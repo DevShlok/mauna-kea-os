@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mauna Kea OS — Internal Platform
 
-## Getting Started
+Welcome to **Mauna Kea OS**, a next-generation Executive Search and AI Assessment platform built for high-growth strategic hiring. 
 
-First, run the development server:
+This platform unifies mandate management, candidate pipelining, float list management, and AI-driven candidate assessment into a single, seamless dashboard.
 
+## Tech Stack
+
+This project is built using modern, highly scalable web technologies:
+- **Framework**: [Next.js 15+](https://nextjs.org/) (App Router)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Database**: [MySQL](https://www.mysql.com/)
+- **ORM**: [Drizzle ORM](https://orm.drizzle.team/)
+- **State Management**: [Zustand](https://docs.pmnd.rs/zustand/getting-started/introduction)
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed on your machine:
+- [Node.js](https://nodejs.org/) (v20 or higher)
+- [MySQL](https://www.mysql.com/) (Ensure the service is running)
+
+## Local Development Setup
+
+Follow these steps to get the project running locally on your machine.
+
+### 1. Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-username/mauna-kea-os.git
+cd mauna-kea-os
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install Dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Environment Variables
+Create a `.env.local` file in the root of the project. You will need to provide your MySQL database credentials:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_NAME=maunakea
+DB_PORT=3306
 
-## Learn More
+# (Optional) Future AI configuration
+# OPENAI_API_KEY=your_openai_api_key
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 4. Database Setup
+We use Drizzle ORM to manage the database schema. Ensure your MySQL server is running, and an empty database named `maunakea` exists.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+First, push the schema to your database:
+```bash
+npx drizzle-kit push
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+*(Optional)* If you have a seed script to populate initial mock data:
+```bash
+npm run seed
+```
 
-## Deploy on Vercel
+### 5. Start the Development Server
+```bash
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the application running.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Features & Architecture
+
+- **Mandates Dashboard**: Track active executive search mandates, manage pipelines (Longlist -> Offer), and visualise the hiring funnel.
+- **Float List**: A centralised repository of active "A-player" candidates proactively mapped to dream roles and companies.
+- **AI Workbench (In Progress)**: Evaluates candidate transcripts against specific competency frameworks (e.g., CFO, CTO) to generate structured, PDF-ready assessment reports.
+- **Responsive UI**: A highly responsive, premium UI utilising glassmorphism and modern dashboard aesthetics.
+
+## Contributing
+1. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Push to the branch (`git push origin feature/amazing-feature`)
+4. Open a Pull Request
+
+## License
+Proprietary — Mauna Kea International
