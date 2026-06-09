@@ -1,7 +1,8 @@
 "use server";
 
 import { db } from "@/db";
-import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, flCandidates, flSubmissions, flFollowUps, platformUsers } from "@/db/schema";
+import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, flCandidates, flSubmissions, flFollowUps, platformUsers, flReferences, flActivities, candidateReports } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function createMandateAction(data: any) {
@@ -83,8 +84,20 @@ export async function addFloatListEntryAction(data: any) {
     location: data.location,
     exp: data.exp ? Number(data.exp) : null,
     ctc: data.ctc ? Number(data.ctc) : null,
-    status: "Active",
+    expected: data.expected ? Number(data.expected) : null,
+    notice: data.notice ? Number(data.notice) : null,
+    status: data.status || "Active",
+    qual: data.qual || [],
+    dreamRoles: data.dreamRoles || [],
+    dreamCos: data.dreamCos || [],
+    expTags: data.expTags || [],
+    linkedin: data.linkedin || null,
+    targetCompany: data.targetCompany || null,
+    currency: data.currency || "INR",
+    cvFileName: data.cvFileName || null,
+    notes: data.notes || null,
     initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+    cvText: data.cvText || null,
   });
   revalidatePath("/dashboard/float-list/database");
   return id;
@@ -116,6 +129,7 @@ export async function addSubmissionAction(data: any) {
   });
   revalidatePath("/dashboard/float-list/submissions");
   revalidatePath("/dashboard/float-list/database");
+  revalidatePath("/dashboard/float-list/" + candId);
   return { id, candId };
 }
 
@@ -161,4 +175,56 @@ export async function addPlatformUserAction(data: { name: string; email: string;
   });
   revalidatePath("/dashboard/settings");
   return id;
+}
+
+export async function addReferenceAction(data: any) {
+  await db.insert(flReferences).values({
+    candId: data.candId,
+    type: data.type,
+    name: data.name,
+    org: data.org,
+    rel: data.rel,
+    text: data.text,
+  });
+  revalidatePath("/dashboard/float-list/" + data.candId);
+}
+
+export async function deleteFloatListEntryAction(id: string) {
+  await db.delete(flSubmissions).where(eq(flSubmissions.candId, id));
+  await db.delete(flFollowUps).where(eq(flFollowUps.candId, id));
+  await db.delete(flActivities).where(eq(flActivities.candId, id));
+  await db.delete(flReferences).where(eq(flReferences.candId, id));
+  await db.delete(candidateReports).where(eq(candidateReports.candidateId, id));
+  await db.delete(flCandidates).where(eq(flCandidates.id, id));
+  revalidatePath("/dashboard/float-list/database");
+}
+export async function editFloatListEntryAction(id: string, data: any) {
+  await db.update(flCandidates).set({
+    name: data.name,
+    company: data.company,
+    designation: data.designation,
+    email: data.email,
+    mobile: data.mobile,
+    location: data.location,
+    exp: data.exp ? Number(data.exp) : null,
+    ctc: data.ctc ? Number(data.ctc) : null,
+    expected: data.expected ? Number(data.expected) : null,
+    notice: data.notice ? Number(data.notice) : null,
+    status: data.status || "Active",
+    qual: data.qual || [],
+    expTags: data.expTags || [],
+    linkedin: data.linkedin || null,
+    targetCompany: data.targetCompany || null,
+    currency: data.currency || "INR",
+    cvFileName: data.cvFileName || null,
+    notes: data.notes || null,
+    initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+  }).where(eq(flCandidates.id, id));
+  revalidatePath("/dashboard/float-list/database");
+  revalidatePath("/dashboard/float-list/" + id);
+  return id;
+}
+export async function updateCandidateStatusAction(id: string, status: string) {
+  await db.update(flCandidates).set({ status }).where(eq(flCandidates.id, id));
+  revalidatePath("/dashboard/float-list/database");
 }

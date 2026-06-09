@@ -34,6 +34,7 @@ export const mandateCandidates = mysqlTable('mandate_candidates', {
   score: float('score'),
   hasReport: boolean('has_report').default(false),
   initials: varchar('initials', { length: 5 }),
+  cvText: text('cv_text'),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
@@ -59,7 +60,25 @@ export const flCandidates = mysqlTable('fl_candidates', {
   score: float('score'),
   assessDate: varchar('assess_date', { length: 20 }),
   linkedin: varchar('linkedin', { length: 500 }),
+  linkedinPdf: varchar('linkedin_pdf', { length: 500 }),
+  targetCompany: varchar('target_company', { length: 255 }),
+  currency: varchar('currency', { length: 20 }).default('INR'),
+  cvFileName: varchar('cv_file_name', { length: 255 }),
+  notes: text('notes'),
   hasCv: boolean('has_cv').default(false),
+  cvText: text('cv_text'),
+  createdAt: datetime('created_at').default(sql`now()`),
+});
+
+// ─── FL REFERENCES ───────────────────────────────────────
+export const flReferences = mysqlTable('fl_references', {
+  id: int('id').autoincrement().primaryKey(),
+  candId: varchar('cand_id', { length: 20 }).notNull().references(() => flCandidates.id),
+  type: varchar('type', { length: 50 }),
+  name: varchar('name', { length: 255 }),
+  org: varchar('org', { length: 255 }),
+  rel: varchar('rel', { length: 255 }),
+  text: text('text'),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
@@ -112,6 +131,7 @@ export const frameworks = mysqlTable('frameworks', {
   industry: varchar('industry', { length: 255 }),
   usedIn: int('used_in').default(0),
   lastModified: varchar('last_modified', { length: 50 }),
+  reportSections: json('report_sections').$type<string[]>().default(['Relevant Experience', 'Motivation & Fit', 'Key Strengths', 'Areas to Probe', 'Mauna Kea Recommendation']),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
@@ -142,14 +162,26 @@ export const platformUsers = mysqlTable('platform_users', {
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
+// ─── CANDIDATE REPORTS (AI WORKBENCH) ────────────────────
+export const candidateReports = mysqlTable('candidate_reports', {
+  id: varchar('id', { length: 20 }).primaryKey(),
+  candidateId: varchar('candidate_id', { length: 20 }).notNull(), // Can be FlCandidate or MandateCandidate ID
+  frameworkId: varchar('framework_id', { length: 20 }).notNull().references(() => frameworks.id),
+  status: varchar('status', { length: 50 }).default('Generating'), // Generating, Completed, Failed
+  reportData: json('report_data'), // The dynamic JSON output from the AI
+  createdAt: datetime('created_at').default(sql`now()`),
+});
+
 // ─── TYPES ───────────────────────────────────────────────
 export type Mandate = typeof mandates.$inferSelect;
 export type MandateCandidate = typeof mandateCandidates.$inferSelect;
 export type FlCandidate = typeof flCandidates.$inferSelect;
 export type FlSubmission = typeof flSubmissions.$inferSelect;
 export type FlFollowUp = typeof flFollowUps.$inferSelect;
+export type FlReference = typeof flReferences.$inferSelect;
 export type FlActivity = typeof flActivities.$inferSelect;
 export type Framework = typeof frameworks.$inferSelect;
 export type FrameworkCategory = typeof frameworkCategories.$inferSelect;
 export type FrameworkCriterion = typeof frameworkCriteria.$inferSelect;
 export type PlatformUser = typeof platformUsers.$inferSelect;
+export type CandidateReport = typeof candidateReports.$inferSelect;

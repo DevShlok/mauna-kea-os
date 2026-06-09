@@ -1,7 +1,7 @@
 import { getFlCandidateById } from "@/db/queries";
-import FlCandidateClient from "./FlCandidateClient";
+import NewCandidateClient from "../../database/new/NewCandidateClient";
 
-export default async function FlCandidateProfilePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditFlCandidatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const candidate = await getFlCandidateById(id);
 
@@ -9,5 +9,5 @@ export default async function FlCandidateProfilePage({ params }: { params: Promi
     return <div className="p-10 text-center text-gray-400">Candidate not found.</div>;
   }
 
-  return <FlCandidateClient candidate={candidate} />;
+  return <NewCandidateClient initialData={candidate} />;
 }

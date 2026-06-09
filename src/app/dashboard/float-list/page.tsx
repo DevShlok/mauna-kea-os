@@ -42,7 +42,10 @@ export default function FloatListDashPage() {
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Float List Dashboard</h1>
-        <Link href="/dashboard/float-list/database" className="px-4 py-2 bg-yellow-500 text-blue-900 rounded text-xs font-bold hover:bg-yellow-400">+ Add Candidate</Link>
+        <div className="flex gap-2">
+          <a href="/api/export-csv" className="px-4 py-2 bg-gray-100 text-gray-600 rounded text-xs font-bold hover:bg-gray-200 transition-colors inline-block text-center cursor-pointer">Export CSV</a>
+          <Link href="/dashboard/float-list/database/new" className="px-4 py-2 bg-yellow-500 text-blue-900 rounded text-xs font-bold hover:bg-yellow-400 transition-colors inline-block">+ Add Candidate</Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4 mb-8">

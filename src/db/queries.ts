@@ -1,7 +1,7 @@
 import { db } from './index';
 import { eq, sql } from 'drizzle-orm';
 import {
-  mandates, mandateCandidates, flCandidates, flSubmissions,
+  mandates, mandateCandidates, flCandidates, flSubmissions, flReferences,
   flFollowUps, flActivities, frameworks, frameworkCategories,
   frameworkCriteria, platformUsers
 } from './schema';
@@ -51,6 +51,7 @@ export async function getAllMandateCandidates() {
     score: mandateCandidates.score,
     hasReport: mandateCandidates.hasReport,
     initials: mandateCandidates.initials,
+    cvText: mandateCandidates.cvText,
     mandateId: mandateCandidates.mandateId,
     mandateRole: mandates.role,
     mandateCompany: mandates.company,
@@ -71,6 +72,7 @@ export async function getMandateCandidateByExtId(extId: string) {
     score: mandateCandidates.score,
     hasReport: mandateCandidates.hasReport,
     initials: mandateCandidates.initials,
+    cvText: mandateCandidates.cvText,
     mandateId: mandateCandidates.mandateId,
     mandateRole: mandates.role,
     mandateCompany: mandates.company,
@@ -99,6 +101,7 @@ export async function getFlCandidateById(id: string) {
   const activities = await db.select().from(flActivities).where(eq(flActivities.candId, id));
   const submissions = await db.select().from(flSubmissions).where(eq(flSubmissions.candId, id));
   const followUps = await db.select().from(flFollowUps).where(eq(flFollowUps.candId, id));
+  const references = await db.select().from(flReferences).where(eq(flReferences.candId, id));
   return {
     ...cand,
     qual: (cand.qual ?? []) as string[],
@@ -108,6 +111,7 @@ export async function getFlCandidateById(id: string) {
     activities,
     submissions: submissions.map(s => ({ ...s, via: (s.via ?? []) as string[] })),
     followUps,
+    references,
   };
 }
 
