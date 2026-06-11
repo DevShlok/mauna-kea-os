@@ -107,14 +107,14 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
       {/* PAGE 1 */}
       <div className={`bg-white w-[794px] h-[1122px] mx-auto shadow-2xl print:shadow-none relative box-border print:scale-100 max-w-none p-[50px] overflow-hidden print:break-after-page ${fontStyle}`}>
         {/* Header */}
-        <div className="flex justify-end mb-8 border-b border-gray-200 pb-4">
+        <div className="flex justify-end mb-4 border-b border-gray-200 pb-3">
           <h1 className={`text-2xl font-bold ${headerColor}`} contentEditable suppressContentEditableWarning>
             <span className="font-normal text-gray-700">Mauna Kea</span> International
           </h1>
         </div>
 
         {/* Top Profile + Timeline Section */}
-        <div className="flex flex-row justify-between w-full h-[320px]">
+        <div className="flex flex-row justify-between w-full h-[260px]">
           {/* Left: Profile */}
           <div className="w-[30%] flex flex-col items-center">
             <div className="relative w-[140px] h-[140px]">
@@ -183,7 +183,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         </div>
 
         {/* Content Blocks */}
-        <div className="mt-8 text-[14px] leading-relaxed text-justify space-y-6">
+        <div className="mt-5 text-[14px] leading-relaxed text-justify space-y-4">
           <p contentEditable suppressContentEditableWarning>
             {rp["Notes Summary"]?.join(" ") || `${cand.name} is a finance and strategy leader with extensive experience...`}
           </p>
@@ -236,17 +236,17 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
       {/* PAGE 2 */}
       <div className={`bg-white w-[794px] h-[1122px] mx-auto shadow-2xl print:shadow-none relative box-border print:scale-100 max-w-none p-[50px] overflow-hidden ${fontStyle}`}>
         {/* Header */}
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end mb-2">
           <h1 className={`text-2xl font-bold ${headerColor}`} contentEditable suppressContentEditableWarning>
             <span className="font-normal text-gray-700">Mauna Kea</span> International
           </h1>
         </div>
-        <div className="mb-6">
+        <div className="mb-3">
           <h2 className={`text-[20px] font-bold ${headerColor}`}>Evaluation against key criterion</h2>
         </div>
 
         {/* Framework Evaluation Table */}
-        <div className="bg-[#f5f8fc] rounded-md p-6 mb-8 border border-[#e2e8f0]">
+        <div className="bg-[#f5f8fc] rounded-md p-4 mb-4 border border-[#e2e8f0]">
           {framework ? (
             framework.categories.map((cat: any, i: number) => (
               <div key={cat.id} className={i !== 0 ? "mt-4" : ""}>
@@ -288,12 +288,12 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         </div>
 
         {/* Remaining Content Blocks */}
-        <div className="text-[14px] leading-relaxed text-justify space-y-6">
+        <div className="text-[14px] leading-relaxed text-justify space-y-4">
           <div>
             <h3 className={`text-[18px] font-bold ${headerColor} mb-3`} contentEditable suppressContentEditableWarning>
               Key Strengths
             </h3>
-            <div className="space-y-3 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+            <div className="space-y-2 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
               {rp["Key Strengths"]?.map((s: string, idx: number) => (
                 <li key={idx} className="pl-1">{s}</li>
               )) || (
@@ -309,7 +309,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
             <h3 className={`text-[18px] font-bold ${headerColor} mb-3`} contentEditable suppressContentEditableWarning>
               Areas to Probe
             </h3>
-            <div className="space-y-3 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+            <div className="space-y-2 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
               {rp["Risks"]?.map((r: string, idx: number) => (
                 <li key={idx} className="pl-1">{r}</li>
               )) || (
