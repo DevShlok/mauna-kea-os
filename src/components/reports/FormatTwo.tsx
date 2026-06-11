@@ -1,52 +1,47 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-export default function FormatTwo({ mandate, candidates }: { mandate: any, candidates: any[] }) {
+export default function FormatTwo({ mandate, candidates, framework, scores }: { mandate: any, candidates: any[], framework?: any, scores?: Record<number, number> }) {
   return (
-    <div className="flex flex-col gap-10 bg-gray-100 py-10 items-center min-h-screen">
+    <div className="flex flex-col gap-10 bg-gray-200 py-10 items-center min-h-screen">
       {candidates.map((cand, idx) => {
-        return <CandidateFormatTwo key={cand.id} cand={cand} />;
+        return <CandidateFormatTwo key={cand.id} cand={cand} framework={framework} scores={scores} />;
       })}
     </div>
   );
 }
 
-function CandidateFormatTwo({ cand }: { cand: any }) {
+function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?: any, scores?: Record<number, number> }) {
   const rp = cand.reportData || {};
   
-  // Try to parse out basic timeline data from report
-  const defaultCurrentCompany = rp["Current Company"] || cand.company || "Current Company";
-  const defaultCurrentRole = rp["Designation"] || cand.role || "Current Role";
-  const defaultFormerCompany = rp["Former Company"] || "Former Company";
-
-  // State for timeline data
-  const [timelineData, setTimelineData] = useState<{
-    currentCompany: string;
-    currentRole: string;
-    formerCompany: string;
-    formerRole: string;
-  } | null>(null);
+  // State for timeline data (up to 6 items)
+  const [experienceList, setExperienceList] = useState<{
+    companyName: string;
+    position: string;
+    duration: string;
+    startDate: string;
+    endDate: string;
+    domain: string;
+  }[]>([]);
 
   const [isScraping, setIsScraping] = useState(false);
 
-  const currentCompany = timelineData?.currentCompany || defaultCurrentCompany;
-  const currentRole = timelineData?.currentRole || defaultCurrentRole;
-  const formerCompany = timelineData?.formerCompany || defaultFormerCompany;
-  const formerRole = timelineData?.formerRole || "Previous Role";
-
-  // Update domains automatically if timelineData changes
-  const [currentDomain, setCurrentDomain] = useState("");
-  const [formerDomain, setFormerDomain] = useState("");
-
-  // Initialize or update domains based on company names
-  React.useEffect(() => {
-    setCurrentDomain(currentCompany.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com');
-  }, [currentCompany]);
-
-  React.useEffect(() => {
-    setFormerDomain(formerCompany.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com');
-  }, [formerCompany]);
+  // Initialize with some default if empty
+  useEffect(() => {
+    if (experienceList.length === 0) {
+      setExperienceList([
+        {
+          companyName: rp["Current Company"] || cand.company || "Current Company",
+          position: rp["Designation"] || cand.role || "Current Role",
+          duration: "",
+          startDate: "",
+          endDate: "Present",
+          domain: (rp["Current Company"] || cand.company || "Current Company").toLowerCase().replace(/[^a-z0-9]/g, '') + '.com'
+        }
+      ]);
+    }
+  }, []);
 
   const fetchLinkedIn = async () => {
     if (!cand.linkedin) {
@@ -72,12 +67,15 @@ function CandidateFormatTwo({ cand }: { cand: any }) {
           setIsScraping(false);
           const exp = data.data?.experience || [];
           if (exp.length > 0) {
-            setTimelineData({
-              currentCompany: exp[0]?.companyName || defaultCurrentCompany,
-              currentRole: exp[0]?.position || defaultCurrentRole,
-              formerCompany: exp[1]?.companyName || defaultFormerCompany,
-              formerRole: exp[1]?.position || "Previous Role"
-            });
+            const parsedExp = exp.slice(0, 6).map((e: any) => ({
+              companyName: e.companyName || "Unknown",
+              position: e.position || "Unknown Role",
+              duration: e.duration || "",
+              startDate: e.startDate?.text || "",
+              endDate: e.endDate?.text || "Present",
+              domain: e.companyUniversalName ? e.companyUniversalName + ".com" : (e.companyName || "company").toLowerCase().replace(/[^a-z0-9]/g, '') + '.com'
+            }));
+            setExperienceList(parsedExp);
           } else {
             alert("LinkedIn scrape succeeded, but no experience data was found.");
           }
@@ -93,135 +91,255 @@ function CandidateFormatTwo({ cand }: { cand: any }) {
     }
   };
 
+  const PageStyle = `
+    @page { size: A4; margin: 0mm; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  `;
+
+  // Standard Serif Font styling
+  const fontStyle = "font-serif text-[#1e293b]";
+  const headerColor = "text-[#003366]";
+
   return (
-    <div className="bg-white w-[794px] h-[1122px] mx-auto shadow-xl print:shadow-none relative font-sans break-after-page mb-10 print:mb-0 box-border print:scale-100 max-w-none p-[40px]">
-      <style type="text/css" media="print">
-        {`
-          @page { size: A4; margin: 0mm; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        `}
-      </style>
+    <div className="flex flex-col gap-10">
+      <style type="text/css" media="print" dangerouslySetInnerHTML={{ __html: PageStyle }} />
 
-      {/* Header Container */}
-      <div className="flex justify-between max-w-[800px] mt-10">
-        
-        {/* Left Column: Profile Section */}
-        <div className="text-center w-[35%] flex flex-col items-center">
-          {/* Profile Photo fallback to Initials */}
-          <div 
-            className="w-[150px] h-[150px] rounded-full border-[3px] border-[#003366] object-cover flex items-center justify-center text-5xl font-bold text-[#003366] bg-gray-50 shadow-sm"
-          >
-            {cand.initials || cand.name.substring(0, 2).toUpperCase()}
-          </div>
-          
-          {cand.linkedin && (
-            <div className="flex flex-col items-center">
-              <a href={cand.linkedin} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" 
-                  alt="LinkedIn" 
-                  className="w-[30px] -mt-[20px] relative z-10 bg-white rounded-sm"
-                />
-              </a>
-              <button 
-                onClick={fetchLinkedIn}
-                disabled={isScraping}
-                className="mt-2 print:hidden bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold py-1 px-2 rounded flex items-center justify-center min-w-[120px]"
-              >
-                {isScraping ? "Scraping Profile..." : "Fetch LinkedIn Data"}
-              </button>
+      {/* PAGE 1 */}
+      <div className={`bg-white w-[794px] h-[1122px] mx-auto shadow-2xl print:shadow-none relative box-border print:scale-100 max-w-none p-[50px] overflow-hidden ${fontStyle}`}>
+        {/* Header */}
+        <div className="flex justify-end mb-8 border-b border-gray-200 pb-4">
+          <h1 className={`text-2xl font-bold ${headerColor}`} contentEditable suppressContentEditableWarning>
+            <span className="font-normal text-gray-700">Mauna Kea</span> International
+          </h1>
+        </div>
+
+        {/* Top Profile + Timeline Section */}
+        <div className="flex flex-row justify-between w-full h-[320px]">
+          {/* Left: Profile */}
+          <div className="w-[30%] flex flex-col items-center">
+            <div className="relative w-[140px] h-[140px]">
+              <div className={`w-[140px] h-[140px] rounded-full border-4 border-black object-cover flex items-center justify-center text-5xl font-bold text-black bg-gray-50 shadow-md`}>
+                {cand.initials || cand.name.substring(0, 2).toUpperCase()}
+              </div>
+              {cand.linkedin && (
+                <a href={cand.linkedin} target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 bg-white rounded-md p-1 shadow-md cursor-pointer">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn" className="w-[28px]" />
+                </a>
+              )}
             </div>
-          )}
-          
-          <h2 className="text-[#003366] text-[24px] font-bold mt-4 mb-1" contentEditable suppressContentEditableWarning>
-            {cand.name}
-          </h2>
-          <p className="text-[14px] text-gray-600 font-semibold" contentEditable suppressContentEditableWarning>
-            {rp["Pedigree"] || "Qualification / Pedigree"}
+            
+            <button 
+              onClick={fetchLinkedIn}
+              disabled={isScraping}
+              className="mt-3 print:hidden bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold py-1 px-3 rounded-full flex items-center justify-center shadow-sm"
+            >
+              {isScraping ? "Scraping..." : "Fetch LinkedIn"}
+            </button>
+            
+            <h2 className={`text-[20px] font-bold mt-4 text-center ${headerColor}`} contentEditable suppressContentEditableWarning>
+              {cand.name}
+            </h2>
+            <p className="text-[16px] font-semibold text-center mt-1" contentEditable suppressContentEditableWarning>
+              {rp["Pedigree"] || "CA 2012"}
+            </p>
+          </div>
+
+          {/* Right: Timeline Grid */}
+          <div className="w-[65%] border border-gray-100 bg-gray-50/30 rounded-xl p-4 overflow-hidden relative">
+            <div className="absolute left-[39%] top-6 bottom-6 w-[2px] bg-blue-100 z-0"></div>
+            <div className="flex flex-col gap-5 z-10 relative">
+              {experienceList.map((exp, i) => (
+                <div key={i} className="flex flex-row items-center justify-between text-[11px]">
+                  <div className="w-[35%] flex items-center gap-3">
+                    <img 
+                      src={`https://logo.clearbit.com/${exp.domain}`} 
+                      alt={exp.companyName}
+                      className="w-[30px] h-[30px] object-contain bg-white border border-gray-200 rounded p-0.5"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://ui-avatars.com/api/?name=" + exp.companyName + "&background=ffffff&color=000000";
+                      }}
+                    />
+                    <div className="font-bold truncate" contentEditable suppressContentEditableWarning>
+                      {exp.companyName}
+                    </div>
+                  </div>
+                  
+                  <div className="w-[5%] flex justify-center relative">
+                    <div className="w-[10px] h-[10px] rounded-full bg-gray-400 z-10 border-2 border-white shadow-sm"></div>
+                  </div>
+
+                  <div className="w-[25%] text-gray-600 text-center" contentEditable suppressContentEditableWarning>
+                    {exp.startDate ? `${exp.startDate.split(' ')[1] || exp.startDate} - ${exp.endDate?.split(' ')[1] || exp.endDate}` : exp.endDate}
+                  </div>
+
+                  <div className="w-[35%] font-medium text-gray-800" contentEditable suppressContentEditableWarning>
+                    {exp.position}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Content Blocks */}
+        <div className="mt-8 text-[14px] leading-relaxed text-justify space-y-6">
+          <p contentEditable suppressContentEditableWarning>
+            {rp["Notes Summary"]?.join(" ") || `${cand.name} is a finance and strategy leader with extensive experience...`}
           </p>
-        </div>
 
-        {/* Right Column: Timeline Section */}
-        <div className="w-[60%] border-l-2 border-[#e0e0e0] pl-6 pt-4 flex flex-col gap-10">
-          
-          {/* Current Role */}
-          <div className="flex items-center relative">
-            <div className="absolute -left-[31px] w-[10px] h-[10px] bg-[#003366] rounded-full"></div>
-            
-            <div className="flex flex-col items-center mr-5">
-              <img 
-                src={`https://logo.clearbit.com/${currentDomain}`} 
-                alt={currentCompany} 
-                className="w-[80px] h-[80px] object-contain bg-white rounded-md border border-gray-100 p-1 shadow-sm"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://ui-avatars.com/api/?name=" + currentCompany + "&background=f3f4f6&color=4b5563";
-                }}
-              />
-              <input 
-                value={currentDomain} 
-                onChange={(e) => setCurrentDomain(e.target.value)} 
-                className="text-[8px] text-gray-400 text-center w-[80px] mt-1 outline-none border-b border-dashed print:hidden" 
-                placeholder="domain.com"
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <div className="w-[150px] font-bold text-[14px] text-[#003366]" contentEditable suppressContentEditableWarning>
-                Present
-              </div>
-              <div className="font-bold text-[16px] text-gray-900 mt-1" contentEditable suppressContentEditableWarning>
-                {currentRole}
-              </div>
-              <div className="text-[14px] text-gray-500 mt-0.5" contentEditable suppressContentEditableWarning>
-                {currentCompany}
-              </div>
+          <div>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+              What is {cand.name.split(' ')[0]} famous for
+            </h3>
+            <div className="space-y-2 ml-2">
+              <p contentEditable suppressContentEditableWarning>Team feedback</p>
+              <p contentEditable suppressContentEditableWarning>Superior feedback</p>
+              <p contentEditable suppressContentEditableWarning>Peer feedback</p>
             </div>
           </div>
 
-          {/* Former Role */}
-          <div className="flex items-center relative">
-            <div className="absolute -left-[31px] w-[10px] h-[10px] bg-[#a0a0a0] rounded-full"></div>
-            
-            <div className="flex flex-col items-center mr-5">
-              <img 
-                src={`https://logo.clearbit.com/${formerDomain}`} 
-                alt={formerCompany} 
-                className="w-[80px] h-[80px] object-contain bg-white rounded-md border border-gray-100 p-1 shadow-sm"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://ui-avatars.com/api/?name=" + formerCompany + "&background=f3f4f6&color=4b5563";
-                }}
-              />
-              <input 
-                value={formerDomain} 
-                onChange={(e) => setFormerDomain(e.target.value)} 
-                className="text-[8px] text-gray-400 text-center w-[80px] mt-1 outline-none border-b border-dashed print:hidden" 
-                placeholder="domain.com"
-              />
-            </div>
+          <div>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+              Career aspiration
+            </h3>
+            <p contentEditable suppressContentEditableWarning>
+              Details about career aspiration can be filled here...
+            </p>
+          </div>
 
-            <div className="flex flex-col">
-              <div className="w-[150px] font-bold text-[14px] text-gray-500" contentEditable suppressContentEditableWarning>
-                Previous
-              </div>
-              <div className="font-bold text-[16px] text-gray-900 mt-1" contentEditable suppressContentEditableWarning>
-                {formerRole}
-              </div>
-              <div className="text-[14px] text-gray-500 mt-0.5" contentEditable suppressContentEditableWarning>
-                {formerCompany}
-              </div>
+          <div>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+              Relevant Experience
+            </h3>
+            <div className="space-y-2 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+              <li className="pl-1">
+                <strong>{experienceList[0]?.companyName} (Current):</strong> Description of relevant achievements...
+              </li>
+              <li className="pl-1">
+                <strong>{experienceList[1]?.companyName}:</strong> Description of relevant achievements...
+              </li>
             </div>
           </div>
 
+          <div>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+              Motivation for the role
+            </h3>
+            <p contentEditable suppressContentEditableWarning>
+              Motivated by the opportunity to move into a broader strategic leadership role...
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="mt-[60px] border-t border-[#e0e0e0] pt-8">
-        <h3 className="text-[#003366] text-[20px] font-bold mb-4">Executive Summary</h3>
-        <p className="text-[14px] text-gray-700 leading-relaxed text-justify" contentEditable suppressContentEditableWarning>
-          {rp["Notes Summary"]?.join(" ") || rp["Key Strengths"]?.join(" ") || "Candidate brings extensive experience across multiple domains..."}
-        </p>
-      </div>
+      {/* PAGE 2 */}
+      <div className={`bg-white w-[794px] h-[1122px] mx-auto shadow-2xl print:shadow-none relative box-border print:scale-100 max-w-none p-[50px] overflow-hidden ${fontStyle}`}>
+        {/* Header */}
+        <div className="flex justify-end mb-4">
+          <h1 className={`text-2xl font-bold ${headerColor}`} contentEditable suppressContentEditableWarning>
+            <span className="font-normal text-gray-700">Mauna Kea</span> International
+          </h1>
+        </div>
+        <div className="mb-6">
+          <h2 className={`text-[20px] font-bold ${headerColor}`}>Evaluation against key criterion</h2>
+        </div>
 
+        {/* Framework Evaluation Table */}
+        <div className="bg-[#f5f8fc] rounded-md p-6 mb-8 border border-[#e2e8f0]">
+          {framework ? (
+            framework.categories.map((cat: any, i: number) => (
+              <div key={cat.id} className={i !== 0 ? "mt-4" : ""}>
+                <h3 className="font-bold text-[16px] text-gray-900 mb-2">
+                  {i + 1}. {cat.name}
+                </h3>
+                <div className="ml-6 space-y-2 text-[14px]">
+                  {cat.criteria.map((c: any, j: number) => {
+                    // Calculate left percentage based on 1-10 score (default 5 if not set)
+                    const score = scores?.[c.id] || 5;
+                    const leftPercent = `${((score - 1) / 9) * 100}%`;
+                    const letter = String.fromCharCode(65 + j); // A, B, C...
+                    
+                    return (
+                      <div key={c.id} className="flex justify-between items-center text-gray-800">
+                        <div className="w-[55%]">
+                          {letter}. {c.name}
+                        </div>
+                        <div className="w-[45%] flex items-center justify-between text-[11px] text-gray-500 font-sans tracking-wide">
+                          <span className="mr-3">Low</span>
+                          <div className="flex-grow relative h-[1px] bg-gray-400">
+                            <div 
+                              className="absolute w-[12px] h-[12px] bg-[#003366] rounded-full top-1/2 -translate-y-1/2 shadow-sm cursor-pointer hover:scale-125 transition-transform" 
+                              style={{ left: leftPercent }}
+                              title={`Score: ${score}/10`}
+                            ></div>
+                          </div>
+                          <span className="ml-3">High</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-gray-500 italic text-center py-4">No framework data available to display evaluation criteria.</div>
+          )}
+        </div>
+
+        {/* Remaining Content Blocks */}
+        <div className="text-[14px] leading-relaxed text-justify space-y-6">
+          <div>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-3`} contentEditable suppressContentEditableWarning>
+              Key Strengths
+            </h3>
+            <div className="space-y-3 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+              {rp["Key Strengths"]?.map((s: string, idx: number) => (
+                <li key={idx} className="pl-1">{s}</li>
+              )) || (
+                <>
+                  <li className="pl-1"><strong>Empathetic Leadership:</strong> Built a high-retention team from scratch...</li>
+                  <li className="pl-1"><strong>Strategic Storytelling:</strong> Expert at translating complex financial data...</li>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-3`} contentEditable suppressContentEditableWarning>
+              Areas to Probe
+            </h3>
+            <div className="space-y-3 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+              {rp["Risks"]?.map((r: string, idx: number) => (
+                <li key={idx} className="pl-1">{r}</li>
+              )) || (
+                <>
+                  <li className="pl-1"><strong>Delegation Balance:</strong> Due to his speed and focus on quality...</li>
+                  <li className="pl-1"><strong>Proactive Insights:</strong> While collaborative, he aims to move beyond...</li>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
+              Compensation
+            </h3>
+            <p contentEditable suppressContentEditableWarning>
+              ₹ 54 lakhs fixed + ~30% variable (~₹ 16 lakhs) + annual increment eligibility
+            </p>
+          </div>
+
+          <div>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-3`} contentEditable suppressContentEditableWarning>
+              Mauna Kea Recommendation
+            </h3>
+            <p contentEditable suppressContentEditableWarning>
+              {rp["Recommendation"]?.join(" ") || `${cand.name} is a strategic finance leader with deep expertise... His profile is best suited for organizations requiring structured financial governance and enhanced business visibility.`}
+            </p>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }
