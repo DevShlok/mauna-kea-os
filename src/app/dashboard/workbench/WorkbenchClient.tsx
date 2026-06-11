@@ -315,12 +315,34 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
                 <h3 className="font-bold text-gray-900 border-b border-gray-100 pb-2">Candidate Files</h3>
                 <div className="flex gap-4">
                   {selectedCandidate.cvFileName && (
-                    <a href={selectedCandidate.cvFileName} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 bg-[#f4f7fd] text-[#123D8D] rounded-md text-[13px] font-bold border border-[#D4E0F0] hover:bg-[#e6ebf5] transition-colors">
+                    <a 
+                      href={selectedCandidate.cvFileName?.startsWith('http') ? selectedCandidate.cvFileName : "#"} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="flex items-center gap-2 px-3 py-2 bg-[#f4f7fd] text-[#123D8D] rounded-md text-[13px] font-bold border border-[#D4E0F0] hover:bg-[#e6ebf5] transition-colors"
+                      onClick={(e) => {
+                        if (!selectedCandidate.cvFileName?.startsWith('http')) {
+                          e.preventDefault();
+                          alert("This candidate's CV failed to upload to the cloud previously. Please re-upload it from the Float List.");
+                        }
+                      }}
+                    >
                       📄 View CV / Resume
                     </a>
                   )}
                   {selectedCandidate.linkedinPdf && (
-                    <a href={selectedCandidate.linkedinPdf} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 bg-[#f0f9ff] text-[#0369a1] rounded-md text-[13px] font-bold border border-[#bae6fd] hover:bg-[#e0f2fe] transition-colors">
+                    <a 
+                      href={selectedCandidate.linkedinPdf?.startsWith('http') ? selectedCandidate.linkedinPdf : "#"} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="flex items-center gap-2 px-3 py-2 bg-[#f0f9ff] text-[#0369a1] rounded-md text-[13px] font-bold border border-[#bae6fd] hover:bg-[#e0f2fe] transition-colors"
+                      onClick={(e) => {
+                        if (!selectedCandidate.linkedinPdf?.startsWith('http')) {
+                          e.preventDefault();
+                          alert("This candidate's LinkedIn PDF failed to upload to the cloud previously. Please re-upload it from the Float List.");
+                        }
+                      }}
+                    >
                       📘 View LinkedIn PDF
                     </a>
                   )}
