@@ -28,7 +28,7 @@ export function Sidebar() {
     { label: "AI Workbench", icon: BrainCircuit, href: "/dashboard/workbench" },
     { label: "Frameworks", icon: Scale, href: "/dashboard/frameworks" },
     { section: "Float List" },
-    { label: "Candidate DB", icon: Database, href: "/dashboard/float-list/database" },
+    { label: "Float DB", icon: Database, href: "/dashboard/float-list/database" },
     { label: "Submissions", icon: Send, href: "/dashboard/float-list/submissions" },
   ];
 

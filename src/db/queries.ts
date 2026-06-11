@@ -1,5 +1,6 @@
 import { db } from './index';
 import { eq, sql } from 'drizzle-orm';
+import { unstable_cache } from 'next/cache';
 import {
   mandates, mandateCandidates, flCandidates, flSubmissions, flReferences,
   flFollowUps, flActivities, frameworks, frameworkCategories,
@@ -7,7 +8,7 @@ import {
 } from './schema';
 
 // ─── MANDATES ────────────────────────────────────────────
-export async function getMandates() {
+export const getMandates = unstable_cache(async () => {
   const rows = await db.select().from(mandates).orderBy(mandates.id);
   const cands = await db.select().from(mandateCandidates);
   return rows.map(m => ({
@@ -15,9 +16,9 @@ export async function getMandates() {
     sectors: (m.sectors ?? []) as string[],
     candidates: cands.filter(c => c.mandateId === m.id),
   }));
-}
+}, ['getMandates'], { tags: ['dashboard-data'] });
 
-export async function getMandateById(id: number) {
+export const getMandateById = unstable_cache(async (id: number) => {
   const [mandate] = await db.select().from(mandates).where(eq(mandates.id, id));
   if (!mandate) return null;
   const cands = await db.select().from(mandateCandidates).where(eq(mandateCandidates.mandateId, id));
@@ -26,7 +27,7 @@ export async function getMandateById(id: number) {
     sectors: (mandate.sectors ?? []) as string[],
     candidates: cands,
   };
-}
+}, ['getMandateById'], { tags: ['dashboard-data'] });
 
 export async function updateMandateStatus(id: number, field: 'status' | 'internalStatus', value: string) {
   if (field === 'status') {
@@ -40,7 +41,7 @@ export async function updateCandidateStage(candId: number, newStage: string) {
   await db.update(mandateCandidates).set({ stage: newStage }).where(eq(mandateCandidates.id, candId));
 }
 
-export async function getAllMandateCandidates() {
+export const getAllMandateCandidates = unstable_cache(async () => {
   const cands = await db.select({
     id: mandateCandidates.id,
     externalId: mandateCandidates.externalId,
@@ -59,9 +60,9 @@ export async function getAllMandateCandidates() {
   .from(mandateCandidates)
   .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id));
   return cands;
-}
+}, ['getAllMandateCandidates'], { tags: ['dashboard-data'] });
 
-export async function getMandateCandidateByExtId(extId: string) {
+export const getMandateCandidateByExtId = unstable_cache(async (extId: string) => {
   const [cand] = await db.select({
     id: mandateCandidates.id,
     externalId: mandateCandidates.externalId,
@@ -81,10 +82,10 @@ export async function getMandateCandidateByExtId(extId: string) {
   .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id))
   .where(eq(mandateCandidates.externalId, extId));
   return cand ?? null;
-}
+}, ['getMandateCandidateByExtId'], { tags: ['dashboard-data'] });
 
 // ─── FLOAT LIST CANDIDATES ───────────────────────────────
-export async function getFlCandidates() {
+export const getFlCandidates = unstable_cache(async () => {
   const rows = await db.select().from(flCandidates).orderBy(flCandidates.id);
   return rows.map(c => ({
     ...c,
@@ -93,9 +94,9 @@ export async function getFlCandidates() {
     dreamCos: (c.dreamCos ?? []) as string[],
     expTags: (c.expTags ?? []) as string[],
   }));
-}
+}, ['getFlCandidates'], { tags: ['dashboard-data'] });
 
-export async function getFlCandidateById(id: string) {
+export const getFlCandidateById = unstable_cache(async (id: string) => {
   const [cand] = await db.select().from(flCandidates).where(eq(flCandidates.id, id));
   if (!cand) return null;
   const activities = await db.select().from(flActivities).where(eq(flActivities.candId, id));
@@ -113,21 +114,21 @@ export async function getFlCandidateById(id: string) {
     followUps,
     references,
   };
-}
+}, ['getFlCandidateById'], { tags: ['dashboard-data'] });
 
 // ─── SUBMISSIONS ─────────────────────────────────────────
-export async function getSubmissions() {
+export const getSubmissions = unstable_cache(async () => {
   const rows = await db.select().from(flSubmissions).orderBy(flSubmissions.dateShared);
   return rows.map(s => ({ ...s, via: (s.via ?? []) as string[] }));
-}
+}, ['getSubmissions'], { tags: ['dashboard-data'] });
 
 // ─── FOLLOW-UPS ──────────────────────────────────────────
-export async function getFollowUps() {
+export const getFollowUps = unstable_cache(async () => {
   return db.select().from(flFollowUps).orderBy(flFollowUps.dueDate);
-}
+}, ['getFollowUps'], { tags: ['dashboard-data'] });
 
 // ─── FRAMEWORKS ──────────────────────────────────────────
-export async function getFrameworks() {
+export const getFrameworks = unstable_cache(async () => {
   const fws = await db.select().from(frameworks);
   const cats = await db.select().from(frameworkCategories);
   const crits = await db.select().from(frameworkCriteria);
@@ -135,12 +136,10 @@ export async function getFrameworks() {
   const mCands = await db.select({ id: mandateCandidates.id, externalId: mandateCandidates.externalId, mandateId: mandateCandidates.mandateId }).from(mandateCandidates);
 
   return fws.map(fw => {
-    // Calculate unique MANDATES assessed with this framework
     const fwReports = reports.filter(r => r.frameworkId === fw.id);
     
     const uniqueMandates = new Set<number>();
     fwReports.forEach(r => {
-      // r.candidateId could be string (externalId) or stringified number (mandateCandidates.id)
       const isNum = !isNaN(Number(r.candidateId));
       const candMatch = isNum 
         ? mCands.find(mc => mc.id === Number(r.candidateId) || mc.externalId === r.candidateId)
@@ -151,7 +150,6 @@ export async function getFrameworks() {
       }
     });
     
-    // Fallback to fw.usedIn if there's no reports but it was seeded with a number
     const actualUsedIn = uniqueMandates.size > 0 ? uniqueMandates.size : (fwReports.length > 0 ? 1 : (fw.usedIn || 0));
 
     return {
@@ -165,9 +163,9 @@ export async function getFrameworks() {
         })),
     };
   });
-}
+}, ['getFrameworks'], { tags: ['dashboard-data'] });
 
-export async function getFrameworkById(id: string) {
+export const getFrameworkById = unstable_cache(async (id: string) => {
   const [fw] = await db.select().from(frameworks).where(eq(frameworks.id, id));
   if (!fw) return null;
   const cats = await db.select().from(frameworkCategories).where(eq(frameworkCategories.frameworkId, id));
@@ -179,15 +177,15 @@ export async function getFrameworkById(id: string) {
       criteria: crits.filter(cr => cr.categoryId === c.id),
     })),
   };
-}
+}, ['getFrameworkById'], { tags: ['dashboard-data'] });
 
 // ─── USERS ───────────────────────────────────────────────
-export async function getPlatformUsers() {
+export const getPlatformUsers = unstable_cache(async () => {
   return db.select().from(platformUsers);
-}
+}, ['getPlatformUsers'], { tags: ['dashboard-data'] });
 
 // ─── ANALYTICS ───────────────────────────────────────────
-export async function getAnalyticsData() {
+export const getAnalyticsData = unstable_cache(async () => {
   const [mandateCount] = await db.select({ count: sql<number>`count(*)` }).from(mandates);
   const [candCount] = await db.select({ count: sql<number>`count(*)` }).from(mandateCandidates);
   const [flCount] = await db.select({ count: sql<number>`count(*)` }).from(flCandidates);
@@ -196,4 +194,4 @@ export async function getAnalyticsData() {
     totalCandidates: Number(candCount?.count ?? 0),
     flTotal: Number(flCount?.count ?? 0),
   };
-}
+}, ['getAnalyticsData'], { tags: ['dashboard-data'] });

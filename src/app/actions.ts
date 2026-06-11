@@ -6,6 +6,7 @@ import { eq, sql, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function createMandateAction(data: any) {
+  revalidatePath("/dashboard", "layout");
   const result = await db.insert(mandates).values({
     company: data.company,
     role: data.role,
@@ -25,6 +26,7 @@ export async function createMandateAction(data: any) {
 }
 
 export async function editMandateAction(id: number, data: any) {
+  revalidatePath("/dashboard", "layout");
   await db.update(mandates).set({
     company: data.company,
     role: data.role,
@@ -43,6 +45,7 @@ export async function editMandateAction(id: number, data: any) {
 }
 
 export async function createFrameworkAction(data: any) {
+  revalidatePath("/dashboard", "layout");
   const id = "FW-" + Date.now();
   await db.insert(frameworks).values({
     id,
@@ -78,6 +81,7 @@ export async function createFrameworkAction(data: any) {
 }
 
 export async function addCandidateToMandateAction(data: any) {
+  revalidatePath("/dashboard", "layout");
   await db.insert(mandateCandidates).values({
     externalId: data.externalId,
     mandateId: data.mandateId,
@@ -91,6 +95,7 @@ export async function addCandidateToMandateAction(data: any) {
 }
 
 export async function addFloatListEntryAction(data: any) {
+  revalidatePath("/dashboard", "layout");
   const id = "CAND-" + Date.now();
   await db.insert(flCandidates).values({
     id,
@@ -122,6 +127,7 @@ export async function addFloatListEntryAction(data: any) {
 }
 
 export async function addSubmissionAction(data: any) {
+  revalidatePath("/dashboard", "layout");
   let candId = data.candId;
   
   if (!candId) {
@@ -175,6 +181,7 @@ export async function addSubmissionAction(data: any) {
 }
 
 export async function bulkAddSubmissionAction(data: { mandateId: number; candidates: any[]; client: string; role: string; consultant: string }) {
+  revalidatePath("/dashboard", "layout");
   for (const c of data.candidates) {
     const candId = c.id;
     const candName = c.name;
@@ -219,6 +226,7 @@ export async function bulkAddSubmissionAction(data: { mandateId: number; candida
 }
 
 export async function removeCandidateFromMandateAction(data: { id: number; externalId: string; company: string; role: string; mandateId: number }) {
+  revalidatePath("/dashboard", "layout");
   // Delete from mandateCandidates
   await db.delete(mandateCandidates).where(eq(mandateCandidates.id, data.id));
 
@@ -234,12 +242,14 @@ export async function removeCandidateFromMandateAction(data: { id: number; exter
 }
 
 export async function updateSubmissionAction(id: string, data: { via?: string[]; followUp?: string; response?: string; status?: string }) {
+  revalidatePath("/dashboard", "layout");
   await db.update(flSubmissions).set(data).where(eq(flSubmissions.id, id));
   revalidatePath("/dashboard/float-list/submissions");
   revalidatePath("/dashboard/float-list/database");
 }
 
 export async function addFollowUpAction(data: any) {
+  revalidatePath("/dashboard", "layout");
   let candId = data.candId;
   
   if (!candId) {
@@ -270,6 +280,7 @@ export async function addFollowUpAction(data: any) {
 }
 
 export async function addPlatformUserAction(data: { name: string; email: string; role: string }) {
+  revalidatePath("/dashboard", "layout");
   const id = "U-" + Math.floor(Math.random() * 10000);
   await db.insert(platformUsers).values({
     id,
@@ -284,6 +295,7 @@ export async function addPlatformUserAction(data: { name: string; email: string;
 }
 
 export async function addReferenceAction(data: any) {
+  revalidatePath("/dashboard", "layout");
   await db.insert(flReferences).values({
     candId: data.candId,
     type: data.type,
@@ -296,6 +308,7 @@ export async function addReferenceAction(data: any) {
 }
 
 export async function deleteFloatListEntryAction(id: string) {
+  revalidatePath("/dashboard", "layout");
   await db.delete(flSubmissions).where(eq(flSubmissions.candId, id));
   await db.delete(flFollowUps).where(eq(flFollowUps.candId, id));
   await db.delete(flActivities).where(eq(flActivities.candId, id));
@@ -305,6 +318,7 @@ export async function deleteFloatListEntryAction(id: string) {
   revalidatePath("/dashboard/float-list/database");
 }
 export async function editFloatListEntryAction(id: string, data: any) {
+  revalidatePath("/dashboard", "layout");
   await db.update(flCandidates).set({
     name: data.name,
     company: data.company,
@@ -331,17 +345,20 @@ export async function editFloatListEntryAction(id: string, data: any) {
   return id;
 }
 export async function updateCandidateStatusAction(id: string, status: string) {
+  revalidatePath("/dashboard", "layout");
   await db.update(flCandidates).set({ status }).where(eq(flCandidates.id, id));
   revalidatePath("/dashboard/float-list/database");
 }
 
 export async function updateMandateCandidateStageAction(candId: number, stage: string, mandateId: number) {
+  revalidatePath("/dashboard", "layout");
   await db.update(mandateCandidates).set({ stage }).where(eq(mandateCandidates.id, candId));
   revalidatePath("/dashboard/candidates");
   revalidatePath(`/dashboard/mandates/${mandateId}`);
 }
 
 export async function updateMandateSearchNotesAction(id: number, text: string) {
+  revalidatePath("/dashboard", "layout");
   await db.update(mandates).set({ searchNotes: text }).where(eq(mandates.id, id));
   revalidatePath(`/dashboard/mandates/${id}`);
 }
