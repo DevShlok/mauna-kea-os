@@ -15,14 +15,83 @@ export default function FormatTwo({ mandate, candidates }: { mandate: any, candi
 function CandidateFormatTwo({ cand }: { cand: any }) {
   const rp = cand.reportData || {};
   
-  // Try to parse out basic timeline data
-  const currentCompany = rp["Current Company"] || cand.company || "Current Company";
-  const currentRole = rp["Designation"] || cand.role || "Current Role";
-  const formerCompany = rp["Former Company"] || "Former Company";
+  // Try to parse out basic timeline data from report
+  const defaultCurrentCompany = rp["Current Company"] || cand.company || "Current Company";
+  const defaultCurrentRole = rp["Designation"] || cand.role || "Current Role";
+  const defaultFormerCompany = rp["Former Company"] || "Former Company";
 
-  // State for editable domains to fetch logos
-  const [currentDomain, setCurrentDomain] = useState(currentCompany.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com');
-  const [formerDomain, setFormerDomain] = useState(formerCompany.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com');
+  // State for timeline data
+  const [timelineData, setTimelineData] = useState<{
+    currentCompany: string;
+    currentRole: string;
+    formerCompany: string;
+    formerRole: string;
+  } | null>(null);
+
+  const [isScraping, setIsScraping] = useState(false);
+
+  const currentCompany = timelineData?.currentCompany || defaultCurrentCompany;
+  const currentRole = timelineData?.currentRole || defaultCurrentRole;
+  const formerCompany = timelineData?.formerCompany || defaultFormerCompany;
+  const formerRole = timelineData?.formerRole || "Previous Role";
+
+  // Update domains automatically if timelineData changes
+  const [currentDomain, setCurrentDomain] = useState("");
+  const [formerDomain, setFormerDomain] = useState("");
+
+  // Initialize or update domains based on company names
+  React.useEffect(() => {
+    setCurrentDomain(currentCompany.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com');
+  }, [currentCompany]);
+
+  React.useEffect(() => {
+    setFormerDomain(formerCompany.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com');
+  }, [formerCompany]);
+
+  const fetchLinkedIn = async () => {
+    if (!cand.linkedin) {
+      alert("No LinkedIn URL found for this candidate.");
+      return;
+    }
+    setIsScraping(true);
+    try {
+      const startRes = await fetch('/api/linkedin/start', {
+        method: 'POST',
+        body: JSON.stringify({ url: cand.linkedin }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const startData = await startRes.json();
+      if (!startData.runId) throw new Error(startData.error || "Failed to start scraper");
+      
+      const poll = setInterval(async () => {
+        const statusRes = await fetch(`/api/linkedin/status?runId=${startData.runId}`);
+        const data = await statusRes.json();
+        
+        if (data.status === 'SUCCEEDED') {
+          clearInterval(poll);
+          setIsScraping(false);
+          const exp = data.data?.experience || [];
+          if (exp.length > 0) {
+            setTimelineData({
+              currentCompany: exp[0]?.companyName || defaultCurrentCompany,
+              currentRole: exp[0]?.position || defaultCurrentRole,
+              formerCompany: exp[1]?.companyName || defaultFormerCompany,
+              formerRole: exp[1]?.position || "Previous Role"
+            });
+          } else {
+            alert("LinkedIn scrape succeeded, but no experience data was found.");
+          }
+        } else if (data.status === 'FAILED') {
+          clearInterval(poll);
+          setIsScraping(false);
+          alert("LinkedIn scraping failed! The profile may be private or invalid.");
+        }
+      }, 5000);
+    } catch (e: any) {
+      setIsScraping(false);
+      alert("Error: " + e.message);
+    }
+  };
 
   return (
     <div className="bg-white w-[794px] h-[1122px] mx-auto shadow-xl print:shadow-none relative font-sans break-after-page mb-10 print:mb-0 box-border print:scale-100 max-w-none p-[40px]">
@@ -46,13 +115,22 @@ function CandidateFormatTwo({ cand }: { cand: any }) {
           </div>
           
           {cand.linkedin && (
-            <a href={cand.linkedin} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" 
-                alt="LinkedIn" 
-                className="w-[30px] -mt-[20px] relative z-10 bg-white rounded-sm"
-              />
-            </a>
+            <div className="flex flex-col items-center">
+              <a href={cand.linkedin} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" 
+                  alt="LinkedIn" 
+                  className="w-[30px] -mt-[20px] relative z-10 bg-white rounded-sm"
+                />
+              </a>
+              <button 
+                onClick={fetchLinkedIn}
+                disabled={isScraping}
+                className="mt-2 print:hidden bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold py-1 px-2 rounded flex items-center justify-center min-w-[120px]"
+              >
+                {isScraping ? "Scraping Profile..." : "Fetch LinkedIn Data"}
+              </button>
+            </div>
           )}
           
           <h2 className="text-[#003366] text-[24px] font-bold mt-4 mb-1" contentEditable suppressContentEditableWarning>
@@ -126,7 +204,7 @@ function CandidateFormatTwo({ cand }: { cand: any }) {
                 Previous
               </div>
               <div className="font-bold text-[16px] text-gray-900 mt-1" contentEditable suppressContentEditableWarning>
-                Previous Role
+                {formerRole}
               </div>
               <div className="text-[14px] text-gray-500 mt-0.5" contentEditable suppressContentEditableWarning>
                 {formerCompany}
