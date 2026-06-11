@@ -6,11 +6,7 @@ import * as schema from './schema';
 const globalForDb = globalThis as unknown as { pool?: mysql.Pool };
 
 const pool = globalForDb.pool ?? mysql.createPool({
-  host: 'localhost',
-  port: 3306,
-  user: 'root',
-  password: 'Krishna@1469*',
-  database: 'maunakea',
+  uri: process.env.DATABASE_URL,
   connectionLimit: 10,
   waitForConnections: true,
 });
