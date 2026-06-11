@@ -132,7 +132,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
       setMandateId(candidateRef.mandateId.toString());
     }
 
-    fetch(`/api/reports/latest?candidateId=${candidateId}`)
+    fetch(`/api/latest-report?candidateId=${candidateId}`)
       .then(res => res.json())
       .then(data => {
         if (data.exists && data.report?.reportData) {
