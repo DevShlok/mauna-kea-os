@@ -1,14 +1,12 @@
 import { defineConfig } from 'drizzle-kit';
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 
 export default defineConfig({
   schema: './src/db/schema.ts',
   out: './drizzle',
   dialect: 'mysql',
   dbCredentials: {
-    host: 'localhost',
-    port: 3306,
-    user: 'root',
-    password: 'Krishna@1469*',
-    database: 'maunakea',
+    url: process.env.DATABASE_URL!,
   },
 });
