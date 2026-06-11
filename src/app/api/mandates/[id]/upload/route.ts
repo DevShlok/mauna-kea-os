@@ -120,3 +120,34 @@ export async function POST(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const resolvedParams = await params;
+    const mandateId = Number(resolvedParams.id);
+    const { docType } = await req.json();
+
+    const columnMap: Record<string, object> = {
+      jd: { jdUrl: null },
+      notes: { interviewNotesUrl: null },
+      docs: { additionalDocsUrl: null },
+    };
+
+    if (!columnMap[docType]) {
+      return NextResponse.json({ error: "Invalid docType" }, { status: 400 });
+    }
+
+    await db.update(mandates).set(columnMap[docType]).where(eq(mandates.id, mandateId));
+    
+    // @ts-ignore
+    revalidateTag("dashboard-data");
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("Mandate doc delete error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

@@ -77,6 +77,24 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
     setUploadingDoc(null);
   }
 
+  const handleRemoveDoc = async (docType: string) => {
+    if (!confirm("Are you sure you want to remove this file link?")) return;
+    setUploadingDoc(docType);
+    try {
+      const res = await fetch(`/api/mandates/${mandate.id}/upload`, {
+        method: "DELETE",
+        body: JSON.stringify({ docType }),
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!res.ok) throw new Error("Failed to remove link");
+      window.location.reload();
+    } catch(err: any) {
+      alert(err.message);
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
   async function handleSaveText(e: React.FormEvent) {
     e.preventDefault();
     setUploadingDoc(textModal.type);
@@ -203,6 +221,16 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                 />
                 {uploadingDoc === "jd" ? "Uploading..." : mandate.jdUrl ? "Replace" : "Upload File"}
               </label>
+              {mandate.jdUrl && (
+                <button 
+                  onClick={() => handleRemoveDoc("jd")} 
+                  disabled={uploadingDoc !== null}
+                  className="px-2 py-1 border border-gray-200 text-red-500 hover:bg-red-50 rounded text-xs transition-colors"
+                  title="Remove File"
+                >
+                  🗑️
+                </button>
+              )}
             </div>
           </div>
 
@@ -229,6 +257,16 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                   />
                   {uploadingDoc === "notes" ? "Uploading..." : "Upload File"}
                 </label>
+                {mandate.interviewNotesUrl && (
+                  <button 
+                    onClick={() => handleRemoveDoc("notes")} 
+                    disabled={uploadingDoc !== null}
+                    className="px-2 py-1 border border-gray-200 text-red-500 hover:bg-red-50 rounded text-xs transition-colors"
+                    title="Remove File"
+                  >
+                    🗑️
+                  </button>
+                )}
                 <button onClick={() => setTextModal({ isOpen: true, type: "notes", text: mandate.interviewNotesText || "" })} className="px-3 py-1 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">
                   {mandate.interviewNotesText ? "Edit Text" : "Add Text"}
                 </button>
@@ -260,6 +298,16 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                 />
                 {uploadingDoc === "docs" ? "Uploading..." : mandate.additionalDocsUrl ? "Replace" : "Upload File"}
               </label>
+              {mandate.additionalDocsUrl && (
+                <button 
+                  onClick={() => handleRemoveDoc("docs")} 
+                  disabled={uploadingDoc !== null}
+                  className="px-2 py-1 border border-gray-200 text-red-500 hover:bg-red-50 rounded text-xs transition-colors"
+                  title="Remove File"
+                >
+                  🗑️
+                </button>
+              )}
             </div>
           </div>
           <div className="pt-2 border-t border-gray-100 flex-1 flex flex-col relative">
