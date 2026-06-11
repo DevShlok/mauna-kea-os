@@ -21,7 +21,13 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
       list.push({ ...c, searchId: `fl_${c.id}`, type: "Float List" });
     }
     for (const c of mandateCandidates) {
-      list.push({ ...c, searchId: `mc_${c.id}`, type: "Mandate Candidate" });
+      const flCand = flCandidates.find(fl => fl.id === c.externalId);
+      list.push({ 
+        ...c, 
+        linkedin: flCand?.linkedin,
+        searchId: `mc_${c.id}`, 
+        type: "Mandate Candidate" 
+      });
     }
     return list;
   }, [flCandidates, mandateCandidates]);
