@@ -110,6 +110,8 @@ export async function POST(
     }
 
     await db.update(mandates).set(columnMap[docType]).where(eq(mandates.id, mandateId));
+    
+    // @ts-ignore
     revalidateTag("dashboard-data");
 
     return NextResponse.json({ success: true, url: driveUrl, extractedText: extractedText || undefined });
