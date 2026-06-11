@@ -7,18 +7,19 @@ import {
   Users,
   BrainCircuit,
   Scale,
-  BarChart2,
-  Waves,
   Database,
   Send,
-  BellRing,
-  TrendingUp,
-  Settings,
   LogOut
 } from "lucide-react";
+import { useUser, useClerk } from "@clerk/nextjs";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user } = useUser();
+  const { signOut } = useClerk();
+
+  const fullName = user?.fullName || "User";
+  const initials = fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "MK";
 
   const navItems = [
     { section: "Search Delivery" },
@@ -76,13 +77,13 @@ export function Sidebar() {
 
       <div className="mt-auto p-3.5 border-t border-white/10 flex items-center gap-2.5">
         <div className="w-[34px] h-[34px] bg-[#D8B15B] text-[#0d2f6e] rounded-full flex items-center justify-center font-serif text-[13px] font-bold shrink-0">
-          RK
+          {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <span className="text-white text-xs font-semibold block truncate">Rahul Kumar</span>
+          <span className="text-white text-xs font-semibold block truncate">{fullName}</span>
           <span className="text-white/50 text-[10px] block">Admin</span>
         </div>
-        <button className="text-white/45 hover:text-white transition-colors p-1" title="Sign Out">
+        <button onClick={() => signOut({ redirectUrl: '/sign-in' })} className="text-white/45 hover:text-white transition-colors p-1" title="Sign Out">
           <LogOut className="w-[14px] h-[14px]" />
         </button>
       </div>
