@@ -1,27 +1,30 @@
-import { ApifyClient } from 'apify-client';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
-    if (!process.env.APIFY_API_TOKEN) {
-        return NextResponse.json({ error: "APIFY_API_TOKEN environment variable is absolutely missing on the Vercel server. Vercel cannot see your token." }, { status: 500 });
+    const token = process.env.APIFY_API_TOKEN;
+    if (!token) {
+        return NextResponse.json({ error: "APIFY_API_TOKEN environment variable is absolutely missing on the Vercel server." }, { status: 500 });
     }
-
-    const client = new ApifyClient({
-        token: process.env.APIFY_API_TOKEN,
-    });
 
     try {
         const { searchParams } = new URL(req.url);
         const runId = searchParams.get('runId');
         if (!runId) return NextResponse.json({ error: "Missing runId" }, { status: 400 });
 
-        const run = await client.run(runId).get();
-        if (!run) return NextResponse.json({ error: "Run not found" }, { status: 404 });
+        const statusRes = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${token}`);
+        const statusData = await statusRes.json();
+        
+        if (!statusRes.ok) {
+            throw new Error(statusData.error?.message || JSON.stringify(statusData));
+        }
+
+        const run = statusData.data;
 
         if (run.status === 'SUCCEEDED') {
-            const { items } = await client.dataset(run.defaultDatasetId).listItems();
+            const datasetRes = await fetch(`https://api.apify.com/v2/datasets/${run.defaultDatasetId}/items?token=${token}`);
+            const items = await datasetRes.json();
             return NextResponse.json({ status: 'SUCCEEDED', data: items[0] });
         }
         
