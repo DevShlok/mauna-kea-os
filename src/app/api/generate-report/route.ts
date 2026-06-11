@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { frameworks, frameworkCategories, frameworkCriteria, candidateReports, flCandidates, mandateCandidates } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import { generateObject } from "ai";
 import { google } from "@ai-sdk/google";
 import { z } from "zod";
@@ -70,16 +70,30 @@ export async function POST(req: Request) {
     schemaObject["scores"] = z.object(scoresObject);
     const DynamicSchema = z.object(schemaObject);
 
-    // 3. Create a unique Report ID
-    const reportId = "REP-" + Date.now();
-
-    // 4. Save initial "Generating" state to DB so frontend can poll
-    await db.insert(candidateReports).values({
-      id: reportId,
-      candidateId,
-      frameworkId,
-      status: "Generating",
-    });
+    // 3. Overwrite existing report or create a new one to prevent DB bloat
+    const existingReports = await db.select().from(candidateReports).where(eq(candidateReports.candidateId, candidateId));
+    let reportId;
+    
+    if (existingReports.length > 0) {
+      reportId = existingReports[0].id;
+      await db.update(candidateReports)
+        .set({ status: "Generating", frameworkId, reportData: null })
+        .where(eq(candidateReports.id, reportId));
+        
+      // Clean up any stray duplicates
+      if (existingReports.length > 1) {
+        await db.delete(candidateReports)
+          .where(and(eq(candidateReports.candidateId, candidateId), ne(candidateReports.id, reportId)));
+      }
+    } else {
+      reportId = "REP-" + Date.now();
+      await db.insert(candidateReports).values({
+        id: reportId,
+        candidateId,
+        frameworkId,
+        status: "Generating",
+      });
+    }
 
     // We do NOT await the AI generation so the API returns instantly.
     // The generation happens asynchronously.
