@@ -45,13 +45,15 @@ function CandidateFormatTwo({ cand }: { cand: any }) {
             {cand.initials || cand.name.substring(0, 2).toUpperCase()}
           </div>
           
-          <a href="#" target="_blank" className="cursor-pointer">
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" 
-              alt="LinkedIn" 
-              className="w-[30px] -mt-[20px] relative z-10 bg-white rounded-sm"
-            />
-          </a>
+          {cand.linkedin && (
+            <a href={cand.linkedin} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+              <img 
+                src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" 
+                alt="LinkedIn" 
+                className="w-[30px] -mt-[20px] relative z-10 bg-white rounded-sm"
+              />
+            </a>
+          )}
           
           <h2 className="text-[#003366] text-[24px] font-bold mt-4 mb-1" contentEditable suppressContentEditableWarning>
             {cand.name}
