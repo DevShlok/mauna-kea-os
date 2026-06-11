@@ -121,6 +121,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
     setIsLoadingReport(true);
     setReportData(null);
     setReportExistsInDb(false);
+    setScores({});
 
     // Auto-select mandate if the candidate is attached to one
     if (candidateRef.mandateId) {
@@ -136,10 +137,10 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
           setReportExistsInDb(true);
           
           if (data.report.frameworkId) {
-            setFrameworkId(data.report.frameworkId);
+            setFrameworkId(data.report.frameworkId.toString());
             
             // Map the AI-generated nested scores back to the UI's flat scores object
-            const fw = frameworks.find(f => f.id === data.report.frameworkId);
+            const fw = frameworks.find((f: any) => f.id.toString() === data.report.frameworkId.toString());
             if (fw && data.report.reportData.scores) {
               const newScores: Record<number, number> = {};
               fw.categories.forEach((cat: any) => {
