@@ -31,11 +31,6 @@ export async function editMandateAction(id: number, data: any) {
     company: data.company,
     role: data.role,
     ctc: data.ctc,
-  revalidatePath("/dashboard", "layout");
-  await db.update(mandates).set({
-    company: data.company,
-    role: data.role,
-    ctc: data.ctc,
     exp: data.exp,
     workMode: data.workMode,
     clientPOC: data.clientPOC,
@@ -345,6 +340,7 @@ export async function editFloatListEntryAction(id: string, data: any) {
     cvFileName: data.cvFileName || null,
     notes: data.notes || null,
     initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+    profilePic: data.profilePic !== undefined ? data.profilePic : undefined,
   }).where(eq(flCandidates.id, id));
   revalidatePath("/dashboard/float-list/database");
   revalidatePath("/dashboard/float-list/" + id);
