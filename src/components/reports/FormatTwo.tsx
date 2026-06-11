@@ -65,7 +65,14 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         if (data.status === 'SUCCEEDED') {
           clearInterval(poll);
           setIsScraping(false);
-          const exp = data.data?.experience || [];
+          console.log("APIFY RAW DATA:", data.data);
+          
+          if (data.data?.error) {
+            alert(`Apify Error: ${data.data.error}`);
+            return;
+          }
+
+          const exp = data.data?.experience || data.data?.experiences || [];
           if (exp.length > 0) {
             const parsedExp = exp.slice(0, 6).map((e: any) => ({
               companyName: e.companyName || "Unknown",
