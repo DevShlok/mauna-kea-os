@@ -21,7 +21,7 @@ export function Sidebar() {
   const fullName = user?.fullName || "User";
   const initials = fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "MK";
 
-  const navItems = [
+  const navItems: any[] = [
     { section: "Search Delivery" },
     { label: "Mandates", icon: ClipboardList, href: "/dashboard/mandates", badge: 4 },
     { label: "Candidates", icon: Users, href: "/dashboard/candidates" },

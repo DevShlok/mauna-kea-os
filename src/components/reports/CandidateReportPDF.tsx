@@ -7,8 +7,8 @@ interface CandidateReportPDFProps {
   frameworkName: string;
   reportData: Record<string, any>;
   onReportDataChange?: (newData: Record<string, any>) => void;
-  onGeneratePdf?: (format: string) => void;
-  onGeneratePptx?: (format: string) => void;
+  onGeneratePdf?: (format: "format1" | "format2") => void;
+  onGeneratePptx?: (format: "format1" | "format2") => void;
 }
 
 export default function CandidateReportPDF({ candidate, frameworkName, reportData, onReportDataChange, onGeneratePdf, onGeneratePptx }: CandidateReportPDFProps) {
@@ -278,7 +278,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
 
           <button
             onClick={() => {
-              const format = (document.getElementById('reportFormatSelect') as HTMLSelectElement).value;
+              const format = (document.getElementById('reportFormatSelect') as HTMLSelectElement).value as "format1" | "format2";
               if (onGeneratePdf) onGeneratePdf(format);
             }}
             className="py-3 px-6 bg-[#1e3a8a] text-white rounded-md font-bold text-[14px] hover:bg-[#1e40af] transition-colors shadow-sm flex items-center justify-center min-w-[140px]"
@@ -287,7 +287,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
           </button>
           <button
             onClick={() => {
-              const format = (document.getElementById('reportFormatSelect') as HTMLSelectElement).value;
+              const format = (document.getElementById('reportFormatSelect') as HTMLSelectElement).value as "format1" | "format2";
               if (onGeneratePptx) onGeneratePptx(format);
             }}
             className="py-3 px-6 border border-gray-300 bg-white text-gray-700 rounded-md font-bold text-[14px] hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center min-w-[140px]"
