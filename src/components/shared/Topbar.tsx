@@ -2,6 +2,7 @@
 
 import { Search, Bell } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { UserButton } from "@clerk/nextjs";
 
 export function Topbar() {
   const pathname = usePathname();
@@ -38,8 +39,8 @@ export function Topbar() {
         Admin
       </span>
 
-      <div className="w-8 h-8 bg-[#123D8D] text-white rounded-full flex items-center justify-center font-serif text-xs font-bold cursor-pointer">
-        RK
+      <div className="flex items-center justify-center">
+        <UserButton />
       </div>
     </div>
   );
