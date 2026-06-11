@@ -23,9 +23,8 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
     for (const c of mandateCandidates) {
       const flCand = flCandidates.find(fl => fl.id === c.externalId);
       list.push({ 
+        ...flCand,
         ...c, 
-        linkedin: flCand?.linkedin,
-        profilePic: flCand?.profilePic,
         searchId: `mc_${c.id}`, 
         type: "Mandate Candidate" 
       });
@@ -309,6 +308,25 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
           {/* LEFT COLUMN: Evaluation Setup */}
           <div className="flex flex-col gap-6">
             
+            {/* Candidate Files */}
+            {(selectedCandidate.cvFileName || selectedCandidate.linkedinPdf) && (
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col gap-3">
+                <h3 className="font-bold text-gray-900 border-b border-gray-100 pb-2">Candidate Files</h3>
+                <div className="flex gap-4">
+                  {selectedCandidate.cvFileName && (
+                    <a href={selectedCandidate.cvFileName} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 bg-[#f4f7fd] text-[#123D8D] rounded-md text-[13px] font-bold border border-[#D4E0F0] hover:bg-[#e6ebf5] transition-colors">
+                      📄 View CV / Resume
+                    </a>
+                  )}
+                  {selectedCandidate.linkedinPdf && (
+                    <a href={selectedCandidate.linkedinPdf} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 bg-[#f0f9ff] text-[#0369a1] rounded-md text-[13px] font-bold border border-[#bae6fd] hover:bg-[#e0f2fe] transition-colors">
+                      📘 View LinkedIn PDF
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Criteria & Manual Scores */}
             {selectedFramework && (
               <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
