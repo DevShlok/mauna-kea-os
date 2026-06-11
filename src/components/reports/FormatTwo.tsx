@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 
 export default function FormatTwo({ mandate, candidates, framework, scores }: { mandate: any, candidates: any[], framework?: any, scores?: Record<number, number> }) {
   return (
-    <div className="flex flex-col gap-10 bg-gray-200 py-10 items-center min-h-screen">
+    <div className="flex flex-col gap-10 bg-gray-200 py-10 items-center min-h-screen print:block print:bg-white print:py-0 print:gap-0">
       {candidates.map((cand, idx) => {
         return <CandidateFormatTwo key={cand.id} cand={cand} framework={framework} scores={scores} />;
       })}
