@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { db } from "@/db";
 import { mandates } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -109,6 +110,7 @@ export async function POST(
     }
 
     await db.update(mandates).set(columnMap[docType]).where(eq(mandates.id, mandateId));
+    revalidateTag("dashboard-data");
 
     return NextResponse.json({ success: true, url: driveUrl, extractedText: extractedText || undefined });
   } catch (error: any) {
