@@ -31,12 +31,52 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
   const [expTags, setExpTags] = useState<string[]>(initialData?.expTags || []);
   const [linkedinPdfFile, setLinkedinPdfFile] = useState<File | null>(null);
   const [cvPdfFile, setCvPdfFile] = useState<File | null>(null);
+  const [profilePicBase64, setProfilePicBase64] = useState<string | null>(initialData?.profilePic || null);
   const [isSaving, setIsSaving] = useState(false);
   const [showAdditional, setShowAdditional] = useState(!!isEdit);
 
   const defaultQuals = ['CA','MBA','CFA','CS','B.Tech','M.Tech','Chartered Engineer','PhD','LLB'];
   const locations = ["Mumbai", "Delhi", "Bengaluru", "Chennai", "Hyderabad", "Pune", "Remote"];
   const currencies = ["INR", "USD", "GBP", "EUR", "SGD", "AED"];
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 300;
+        const MAX_HEIGHT = 300;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+        setProfilePicBase64(dataUrl);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleCheckbox = (q: string) => {
     if (quals.includes(q)) setQuals(quals.filter(x => x !== q));
@@ -91,7 +131,8 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
         targetCompany: form.targetCompany,
         currency: form.currency,
         cvFileName: cvPdfFile ? cvPdfFile.name : form.cvFileName,
-        notes: form.notes
+        notes: form.notes,
+        profilePic: profilePicBase64
       };
 
       let candId = initialData?.id;
@@ -179,6 +220,28 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
                 )}
               </div>
             </div>
+            
+            {/* Profile Picture Upload */}
+            <div className="mt-5 border-t border-[#D4E0F0] pt-5">
+              <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Profile Picture (Optional)</label>
+              <div className="flex items-center gap-5">
+                <div className="w-[80px] h-[80px] rounded-full bg-[#f4f7fd] border-2 border-dashed border-[#D4E0F0] flex items-center justify-center overflow-hidden shrink-0">
+                  {profilePicBase64 ? (
+                    <img src={profilePicBase64} alt="Profile preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[20px] opacity-40">👤</span>
+                  )}
+                </div>
+                <label className="border-[1.5px] border-[#D4E0F0] rounded-[6px] px-4 py-2 text-[13px] font-bold text-[#6b7a99] hover:bg-[#f4f7fd] cursor-pointer transition-colors cursor-pointer">
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  Upload Image
+                </label>
+                {profilePicBase64 && (
+                  <button onClick={() => setProfilePicBase64(null)} className="text-[13px] text-red-500 font-bold hover:underline">Remove</button>
+                )}
+              </div>
+            </div>
+            
           </div>
         </div>
 

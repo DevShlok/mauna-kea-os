@@ -1,4 +1,4 @@
-import { mysqlTable, int, varchar, text, float, boolean, datetime, json } from 'drizzle-orm/mysql-core';
+import { mysqlTable, int, varchar, text, float, boolean, datetime, json, mediumtext } from 'drizzle-orm/mysql-core';
 import { sql } from 'drizzle-orm';
 
 // ─── MANDATES ────────────────────────────────────────────
@@ -73,6 +73,7 @@ export const flCandidates = mysqlTable('fl_candidates', {
   notes: text('notes'),
   hasCv: boolean('has_cv').default(false),
   cvText: text('cv_text'),
+  profilePic: mediumtext('profile_pic'),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 

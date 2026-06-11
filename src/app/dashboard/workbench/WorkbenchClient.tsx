@@ -25,6 +25,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
       list.push({ 
         ...c, 
         linkedin: flCand?.linkedin,
+        profilePic: flCand?.profilePic,
         searchId: `mc_${c.id}`, 
         type: "Mandate Candidate" 
       });

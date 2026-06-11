@@ -118,8 +118,12 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           {/* Left: Profile */}
           <div className="w-[30%] flex flex-col items-center">
             <div className="relative w-[140px] h-[140px]">
-              <div className={`w-[140px] h-[140px] rounded-full border-4 border-black object-cover flex items-center justify-center text-5xl font-bold text-black bg-gray-50 shadow-md`}>
-                {cand.initials || cand.name.substring(0, 2).toUpperCase()}
+              <div className={`w-[140px] h-[140px] rounded-full border-4 border-black object-cover flex items-center justify-center text-5xl font-bold text-black bg-gray-50 shadow-md overflow-hidden`}>
+                {cand.profilePic ? (
+                  <img src={cand.profilePic} alt={cand.name} className="w-full h-full object-cover" />
+                ) : (
+                  cand.initials || cand.name.substring(0, 2).toUpperCase()
+                )}
               </div>
               {cand.linkedin && (
                 <a href={cand.linkedin} target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 bg-white rounded-md p-1 shadow-md cursor-pointer">
@@ -139,9 +143,6 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
             <h2 className={`text-[20px] font-bold mt-4 text-center ${headerColor}`} contentEditable suppressContentEditableWarning>
               {cand.name}
             </h2>
-            <p className="text-[16px] font-semibold text-center mt-1" contentEditable suppressContentEditableWarning>
-              {rp["Pedigree"] || "CA 2012"}
-            </p>
           </div>
 
           {/* Right: Timeline Grid */}
