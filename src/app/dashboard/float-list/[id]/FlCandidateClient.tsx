@@ -51,10 +51,11 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
         alert("CV uploaded successfully!");
         router.refresh();
       } else {
-        alert("Upload failed.");
+        const errData = await res.json().catch(() => ({}));
+        alert(`Upload failed: ${errData.error || res.statusText}`);
       }
-    } catch (err) {
-      alert("Error uploading CV.");
+    } catch (err: any) {
+      alert(`Error uploading CV: ${err.message}`);
     }
     setIsUploading(false);
   };
