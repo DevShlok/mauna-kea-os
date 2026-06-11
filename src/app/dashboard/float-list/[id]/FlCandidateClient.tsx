@@ -194,8 +194,21 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
               {candidate.hasCv && (
                 <div className="flex items-center gap-2 p-2 bg-[#f4f7fd] rounded-md text-[13px] mb-3">
                   <span>📄</span>
-                  <span className="flex-1 font-semibold">{candidate.cvFileName || `${candidate.name.replace(' ', '_')}_CV.pdf`}</span>
-                  <a href={candidate.cvFileName || "#"} target="_blank" rel="noreferrer" className="px-3 py-1 bg-white text-[#123D8D] rounded text-[12px] font-bold border border-[#D4E0F0] hover:bg-gray-50 z-20">View / Download</a>
+                  <span className="flex-1 font-semibold">{candidate.cvFileName?.split('/').pop() || `${candidate.name.replace(' ', '_')}_CV.pdf`}</span>
+                  <a 
+                    href={candidate.cvFileName?.startsWith('http') ? candidate.cvFileName : "#"} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="px-3 py-1 bg-white text-[#123D8D] rounded text-[12px] font-bold border border-[#D4E0F0] hover:bg-gray-50 z-20"
+                    onClick={(e) => {
+                      if (!candidate.cvFileName?.startsWith('http')) {
+                        e.preventDefault();
+                        alert("File hasn't been successfully uploaded to the cloud. Please try uploading the CV again.");
+                      }
+                    }}
+                  >
+                    View / Download
+                  </a>
                 </div>
               )}
 
@@ -203,7 +216,20 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
                 <div className="flex items-center gap-2 p-2 bg-[#f0f9ff] rounded-md text-[13px] mb-3 border border-[#bae6fd]">
                   <span>📘</span>
                   <span className="flex-1 font-semibold">LinkedIn_Profile.pdf</span>
-                  <a href={candidate.linkedinPdf} target="_blank" rel="noreferrer" className="px-3 py-1 bg-white text-[#0369a1] rounded text-[12px] font-bold border border-[#bae6fd] hover:bg-white z-20">View / Download</a>
+                  <a 
+                    href={candidate.linkedinPdf?.startsWith('http') ? candidate.linkedinPdf : "#"} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="px-3 py-1 bg-white text-[#0369a1] rounded text-[12px] font-bold border border-[#bae6fd] hover:bg-white z-20"
+                    onClick={(e) => {
+                      if (!candidate.linkedinPdf?.startsWith('http')) {
+                        e.preventDefault();
+                        alert("LinkedIn PDF hasn't been successfully uploaded to the cloud. Please try uploading it again.");
+                      }
+                    }}
+                  >
+                    View / Download
+                  </a>
                 </div>
               )}
 
