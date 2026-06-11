@@ -3,7 +3,7 @@ import { eq, sql } from 'drizzle-orm';
 import {
   mandates, mandateCandidates, flCandidates, flSubmissions, flReferences,
   flFollowUps, flActivities, frameworks, frameworkCategories,
-  frameworkCriteria, platformUsers
+  frameworkCriteria, platformUsers, candidateReports
 } from './schema';
 
 // ─── MANDATES ────────────────────────────────────────────
@@ -131,15 +131,40 @@ export async function getFrameworks() {
   const fws = await db.select().from(frameworks);
   const cats = await db.select().from(frameworkCategories);
   const crits = await db.select().from(frameworkCriteria);
-  return fws.map(fw => ({
-    ...fw,
-    categories: cats
-      .filter(c => c.frameworkId === fw.id)
-      .map(c => ({
-        ...c,
-        criteria: crits.filter(cr => cr.categoryId === c.id),
-      })),
-  }));
+  const reports = await db.select({ frameworkId: candidateReports.frameworkId, candidateId: candidateReports.candidateId }).from(candidateReports);
+  const mCands = await db.select({ id: mandateCandidates.id, externalId: mandateCandidates.externalId, mandateId: mandateCandidates.mandateId }).from(mandateCandidates);
+
+  return fws.map(fw => {
+    // Calculate unique MANDATES assessed with this framework
+    const fwReports = reports.filter(r => r.frameworkId === fw.id);
+    
+    const uniqueMandates = new Set<number>();
+    fwReports.forEach(r => {
+      // r.candidateId could be string (externalId) or stringified number (mandateCandidates.id)
+      const isNum = !isNaN(Number(r.candidateId));
+      const candMatch = isNum 
+        ? mCands.find(mc => mc.id === Number(r.candidateId) || mc.externalId === r.candidateId)
+        : mCands.find(mc => mc.externalId === r.candidateId);
+        
+      if (candMatch) {
+        uniqueMandates.add(candMatch.mandateId);
+      }
+    });
+    
+    // Fallback to fw.usedIn if there's no reports but it was seeded with a number
+    const actualUsedIn = uniqueMandates.size > 0 ? uniqueMandates.size : (fwReports.length > 0 ? 1 : (fw.usedIn || 0));
+
+    return {
+      ...fw,
+      usedIn: actualUsedIn,
+      categories: cats
+        .filter(c => c.frameworkId === fw.id)
+        .map(c => ({
+          ...c,
+          criteria: crits.filter(cr => cr.categoryId === c.id),
+        })),
+    };
+  });
 }
 
 export async function getFrameworkById(id: string) {

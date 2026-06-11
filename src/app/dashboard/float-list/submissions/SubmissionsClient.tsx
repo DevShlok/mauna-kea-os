@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { addSubmissionAction } from "@/app/actions";
+import { addSubmissionAction, updateSubmissionAction } from "@/app/actions";
 
 const STATUS_COLORS: Record<string, string> = {
   Shortlisted: "bg-green-100 text-green-800",
@@ -65,13 +65,58 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
                     <td className="px-4 py-3 text-gray-500">{s.consultant}</td>
                     <td className="px-4 py-3 text-gray-500 text-xs">{s.dateShared}</td>
                     <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {(s.via || []).map((v: string) => (<span key={v} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">{v}</span>))}
-                      </div>
+                      <input 
+                        type="text" 
+                        className="w-full text-xs p-1 bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-blue-500 rounded outline-none" 
+                        placeholder="e.g. Email, WhatsApp"
+                        value={(s.via || []).join(", ")}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.currentTarget.blur();
+                        }}
+                        onChange={(e) => {
+                          const val = e.target.value.split(",").map(v=>v.trim()).filter(Boolean);
+                          setSubmissions(submissions.map((sub: any) => sub.id === s.id ? { ...sub, via: val } : sub));
+                        }}
+                        onBlur={async (e) => {
+                          const val = e.target.value.split(",").map(v=>v.trim()).filter(Boolean);
+                          await updateSubmissionAction(s.id, { via: val });
+                        }}
+                      />
                     </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">{s.followUp}</td>
+                    <td className="px-4 py-3 text-gray-400 text-xs">
+                      <input 
+                        type="date" 
+                        className="w-full text-xs p-1 bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-blue-500 rounded outline-none text-gray-500 cursor-pointer" 
+                        value={s.followUp || ""}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          setSubmissions(submissions.map((sub: any) => sub.id === s.id ? { ...sub, followUp: e.target.value } : sub));
+                        }}
+                        onBlur={async (e) => {
+                          await updateSubmissionAction(s.id, { followUp: e.target.value });
+                        }}
+                      />
+                    </td>
                     <td className="px-4 py-3"><span className={"px-2 py-0.5 rounded-full text-xs font-bold " + colorCls}>{s.status}</span></td>
-                    <td className="px-4 py-3 text-gray-500 text-xs max-w-xs truncate">{s.response}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">
+                      <input 
+                        type="text" 
+                        className="w-full text-xs p-1 bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-blue-500 rounded outline-none text-gray-500" 
+                        placeholder="Enter client response..."
+                        value={s.response || ""}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.currentTarget.blur();
+                        }}
+                        onChange={(e) => {
+                          setSubmissions(submissions.map((sub: any) => sub.id === s.id ? { ...sub, response: e.target.value } : sub));
+                        }}
+                        onBlur={async (e) => {
+                          await updateSubmissionAction(s.id, { response: e.target.value });
+                        }}
+                      />
+                    </td>
                   </tr>
                 );
               })}

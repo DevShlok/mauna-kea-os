@@ -7,10 +7,14 @@ interface CandidateReportPDFProps {
   frameworkName: string;
   reportData: Record<string, any>;
   onReportDataChange?: (newData: Record<string, any>) => void;
+  onGeneratePdf?: (format: string) => void;
+  onGeneratePptx?: (format: string) => void;
 }
 
-export default function CandidateReportPDF({ candidate, frameworkName, reportData, onReportDataChange }: CandidateReportPDFProps) {
-  const { scores, ...sections } = reportData;
+export default function CandidateReportPDF({ candidate, frameworkName, reportData, onReportDataChange, onGeneratePdf, onGeneratePptx }: CandidateReportPDFProps) {
+  const { scores, ...allSections } = reportData;
+  const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Notes Summary"];
+  const sections = Object.fromEntries(Object.entries(allSections).filter(([k]) => !hiddenFields.includes(k)));
 
   // Track editing state per section
   const [editingSections, setEditingSections] = useState<Record<string, boolean>>({});
@@ -68,16 +72,22 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
   const renderContent = (content: any) => {
     if (Array.isArray(content)) {
       return (
-        <ul className="list-disc pl-5 space-y-2 mt-2">
-          {content.map((item, idx) => (
-            <li key={idx} className="text-[13px] text-gray-700 leading-relaxed">
-              {item}
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-col gap-2.5 mt-1">
+          {content.map((item, idx) => {
+            const hasNumber = /^\d+[\.\)]\s/.test(item);
+            // Bold the prefix if it ends with a colon
+            const formattedItem = item.replace(/^(.*?:)/, '<strong>$1</strong>');
+            return (
+              <div key={idx} className="text-[12px] text-[#334155] leading-relaxed font-normal flex gap-1">
+                {!hasNumber && <span className="font-bold shrink-0">{idx + 1}.</span>}
+                <span dangerouslySetInnerHTML={{ __html: formattedItem }} />
+              </div>
+            );
+          })}
+        </div>
       );
     }
-    return <p className="text-[13px] text-gray-700 leading-relaxed mt-2 whitespace-pre-wrap">{content}</p>;
+    return <p className="text-[12px] text-[#334155] leading-relaxed mt-1 whitespace-pre-wrap font-normal">{content}</p>;
   };
 
   return (
@@ -105,9 +115,9 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
       </div>
 
       {/* AI Draft badge */}
-      <div className="px-10 pb-2 flex items-center justify-between border-b border-gray-100 mb-6">
-        <div className="text-[15px] font-bold text-gray-900 font-serif">AI-Generated Assessment Draft</div>
-        <span className="text-[11px] bg-[#d1fae5] text-[#065f46] px-2 py-0.5 rounded-full font-bold">AI Draft</span>
+      <div className="px-10 pb-4 flex items-center justify-between border-b border-gray-100 mb-6">
+        <h2 className="text-[20px] font-bold text-gray-900 font-serif tracking-tight">AI-Generated Assessment Draft</h2>
+        <span className="text-[12px] bg-[#d1fae5] text-[#065f46] px-3 py-1 rounded-full font-bold shadow-sm">AI Draft</span>
       </div>
 
       <div className="px-10 pb-10 space-y-6">
@@ -117,50 +127,56 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
           const isEditing = editingSections[title];
           const isAccepted = acceptedSections[title];
           const displayTitle = title.replace(/([A-Z])/g, " $1").trim();
+          
+          let icon = "📝";
+          if (title.toLowerCase().includes("experience")) icon = "💼";
+          else if (title.toLowerCase().includes("motivation") || title.toLowerCase().includes("fit")) icon = "🎯";
+          else if (title.toLowerCase().includes("strength")) icon = "⭐";
+          else if (title.toLowerCase().includes("recommendation") || title.toLowerCase().includes("mk")) icon = "✅";
 
           return (
             <div
               key={i}
-              className={`border rounded-lg overflow-hidden transition-all ${
+              className={`border rounded-xl shadow-[0_2px_8px_rgb(0,0,0,0.04)] transition-all mb-4 ${
                 isAccepted
-                  ? "border-green-200 bg-green-50/30"
+                  ? "border-green-200 bg-green-50/10"
                   : isEditing
-                  ? "border-blue-300 bg-blue-50/20 ring-1 ring-blue-200"
-                  : "border-gray-200"
+                  ? "border-blue-300 ring-1 ring-blue-200 bg-white"
+                  : "border-[#e2e8f0] bg-white"
               }`}
             >
               {/* Section header bar */}
-              <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200">
-                <span className="text-[14px] font-bold text-blue-900 font-serif flex items-center gap-2">
-                  {isAccepted && <span className="text-green-600">✓</span>}
+              <div className="flex items-center justify-between px-5 pt-4 pb-2">
+                <span className="text-[15px] font-bold text-[#00174f] flex items-center gap-2">
+                  <span className="text-lg">{icon}</span>
                   {displayTitle}
                 </span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleAccept(title)}
-                    className={`px-3 py-1 rounded text-[11px] font-bold transition-colors ${
+                    className={`px-3 py-1.5 border rounded-md text-[12px] font-semibold transition-colors shadow-sm ${
                       isAccepted
-                        ? "bg-green-100 text-green-700 cursor-default"
-                        : "text-gray-500 hover:bg-green-50 hover:text-green-700"
+                        ? "bg-green-50 border-green-200 text-green-700 cursor-default"
+                        : "bg-white border-[#e2e8f0] text-gray-700 hover:bg-gray-50"
                     }`}
                   >
                     {isAccepted ? "Accepted ✓" : "Accept"}
                   </button>
                   <button
                     onClick={() => handleEdit(title)}
-                    className={`px-3 py-1 rounded text-[11px] font-bold transition-colors ${
+                    className={`px-3 py-1.5 border rounded-md text-[12px] font-semibold transition-colors shadow-sm ${
                       isEditing
-                        ? "bg-blue-100 text-blue-700"
-                        : "text-gray-500 hover:bg-blue-50 hover:text-blue-700"
+                        ? "bg-blue-50 border-blue-200 text-blue-700"
+                        : "bg-white border-[#e2e8f0] text-gray-700 hover:bg-gray-50"
                     }`}
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleRedo(title)}
-                    className="px-3 py-1 rounded text-[11px] font-bold text-gray-500 hover:bg-amber-50 hover:text-amber-700 transition-colors"
+                    className="px-3 py-1.5 border border-[#e2e8f0] bg-white rounded-md text-[12px] font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-1"
                   >
-                    ↺ Redo
+                    <span>↺</span> Redo
                   </button>
                 </div>
               </div>
@@ -168,7 +184,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
               {/* Section body — becomes contentEditable on Edit */}
               <div
                 ref={(el) => { bodyRefs.current[title] = el; }}
-                className={`px-4 py-3 outline-none transition-colors ${
+                className={`px-5 pb-5 pt-1 outline-none transition-colors ${
                   isEditing ? "bg-white cursor-text" : ""
                 }`}
                 suppressContentEditableWarning
@@ -241,22 +257,40 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
         )}
 
         {/* Bottom action bar */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200">
+        <div className="flex gap-4 pt-6 border-t border-gray-200 items-center">
           <button
             onClick={() => alert("Report submitted for approval")}
-            className="flex-1 py-2.5 bg-yellow-500 text-blue-900 rounded font-bold text-xs hover:bg-yellow-400 transition-colors"
+            className="flex-1 py-3 bg-[#dfb259] text-[#1e3a8a] rounded-md font-bold text-[14px] hover:bg-[#cca24e] transition-colors shadow-sm"
           >
             Submit for Approval
           </button>
+          
+          <div className="flex items-center gap-2 border border-gray-300 rounded-md px-3 bg-white h-11">
+            <span className="text-[12px] font-bold text-gray-500 uppercase tracking-wide">Format:</span>
+            <select 
+              className="py-1 text-[14px] outline-none bg-transparent font-bold text-[#1e3a8a] cursor-pointer"
+              id="reportFormatSelect"
+            >
+              <option value="format1">Format 1</option>
+              <option value="format2">Format 2</option>
+            </select>
+          </div>
+
           <button
-            onClick={() => alert("PDF generated")}
-            className="py-2.5 px-4 bg-blue-900 text-white rounded font-bold text-xs hover:bg-blue-800 transition-colors"
+            onClick={() => {
+              const format = (document.getElementById('reportFormatSelect') as HTMLSelectElement).value;
+              if (onGeneratePdf) onGeneratePdf(format);
+            }}
+            className="py-3 px-6 bg-[#1e3a8a] text-white rounded-md font-bold text-[14px] hover:bg-[#1e40af] transition-colors shadow-sm flex items-center justify-center min-w-[140px]"
           >
             Generate PDF
           </button>
           <button
-            onClick={() => alert("PPTX generated")}
-            className="py-2.5 px-4 border border-gray-200 text-gray-500 rounded font-bold text-xs hover:bg-gray-50 transition-colors"
+            onClick={() => {
+              const format = (document.getElementById('reportFormatSelect') as HTMLSelectElement).value;
+              if (onGeneratePptx) onGeneratePptx(format);
+            }}
+            className="py-3 px-6 border border-gray-300 bg-white text-gray-700 rounded-md font-bold text-[14px] hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center min-w-[140px]"
           >
             Generate PPTX
           </button>

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { addSubmissionAction, addReferenceAction, deleteFloatListEntryAction } from "@/app/actions";
@@ -24,11 +24,11 @@ function Tile({ id, icon, name, meta, content, isOpen, toggle }: any) {
   );
 }
 
-export default function FlCandidateClient({ candidate }: { candidate: any }) {
+export default function FlCandidateClient({ candidate, mandates = [] }: { candidate: any; mandates?: any[] }) {
   const router = useRouter();
   const [activeTiles, setActiveTiles] = useState<Record<string, boolean>>({});
   const [isSubModalOpen, setIsSubModalOpen] = useState(false);
-  const [subForm, setSubForm] = useState({ client: "", role: "", consultant: "" });
+  const [subForm, setSubForm] = useState({ client: "", role: "", consultant: "", mandateId: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isRefModalOpen, setIsRefModalOpen] = useState(false);
@@ -69,13 +69,15 @@ export default function FlCandidateClient({ candidate }: { candidate: any }) {
     await addSubmissionAction({
       candId: candidate.id,
       candName: candidate.name,
+      candCompany: candidate.company,
       client: subForm.client,
       role: subForm.role,
-      consultant: subForm.consultant
+      consultant: subForm.consultant,
+      mandateId: subForm.mandateId
     });
     setIsSubmitting(false);
     setIsSubModalOpen(false);
-    setSubForm({ client: "", role: "", consultant: "" });
+    setSubForm({ client: "", role: "", consultant: "", mandateId: "" });
   };
 
   const handleAddReference = async (e: React.FormEvent) => {
@@ -193,7 +195,7 @@ export default function FlCandidateClient({ candidate }: { candidate: any }) {
                 <div className="flex items-center gap-2 p-2 bg-[#f4f7fd] rounded-md text-[13px] mb-3">
                   <span>📄</span>
                   <span className="flex-1 font-semibold">{candidate.cvFileName || `${candidate.name.replace(' ', '_')}_CV.pdf`}</span>
-                  <a href={`/uploads/cvs/${candidate.id}.pdf`} target="_blank" rel="noreferrer" className="px-3 py-1 bg-white text-[#123D8D] rounded text-[12px] font-bold border border-[#D4E0F0] hover:bg-gray-50 z-20">View / Download</a>
+                  <a href={candidate.cvFileName || "#"} target="_blank" rel="noreferrer" className="px-3 py-1 bg-white text-[#123D8D] rounded text-[12px] font-bold border border-[#D4E0F0] hover:bg-gray-50 z-20">View / Download</a>
                 </div>
               )}
 
@@ -238,7 +240,7 @@ export default function FlCandidateClient({ candidate }: { candidate: any }) {
           isOpen={activeTiles['refs']} toggle={toggleTile}
           content={
             <div>
-              {refCards.map((r, i) => (
+              {refCards.map((r: { name: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; type: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; org: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; rel: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; text: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; }, i: Key | null | undefined) => (
                 <div key={i} className="mb-3 p-3 bg-[#fafbfd] border border-[#D4E0F0] rounded-md">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-bold text-[#111]">{r.name}</span>
@@ -352,12 +354,33 @@ export default function FlCandidateClient({ candidate }: { candidate: any }) {
             </div>
             <form onSubmit={handleAddSubmission} className="p-5 flex flex-col gap-4">
               <div>
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Submit to active mandate?</label>
+                <select
+                  value={subForm.mandateId}
+                  onChange={e => {
+                    const mId = e.target.value;
+                    const mandate = mandates.find(m => m.id.toString() === mId);
+                    if (mandate) {
+                      setSubForm({...subForm, mandateId: mId, client: mandate.company, role: mandate.role});
+                    } else {
+                      setSubForm({...subForm, mandateId: "", client: "", role: ""});
+                    }
+                  }}
+                  className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]"
+                >
+                  <option value="">-- No, manual entry --</option>
+                  {mandates.map(m => (
+                    <option key={m.id} value={m.id}>{m.company} - {m.role}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Client Company <span className="text-red-500">*</span></label>
-                <input required value={subForm.client} onChange={e=>setSubForm({...subForm, client: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" placeholder="E.g. HDFC Bank" />
+                <input required value={subForm.client} readOnly={!!subForm.mandateId} onChange={e=>setSubForm({...subForm, client: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none focus:border-[#123D8D] disabled:bg-gray-50" placeholder="E.g. HDFC Bank" />
               </div>
               <div>
                 <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Role <span className="text-red-500">*</span></label>
-                <input required value={subForm.role} onChange={e=>setSubForm({...subForm, role: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" placeholder="E.g. Chief Financial Officer" />
+                <input required value={subForm.role} readOnly={!!subForm.mandateId} onChange={e=>setSubForm({...subForm, role: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none focus:border-[#123D8D] disabled:bg-gray-50" placeholder="E.g. Chief Financial Officer" />
               </div>
               <div>
                 <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Consultant</label>

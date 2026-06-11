@@ -26,16 +26,9 @@ export function Sidebar() {
     { label: "Candidates", icon: Users, href: "/dashboard/candidates" },
     { label: "AI Workbench", icon: BrainCircuit, href: "/dashboard/workbench" },
     { label: "Frameworks", icon: Scale, href: "/dashboard/frameworks" },
-    { section: "Intelligence" },
-    { label: "Analytics", icon: BarChart2, href: "/dashboard/analytics" },
     { section: "Float List" },
-    { label: "Float List", icon: Waves, href: "/dashboard/float-list", badge: 48 },
     { label: "Candidate DB", icon: Database, href: "/dashboard/float-list/database" },
     { label: "Submissions", icon: Send, href: "/dashboard/float-list/submissions" },
-    { label: "Follow-Ups", icon: BellRing, href: "/dashboard/float-list/followups", badge: 3, badgeColor: "bg-red-600 text-white" },
-    { label: "FL Analytics", icon: TrendingUp, href: "/dashboard/analytics" },
-    { section: "Admin" },
-    { label: "Settings", icon: Settings, href: "/dashboard/settings" },
   ];
 
   return (

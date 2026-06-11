@@ -19,6 +19,12 @@ export const mandates = mysqlTable('mandates', {
   clientPOC: varchar('client_poc', { length: 255 }),
   pocEmail: varchar('poc_email', { length: 255 }),
   pocPhone: varchar('poc_phone', { length: 50 }),
+  jdUrl: varchar('jd_url', { length: 1000 }),
+  interviewNotesUrl: varchar('interview_notes_url', { length: 1000 }),
+  additionalDocsUrl: varchar('additional_docs_url', { length: 1000 }),
+  jdText: text('jd_text'),
+  interviewNotesText: text('interview_notes_text'),
+  searchNotes: text('search_notes'),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 

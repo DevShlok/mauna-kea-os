@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, flCandidates, flSubmissions, flFollowUps, platformUsers, flReferences, flActivities, candidateReports } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function createMandateAction(data: any) {
@@ -22,6 +22,24 @@ export async function createMandateAction(data: any) {
   });
   revalidatePath("/dashboard/mandates");
   return result[0].insertId;
+}
+
+export async function editMandateAction(id: number, data: any) {
+  await db.update(mandates).set({
+    company: data.company,
+    role: data.role,
+    ctc: data.ctc,
+    exp: data.exp,
+    workMode: data.workMode,
+    clientPOC: data.clientPOC,
+    pocEmail: data.pocEmail,
+    pocPhone: data.pocPhone,
+    consultant: data.consultant,
+    target: data.target,
+    geography: data.geography,
+  }).where(eq(mandates.id, id));
+  revalidatePath("/dashboard/mandates");
+  revalidatePath(`/dashboard/mandates/${id}`);
 }
 
 export async function createFrameworkAction(data: any) {
@@ -127,10 +145,98 @@ export async function addSubmissionAction(data: any) {
     dateShared: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
     status: "Shared",
   });
+  
+  // Link to Mandate Pipeline if submitted to an active mandate
+  if (data.mandateId) {
+    // Check if they are already in the pipeline to prevent duplicates
+    const existing = await db.select().from(mandateCandidates).where(
+      sql`${mandateCandidates.externalId} = ${candId} AND ${mandateCandidates.mandateId} = ${data.mandateId}`
+    );
+    if (existing.length === 0) {
+      await db.insert(mandateCandidates).values({
+        externalId: candId,
+        mandateId: Number(data.mandateId),
+        name: data.candName,
+        company: data.candCompany || "",
+        role: data.role,
+        stage: "universe",
+        initials: data.candName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+      });
+      revalidatePath(`/dashboard/mandates/${data.mandateId}`);
+      revalidatePath(`/dashboard/mandates`);
+      revalidatePath(`/dashboard/candidates`);
+    }
+  }
+
   revalidatePath("/dashboard/float-list/submissions");
   revalidatePath("/dashboard/float-list/database");
   revalidatePath("/dashboard/float-list/" + candId);
   return { id, candId };
+}
+
+export async function bulkAddSubmissionAction(data: { mandateId: number; candidates: any[]; client: string; role: string; consultant: string }) {
+  for (const c of data.candidates) {
+    const candId = c.id;
+    const candName = c.name;
+    
+    // 1. Create submission
+    const subId = "S-" + Date.now().toString() + "-" + Math.floor(Math.random() * 1000);
+    await db.insert(flSubmissions).values({
+      id: subId,
+      candId,
+      candName,
+      client: data.client,
+      role: data.role,
+      consultant: data.consultant || "System",
+      dateShared: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+      status: "Shared",
+    });
+
+    // 2. Add to Mandate Pipeline
+    const existing = await db.select().from(mandateCandidates).where(
+      sql`${mandateCandidates.externalId} = ${candId} AND ${mandateCandidates.mandateId} = ${data.mandateId}`
+    );
+    if (existing.length === 0) {
+      await db.insert(mandateCandidates).values({
+        externalId: candId,
+        mandateId: Number(data.mandateId),
+        name: candName,
+        company: c.company || "",
+        role: data.role,
+        stage: "universe",
+        initials: candName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+        score: c.score || null,
+        hasReport: !!c.score, // if they had a float list score, assume they have a report
+      });
+    }
+  }
+
+  revalidatePath(`/dashboard/mandates/${data.mandateId}`);
+  revalidatePath("/dashboard/mandates");
+  revalidatePath("/dashboard/candidates");
+  revalidatePath("/dashboard/float-list/submissions");
+  revalidatePath("/dashboard/float-list/database");
+}
+
+export async function removeCandidateFromMandateAction(data: { id: number; externalId: string; company: string; role: string; mandateId: number }) {
+  // Delete from mandateCandidates
+  await db.delete(mandateCandidates).where(eq(mandateCandidates.id, data.id));
+
+  // Delete from flSubmissions where candidate, company and role match
+  await db.delete(flSubmissions).where(
+    sql`${flSubmissions.candId} = ${data.externalId} AND ${flSubmissions.client} = ${data.company} AND ${flSubmissions.role} = ${data.role}`
+  );
+
+  revalidatePath(`/dashboard/mandates/${data.mandateId}`);
+  revalidatePath("/dashboard/mandates");
+  revalidatePath("/dashboard/candidates");
+  revalidatePath("/dashboard/float-list/submissions");
+}
+
+export async function updateSubmissionAction(id: string, data: { via?: string[]; followUp?: string; response?: string; status?: string }) {
+  await db.update(flSubmissions).set(data).where(eq(flSubmissions.id, id));
+  revalidatePath("/dashboard/float-list/submissions");
+  revalidatePath("/dashboard/float-list/database");
 }
 
 export async function addFollowUpAction(data: any) {
@@ -227,4 +333,15 @@ export async function editFloatListEntryAction(id: string, data: any) {
 export async function updateCandidateStatusAction(id: string, status: string) {
   await db.update(flCandidates).set({ status }).where(eq(flCandidates.id, id));
   revalidatePath("/dashboard/float-list/database");
+}
+
+export async function updateMandateCandidateStageAction(candId: number, stage: string, mandateId: number) {
+  await db.update(mandateCandidates).set({ stage }).where(eq(mandateCandidates.id, candId));
+  revalidatePath("/dashboard/candidates");
+  revalidatePath(`/dashboard/mandates/${mandateId}`);
+}
+
+export async function updateMandateSearchNotesAction(id: number, text: string) {
+  await db.update(mandates).set({ searchNotes: text }).where(eq(mandates.id, id));
+  revalidatePath(`/dashboard/mandates/${id}`);
 }

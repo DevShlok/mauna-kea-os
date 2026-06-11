@@ -12,15 +12,30 @@ export default function MandatesClient({ initialMandates }: { initialMandates: M
   const router = useRouter();
   const [mandates, setMandates] = useState(initialMandates);
   const [search, setSearch] = useState("");
+  const [companyFilter, setCompanyFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [sectorFilter, setSectorFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [internalFilter, setInternalFilter] = useState("");
 
-  const filtered = mandates.filter(m =>
-    m.company.toLowerCase().includes(search.toLowerCase()) ||
-    m.role.toLowerCase().includes(search.toLowerCase())
-  );
+  const uniqueCompanies = Array.from(new Set(mandates.map(m => m.company))).sort();
+  const uniqueRoles = Array.from(new Set(mandates.map(m => m.role))).sort();
+  const uniqueSectors = Array.from(new Set(mandates.flatMap(m => m.sectors))).sort();
+
+  const filtered = mandates.filter(m => {
+    const matchSearch = m.company.toLowerCase().includes(search.toLowerCase()) || m.role.toLowerCase().includes(search.toLowerCase());
+    const matchCompany = !companyFilter || m.company === companyFilter;
+    const matchRole = !roleFilter || m.role === roleFilter;
+    const matchSector = !sectorFilter || m.sectors.includes(sectorFilter);
+    const matchStatus = !statusFilter || m.status === statusFilter;
+    const matchInternal = !internalFilter || m.internalStatus === internalFilter;
+    return matchSearch && matchCompany && matchRole && matchSector && matchStatus && matchInternal;
+  });
 
   async function handleStatusChange(id: number, field: "status" | "internalStatus", value: string) {
     setMandates(prev => prev.map(m => m.id === id ? { ...m, [field]: value } : m));
     await fetch("/api/mandates/" + id, { method: "PATCH", body: JSON.stringify({ field, value }), headers: { "Content-Type": "application/json" } });
+    router.refresh();
   }
 
   return (
@@ -29,11 +44,32 @@ export default function MandatesClient({ initialMandates }: { initialMandates: M
         <h1 className="text-2xl font-bold text-gray-900">All Mandates</h1>
         <Link href="/dashboard/mandates/new" className="px-4 py-2 bg-yellow-500 text-blue-900 rounded text-xs font-bold hover:bg-yellow-400">+ Add New Mandate</Link>
       </div>
-      <div className="flex gap-3 mb-6">
-        <input type="text" placeholder="Search mandates..." value={search} onChange={e => setSearch(e.target.value)} className="w-56 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-blue-900"/>
-        <select className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none">
+      <div className="flex flex-wrap gap-3 mb-6 bg-white p-3 border border-gray-200 rounded-xl shadow-sm">
+        <input type="text" placeholder="Search mandates..." value={search} onChange={e => setSearch(e.target.value)} className="min-w-[200px] flex-1 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-blue-900"/>
+        
+        <select value={companyFilter} onChange={e => setCompanyFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+          <option value="">All Companies</option>
+          {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        
+        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+          <option value="">All Roles</option>
+          {uniqueRoles.map(r => <option key={r} value={r}>{r}</option>)}
+        </select>
+        
+        <select value={sectorFilter} onChange={e => setSectorFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+          <option value="">All Sectors</option>
+          {uniqueSectors.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
           <option value="">All Statuses</option>
           {STAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        
+        <select value={internalFilter} onChange={e => setInternalFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+          <option value="">All Internal</option>
+          {INTERNAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       </div>
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">

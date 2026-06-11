@@ -5,11 +5,18 @@ import { useState, useEffect } from "react";
 import { updateCandidateStatusAction } from "@/app/actions";
 import * as XLSX from "xlsx";
 
-export default function DatabaseClient({ initialCandidates }: { initialCandidates: any[] }) {
+export default function DatabaseClient({ initialCandidates, assignMandate }: { initialCandidates: any[]; assignMandate?: any }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
   const [candidates, setCandidates] = useState(initialCandidates);
+  
+  // Bulk Assign State
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const [submitForm, setSubmitForm] = useState({
+    consultant: assignMandate?.consultant || "",
+  });
 
   useEffect(() => {
     setCandidates(initialCandidates);
@@ -76,12 +83,25 @@ export default function DatabaseClient({ initialCandidates }: { initialCandidate
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Float List Database</h1>
-        <div className="flex gap-2">
-          <button onClick={handleExportCSV} className="px-4 py-2 bg-gray-100 text-gray-600 rounded text-xs font-bold hover:bg-gray-200 transition-colors">Export CSV</button>
-          <button onClick={() => router.push('/dashboard/float-list/database/new')} className="px-4 py-2 bg-yellow-500 text-blue-900 rounded text-xs font-bold hover:bg-yellow-400 transition-colors">+ Add Candidate</button>
+      <div className="flex justify-between items-end mb-6">
+        <div>
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#6b7a99] mb-1.5 tracking-wide uppercase">
+            <Link href="/dashboard" className="hover:text-[#123D8D]">Home</Link>
+            <span>/</span>
+            <span>Float List</span>
+          </div>
+          <h1 className="text-2xl font-bold text-[#111]">
+            {assignMandate ? `Select Candidates for ${assignMandate.company}` : "Candidate Database"}
+          </h1>
         </div>
+        {!assignMandate && (
+          <div className="flex gap-2">
+            <button onClick={handleExportCSV} className="h-9 px-4 rounded-md text-[13px] font-bold border border-[#D4E0F0] text-[#123D8D] bg-white hover:bg-[#fafbff]">Export CSV</button>
+            <Link href="/dashboard/float-list/database/new" className="h-9 px-4 rounded-md text-[13px] font-bold text-white bg-[#123D8D] hover:bg-[#0d2f6e] flex items-center">
+              + New Entry
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-2.5 flex-wrap mb-4">
@@ -117,6 +137,21 @@ export default function DatabaseClient({ initialCandidates }: { initialCandidate
           <table className="w-full border-collapse">
             <thead>
               <tr>
+                {assignMandate && (
+                  <th className="text-center px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd] w-10">
+                    <input 
+                      type="checkbox" 
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds(filtered.map(c => c.id));
+                        } else {
+                          setSelectedIds([]);
+                        }
+                      }}
+                      checked={selectedIds.length > 0 && selectedIds.length === filtered.length}
+                    />
+                  </th>
+                )}
                 <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Name & Role</th>
                 <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Location</th>
                 <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Current CTC</th>
@@ -128,7 +163,25 @@ export default function DatabaseClient({ initialCandidates }: { initialCandidate
             </thead>
             <tbody>
               {filtered.map((c: any) => (
-                <tr key={c.id} className="hover:bg-[#fafbff] cursor-pointer group" onClick={() => router.push("/dashboard/float-list/" + c.id)}>
+                <tr key={c.id} className="hover:bg-[#fafbff] cursor-pointer group" onClick={() => {
+                  if (assignMandate) {
+                    setSelectedIds(prev => prev.includes(c.id) ? prev.filter(id => id !== c.id) : [...prev, c.id]);
+                  } else {
+                    router.push("/dashboard/float-list/" + c.id);
+                  }
+                }}>
+                  {assignMandate && (
+                    <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-center" onClick={e => e.stopPropagation()}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedIds.includes(c.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedIds(prev => [...prev, c.id]);
+                          else setSelectedIds(prev => prev.filter(id => id !== c.id));
+                        }}
+                      />
+                    </td>
+                  )}
                   <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[13px]">
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-md bg-[#D8B15B] text-[#0d2f6e] flex items-center justify-center text-[12px] font-bold shrink-0">{c.initials}</div>
@@ -177,6 +230,89 @@ export default function DatabaseClient({ initialCandidates }: { initialCandidate
           </table>
         </div>
       </div>
+      {assignMandate && selectedIds.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D4E0F0] shadow-[0_-4px_10px_rgba(0,0,0,0.05)] p-4 flex justify-center z-40">
+          <div className="flex items-center gap-6 max-w-screen-xl w-full px-6">
+            <span className="font-bold text-[#111]">{selectedIds.length} candidate(s) selected</span>
+            <div className="flex-1"></div>
+            <button onClick={() => router.push(`/dashboard/mandates/${assignMandate.id}`)} className="px-4 py-2 text-sm font-bold text-[#6b7a99] hover:bg-gray-100 rounded">Cancel</button>
+            <button onClick={() => setIsSubmitModalOpen(true)} className="px-6 py-2 bg-[#123D8D] text-white text-sm font-bold rounded shadow-sm hover:bg-[#0d2f6e]">
+              Add to {assignMandate.company}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isSubmitModalOpen && assignMandate && (
+        <div className="fixed inset-0 bg-[#0d2f6e]/50 z-50 flex items-center justify-center backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center p-5 border-b border-[#D4E0F0]">
+              <h2 className="text-xl font-bold text-[#111]">Submit to Client</h2>
+              <button onClick={() => setIsSubmitModalOpen(false)} className="text-[#6b7a99] hover:text-[#111]">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            
+            <div className="p-5 flex flex-col gap-4">
+              <div>
+                <label className="block text-[11px] font-bold text-[#6b7a99] mb-1.5 uppercase tracking-wide">Submit to Active Mandate?</label>
+                <div className="w-full h-10 border border-[#D4E0F0] rounded-md px-3 bg-gray-50 flex items-center text-sm font-semibold text-[#111]">
+                  {assignMandate.role} @ {assignMandate.company}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-[11px] font-bold text-[#6b7a99] mb-1.5 uppercase tracking-wide">Client Company <span className="text-red-500">*</span></label>
+                <div className="w-full h-10 border border-[#D4E0F0] rounded-md px-3 bg-gray-50 flex items-center text-sm text-[#111]">
+                  {assignMandate.company}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-[11px] font-bold text-[#6b7a99] mb-1.5 uppercase tracking-wide">Role <span className="text-red-500">*</span></label>
+                <div className="w-full h-10 border border-[#D4E0F0] rounded-md px-3 bg-gray-50 flex items-center text-sm text-[#111]">
+                  {assignMandate.role}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#6b7a99] mb-1.5 uppercase tracking-wide">Consultant</label>
+                <input 
+                  type="text" 
+                  value={submitForm.consultant} 
+                  onChange={e => setSubmitForm({...submitForm, consultant: e.target.value})}
+                  className="w-full h-10 border border-[#D4E0F0] rounded-md px-3 text-sm outline-none focus:border-[#123D8D]"
+                  placeholder="Consultant Name"
+                />
+              </div>
+            </div>
+            
+            <div className="p-5 border-t border-[#D4E0F0] bg-[#fafbfd] flex justify-end gap-3">
+              <button onClick={() => setIsSubmitModalOpen(false)} className="px-5 py-2 text-[13px] font-bold text-[#6b7a99] hover:bg-gray-200 rounded-md">Cancel</button>
+              <button 
+                onClick={async () => {
+                  try {
+                    const cands = candidates.filter(c => selectedIds.includes(c.id));
+                    await import("@/app/actions").then(m => m.bulkAddSubmissionAction({
+                      mandateId: assignMandate.id,
+                      candidates: cands,
+                      client: assignMandate.company,
+                      role: assignMandate.role,
+                      consultant: submitForm.consultant
+                    }));
+                    router.push(`/dashboard/mandates/${assignMandate.id}`);
+                  } catch(e) {
+                    alert("Failed to submit");
+                  }
+                }}
+                className="px-5 py-2 bg-[#D8B15B] text-[#0d2f6e] text-[13px] font-bold rounded-md shadow-sm hover:bg-[#c29c47]"
+              >
+                Submit Candidate{selectedIds.length > 1 ? 's' : ''}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

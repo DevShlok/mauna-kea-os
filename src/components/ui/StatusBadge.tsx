@@ -1,24 +1,24 @@
 import { STAGE_LABELS, INTERNAL_LABELS } from '@/lib/helpers';
 
 const STAGE_COLORS: Record<string, string> = {
-  interview: 'bg-green-100 text-green-800',
-  'offer-accepted': 'bg-green-200 text-green-900',
-  'offer-sent': 'bg-blue-100 text-blue-800',
-  shortlist: 'bg-blue-100 text-blue-800',
-  calllist: 'bg-yellow-100 text-yellow-800',
-  longlist: 'bg-orange-100 text-orange-800',
+  universe: 'bg-gray-100 text-gray-700',
   mapping: 'bg-purple-100 text-purple-800',
-  universe: 'bg-gray-100 text-gray-600',
-  closed: 'bg-red-100 text-red-700',
-  'position-closed': 'bg-red-100 text-red-700',
+  longlist: 'bg-orange-100 text-orange-800',
+  calllist: 'bg-amber-100 text-amber-800',
+  shortlist: 'bg-blue-100 text-blue-800',
+  interview: 'bg-emerald-100 text-emerald-800',
+  'offer-sent': 'bg-indigo-100 text-indigo-800',
+  'offer-accepted': 'bg-teal-100 text-teal-800',
+  closed: 'bg-red-100 text-red-800',
+  'position-closed': 'bg-rose-100 text-rose-800',
 };
 
 const INTERNAL_COLORS: Record<string, string> = {
-  contractsigned: 'bg-green-100 text-green-800',
-  paymentreceived: 'bg-green-100 text-green-800',
-  invoicesent: 'bg-blue-100 text-blue-800',
   contractsent: 'bg-yellow-100 text-yellow-800',
-  followup: 'bg-orange-100 text-orange-800',
+  contractsigned: 'bg-green-100 text-green-800',
+  invoicesent: 'bg-sky-100 text-sky-800',
+  paymentreceived: 'bg-teal-100 text-teal-800',
+  followup: 'bg-fuchsia-100 text-fuchsia-800',
 };
 
 interface StatusBadgeProps {
