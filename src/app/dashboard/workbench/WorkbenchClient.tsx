@@ -442,12 +442,12 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
                   />
                 )}
                 {activeView === "format1" && (
-                  <div className="print:fixed print:inset-0 print:bg-white print:z-[9999] print:overflow-hidden flex print:items-center print:justify-center">
+                  <div className="print:fixed print:inset-0 print:bg-white print:z-[9999] print:overflow-visible print:block">
                     <FormatOne mandate={selectedMandate} candidates={[{...selectedCandidate, reportData}]} />
                   </div>
                 )}
                 {activeView === "format2" && (
-                  <div className="print:fixed print:inset-0 print:bg-white print:z-[9999] print:overflow-hidden flex print:items-center print:justify-center">
+                  <div className="print:fixed print:inset-0 print:bg-white print:z-[9999] print:overflow-visible print:block">
                     {activeView === "format2" && reportData && selectedMandate && (
                       <FormatTwo 
                         mandate={selectedMandate} 

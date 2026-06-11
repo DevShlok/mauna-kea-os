@@ -105,7 +105,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
       <style type="text/css" media="print" dangerouslySetInnerHTML={{ __html: PageStyle }} />
 
       {/* PAGE 1 */}
-      <div className={`bg-white w-[794px] h-[1122px] mx-auto shadow-2xl print:shadow-none relative box-border print:scale-100 max-w-none p-[50px] overflow-hidden ${fontStyle}`}>
+      <div className={`bg-white w-[794px] h-[1122px] mx-auto shadow-2xl print:shadow-none relative box-border print:scale-100 max-w-none p-[50px] overflow-hidden print:break-after-page ${fontStyle}`}>
         {/* Header */}
         <div className="flex justify-end mb-8 border-b border-gray-200 pb-4">
           <h1 className={`text-2xl font-bold ${headerColor}`} contentEditable suppressContentEditableWarning>
