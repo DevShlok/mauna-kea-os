@@ -46,11 +46,13 @@ export async function POST(req: Request) {
     });
 
     // Add extra metadata fields for final reports if they don't already exist
-    const metadataFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Notes Summary"];
+    const metadataFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Notes Summary", "Superior Reference", "Peer Reference", "Team Reference"];
     metadataFields.forEach(field => {
       if (!schemaObject[field]) {
         if (field === "Notes Summary") {
           schemaObject[field] = z.array(z.string()).describe("A brief 3-4 bullet point summary of overall notes, background, and fit.");
+        } else if (field.includes("Reference")) {
+          schemaObject[field] = z.string().describe(`Summarize the ${field} using professional executive language based on the provided notes. Keep it to 1-2 impactful sentences.`);
         } else {
           schemaObject[field] = z.string().describe(`Extract or infer ${field} from the transcript. Keep it extremely brief (e.g. 'Kohler India', 'IIM L', 'INR 85L', '400+'). Leave blank if not available.`);
         }
@@ -127,17 +129,9 @@ INSTRUCTIONS:
         
         const overallScore = totalWeight > 0 ? Number((totalWeightedScore / totalWeight).toFixed(1)) : 0;
 
-        // Merge direct manual feedbacks to prevent AI hallucination
-        const finalReportData = {
-          ...object,
-          "Superior Reference": feedback?.superior || "",
-          "Peer Reference": feedback?.peer || "",
-          "Team Reference": feedback?.team || "",
-        };
-
         // Update report
         await db.update(candidateReports)
-          .set({ status: "Completed", reportData: finalReportData })
+          .set({ status: "Completed", reportData: object })
           .where(eq(candidateReports.id, reportId));
           
         // Update candidate score
