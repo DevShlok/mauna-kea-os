@@ -91,36 +91,36 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
   };
 
   return (
-    <div className="bg-white max-w-[800px] mx-auto border border-gray-200 shadow-sm font-sans" style={{ minHeight: "1056px" }}>
+    <div className="bg-white max-w-[750px] mx-auto border border-gray-200 shadow-sm font-sans rounded-lg overflow-hidden">
       {/* HEADER */}
-      <div className="flex justify-between items-start p-10 pb-6">
-        <div className="flex items-center gap-6">
-          <div className="w-32 h-32 rounded-full bg-blue-900 text-white flex items-center justify-center text-4xl font-bold shrink-0 border-4 border-white shadow-lg relative">
+      <div className="flex justify-between items-start p-6 pb-4">
+        <div className="flex items-center gap-4">
+          <div className="w-20 h-20 rounded-full bg-blue-900 text-white flex items-center justify-center text-3xl font-bold shrink-0 border-4 border-white shadow-md relative">
             {candidate.initials}
-            <div className="absolute bottom-0 right-0 w-8 h-8 bg-[#0a66c2] text-white rounded flex items-center justify-center text-sm font-bold border-2 border-white">
+            <div className="absolute bottom-0 right-0 w-6 h-6 bg-[#0a66c2] text-white rounded flex items-center justify-center text-[10px] font-bold border-2 border-white">
               in
             </div>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-blue-900 font-serif">{candidate.name}</h1>
-            <p className="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide">
+            <h1 className="text-xl font-bold text-blue-900 font-serif">{candidate.name}</h1>
+            <p className="text-[12px] font-bold text-gray-500 mt-0.5 uppercase tracking-wide">
               {candidate.designation || candidate.role || "Candidate"} at {candidate.company || "Unknown Company"}
             </p>
           </div>
         </div>
         <div className="text-right">
-          <h2 className="text-xl font-bold text-blue-900 font-serif">Mauna Kea <span className="text-[#0d2f6e]">International</span></h2>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1 text-right block w-full">{frameworkName} Assessment</p>
+          <h2 className="text-lg font-bold text-blue-900 font-serif">Mauna Kea <span className="text-[#0d2f6e]">International</span></h2>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-right block w-full">{frameworkName} Assessment</p>
         </div>
       </div>
 
       {/* AI Draft badge */}
-      <div className="px-10 pb-4 flex items-center justify-between border-b border-gray-100 mb-6">
-        <h2 className="text-[20px] font-bold text-gray-900 font-serif tracking-tight">AI-Generated Assessment Draft</h2>
-        <span className="text-[12px] bg-[#d1fae5] text-[#065f46] px-3 py-1 rounded-full font-bold shadow-sm">AI Draft</span>
+      <div className="px-6 pb-3 flex items-center justify-between border-b border-gray-100 mb-5">
+        <h2 className="text-[16px] font-bold text-gray-900 font-serif tracking-tight">AI-Generated Assessment Draft</h2>
+        <span className="text-[10px] bg-[#d1fae5] text-[#065f46] px-2 py-0.5 rounded-full font-bold shadow-sm">AI Draft</span>
       </div>
 
-      <div className="px-10 pb-10 space-y-6">
+      <div className="px-6 pb-6 space-y-4">
         
         {/* DYNAMIC TEXT SECTIONS — each with Accept / Edit / Redo */}
         {Object.entries(sections).map(([title, content], i) => {
@@ -146,9 +146,9 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
               }`}
             >
               {/* Section header bar */}
-              <div className="flex items-center justify-between px-5 pt-4 pb-2">
-                <span className="text-[15px] font-bold text-[#00174f] flex items-center gap-2">
-                  <span className="text-lg">{icon}</span>
+              <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                <span className="text-[13px] font-bold text-[#00174f] flex items-center gap-1.5">
+                  <span className="text-base">{icon}</span>
                   {displayTitle}
                 </span>
                 <div className="flex items-center gap-2">
@@ -206,12 +206,12 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
 
         {/* DYNAMIC SCORING FRAMEWORK */}
         {scores && (
-          <div className="bg-blue-50/50 rounded-xl p-6 border border-blue-100">
-            <h3 className="text-[15px] font-bold text-blue-900 font-serif mb-6 border-b border-blue-200 pb-2">
+          <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100">
+            <h3 className="text-[13px] font-bold text-blue-900 font-serif mb-4 border-b border-blue-200 pb-2">
               Evaluation against key criterion
             </h3>
             
-            <div className="space-y-6">
+            <div className="space-y-4">
               {Object.entries(scores).map(([categoryName, criteria]: [string, any], catIdx) => (
                 <div key={catIdx}>
                   <div className="flex justify-between mb-3">
@@ -283,7 +283,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
             }}
             className="py-3 px-6 bg-[#1e3a8a] text-white rounded-md font-bold text-[14px] hover:bg-[#1e40af] transition-colors shadow-sm flex items-center justify-center min-w-[140px]"
           >
-            Generate PDF
+            Preview PDF
           </button>
           <button
             onClick={() => {

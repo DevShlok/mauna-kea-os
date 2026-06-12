@@ -101,7 +101,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
     if (confirm(`Are you sure you want to permanently delete ${candidate.name}? This action cannot be undone and will delete all associated references, submissions, and reports.`)) {
       setIsDeleting(true);
       await deleteFloatListEntryAction(candidate.id);
-      router.push("/dashboard/float-list");
+      router.push("/dashboard/candidates");
       router.refresh();
     }
   };
@@ -121,7 +121,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-6 flex gap-1 cursor-pointer">
         <Link href="/dashboard" className="hover:text-[#111]">Home</Link> / 
-        <Link href="/dashboard/float-list" className="hover:text-[#111]">Float List</Link> / 
+        <Link href="/dashboard/candidates" className="hover:text-[#111]">Candidate DB</Link> / 
         <span className="text-[#111]">{candidate.name}</span>
       </div>
 
@@ -162,7 +162,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
           )}
 
           <div className="flex gap-2 mt-2">
-            <Link href="/dashboard/float-list" className="px-3 py-1.5 rounded-md text-[12px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">← Back</Link>
+            <Link href="/dashboard/candidates" className="px-3 py-1.5 rounded-md text-[12px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">← Back</Link>
             <button onClick={() => setIsSubModalOpen(true)} className="px-3 py-1.5 rounded-md text-[12px] font-semibold bg-[#D8B15B] text-[#0d2f6e] hover:bg-[#e8c97a] transition-all">Submit to Client</button>
             <button className="px-3 py-1.5 rounded-md text-[12px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">Export</button>
             <div className="flex-1"></div>
@@ -313,7 +313,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
 
         {/* Tile 5: Compensation */}
         <Tile 
-          id="comp" icon="💰" name="Compensation & Benchmarking" meta={`Current: ${candidate.ctc >= 100 ? (candidate.ctc / 100).toFixed(1).replace(/\.0$/, '') + 'Cr' : candidate.ctc + 'L'} · Expected: ${candidate.expected >= 100 ? (candidate.expected / 100).toFixed(1).replace(/\.0$/, '') + 'Cr' : candidate.expected + 'L'}`}
+          id="comp" icon="💰" name="Compensation & Benchmarking" meta={`Current: ₹${candidate.ctc >= 100 ? (candidate.ctc / 100).toFixed(1).replace(/\.0$/, '') + 'Cr' : candidate.ctc + 'L'} · Expected: ₹${candidate.expected >= 100 ? (candidate.expected / 100).toFixed(1).replace(/\.0$/, '') + 'Cr' : candidate.expected + 'L'}`}
           isOpen={activeTiles['comp']} toggle={toggleTile}
           content={
             <div className="grid grid-cols-4 gap-3">

@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, flCandidates, flSubmissions, flFollowUps, platformUsers, flReferences, flActivities, candidateReports } from "@/db/schema";
+import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports } from "@/db/schema";
 import { eq, sql, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -44,7 +44,7 @@ export async function editMandateAction(id: number, data: any) {
   revalidatePath(`/dashboard/mandates/${id}`);
 }
 
-export async function createFrameworkAction(data: any) {
+export async function createFrameworkAction(data: any, mandateIds?: string[]) {
   revalidatePath("/dashboard", "layout");
   const id = "FW-" + Date.now();
   await db.insert(frameworks).values({
@@ -54,6 +54,12 @@ export async function createFrameworkAction(data: any) {
     lastModified: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
   });
   
+  if (mandateIds && mandateIds.length > 0) {
+    for (const mId of mandateIds) {
+      await db.update(mandates).set({ frameworkId: id }).where(eq(mandates.id, parseInt(mId)));
+    }
+  }
+
   if (data.categories && data.categories.length > 0) {
     for (let i = 0; i < data.categories.length; i++) {
       const cat = data.categories[i];
@@ -97,7 +103,7 @@ export async function addCandidateToMandateAction(data: any) {
 export async function addFloatListEntryAction(data: any) {
   revalidatePath("/dashboard", "layout");
   const id = "CAND-" + Date.now();
-  await db.insert(flCandidates).values({
+  await db.insert(candidates).values({
     id,
     name: data.name,
     company: data.company,
@@ -107,6 +113,8 @@ export async function addFloatListEntryAction(data: any) {
     location: data.location,
     exp: data.exp ? Number(data.exp) : null,
     ctc: data.ctc ? Number(data.ctc) : null,
+    fixedCtc: data.fixedCtc ? Number(data.fixedCtc) : null,
+    variableCtc: data.variableCtc ? Number(data.variableCtc) : null,
     expected: data.expected ? Number(data.expected) : null,
     notice: data.notice ? Number(data.notice) : null,
     status: data.status || "Active",
@@ -133,7 +141,7 @@ export async function addSubmissionAction(data: any) {
   
   if (!candId) {
     candId = "CAND-" + Date.now();
-    await db.insert(flCandidates).values({
+    await db.insert(candidates).values({
       id: candId,
       name: data.candName,
       status: "Active",
@@ -142,7 +150,7 @@ export async function addSubmissionAction(data: any) {
   }
 
   const id = "SUB-" + Date.now();
-  await db.insert(flSubmissions).values({
+  await db.insert(floats).values({
     id,
     candId,
     candName: data.candName,
@@ -189,7 +197,7 @@ export async function bulkAddSubmissionAction(data: { mandateId: number; candida
     
     // 1. Create submission
     const subId = "S-" + Date.now().toString() + "-" + Math.floor(Math.random() * 1000);
-    await db.insert(flSubmissions).values({
+    await db.insert(floats).values({
       id: subId,
       candId,
       candName,
@@ -231,9 +239,9 @@ export async function removeCandidateFromMandateAction(data: { id: number; exter
   // Delete from mandateCandidates
   await db.delete(mandateCandidates).where(eq(mandateCandidates.id, data.id));
 
-  // Delete from flSubmissions where candidate, company and role match
-  await db.delete(flSubmissions).where(
-    sql`${flSubmissions.candId} = ${data.externalId} AND ${flSubmissions.client} = ${data.company} AND ${flSubmissions.role} = ${data.role}`
+  // Delete from floats where candidate, company and role match
+  await db.delete(floats).where(
+    sql`${floats.candId} = ${data.externalId} AND ${floats.client} = ${data.company} AND ${floats.role} = ${data.role}`
   );
 
   revalidatePath(`/dashboard/mandates/${data.mandateId}`);
@@ -242,9 +250,9 @@ export async function removeCandidateFromMandateAction(data: { id: number; exter
   revalidatePath("/dashboard/float-list/submissions");
 }
 
-export async function updateSubmissionAction(id: string, data: { via?: string[]; followUp?: string; response?: string; status?: string }) {
+export async function updateSubmissionAction(id: string, data: { via?: string[]; followUp?: string; response?: string; status?: string; candName?: string; client?: string; role?: string; consultant?: string; }) {
   revalidatePath("/dashboard", "layout");
-  await db.update(flSubmissions).set(data).where(eq(flSubmissions.id, id));
+  await db.update(floats).set(data).where(eq(floats.id, id));
   revalidatePath("/dashboard/float-list/submissions");
   revalidatePath("/dashboard/float-list/database");
 }
@@ -255,7 +263,7 @@ export async function addFollowUpAction(data: any) {
   
   if (!candId) {
     candId = "CAND-" + Date.now();
-    await db.insert(flCandidates).values({
+    await db.insert(candidates).values({
       id: candId,
       name: data.candName,
       status: "Active",
@@ -264,7 +272,7 @@ export async function addFollowUpAction(data: any) {
   }
 
   const id = "FU-" + Date.now();
-  await db.insert(flFollowUps).values({
+  await db.insert(floatFollowUps).values({
     id,
     candId,
     cand: data.candName,
@@ -297,7 +305,7 @@ export async function addPlatformUserAction(data: { name: string; email: string;
 
 export async function addReferenceAction(data: any) {
   revalidatePath("/dashboard", "layout");
-  await db.insert(flReferences).values({
+  await db.insert(floatReferences).values({
     candId: data.candId,
     type: data.type,
     name: data.name,
@@ -310,17 +318,17 @@ export async function addReferenceAction(data: any) {
 
 export async function deleteFloatListEntryAction(id: string) {
   revalidatePath("/dashboard", "layout");
-  await db.delete(flSubmissions).where(eq(flSubmissions.candId, id));
-  await db.delete(flFollowUps).where(eq(flFollowUps.candId, id));
-  await db.delete(flActivities).where(eq(flActivities.candId, id));
-  await db.delete(flReferences).where(eq(flReferences.candId, id));
+  await db.delete(floats).where(eq(floats.candId, id));
+  await db.delete(floatFollowUps).where(eq(floatFollowUps.candId, id));
+  await db.delete(floatActivities).where(eq(floatActivities.candId, id));
+  await db.delete(floatReferences).where(eq(floatReferences.candId, id));
   await db.delete(candidateReports).where(eq(candidateReports.candidateId, id));
-  await db.delete(flCandidates).where(eq(flCandidates.id, id));
+  await db.delete(candidates).where(eq(candidates.id, id));
   revalidatePath("/dashboard/float-list/database");
 }
 export async function editFloatListEntryAction(id: string, data: any) {
   revalidatePath("/dashboard", "layout");
-  await db.update(flCandidates).set({
+  await db.update(candidates).set({
     name: data.name,
     company: data.company,
     designation: data.designation,
@@ -329,6 +337,8 @@ export async function editFloatListEntryAction(id: string, data: any) {
     location: data.location,
     exp: data.exp ? Number(data.exp) : null,
     ctc: data.ctc ? Number(data.ctc) : null,
+    fixedCtc: data.fixedCtc ? Number(data.fixedCtc) : null,
+    variableCtc: data.variableCtc ? Number(data.variableCtc) : null,
     expected: data.expected ? Number(data.expected) : null,
     notice: data.notice ? Number(data.notice) : null,
     status: data.status || "Active",
@@ -341,14 +351,14 @@ export async function editFloatListEntryAction(id: string, data: any) {
     notes: data.notes || null,
     initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
     profilePic: data.profilePic !== undefined ? data.profilePic : undefined,
-  }).where(eq(flCandidates.id, id));
+  }).where(eq(candidates.id, id));
   revalidatePath("/dashboard/float-list/database");
   revalidatePath("/dashboard/float-list/" + id);
   return id;
 }
 export async function updateCandidateStatusAction(id: string, status: string) {
   revalidatePath("/dashboard", "layout");
-  await db.update(flCandidates).set({ status }).where(eq(flCandidates.id, id));
+  await db.update(candidates).set({ status }).where(eq(candidates.id, id));
   revalidatePath("/dashboard/float-list/database");
 }
 
@@ -363,4 +373,80 @@ export async function updateMandateSearchNotesAction(id: number, text: string) {
   revalidatePath("/dashboard", "layout");
   await db.update(mandates).set({ searchNotes: text }).where(eq(mandates.id, id));
   revalidatePath(`/dashboard/mandates/${id}`);
+}
+
+export async function editFrameworkAction(id: string, data: any, mandateIds?: string[]) {
+  revalidatePath('/dashboard', 'layout');
+  await db.update(frameworks).set({
+    name: data.name,
+    industry: data.industry,
+    lastModified: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+  }).where(eq(frameworks.id, id));
+
+  await db.update(mandates).set({ frameworkId: null }).where(eq(mandates.frameworkId, id));
+  if (mandateIds && mandateIds.length > 0) {
+    for (const mId of mandateIds) {
+      await db.update(mandates).set({ frameworkId: id }).where(eq(mandates.id, parseInt(mId)));
+    }
+  }
+
+  const oldCats = await db.select().from(frameworkCategories).where(eq(frameworkCategories.frameworkId, id));
+  for (const cat of oldCats) {
+    await db.delete(frameworkCriteria).where(eq(frameworkCriteria.categoryId, cat.id));
+  }
+  await db.delete(frameworkCategories).where(eq(frameworkCategories.frameworkId, id));
+
+  if (data.categories && data.categories.length > 0) {
+    for (let i = 0; i < data.categories.length; i++) {
+      const cat = data.categories[i];
+      const res = await db.insert(frameworkCategories).values({
+        frameworkId: id,
+        name: cat.name,
+        sortOrder: i,
+      });
+      const catId = res[0].insertId;
+      
+      if (cat.criteria && cat.criteria.length > 0) {
+        for (let j = 0; j < cat.criteria.length; j++) {
+          await db.insert(frameworkCriteria).values({
+            categoryId: catId,
+            name: cat.criteria[j].name,
+            weight: cat.criteria[j].weight || 10,
+            sortOrder: j,
+          });
+        }
+      }
+    }
+  }
+  revalidatePath('/dashboard/frameworks');
+  return id;
+}
+
+export async function deleteFrameworkAction(id: string) {
+  revalidatePath('/dashboard', 'layout');
+  
+  // Need to cascade delete
+  const oldCats = await db.select().from(frameworkCategories).where(eq(frameworkCategories.frameworkId, id));
+  for (const cat of oldCats) {
+    await db.delete(frameworkCriteria).where(eq(frameworkCriteria.categoryId, cat.id));
+  }
+  await db.delete(frameworkCategories).where(eq(frameworkCategories.frameworkId, id));
+  await db.delete(candidateReports).where(eq(candidateReports.frameworkId, id));
+  await db.update(mandates).set({ frameworkId: null }).where(eq(mandates.frameworkId, id));
+  await db.delete(frameworks).where(eq(frameworks.id, id));
+  revalidatePath('/dashboard/frameworks');
+}
+
+export async function deleteMandateAction(id: number) {
+  revalidatePath('/dashboard', 'layout');
+  await db.delete(mandateCandidates).where(eq(mandateCandidates.mandateId, id));
+  await db.delete(mandates).where(eq(mandates.id, id));
+  revalidatePath('/dashboard/mandates');
+}
+
+export async function deleteSubmissionAction(id: string) {
+  revalidatePath('/dashboard', 'layout');
+  await db.delete(floats).where(eq(floats.id, id));
+  revalidatePath('/dashboard/float-list');
+  revalidatePath('/dashboard/float-list/submissions');
 }

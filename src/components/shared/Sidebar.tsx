@@ -24,12 +24,12 @@ export function Sidebar() {
   const navItems: any[] = [
     { section: "Search Delivery" },
     { label: "Mandates", icon: ClipboardList, href: "/dashboard/mandates", badge: 4 },
-    { label: "Candidates", icon: Users, href: "/dashboard/candidates" },
+    { label: "Float List", icon: Send, href: "/dashboard/float-list" },
     { label: "AI Workbench", icon: BrainCircuit, href: "/dashboard/workbench" },
     { label: "Frameworks", icon: Scale, href: "/dashboard/frameworks" },
-    { section: "Float List" },
-    { label: "Float DB", icon: Database, href: "/dashboard/float-list/database" },
-    { label: "Submissions", icon: Send, href: "/dashboard/float-list/submissions" },
+    { section: "Master Database" },
+    { label: "Candidate DB", icon: Database, href: "/dashboard/candidates" },
+    { label: "Submissions", icon: ClipboardList, href: "/dashboard/float-list/submissions" },
   ];
 
   return (

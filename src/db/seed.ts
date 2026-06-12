@@ -1,8 +1,8 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 import {
-  mandates, mandateCandidates, flCandidates, flSubmissions,
-  flFollowUps, flActivities, frameworks, frameworkCategories,
+  mandates, mandateCandidates, candidates, floats,
+  floatFollowUps, floatActivities, frameworks, frameworkCategories,
   frameworkCriteria, platformUsers
 } from './schema';
 

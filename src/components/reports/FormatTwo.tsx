@@ -57,10 +57,10 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
     else setPage2Blocks(blocks);
   };
 
-  // Feedback conditions
   const hasInterviewer = rp["Interviewer Feedback"] && rp["Interviewer Feedback"].trim() !== "" && !rp["Interviewer Feedback"].toLowerCase().includes("not provided");
-  const hasSuperior = rp["Superior Reference"] && rp["Superior Reference"].trim() !== "" && !rp["Superior Reference"].toLowerCase().includes("not provided");
-  const hasPeer = rp["Peer Reference"] && rp["Peer Reference"].trim() !== "" && !rp["Peer Reference"].toLowerCase().includes("not provided");
+  const hasSuperior = rp["Superior Feedback"] && rp["Superior Feedback"].trim() !== "" && !rp["Superior Feedback"].toLowerCase().includes("not provided");
+  const hasPeer = rp["Peer Feedback"] && rp["Peer Feedback"].trim() !== "" && !rp["Peer Feedback"].toLowerCase().includes("not provided");
+  const hasTeam = rp["Team/Subordinate Feedback"] && rp["Team/Subordinate Feedback"].trim() !== "" && !rp["Team/Subordinate Feedback"].toLowerCase().includes("not provided");
 
   const renderBlock = (blockId: string) => {
     switch(blockId) {
@@ -71,7 +71,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           </p>
         );
       case 'famous_for':
-        if (!hasInterviewer && !hasSuperior && !hasPeer) return null;
+        if (!hasInterviewer && !hasSuperior && !hasPeer && !hasTeam) return null;
         return (
           <div>
             <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
@@ -83,31 +83,36 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
                   <strong>Interviewer Feedback:</strong> {rp["Interviewer Feedback"]}
                 </p>
               )}
+              {hasTeam && (
+                <p contentEditable suppressContentEditableWarning>
+                  <strong>Team/Subordinate Feedback:</strong> {rp["Team/Subordinate Feedback"]}
+                </p>
+              )}
               {hasSuperior && (
                 <p contentEditable suppressContentEditableWarning>
-                  <strong>Superior Feedback:</strong> {rp["Superior Reference"]}
+                  <strong>Superior Feedback:</strong> {rp["Superior Feedback"]}
                 </p>
               )}
               {hasPeer && (
                 <p contentEditable suppressContentEditableWarning>
-                  <strong>Peer Feedback:</strong> {rp["Peer Reference"]}
+                  <strong>Peer Feedback:</strong> {rp["Peer Feedback"]}
                 </p>
               )}
             </div>
           </div>
         );
       case 'career_aspiration':
+        if (!rp["Career Aspiration"]) return null;
         return (
           <div>
             <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
               Career aspiration
             </h3>
             <p contentEditable suppressContentEditableWarning>
-              Details about career aspiration can be filled here...
+              {rp["Career Aspiration"]}
             </p>
           </div>
         );
-        
       case 'relevant_experience':
         return (
           <div>
@@ -217,51 +222,35 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
     }
     setIsScraping(true);
     try {
-      const startRes = await fetch('/api/linkedin/start', {
+      const startRes = await fetch('/api/apify-linkedin', {
         method: 'POST',
         body: JSON.stringify({ url: cand.linkedin }),
         headers: { 'Content-Type': 'application/json' }
       });
-      const startData = await startRes.json();
-      if (!startData.runId) throw new Error(startData.error || "Failed to start scraper");
+      const data = await startRes.json();
+      setIsScraping(false);
       
-      const poll = setInterval(async () => {
-        const statusRes = await fetch(`/api/linkedin/status?runId=${startData.runId}`);
-        const data = await statusRes.json();
-        
-        if (data.status === 'SUCCEEDED') {
-          clearInterval(poll);
-          setIsScraping(false);
-          console.log("APIFY RAW DATA:", data.data);
-          
-          if (data.data?.error) {
-            alert(`Apify Error: ${data.data.error}`);
-            return;
-          }
+      if (data.error) throw new Error(data.error);
+      
+      console.log("APIFY RAW DATA:", data.data);
 
-          const exp = data.data?.experience || data.data?.experiences || [];
-          if (exp.length > 0) {
-            const parsedExp = exp.slice(0, 6).map((e: any) => ({
-              companyName: e.companyName || "Unknown",
-              position: e.position || "Unknown Role",
-              duration: e.duration || "",
-              startDate: e.startDate?.text || "",
-              endDate: e.endDate?.text || "Present",
-              domain: e.companyUniversalName ? e.companyUniversalName + ".com" : (e.companyName || "company").toLowerCase().replace(/[^a-z0-9]/g, '') + '.com'
-            }));
-            setExperienceList(parsedExp);
-          } else {
-            alert("LinkedIn scrape succeeded, but no experience data was found.");
-          }
-        } else if (data.status === 'FAILED') {
-          clearInterval(poll);
-          setIsScraping(false);
-          alert("LinkedIn scraping failed! The profile may be private or invalid.");
-        }
-      }, 5000);
+      const exp = data.data?.experiences || data.data?.experience || [];
+      if (exp.length > 0) {
+        const parsedExp = exp.slice(0, 6).map((e: any) => ({
+          companyName: e.company || e.company_name || e.companyName || "Unknown",
+          position: e.title || e.position || "Unknown Role",
+          duration: e.starts_at ? `${e.starts_at} - ${e.ends_at || 'Present'}` : (e.dateRange || e.duration || ""),
+          startDate: "",
+          endDate: "",
+          domain: (e.company || "Unknown").toLowerCase().replace(/[^a-z0-9]/g, '') + '.com'
+        }));
+        setExperienceList(parsedExp);
+      } else {
+        alert("No experience records found on this profile.");
+      }
     } catch (e: any) {
       setIsScraping(false);
-      alert("Error: " + e.message);
+      alert(e.message);
     }
   };
 

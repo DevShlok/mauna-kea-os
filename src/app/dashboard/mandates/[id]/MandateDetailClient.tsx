@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { STAGE_OPTIONS, stageLabel } from "@/lib/helpers";
-import { addCandidateToMandateAction, editMandateAction, updateMandateSearchNotesAction, updateMandateCandidateStageAction } from "@/app/actions";
+import { STAGE_OPTIONS, stageLabel, formatMandateCtc } from "@/lib/helpers";
+import { addCandidateToMandateAction, editMandateAction, updateMandateSearchNotesAction, updateMandateCandidateStageAction, deleteMandateAction } from "@/app/actions";
 
 const PIPELINE_STAGES = [
   "universe","mapping","longlist","calllist","shortlist","interview","offer-sent","offer-accepted","closed",
@@ -22,6 +22,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
   const [isEditingMandate, setIsEditingMandate] = useState(false);
   const [editForm, setEditForm] = useState(initialMandate);
   const [isEditingSubmit, setIsEditingSubmit] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   // Report Modal State
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportFormat, setReportFormat] = useState("1");
@@ -40,7 +41,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
   }
 
   const detailRows = [
-    ["CTC Range", mandate.ctc],
+    ["CTC Range", formatMandateCtc(mandate.ctc)],
     ["Experience", mandate.exp],
     ["Target Sectors", mandate.sectors.join(", ")],
     ["Geography", mandate.geography],
@@ -134,7 +135,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
 
   // Replaced manual add with Float List redirect
   function handleAddCandidateClick() {
-    router.push(`/dashboard/float-list/database?assignToMandate=${mandate.id}`);
+    router.push(`/dashboard/candidates?assignToMandate=${mandate.id}&assignClient=${encodeURIComponent(mandate.company || "")}&assignRole=${encodeURIComponent(mandate.role || "")}`);
   }
 
   async function handleEditMandate(e: React.FormEvent) {
@@ -144,6 +145,15 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
     setMandate(editForm);
     setIsEditingSubmit(false);
     setIsEditingMandate(false);
+  }
+
+  async function handleDeleteMandate() {
+    if (confirm(`Are you sure you want to permanently delete the mandate for ${mandate.company} - ${mandate.role}? This will also delete all associated mandate candidates.`)) {
+      setIsDeleting(true);
+      await deleteMandateAction(mandate.id);
+      router.push("/dashboard/mandates");
+      router.refresh();
+    }
   }
 
   return (
@@ -165,6 +175,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
           </div>
         </div>
         <div className="flex gap-2">
+          <button onClick={handleDeleteMandate} disabled={isDeleting} className="px-4 py-2 border border-red-200 text-red-600 bg-red-50 rounded text-xs font-bold hover:bg-red-100">{isDeleting ? "Deleting..." : "Delete"}</button>
           <button onClick={() => { setEditForm(mandate); setIsEditingMandate(true); }} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Edit</button>
           <button className="px-4 py-2 bg-yellow-500 text-blue-900 rounded text-xs font-bold hover:bg-yellow-400">Send to Client Portal</button>
           <button onClick={() => setIsReportModalOpen(true)} className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800">Generate Report</button>

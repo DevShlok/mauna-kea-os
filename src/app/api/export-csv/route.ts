@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { flCandidates } from "@/db/schema";
+import { candidates } from "@/db/schema";
 import * as XLSX from "xlsx";
 
 export async function GET() {
   try {
-    const candidates = await db.select().from(flCandidates);
+    const cands = await db.select().from(candidates);
     
-    if (!candidates || candidates.length === 0) {
+    if (!cands || cands.length === 0) {
       return new NextResponse("No candidates to export", { status: 404 });
     }
     
     const headers = ["ID", "Name", "Company", "Role", "Location", "Exp (yrs)", "CTC", "Expected", "Notice (days)", "Status", "Qualifications", "LinkedIn", "Target Company"];
-    const rows = candidates.map(c => [
+    const rows = cands.map(c => [
       c.id || "",
       c.name || "",
       c.company || "",

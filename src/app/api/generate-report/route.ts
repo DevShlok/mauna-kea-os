@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { frameworks, frameworkCategories, frameworkCriteria, candidateReports, flCandidates, mandateCandidates } from "@/db/schema";
+import { frameworks, frameworkCategories, frameworkCriteria, candidateReports, candidates, mandateCandidates } from "@/db/schema";
 import { eq, and, ne } from "drizzle-orm";
 import { generateObject } from "ai";
 import { google } from "@ai-sdk/google";
@@ -8,10 +8,56 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { candidateId, frameworkId, transcript, feedback } = await req.json();
+    const { candidateId, frameworkId, mandateId, transcript, feedback } = await req.json();
 
     if (!candidateId || !frameworkId || !transcript) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // 0. Fetch Mandate and Candidate details for extended AI context
+    let enrichedContext = "";
+    
+    // Fetch Candidate
+    const candidateData = await db.select().from(candidates).where(eq(candidates.id, candidateId));
+    if (candidateData.length > 0) {
+      const cand = candidateData[0];
+      if (cand.dreamRoles?.length || cand.dreamCos?.length) {
+        enrichedContext += `\nCANDIDATE CAREER ASPIRATIONS (From Profile):\nDream Roles: ${cand.dreamRoles?.join(", ")}\nDream Companies: ${cand.dreamCos?.join(", ")}\n`;
+      }
+    } else {
+      // Fallback check if candidateId is a MandateCandidate ID
+      const numId = Number(candidateId);
+      if (!isNaN(numId)) {
+        const mc = await db.select().from(mandateCandidates).where(eq(mandateCandidates.id, numId));
+        if (mc.length > 0 && mc[0].externalId) {
+          const flc = await db.select().from(candidates).where(eq(candidates.id, mc[0].externalId));
+          if (flc.length > 0) {
+            const cand = flc[0];
+            if (cand.dreamRoles?.length || cand.dreamCos?.length) {
+              enrichedContext += `\nCANDIDATE CAREER ASPIRATIONS (From Profile):\nDream Roles: ${cand.dreamRoles?.join(", ")}\nDream Companies: ${cand.dreamCos?.join(", ")}\n`;
+            }
+          }
+        }
+      }
+    }
+
+    // Fetch Mandate
+    if (mandateId) {
+      // Since mandate is imported from schema, wait, `mandates` is imported
+      const { mandates } = await import("@/db/schema");
+      const mandateList = await db.select().from(mandates).where(eq(mandates.id, Number(mandateId)));
+      if (mandateList.length > 0) {
+        const m = mandateList[0];
+        enrichedContext += `\nMANDATE SEARCH CONTEXT (Role Requirements):\n`;
+        enrichedContext += `Target Sectors: ${m.sectors?.join(", ") || "N/A"}\n`;
+        enrichedContext += `Target Companies: ${m.targetCompanies?.join(", ") || "N/A"}\n`;
+        if (m.diversity) enrichedContext += `Diversity Preference: ${m.diversity}\n`;
+        if (m.jdText) enrichedContext += `\nJOB DESCRIPTION (Extracted):\n${m.jdText}\n`;
+        if (m.interviewNotesText) enrichedContext += `\nCLIENT INTERVIEW NOTES:\n${m.interviewNotesText}\n`;
+        if (m.additionalDocsText) enrichedContext += `\nADDITIONAL CONTEXT DOCS:\n${m.additionalDocsText}\n`;
+        if (m.searchNotes) enrichedContext += `\nCONSULTANT SEARCH NOTES:\n${m.searchNotes}\n`;
+        if (m.openQuestions) enrichedContext += `\nOPEN QUESTIONS FOR CLIENT:\n${m.openQuestions}\n`;
+      }
     }
 
     // 1. Fetch Framework Data
@@ -46,15 +92,17 @@ export async function POST(req: Request) {
     });
 
     // Add extra metadata fields for final reports if they don't already exist
-    const metadataFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Notes Summary", "Superior Reference", "Peer Reference", "Interviewer Feedback"];
+    const metadataFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Notes Summary", "Superior Feedback", "Peer Feedback", "Team/Subordinate Feedback", "Interviewer Feedback", "Career Aspiration"];
     metadataFields.forEach(field => {
       if (!schemaObject[field]) {
         if (field === "Notes Summary") {
           schemaObject[field] = z.array(z.string()).describe("A brief 3-4 bullet point summary of overall notes, background, and fit.");
         } else if (field === "Interviewer Feedback") {
           schemaObject[field] = z.string().describe("Extract and summarize the core Interviewer Feedback directly from the general Interview Notes provided. Keep it to 1-2 impactful sentences. Return an empty string if it is not provided or missing.");
-        } else if (field.includes("Reference")) {
+        } else if (field.includes("Feedback")) {
           schemaObject[field] = z.string().describe(`Summarize the ${field} using professional executive language based on the provided explicit notes for it. Keep it to 1-2 impactful sentences. Return an empty string if it is not provided or missing.`);
+        } else if (field === "Career Aspiration") {
+          schemaObject[field] = z.string().describe(`Summarize the candidate's Career Aspirations strictly based on their stated Dream Roles and Dream Companies in the context. Write 1-2 sharp sentences.`);
         } else {
           schemaObject[field] = z.string().describe(`Extract or infer ${field} from the transcript. Keep it extremely brief (e.g. 'Kohler India', 'IIM L', 'INR 85L', '400+'). Leave blank if not available.`);
         }
@@ -73,6 +121,21 @@ export async function POST(req: Request) {
 
     schemaObject["scores"] = z.object(scoresObject);
     const DynamicSchema = z.object(schemaObject);
+
+    // Calculate Normalized Weights for the AI Prompt
+    const numCategories = categoriesWithCriteria.length;
+    let frameworkContext = "\nCOMPETENCY FRAMEWORK (Normalized Weightings):\n";
+    frameworkContext += "The candidate is evaluated across categories. Each category holds equal weight globally, but the criteria inside them have specific weights.\n";
+    categoriesWithCriteria.forEach((cat) => {
+      const categoryGlobalWeight = 100 / (numCategories || 1);
+      frameworkContext += `- Category: ${cat.name} (Global Category Weight: ${categoryGlobalWeight.toFixed(1)}%)\n`;
+      cat.criteria.forEach((cr) => {
+        const localWeight = Number(cr.weight) || 0;
+        const globalWeight = (localWeight / 100) * categoryGlobalWeight;
+        frameworkContext += `   * Criterion: ${cr.name}\n     -> Local Weight: ${localWeight}% | **Normalized Global Weight: ${globalWeight.toFixed(1)}%**\n`;
+      });
+    });
+    enrichedContext += frameworkContext;
 
     // 3. Overwrite existing report or create a new one to prevent DB bloat
     const existingReports = await db.select().from(candidateReports).where(eq(candidateReports.candidateId, candidateId));
@@ -99,21 +162,31 @@ export async function POST(req: Request) {
       });
     }
 
-    // We do NOT await the AI generation so the API returns instantly.
-    // The generation happens asynchronously.
     generateObject({
       model: google("gemini-2.5-flash"),
       schema: DynamicSchema,
-      prompt: `You are an expert executive assessor. Evaluate the following candidate interview transcript and notes against the provided competency framework.
+      prompt: `You are an expert executive assessor and organizational psychologist. Your objective is to evaluate the following candidate interview transcript and notes against the provided competency framework, taking into account the specific role requirements (Mandate Data).
       
-TRANSCRIPT / NOTES:
+${enrichedContext}
+
+TRANSCRIPT / CANDIDATE NOTES:
 ${transcript}
 
-INSTRUCTIONS:
-1. Extract relevant information to populate the requested text and bullet-point sections.
-2. Evaluate the candidate on the provided criteria and give a score from 1 to 10 for each. Be objective and critical.
-3. If information is missing for a specific score, infer reasonably based on the seniority and tone of the transcript, or give a neutral score (e.g. 6-7).
-4. IMPORTANT: Keep the output concise and highly focused. For paragraph sections, aim for 1-2 short, impactful sentences. For bullet-point lists, provide exactly 2-3 brief, single-sentence bullet points. Use a professional, senior-executive tone — insightful, sharp, and strictly to the point.`,
+EVALUATION PIPELINE INSTRUCTIONS:
+1. ASSESS THE ROLE (MANDATE): First, understand the Target Sectors, Job Description, and Consultant Search Notes. This is the baseline of what the client strictly needs.
+2. APPLY NORMALIZED WEIGHTS: Look closely at the "Normalized Global Weight" for each criterion in the Competency Framework.
+   - High Global Weight (>10%): These are make-or-break criteria. Be highly critical and look for explicit, undeniable evidence in the transcript.
+   - Lower Global Weight (<5%): These are secondary criteria. You may infer reasonably based on the candidate's seniority and overall pedigree.
+3. SCORING (1-10): Evaluate the candidate objectively. 
+   - 1-4: Significant gaps or red flags.
+   - 5-6: Meets basic expectations but lacks distinction.
+   - 7-8: Strong, proven capability with clear examples.
+   - 9-10: Exceptional, industry-leading expertise with quantifiable impact.
+4. EXTRACT INSIGHTS (EXTREME BREVITY REQUIRED):
+   - For paragraph sections: Write exactly 1 short, impactful sentence. Maximum 15-20 words.
+   - For bullet-point lists: Provide exactly 2 brief bullet points. Maximum 10-15 words per point. Do NOT write paragraphs as bullets.
+   - Eliminate all fluff, filler, and introductory phrasing. Get straight to the core facts.
+5. TONE: Use a professional, senior-executive tone — telegraphic, highly analytical, and strictly to the point. Less is more.`,
     })
       .then(async ({ object }) => {
         // Calculate average score based on weights
@@ -137,12 +210,12 @@ INSTRUCTIONS:
           .where(eq(candidateReports.id, reportId));
           
         // Update candidate score
-        const isFlCandidate = await db.select().from(flCandidates).where(eq(flCandidates.id, candidateId));
+        const isFlCandidate = await db.select().from(candidates).where(eq(candidates.id, candidateId));
         if (isFlCandidate.length > 0) {
           // Update Float List record
-          await db.update(flCandidates)
+          await db.update(candidates)
             .set({ score: overallScore, assessDate: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) })
-            .where(eq(flCandidates.id, candidateId));
+            .where(eq(candidates.id, candidateId));
             
           // Update any Mandate Candidate records linked to this Float List ID
           await db.update(mandateCandidates)

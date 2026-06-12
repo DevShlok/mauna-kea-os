@@ -38,7 +38,6 @@ export default function FrameworksClient({ initialFrameworks }: { initialFramewo
                     <div className="flex gap-2">
                       <button className="px-3 py-1 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800" onClick={() => router.push("/dashboard/frameworks/" + fw.id)}>Edit</button>
                       <button className="px-3 py-1 border border-gray-200 text-gray-500 rounded text-xs font-bold hover:bg-gray-50">Clone</button>
-                      <button className="px-3 py-1 border border-red-200 text-red-500 rounded text-xs font-bold hover:bg-red-50">Delete</button>
                     </div>
                   </td>
                 </tr>

@@ -19,12 +19,18 @@ export const mandates = mysqlTable('mandates', {
   clientPOC: varchar('client_poc', { length: 255 }),
   pocEmail: varchar('poc_email', { length: 255 }),
   pocPhone: varchar('poc_phone', { length: 50 }),
+  pocCc: json('poc_cc').$type<string[]>().default([]),
+  diversity: varchar('diversity', { length: 255 }),
+  targetCompanies: json('target_companies').$type<string[]>().default([]),
   jdUrl: varchar('jd_url', { length: 1000 }),
   interviewNotesUrl: varchar('interview_notes_url', { length: 1000 }),
   additionalDocsUrl: varchar('additional_docs_url', { length: 1000 }),
   jdText: text('jd_text'),
   interviewNotesText: text('interview_notes_text'),
   searchNotes: text('search_notes'),
+  additionalDocsText: text('additional_docs_text'),
+  openQuestions: text('open_questions'),
+  frameworkId: varchar('framework_id', { length: 20 }),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
@@ -44,8 +50,8 @@ export const mandateCandidates = mysqlTable('mandate_candidates', {
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
-// ─── FLOAT LIST CANDIDATES ───────────────────────────────
-export const flCandidates = mysqlTable('fl_candidates', {
+// ─── CANDIDATES (MASTER) ─────────────────────────────────
+export const candidates = mysqlTable('candidates', {
   id: varchar('id', { length: 20 }).primaryKey(),
   initials: varchar('initials', { length: 5 }),
   name: varchar('name', { length: 255 }).notNull(),
@@ -56,6 +62,8 @@ export const flCandidates = mysqlTable('fl_candidates', {
   designation: varchar('designation', { length: 255 }),
   exp: int('exp'),
   ctc: int('ctc'),
+  fixedCtc: int('fixed_ctc'),
+  variableCtc: int('variable_ctc'),
   expected: int('expected'),
   notice: int('notice'),
   status: varchar('status', { length: 50 }).default('Active'),
@@ -77,10 +85,10 @@ export const flCandidates = mysqlTable('fl_candidates', {
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
-// ─── FL REFERENCES ───────────────────────────────────────
-export const flReferences = mysqlTable('fl_references', {
+// ─── FLOAT REFERENCES ────────────────────────────────────
+export const floatReferences = mysqlTable('float_references', {
   id: int('id').autoincrement().primaryKey(),
-  candId: varchar('cand_id', { length: 20 }).notNull().references(() => flCandidates.id),
+  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
   type: varchar('type', { length: 50 }),
   name: varchar('name', { length: 255 }),
   org: varchar('org', { length: 255 }),
@@ -89,10 +97,10 @@ export const flReferences = mysqlTable('fl_references', {
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
-// ─── FL SUBMISSIONS ──────────────────────────────────────
-export const flSubmissions = mysqlTable('fl_submissions', {
+// ─── FLOATS (SUBMISSIONS) ────────────────────────────────
+export const floats = mysqlTable('floats', {
   id: varchar('id', { length: 20 }).primaryKey(),
-  candId: varchar('cand_id', { length: 20 }).notNull().references(() => flCandidates.id),
+  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
   candName: varchar('cand_name', { length: 255 }),
   client: varchar('client', { length: 255 }),
   role: varchar('role', { length: 255 }),
@@ -105,10 +113,10 @@ export const flSubmissions = mysqlTable('fl_submissions', {
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
-// ─── FL FOLLOW-UPS ───────────────────────────────────────
-export const flFollowUps = mysqlTable('fl_followups', {
+// ─── FLOAT FOLLOW-UPS ────────────────────────────────────
+export const floatFollowUps = mysqlTable('float_followups', {
   id: varchar('id', { length: 20 }).primaryKey(),
-  candId: varchar('cand_id', { length: 20 }).notNull().references(() => flCandidates.id),
+  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
   cand: varchar('cand', { length: 255 }),
   client: varchar('client', { length: 255 }),
   role: varchar('role', { length: 255 }),
@@ -119,10 +127,10 @@ export const flFollowUps = mysqlTable('fl_followups', {
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
-// ─── FL ACTIVITIES ───────────────────────────────────────
-export const flActivities = mysqlTable('fl_activities', {
+// ─── FLOAT ACTIVITIES ────────────────────────────────────
+export const floatActivities = mysqlTable('float_activities', {
   id: int('id').autoincrement().primaryKey(),
-  candId: varchar('cand_id', { length: 20 }).notNull().references(() => flCandidates.id),
+  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
   date: varchar('date', { length: 20 }),
   time: varchar('time', { length: 20 }),
   consultant: varchar('consultant', { length: 255 }),
@@ -172,7 +180,7 @@ export const platformUsers = mysqlTable('platform_users', {
 // ─── CANDIDATE REPORTS (AI WORKBENCH) ────────────────────
 export const candidateReports = mysqlTable('candidate_reports', {
   id: varchar('id', { length: 20 }).primaryKey(),
-  candidateId: varchar('candidate_id', { length: 20 }).notNull(), // Can be FlCandidate or MandateCandidate ID
+  candidateId: varchar('candidate_id', { length: 20 }).notNull(), // Can be Candidate or MandateCandidate ID
   frameworkId: varchar('framework_id', { length: 20 }).notNull().references(() => frameworks.id),
   status: varchar('status', { length: 50 }).default('Generating'), // Generating, Completed, Failed
   reportData: json('report_data'), // The dynamic JSON output from the AI
@@ -182,11 +190,11 @@ export const candidateReports = mysqlTable('candidate_reports', {
 // ─── TYPES ───────────────────────────────────────────────
 export type Mandate = typeof mandates.$inferSelect;
 export type MandateCandidate = typeof mandateCandidates.$inferSelect;
-export type FlCandidate = typeof flCandidates.$inferSelect;
-export type FlSubmission = typeof flSubmissions.$inferSelect;
-export type FlFollowUp = typeof flFollowUps.$inferSelect;
-export type FlReference = typeof flReferences.$inferSelect;
-export type FlActivity = typeof flActivities.$inferSelect;
+export type Candidate = typeof candidates.$inferSelect;
+export type Float = typeof floats.$inferSelect;
+export type FloatFollowUp = typeof floatFollowUps.$inferSelect;
+export type FloatReference = typeof floatReferences.$inferSelect;
+export type FloatActivity = typeof floatActivities.$inferSelect;
 export type Framework = typeof frameworks.$inferSelect;
 export type FrameworkCategory = typeof frameworkCategories.$inferSelect;
 export type FrameworkCriterion = typeof frameworkCriteria.$inferSelect;

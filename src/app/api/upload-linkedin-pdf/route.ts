@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { flCandidates } from "@/db/schema";
+import { candidates } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     const ext = file.name.split(".").pop() || "pdf";
 
     // Fetch candidate name for a nice filename
-    const candRows = await db.select().from(flCandidates).where(eq(flCandidates.id, candId));
+    const candRows = await db.select().from(candidates).where(eq(candidates.id, candId));
     const candName = candRows[0]?.name || candId;
     const filename = `${candName} - LinkedIn.${ext}`;
 
@@ -50,9 +50,9 @@ export async function POST(req: Request) {
     const driveUrl = driveData.url;
 
     // Update DB with Drive URL
-    await db.update(flCandidates)
+    await db.update(candidates)
       .set({ linkedinPdf: driveUrl })
-      .where(eq(flCandidates.id, candId));
+      .where(eq(candidates.id, candId));
 
     // Update Google Sheet (if configured)
     const sheetsWebhook = process.env.OS_SHEETS_WEBHOOK_URL;

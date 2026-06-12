@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { STAGE_OPTIONS, INTERNAL_OPTIONS } from "@/lib/helpers";
+import { STAGE_OPTIONS, INTERNAL_OPTIONS, formatMandateCtc } from "@/lib/helpers";
 
 type Candidate = { id: number; externalId: string; name: string; stage: string | null; score: number | null; hasReport: boolean | null; initials: string | null; mandateId: number; };
 type Mandate = { id: number; company: string; role: string; ctc: string | null; exp: string | null; sectors: string[]; status: string | null; internalStatus: string | null; consultant: string | null; candidates: Candidate[]; };
@@ -90,7 +90,7 @@ export default function MandatesClient({ initialMandates }: { initialMandates: M
                 <tr key={m.id} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => router.push("/dashboard/mandates/" + m.id)}>
                   <td className="px-4 py-3 font-semibold text-blue-900">{m.company}</td>
                   <td className="px-4 py-3 text-gray-700">{m.role}</td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{m.ctc}</td>
+                  <td className="px-4 py-3 text-gray-500 text-xs">{formatMandateCtc(m.ctc)}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{m.exp}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">{m.sectors.map(s => <span key={s} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">{s}</span>)}</div>

@@ -1,4 +1,4 @@
-import { getMandateCandidateByExtId, getFrameworks, getFlCandidates, getAllMandateCandidates, getMandates } from "@/db/queries";
+import { getMandateCandidateByExtId, getFrameworks, getCandidates, getAllMandateCandidates, getMandates } from "@/db/queries";
 import WorkbenchClient from "@/app/dashboard/workbench/WorkbenchClient";
 
 export default async function WorkbenchPage({ searchParams }: { searchParams: Promise<{ candId?: string, mandateId?: string }> }) {
@@ -10,9 +10,9 @@ export default async function WorkbenchPage({ searchParams }: { searchParams: Pr
     initialCandidate = await getMandateCandidateByExtId(candId);
   }
 
-  const [frameworksList, flCandidates, mandateCandidates, mandatesList] = await Promise.all([
+  const [frameworksList, candidates, mandateCandidates, mandatesList] = await Promise.all([
     getFrameworks(),
-    getFlCandidates(),
+    getCandidates(),
     getAllMandateCandidates(),
     getMandates()
   ]);
@@ -21,7 +21,7 @@ export default async function WorkbenchPage({ searchParams }: { searchParams: Pr
     <WorkbenchClient 
       initialCandidate={initialCandidate} 
       frameworks={frameworksList}
-      flCandidates={flCandidates}
+      candidates={candidates}
       mandateCandidates={mandateCandidates}
       mandates={mandatesList}
     />

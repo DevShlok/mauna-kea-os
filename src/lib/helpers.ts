@@ -49,3 +49,19 @@ export function getClosurePercent(status: string) {
   if (status === 'mapping') return 20;
   return 5;
 }
+
+export function formatMandateCtc(ctcStr: string | null) {
+  if (!ctcStr) return "-";
+  if (ctcStr.toLowerCase().includes('cr')) return ctcStr; 
+
+  // Remove any 'L' or 'lakhs' to standardize parsing
+  let clean = ctcStr.replace(/lakhs?|l/ig, '').trim();
+  
+  return clean.replace(/\d+(\.\d+)?/g, (match) => {
+    const num = parseFloat(match);
+    if (num >= 100) {
+      return (num / 100).toFixed(1).replace(/\.0$/, '') + 'Cr';
+    }
+    return num + 'L';
+  });
+}

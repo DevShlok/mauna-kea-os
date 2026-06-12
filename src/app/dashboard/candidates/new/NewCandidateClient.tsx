@@ -16,6 +16,8 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
     location: initialData?.location || "", 
     exp: initialData?.exp || "", 
     ctc: initialData?.ctc || "", 
+    fixedCtc: initialData?.fixedCtc || "",
+    variableCtc: initialData?.variableCtc || "",
     expected: initialData?.expected || "", 
     notice: initialData?.notice !== null && initialData?.notice !== undefined ? String(initialData?.notice) : "90", 
     status: initialData?.status || "Active", 
@@ -29,6 +31,8 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
   const [quals, setQuals] = useState<string[]>(initialData?.qual || []);
   const [customQual, setCustomQual] = useState("");
   const [expTags, setExpTags] = useState<string[]>(initialData?.expTags || []);
+  const [dreamRoles, setDreamRoles] = useState<string[]>(initialData?.dreamRoles || []);
+  const [dreamCompanies, setDreamCompanies] = useState<string[]>(initialData?.dreamCos || []);
   const [linkedinPdfFile, setLinkedinPdfFile] = useState<File | null>(null);
   const [cvPdfFile, setCvPdfFile] = useState<File | null>(null);
   const [profilePicBase64, setProfilePicBase64] = useState<string | null>(initialData?.profilePic || null);
@@ -122,11 +126,15 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
         location: form.location,
         exp: form.exp ? Number(form.exp) : null,
         ctc: form.ctc ? Number(form.ctc) : null,
+        fixedCtc: form.fixedCtc ? Number(form.fixedCtc) : null,
+        variableCtc: form.variableCtc ? Number(form.variableCtc) : null,
         expected: form.expected ? Number(form.expected) : null,
         notice: form.notice ? Number(form.notice) : null,
         status: form.status,
         qual: quals,
         expTags: expTags,
+        dreamRoles: dreamRoles,
+        dreamCos: dreamCompanies,
         linkedin: form.linkedin,
         targetCompany: form.targetCompany,
         currency: form.currency,
@@ -157,7 +165,11 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
         await fetch("/api/upload-cv", { method: "POST", body: fd });
       }
 
-      router.push("/dashboard/float-list/database");
+      if (isEdit) {
+        router.push(`/dashboard/candidates/${candId}`);
+      } else {
+        router.push("/dashboard/candidates");
+      }
       router.refresh();
     } catch (e) {
       console.error(e);
@@ -172,7 +184,7 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-6 flex gap-1 cursor-pointer">
         <Link href="/dashboard" className="hover:text-[#111]">Home</Link> / 
-        <Link href="/dashboard/float-list/database" className="hover:text-[#111]">Float List</Link> / 
+        <Link href="/dashboard/candidates" className="hover:text-[#111]">Candidate DB</Link> / 
         <span className="text-[#111]">{isEdit ? "Edit Candidate" : "Add Candidate"}</span>
       </div>
       <div className="flex items-center justify-between mb-5">
@@ -181,9 +193,9 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
 
       <div className="flex flex-col gap-4">
 
-        {/* ═══════════════════════════════════════════ */}
+        {/* ××××××××××××××××××××××××××××××××××××××××××× */}
         {/* MANDATORY FIELDS                            */}
-        {/* ═══════════════════════════════════════════ */}
+        {/* ××××××××××××××××××××××××××××××××××××××××××× */}
         <div className="bg-white border-2 border-[#123D8D] rounded-[10px] overflow-hidden shadow-sm">
           <div className="bg-[#123D8D] px-5 py-3 text-[12px] font-bold uppercase tracking-wide text-white border-b border-[#0d2f6e] flex items-center gap-2">
             <span className="text-red-300">●</span> Mandatory Fields
@@ -223,7 +235,7 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
             
             {/* Profile Picture Upload */}
             <div className="mt-5 border-t border-[#D4E0F0] pt-5">
-              <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Profile Picture (Optional)</label>
+              <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2"></label>
               <div className="flex items-center gap-5">
                 <div className="w-[80px] h-[80px] rounded-full bg-[#f4f7fd] border-2 border-dashed border-[#D4E0F0] flex items-center justify-center overflow-hidden shrink-0">
                   {profilePicBase64 ? (
@@ -245,9 +257,9 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
           </div>
         </div>
 
-        {/* ═══════════════════════════════════════════ */}
+        {/* ××××××××××××××××××××××××××××××××××××××××××× */}
         {/* ADDITIONAL DETAILS                          */}
-        {/* ═══════════════════════════════════════════ */}
+        {/* ××××××××××××××××××××××××××××××××××××××××××× */}
         <div className="bg-white border border-[#D4E0F0] rounded-[10px] overflow-hidden shadow-sm">
           <div 
             onClick={() => setShowAdditional(!showAdditional)}
@@ -304,15 +316,23 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
             <div className="border-t border-[#f0f0f0] pt-5 mb-3">
               <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Compensation & Status</div>
             </div>
-            <div className="grid grid-cols-4 gap-5 mb-6">
+            <div className="grid grid-cols-3 gap-5 mb-6">
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current CTC</label>
+                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current CTC (Total)</label>
                 <div className="flex gap-2">
                   <select value={form.currency} onChange={e=>setForm({...form, currency:e.target.value})} className="w-20 h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-2 text-[14px] outline-none bg-white focus:border-[#123D8D]">
                     {currencies.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                   <input type="number" value={form.ctc} onChange={e=>setForm({...form, ctc:e.target.value})} className="flex-1 h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="Amount" />
                 </div>
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Fixed CTC</label>
+                <input type="number" value={form.fixedCtc} onChange={e=>setForm({...form, fixedCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="Amount" />
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Variable CTC</label>
+                <input type="number" value={form.variableCtc} onChange={e=>setForm({...form, variableCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="Amount" />
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Expected CTC</label>
@@ -360,14 +380,43 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
             <div className="border-t border-[#f0f0f0] pt-5 mb-3">
               <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Past Roles & Experience</div>
             </div>
-            <p className="text-[12px] text-[#6b7a99] mb-2.5">Add each experience as &quot;Title – Company&quot;</p>
+            <p className="text-[12px] text-[#6b7a99] mb-2.5">Add each experience as &quot;Title - Company&quot;</p>
             <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#123D8D] transition-colors mb-6">
               {expTags.map(t => (
                 <span key={t} className="px-2.5 py-1 bg-[#DCE5F4] text-[#123D8D] rounded-[12px] text-[12px] font-semibold flex items-center gap-1.5">
                   {t} <span className="cursor-pointer font-bold opacity-60 hover:opacity-100" onClick={() => removeTag(t, setExpTags, expTags)}>×</span>
                 </span>
               ))}
-              <input type="text" className="border-none outline-none text-[14px] min-w-[200px] flex-1 bg-transparent h-8 px-2" placeholder="e.g. CFO – HDFC Bank, then Enter..." onKeyDown={e => handleAddTag(e, setExpTags, expTags)} />
+              <input type="text" className="border-none outline-none text-[14px] min-w-[200px] flex-1 bg-transparent h-8 px-2" placeholder="e.g. CFO - HDFC Bank, then Enter..." onKeyDown={e => handleAddTag(e, setExpTags, expTags)} />
+            </div>
+
+            {/* Career Aspirations */}
+            <div className="border-t border-[#f0f0f0] pt-5 mb-3">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Career Aspirations</div>
+            </div>
+            <div className="grid grid-cols-2 gap-5 mb-6">
+              <div>
+                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Dream Roles</label>
+                <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#123D8D] transition-colors">
+                  {dreamRoles.map(t => (
+                    <span key={t} className="px-2.5 py-1 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-[12px] text-[12px] font-semibold flex items-center gap-1.5">
+                      {t} <span className="cursor-pointer font-bold opacity-60 hover:opacity-100 hover:text-red-500" onClick={() => removeTag(t, setDreamRoles, dreamRoles)}>×</span>
+                    </span>
+                  ))}
+                  <input type="text" className="border-none outline-none text-[14px] min-w-[120px] flex-1 bg-transparent h-8 px-2" placeholder="e.g. CFO, then Enter..." onKeyDown={e => handleAddTag(e, setDreamRoles, dreamRoles)} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Dream Companies</label>
+                <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#123D8D] transition-colors">
+                  {dreamCompanies.map(t => (
+                    <span key={t} className="px-2.5 py-1 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-[12px] text-[12px] font-semibold flex items-center gap-1.5">
+                      {t} <span className="cursor-pointer font-bold opacity-60 hover:opacity-100 hover:text-red-500" onClick={() => removeTag(t, setDreamCompanies, dreamCompanies)}>×</span>
+                    </span>
+                  ))}
+                  <input type="text" className="border-none outline-none text-[14px] min-w-[120px] flex-1 bg-transparent h-8 px-2" placeholder="e.g. Kotak, then Enter..." onKeyDown={e => handleAddTag(e, setDreamCompanies, dreamCompanies)} />
+                </div>
+              </div>
             </div>
 
             {/* Documents & Notes */}
@@ -403,7 +452,7 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
       </div>
 
       <div className="flex gap-2.5 justify-end py-6">
-        <button onClick={() => router.push('/dashboard/float-list/database')} className="px-5 py-2.5 rounded-md text-[14px] font-semibold text-[#6b7a99] border border-[#D4E0F0] hover:bg-[#f4f7fd] transition-all">Cancel</button>
+        <button onClick={() => router.push('/dashboard/candidates')} className="px-5 py-2.5 rounded-md text-[14px] font-semibold text-[#6b7a99] border border-[#D4E0F0] hover:bg-[#f4f7fd] transition-all">Cancel</button>
         <button disabled={isSaving} onClick={handleSave} className="px-6 py-2.5 rounded-md text-[14px] font-bold bg-[#D8B15B] text-[#0d2f6e] hover:bg-[#e8c97a] transition-all">
           {isSaving ? "Saving..." : (isEdit ? "Update Candidate" : "Add to Float List")}
         </button>

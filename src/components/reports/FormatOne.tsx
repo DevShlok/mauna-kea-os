@@ -1,8 +1,31 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 export default function FormatOne({ mandate, candidates }: { mandate: any, candidates: any[] }) {
+  const [apifyData, setApifyData] = useState<Record<string, any>>({});
+  const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
+
+  const fetchLinkedInExp = async (candId: string, url: string) => {
+    try {
+      setIsLoading(prev => ({ ...prev, [candId]: true }));
+      const res = await fetch("/api/apify-linkedin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+      if (data.data) {
+        setApifyData(prev => ({ ...prev, [candId]: data.data }));
+      } else {
+        alert(data.error || "Failed to fetch LinkedIn data");
+      }
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setIsLoading(prev => ({ ...prev, [candId]: false }));
+    }
+  };
   return (
     <div className="flex flex-col gap-10 print:gap-0 bg-gray-100 print:bg-white py-10 print:py-0 items-center min-h-screen">
       {candidates.map((cand, idx) => {
@@ -20,6 +43,20 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
             </style>
             
             <div className="w-full h-full border-[10px] border-[#00174f] p-[20px] flex flex-col font-sans relative">
+              
+              {/* Fetch LinkedIn Button (Hidden on Print) */}
+              {cand.linkedin && !apifyData[cand.id] && (
+                <div className="absolute top-2 right-2 print:hidden z-10">
+                  <button 
+                    onClick={() => fetchLinkedInExp(cand.id, cand.linkedin)}
+                    disabled={isLoading[cand.id]}
+                    className="bg-[#123D8D] text-white text-[12px] px-3 py-1.5 rounded hover:bg-[#0d2f6e] disabled:opacity-50"
+                  >
+                    {isLoading[cand.id] ? "Fetching Experience..." : "Fetch LinkedIn Exp"}
+                  </button>
+                </div>
+              )}
+
               {/* Header / Name Bar */}
             <div className="flex h-[38px] rounded-lg overflow-hidden shadow-sm mb-4 shrink-0">
               <div className="bg-[#e28723] w-[50px] flex items-center justify-center font-bold text-[22px] text-white shrink-0 pr-1" style={{ borderBottomRightRadius: '16px', borderTopRightRadius: '16px' }}>
@@ -81,6 +118,17 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
               
               <div className="w-full border-t border-dashed border-gray-300"></div>
               <SectionBlock title="ASSESSMENT NOTES" items={assessmentNotes} />
+
+              {/* Injected Work Experience from Apify */}
+              {apifyData[cand.id] && apifyData[cand.id].experiences && (
+                <>
+                  <div className="w-full border-t border-dashed border-gray-300"></div>
+                  <SectionBlock 
+                    title="WORK EXPERIENCE (LinkedIn)" 
+                    items={apifyData[cand.id].experiences.map((e: any) => `${e.title || 'Role'} at ${e.company || 'Company'} (${e.starts_at ? e.starts_at + ' - ' + (e.ends_at || 'Present') : 'Dates'})`)} 
+                  />
+                </>
+              )}
             </div>
 
             </div>

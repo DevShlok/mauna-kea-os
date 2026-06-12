@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { addSubmissionAction, updateSubmissionAction } from "@/app/actions";
+import { addSubmissionAction, updateSubmissionAction, deleteSubmissionAction } from "@/app/actions";
 
 const STATUS_COLORS: Record<string, string> = {
   Shortlisted: "bg-green-100 text-green-800",
@@ -15,6 +15,10 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
   const [submissions, setSubmissions] = useState(initialSubmissions);
   const [isAdding, setIsAdding] = useState(false);
   const [form, setForm] = useState({ candName: "", candId: "", client: "", role: "" });
+  const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
@@ -58,7 +62,7 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
               {submissions.map((s: any) => {
                 const colorCls = STATUS_COLORS[s.status || ""] || "bg-gray-100 text-gray-600";
                 return (
-                  <tr key={s.id} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => router.push("/dashboard/float-list/" + s.candId)}>
+                  <tr key={s.id} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => { setSelectedSubmission(s); setEditForm(s); }}>
                     <td className="px-4 py-3 text-gray-400 text-xs font-mono">{s.id}</td>
                     <td className="px-4 py-3 font-semibold text-blue-900">{s.candName}</td>
                     <td className="px-4 py-3 text-gray-600">{s.role}<br/><span className="text-gray-400 text-xs">{s.client}</span></td>
@@ -171,6 +175,101 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
                 <button type="submit" className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800">Add Submission</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {selectedSubmission && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-[450px] overflow-hidden">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <div className="font-bold text-gray-900">Submission Details</div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => router.push("/dashboard/candidates/" + selectedSubmission.candId)}
+                  className="text-xs text-blue-600 font-bold hover:underline"
+                >
+                  View Profile
+                </button>
+                <button 
+                  onClick={() => router.push("/dashboard/float-list/" + selectedSubmission.candId)}
+                  className="text-xs text-purple-600 font-bold hover:underline"
+                >
+                  Submission History
+                </button>
+              </div>
+            </div>
+            <div className="p-5 flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1">Candidate Name</label>
+                <input value={editForm.candName || ""} onChange={e => setEditForm({...editForm, candName: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Target Company</label>
+                  <input value={editForm.client || ""} onChange={e => setEditForm({...editForm, client: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Target Role</label>
+                  <input value={editForm.role || ""} onChange={e => setEditForm({...editForm, role: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Consultant Name</label>
+                  <input value={editForm.consultant || ""} onChange={e => setEditForm({...editForm, consultant: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Status</label>
+                  <select value={editForm.status || "Shared"} onChange={e => setEditForm({...editForm, status: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none bg-white">
+                    <option value="Shared">Shared</option>
+                    <option value="Under Review">Under Review</option>
+                    <option value="Shortlisted">Shortlisted</option>
+                    <option value="Interviewing">Interviewing</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="Hired">Hired</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+              <button 
+                disabled={isDeleting}
+                onClick={async () => {
+                  if (!confirm("Are you sure you want to delete this submission? It will also be removed from the Mandate Pipeline.")) return;
+                  setIsDeleting(true);
+                  await deleteSubmissionAction(selectedSubmission.id);
+                  setSubmissions(submissions.filter((s: any) => s.id !== selectedSubmission.id));
+                  setIsDeleting(false);
+                  setSelectedSubmission(null);
+                }} 
+                className="px-4 py-2 border border-red-200 text-red-500 rounded text-xs font-bold hover:bg-red-50 disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+              <div className="flex gap-2">
+                <button onClick={() => setSelectedSubmission(null)} className="px-4 py-2 text-gray-500 font-semibold text-xs hover:text-gray-700">Cancel</button>
+                <button 
+                  disabled={isSaving}
+                  onClick={async () => {
+                    setIsSaving(true);
+                    await updateSubmissionAction(selectedSubmission.id, {
+                      candName: editForm.candName,
+                      client: editForm.client,
+                      role: editForm.role,
+                      consultant: editForm.consultant,
+                      status: editForm.status
+                    });
+                    setSubmissions(submissions.map((s: any) => s.id === selectedSubmission.id ? { ...s, ...editForm } : s));
+                    setIsSaving(false);
+                    setSelectedSubmission(null);
+                  }} 
+                  className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800 disabled:opacity-50"
+                >
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

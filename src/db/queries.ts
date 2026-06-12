@@ -2,13 +2,13 @@ import { db } from './index';
 import { eq, sql } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
 import {
-  mandates, mandateCandidates, flCandidates, flSubmissions, flReferences,
-  flFollowUps, flActivities, frameworks, frameworkCategories,
+  mandates, mandateCandidates, candidates, floats, floatReferences,
+  floatFollowUps, floatActivities, frameworks, frameworkCategories,
   frameworkCriteria, platformUsers, candidateReports
 } from './schema';
 
 // ─── MANDATES ────────────────────────────────────────────
-export const getMandates = unstable_cache(async () => {
+export const getMandates = async () => {
   const rows = await db.select().from(mandates).orderBy(mandates.id);
   const cands = await db.select().from(mandateCandidates);
   return rows.map(m => ({
@@ -16,9 +16,9 @@ export const getMandates = unstable_cache(async () => {
     sectors: (m.sectors ?? []) as string[],
     candidates: cands.filter(c => c.mandateId === m.id),
   }));
-}, ['getMandates'], { tags: ['dashboard-data'] });
+};
 
-export const getMandateById = unstable_cache(async (id: number) => {
+export const getMandateById = async (id: number) => {
   const [mandate] = await db.select().from(mandates).where(eq(mandates.id, id));
   if (!mandate) return null;
   const cands = await db.select().from(mandateCandidates).where(eq(mandateCandidates.mandateId, id));
@@ -27,7 +27,7 @@ export const getMandateById = unstable_cache(async (id: number) => {
     sectors: (mandate.sectors ?? []) as string[],
     candidates: cands,
   };
-}, ['getMandateById'], { tags: ['dashboard-data'] });
+};
 
 export async function updateMandateStatus(id: number, field: 'status' | 'internalStatus', value: string) {
   if (field === 'status') {
@@ -41,7 +41,7 @@ export async function updateCandidateStage(candId: number, newStage: string) {
   await db.update(mandateCandidates).set({ stage: newStage }).where(eq(mandateCandidates.id, candId));
 }
 
-export const getAllMandateCandidates = unstable_cache(async () => {
+export const getAllMandateCandidates = async () => {
   const cands = await db.select({
     id: mandateCandidates.id,
     externalId: mandateCandidates.externalId,
@@ -60,9 +60,9 @@ export const getAllMandateCandidates = unstable_cache(async () => {
   .from(mandateCandidates)
   .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id));
   return cands;
-}, ['getAllMandateCandidates'], { tags: ['dashboard-data'] });
+};
 
-export const getMandateCandidateByExtId = unstable_cache(async (extId: string) => {
+export const getMandateCandidateByExtId = async (extId: string) => {
   const [cand] = await db.select({
     id: mandateCandidates.id,
     externalId: mandateCandidates.externalId,
@@ -82,11 +82,11 @@ export const getMandateCandidateByExtId = unstable_cache(async (extId: string) =
   .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id))
   .where(eq(mandateCandidates.externalId, extId));
   return cand ?? null;
-}, ['getMandateCandidateByExtId'], { tags: ['dashboard-data'] });
+};
 
-// ─── FLOAT LIST CANDIDATES ───────────────────────────────
-export const getFlCandidates = unstable_cache(async () => {
-  const rows = await db.select().from(flCandidates).orderBy(flCandidates.id);
+// ─── CANDIDATES (MASTER) ─────────────────────────────────
+export const getCandidates = async () => {
+  const rows = await db.select().from(candidates).orderBy(candidates.id);
   return rows.map(c => ({
     ...c,
     qual: (c.qual ?? []) as string[],
@@ -94,15 +94,15 @@ export const getFlCandidates = unstable_cache(async () => {
     dreamCos: (c.dreamCos ?? []) as string[],
     expTags: (c.expTags ?? []) as string[],
   }));
-}, ['getFlCandidates'], { tags: ['dashboard-data'] });
+};
 
-export const getFlCandidateById = unstable_cache(async (id: string) => {
-  const [cand] = await db.select().from(flCandidates).where(eq(flCandidates.id, id));
+export const getCandidateById = async (id: string) => {
+  const [cand] = await db.select().from(candidates).where(eq(candidates.id, id));
   if (!cand) return null;
-  const activities = await db.select().from(flActivities).where(eq(flActivities.candId, id));
-  const submissions = await db.select().from(flSubmissions).where(eq(flSubmissions.candId, id));
-  const followUps = await db.select().from(flFollowUps).where(eq(flFollowUps.candId, id));
-  const references = await db.select().from(flReferences).where(eq(flReferences.candId, id));
+  const activities = await db.select().from(floatActivities).where(eq(floatActivities.candId, id));
+  const submissions = await db.select().from(floats).where(eq(floats.candId, id));
+  const followUps = await db.select().from(floatFollowUps).where(eq(floatFollowUps.candId, id));
+  const references = await db.select().from(floatReferences).where(eq(floatReferences.candId, id));
   return {
     ...cand,
     qual: (cand.qual ?? []) as string[],
@@ -114,21 +114,21 @@ export const getFlCandidateById = unstable_cache(async (id: string) => {
     followUps,
     references,
   };
-}, ['getFlCandidateById'], { tags: ['dashboard-data'] });
+};
 
-// ─── SUBMISSIONS ─────────────────────────────────────────
-export const getSubmissions = unstable_cache(async () => {
-  const rows = await db.select().from(flSubmissions).orderBy(flSubmissions.dateShared);
+// ─── FLOATS (SUBMISSIONS) ────────────────────────────────
+export const getFloats = async () => {
+  const rows = await db.select().from(floats).orderBy(floats.dateShared);
   return rows.map(s => ({ ...s, via: (s.via ?? []) as string[] }));
-}, ['getSubmissions'], { tags: ['dashboard-data'] });
+};
 
 // ─── FOLLOW-UPS ──────────────────────────────────────────
-export const getFollowUps = unstable_cache(async () => {
-  return db.select().from(flFollowUps).orderBy(flFollowUps.dueDate);
-}, ['getFollowUps'], { tags: ['dashboard-data'] });
+export const getFollowUps = async () => {
+  return db.select().from(floatFollowUps).orderBy(floatFollowUps.dueDate);
+};
 
 // ─── FRAMEWORKS ──────────────────────────────────────────
-export const getFrameworks = unstable_cache(async () => {
+export const getFrameworks = async () => {
   const fws = await db.select().from(frameworks);
   const cats = await db.select().from(frameworkCategories);
   const crits = await db.select().from(frameworkCriteria);
@@ -163,9 +163,9 @@ export const getFrameworks = unstable_cache(async () => {
         })),
     };
   });
-}, ['getFrameworks'], { tags: ['dashboard-data'] });
+};
 
-export const getFrameworkById = unstable_cache(async (id: string) => {
+export const getFrameworkById = async (id: string) => {
   const [fw] = await db.select().from(frameworks).where(eq(frameworks.id, id));
   if (!fw) return null;
   const cats = await db.select().from(frameworkCategories).where(eq(frameworkCategories.frameworkId, id));
@@ -177,21 +177,21 @@ export const getFrameworkById = unstable_cache(async (id: string) => {
       criteria: crits.filter(cr => cr.categoryId === c.id),
     })),
   };
-}, ['getFrameworkById'], { tags: ['dashboard-data'] });
+};
 
 // ─── USERS ───────────────────────────────────────────────
-export const getPlatformUsers = unstable_cache(async () => {
+export const getPlatformUsers = async () => {
   return db.select().from(platformUsers);
-}, ['getPlatformUsers'], { tags: ['dashboard-data'] });
+};
 
 // ─── ANALYTICS ───────────────────────────────────────────
-export const getAnalyticsData = unstable_cache(async () => {
+export const getAnalyticsData = async () => {
   const [mandateCount] = await db.select({ count: sql<number>`count(*)` }).from(mandates);
   const [candCount] = await db.select({ count: sql<number>`count(*)` }).from(mandateCandidates);
-  const [flCount] = await db.select({ count: sql<number>`count(*)` }).from(flCandidates);
+  const [flCount] = await db.select({ count: sql<number>`count(*)` }).from(candidates);
   return {
     activeMandates: Number(mandateCount?.count ?? 0),
     totalCandidates: Number(candCount?.count ?? 0),
     flTotal: Number(flCount?.count ?? 0),
   };
-}, ['getAnalyticsData'], { tags: ['dashboard-data'] });
+};

@@ -1,45 +1,67 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import CandidateReportPDF from "@/components/reports/CandidateReportPDF";
+import { updateCandidateStatusAction } from "@/app/actions";
 import FormatOne from "@/components/reports/FormatOne";
 import FormatTwo from "@/components/reports/FormatTwo";
 
 interface WorkbenchClientProps {
   initialCandidate: any;
   frameworks: any[];
-  flCandidates: any[];
+  candidates: any[];
   mandateCandidates: any[];
   mandates: any[];
 }
 
-export default function WorkbenchClient({ initialCandidate, frameworks, flCandidates, mandateCandidates, mandates }: WorkbenchClientProps) {
-  // Combine candidates for search
+export default function WorkbenchClient({ initialCandidate, frameworks, candidates, mandateCandidates, mandates }: WorkbenchClientProps) {
+  const router = useRouter();
+  
   const allCandidates = useMemo(() => {
-    const list = [];
-    for (const c of flCandidates) {
-      list.push({ ...c, searchId: `fl_${c.id}`, type: "Float List" });
-    }
-    for (const c of mandateCandidates) {
-      const flCand = flCandidates.find(fl => fl.id === c.externalId);
-      list.push({ 
-        ...flCand,
-        ...c, 
-        cvFileName: flCand?.cvFileName || c.cvFileName,
-        linkedinPdf: flCand?.linkedinPdf || c.linkedinPdf,
-        cvText: flCand?.cvText || c.cvText,
-        hasCv: flCand?.hasCv || c.hasCv,
-        searchId: `mc_${c.id}`, 
-        type: "Mandate Candidate" 
-      });
-    }
-    return list;
-  }, [flCandidates, mandateCandidates]);
+    return candidates.map(c => ({
+      ...c,
+      searchId: c.id.toString(),
+    }));
+  }, [candidates]);
 
-  const [selectedCandidateId, setSelectedCandidateId] = useState(initialCandidate ? `mc_${initialCandidate.id}` : "");
-  const [frameworkId, setFrameworkId] = useState(frameworks[0]?.id || "");
+  const [selectedCandidateId, setSelectedCandidateId] = useState(
+    initialCandidate ? (initialCandidate.externalId || initialCandidate.id).toString() : ""
+  );
+  const [frameworkId, setFrameworkId] = useState("");
   const [mandateId, setMandateId] = useState("");
   
+  const [isCandidateModalOpen, setIsCandidateModalOpen] = useState(false);
+  const [candidateSearch, setCandidateSearch] = useState("");
+  const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
+
+  const sortedAndFilteredCandidates = useMemo(() => {
+    let result = allCandidates.filter(c => 
+      c.name.toLowerCase().includes(candidateSearch.toLowerCase()) ||
+      c.company?.toLowerCase().includes(candidateSearch.toLowerCase()) ||
+      c.designation?.toLowerCase().includes(candidateSearch.toLowerCase())
+    );
+
+    if (sortConfig) {
+      result.sort((a, b) => {
+        const aVal = a[sortConfig.key] || "";
+        const bVal = b[sortConfig.key] || "";
+        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return result;
+  }, [allCandidates, candidateSearch, sortConfig]);
+
+  const requestSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
   const [interviewNotes, setInterviewNotes] = useState("");
   const [superiorRef, setSuperiorRef] = useState("");
   const [peerRef, setPeerRef] = useState("");
@@ -63,9 +85,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
     setTimeout(() => {
       setIsGeneratingFormat(false);
       setActiveView(format);
-      if (type === 'pdf') {
-         setTimeout(() => window.print(), 500);
-      } else {
+      if (type === 'pptx') {
          alert("PPTX downloaded!");
       }
     }, 2000);
@@ -74,6 +94,22 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
   const selectedCandidate = allCandidates.find(c => c.searchId === selectedCandidateId);
   const selectedFramework = frameworks.find(f => f.id === frameworkId);
   const selectedMandate = mandates.find(m => m.id.toString() === mandateId) || { role: "Candidate Profile", company: "" };
+
+  const filteredMandates = frameworkId ? mandates.filter(m => m.frameworkId?.toString() === frameworkId) : mandates;
+
+  // Auto-load framework when a mandate is selected
+  useEffect(() => {
+    if (mandateId) {
+      const selectedMandateForFramework = mandates.find(m => m.id.toString() === mandateId);
+      if (selectedMandateForFramework && selectedMandateForFramework.frameworkId) {
+        setFrameworkId(selectedMandateForFramework.frameworkId.toString());
+      } else {
+        setFrameworkId(""); // unlock if mandate has no framework
+      }
+    } else {
+      setFrameworkId(""); // clear framework if mandate is cleared
+    }
+  }, [mandateId, mandates]);
 
   // Initialize scores to 7 when framework changes
   useEffect(() => {
@@ -130,6 +166,9 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
     // Auto-select mandate if the candidate is attached to one
     if (candidateRef.mandateId) {
       setMandateId(candidateRef.mandateId.toString());
+    } else {
+      setMandateId("");
+      setFrameworkId("");
     }
 
     fetch(`/api/latest-report?candidateId=${candidateId}`)
@@ -232,6 +271,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
         body: JSON.stringify({
           candidateId: selectedCandidate.externalId || selectedCandidate.id,
           frameworkId,
+          mandateId: mandateId || undefined,
           transcript: combinedTranscript,
           feedback: {
             superior: superiorRef,
@@ -261,36 +301,25 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
 
       {/* TOP CONFIG BAR */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-6 flex gap-6 items-end">
-        <div className="flex-1">
+        <div className="flex-1 relative">
           <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Select Candidate</label>
-          <select 
-            value={selectedCandidateId} 
-            onChange={e => setSelectedCandidateId(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white"
+          <button 
+            onClick={() => setIsCandidateModalOpen(true)}
+            className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white text-left flex justify-between items-center hover:border-blue-500 transition-colors"
           >
-            <option value="">-- Choose Candidate --</option>
-            <optgroup label="Mandate Candidates">
-              {allCandidates.filter(c => c.type === "Mandate Candidate").map(c => (
-                <option key={c.searchId} value={c.searchId}>{c.name} ({c.company})</option>
-              ))}
-            </optgroup>
-            <optgroup label="Float List">
-              {allCandidates.filter(c => c.type === "Float List").map(c => (
-                <option key={c.searchId} value={c.searchId}>{c.name} ({c.company})</option>
-              ))}
-            </optgroup>
-          </select>
+            {selectedCandidate ? selectedCandidate.name : "-- Choose Candidate --"}
+          </button>
         </div>
         
         <div className="flex-1">
-          <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Link Mandate (Optional)</label>
+          <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Link Mandate</label>
           <select 
             value={mandateId} 
             onChange={e => setMandateId(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white"
           >
             <option value="">-- None --</option>
-            {mandates.map(m => (
+            {filteredMandates.map(m => (
               <option key={m.id} value={m.id}>{m.role} @ {m.company}</option>
             ))}
           </select>
@@ -301,8 +330,10 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
           <select 
             value={frameworkId} 
             onChange={e => setFrameworkId(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white"
+            disabled={!!(mandateId && selectedMandate?.frameworkId)}
+            className={`w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white ${!!(mandateId && selectedMandate?.frameworkId) ? 'opacity-60 cursor-not-allowed bg-gray-50' : ''}`}
           >
+            <option value="">-- Select Framework --</option>
             {frameworks.map(f => (
               <option key={f.id} value={f.id}>{f.name}</option>
             ))}
@@ -474,15 +505,6 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
               </div>
             ) : reportData ? (
               <div className="flex flex-col gap-4">
-                {activeView !== "draft" && (
-                  <div className="flex gap-2 bg-white p-2 rounded-xl border border-gray-200 shadow-sm sticky top-6 z-10 print:hidden justify-between items-center px-4">
-                    <span className="text-sm font-bold text-blue-900 uppercase">Final Report Preview</span>
-                    <div className="flex gap-2">
-                      <button onClick={() => setActiveView("draft")} className="px-4 py-2 bg-gray-100 text-gray-600 rounded text-sm font-bold hover:bg-gray-200">Back to Draft</button>
-                      <button onClick={() => window.print()} className="px-4 py-2 bg-yellow-500 text-blue-900 rounded text-sm font-bold hover:bg-yellow-400">Print PDF</button>
-                    </div>
-                  </div>
-                )}
                 {activeView === "draft" && (
                   <CandidateReportPDF 
                     candidate={selectedCandidate} 
@@ -492,23 +514,6 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
                     onGeneratePdf={(format) => handleGenerateFormat(format, 'pdf')}
                     onGeneratePptx={(format) => handleGenerateFormat(format, 'pptx')}
                   />
-                )}
-                {activeView === "format1" && (
-                  <div className="print:absolute print:left-0 print:top-0 print:w-full print:bg-white print:z-[9999] print:overflow-visible print:block">
-                    {reportData && selectedMandate && (
-                      <FormatTwo 
-                        mandate={selectedMandate} 
-                        candidates={[{ ...selectedCandidate, reportData }]} 
-                        framework={selectedFramework}
-                        scores={scores}
-                      />
-                    )}
-                  </div>
-                )}
-                {activeView === "format2" && (
-                  <div className="print:absolute print:left-0 print:top-0 print:w-full print:bg-white print:z-[9999] print:overflow-visible print:block">
-                    <FormatOne mandate={selectedMandate} candidates={[{...selectedCandidate, reportData}]} />
-                  </div>
                 )}
               </div>
             ) : isGenerating ? (
@@ -525,6 +530,151 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
                 <p className="text-sm text-gray-500">Click <strong>Generate Assessment Draft</strong> to create the assessment draft.</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Full Screen Report Preview Modal */}
+      {(activeView === "format1" || activeView === "format2") && reportData && selectedMandate && (
+        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex flex-col items-center overflow-y-auto print:static print:bg-white print:overflow-visible print:block">
+          
+          {/* Modal Header */}
+          <div className="w-[794px] flex justify-between items-center bg-white mt-10 mb-6 p-4 rounded-xl shadow-xl border border-gray-200 print:hidden shrink-0 animate-in slide-in-from-top-4 duration-300">
+            <span className="text-sm font-bold text-blue-900 uppercase ml-2">Final Report Preview</span>
+            <div className="flex gap-4 items-center">
+              <button onClick={() => window.print()} className="px-5 py-2 bg-yellow-500 text-blue-900 rounded-lg text-sm font-bold hover:bg-yellow-400 shadow-sm transition-colors">
+                Print / Download PDF
+              </button>
+              <button 
+                onClick={() => setActiveView("draft")} 
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors font-bold text-lg"
+                title="Close Preview"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Modal Body / Report */}
+          <div className="print:absolute print:left-0 print:top-0 print:w-full print:bg-white print:z-[9999] print:overflow-visible print:block pb-20 animate-in fade-in zoom-in-95 duration-300 shrink-0">
+            {activeView === "format1" && (
+              <FormatTwo 
+                mandate={selectedMandate} 
+                candidates={[{ ...selectedCandidate, reportData }]} 
+                framework={selectedFramework}
+                scores={scores}
+              />
+            )}
+            {activeView === "format2" && (
+              <FormatOne mandate={selectedMandate} candidates={[{...selectedCandidate, reportData}]} />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Candidate Selection Modal */}
+      {isCandidateModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-[1000px] h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Float Database</h2>
+                <p className="text-xs text-gray-500 mt-1">Select a candidate to assess in the AI Workbench</p>
+              </div>
+              <button onClick={() => setIsCandidateModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-500 transition-colors">✕</button>
+            </div>
+            
+            <div className="p-4 border-b border-gray-100 bg-white">
+              <div className="relative">
+                <input 
+                  type="text" 
+                  autoFocus
+                  placeholder="Search candidates by name, company, or designation..." 
+                  value={candidateSearch}
+                  onChange={e => setCandidateSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto bg-gray-50/30">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-50/80 sticky top-0 z-10 backdrop-blur-sm">
+                  <tr className="border-b border-gray-200">
+                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => requestSort('name')}>
+                      Candidate {sortConfig?.key === 'name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                    </th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => requestSort('company')}>
+                      Company {sortConfig?.key === 'company' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                    </th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => requestSort('designation')}>
+                      Designation {sortConfig?.key === 'designation' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                    </th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {sortedAndFilteredCandidates.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-16 text-center text-gray-400">
+                        <div className="text-sm">No candidates found matching "{candidateSearch}"</div>
+                      </td>
+                    </tr>
+                  ) : (
+                    sortedAndFilteredCandidates.map(c => (
+                      <tr key={c.searchId} className="hover:bg-blue-50/50 transition-colors group cursor-pointer" onClick={() => {
+                        setSelectedCandidateId(c.searchId);
+                        setIsCandidateModalOpen(false);
+                      }}>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded bg-blue-900 text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                              {c.initials || c.name.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div className="font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">{c.name}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-gray-600 font-medium">{c.company || "-"}</td>
+                        <td className="px-6 py-4 text-gray-600">{c.designation || c.role || "-"}</td>
+                        <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
+                          <select
+                            value={c.status || "Active"}
+                            onChange={async (e) => {
+                              try {
+                                await updateCandidateStatusAction(c.searchId, e.target.value);
+                                router.refresh();
+                              } catch(err) {
+                                console.error(err);
+                              }
+                            }}
+                            className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide border cursor-pointer outline-none ${
+                              c.status === 'Active' || !c.status ? 'bg-green-50 text-green-700 border-green-200' : 
+                              c.status === 'Passive' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                              c.status === 'Not Interested' ? 'bg-red-50 text-red-700 border-red-200' :
+                              'bg-gray-50 text-gray-600 border-gray-200'
+                            }`}
+                          >
+                            <option value="Active" className="bg-white text-gray-900">Active</option>
+                            <option value="Passive" className="bg-white text-gray-900">Passive</option>
+                            <option value="Not Interested" className="bg-white text-gray-900">Not Interested</option>
+                          </select>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button className="px-4 py-2 bg-white border border-gray-200 text-blue-900 font-bold text-xs rounded-lg group-hover:bg-blue-900 group-hover:text-white group-hover:border-blue-900 transition-all shadow-sm">
+                            Select
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { mandateCandidates, flCandidates } from "@/db/schema";
+import { mandateCandidates, candidates } from "@/db/schema";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     const results = [];
     
     for (const mc of mcs) {
-      const [fl] = await db.select().from(flCandidates).where(eq(flCandidates.id, mc.externalId));
+      const [fl] = await db.select().from(candidates).where(eq(candidates.id, mc.externalId));
       results.push({
         name: mc.name,
         mandateCandidateId: mc.id,
