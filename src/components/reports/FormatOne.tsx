@@ -11,7 +11,7 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
         const assessmentNotes = rp["Key Strengths"] || rp["MK Recommendation"] || ["Strong capability demonstrated."];
         
         return (
-          <div key={cand.id} className="bg-white w-[794px] h-[1122px] mx-auto shadow-xl print:shadow-none flex flex-col font-sans break-after-page mb-10 print:mb-0 border-[24px] border-white ring-[12px] ring-[#00174f] ring-inset p-[36px] box-border relative print:scale-100 max-w-none">
+          <div key={cand.id} className="bg-white w-[794px] h-[1122px] mx-auto shadow-xl print:shadow-none flex flex-col font-sans break-after-page mb-10 print:mb-0 border-[24px] border-white ring-[12px] ring-[#00174f] ring-inset py-[24px] px-[36px] box-border relative print:scale-100 max-w-none">
             <style type="text/css" media="print">
               {`
                 @page { size: A4; margin: 0mm; }
@@ -20,26 +20,26 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
             </style>
             
             {/* Header / Name Bar */}
-            <div className="flex h-[42px] rounded-lg overflow-hidden shadow-sm mb-5 shrink-0">
-              <div className="bg-[#e28723] w-[60px] flex items-center justify-center font-bold text-[24px] text-white shrink-0 pr-1" style={{ borderBottomRightRadius: '20px', borderTopRightRadius: '20px' }}>
+            <div className="flex h-[38px] rounded-lg overflow-hidden shadow-sm mb-4 shrink-0">
+              <div className="bg-[#e28723] w-[50px] flex items-center justify-center font-bold text-[22px] text-white shrink-0 pr-1" style={{ borderBottomRightRadius: '16px', borderTopRightRadius: '16px' }}>
                 {String(idx + 1).padStart(2, '0')}
               </div>
-              <div className="bg-[#00174f] flex-1 flex items-center pl-4 text-white text-[20px] font-bold uppercase tracking-wide" contentEditable suppressContentEditableWarning>
+              <div className="bg-[#00174f] flex-1 flex items-center pl-4 text-white text-[18px] font-bold uppercase tracking-wide" contentEditable suppressContentEditableWarning>
                 {cand.name}
               </div>
             </div>
 
             {/* Profile Info Section */}
-            <div className="flex gap-10 items-center mb-6 shrink-0">
+            <div className="flex gap-8 items-center mb-5 shrink-0">
               {/* Photo */}
               <div className="flex flex-col items-center shrink-0 ml-2">
-                <div className="w-[200px] h-[200px] rounded-full bg-blue-50 flex items-center justify-center text-6xl font-bold text-[#00174f] border-[1px] border-gray-200 overflow-hidden shadow-inner shrink-0" style={{ boxShadow: "inset 0 4px 6px rgba(0,0,0,0.1)" }}>
+                <div className="w-[160px] h-[160px] rounded-full bg-blue-50 flex items-center justify-center text-5xl font-bold text-[#00174f] border-[1px] border-gray-200 overflow-hidden shadow-inner shrink-0" style={{ boxShadow: "inset 0 4px 6px rgba(0,0,0,0.1)" }}>
                   {cand.initials || cand.name.substring(0, 2).toUpperCase()}
                 </div>
               </div>
 
               {/* Info Fields */}
-              <div className="flex-1 flex flex-col gap-3">
+              <div className="flex-1 flex flex-col gap-2">
                 <DetailRow icon={
                   <svg className="w-6 h-6 text-[#e28723]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -74,7 +74,7 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
             </div>
 
             {/* Notes Sections */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               <div className="w-full border-t border-dashed border-gray-300"></div>
               <SectionBlock title="NOTES" items={notes} />
               
@@ -95,9 +95,9 @@ function DetailRow({ icon, label, value }: { icon: React.ReactNode, label: strin
       <div className="w-10 h-10 flex items-center justify-center shrink-0 border border-[#e28723] rounded-full text-[#e28723] bg-orange-50/50">
         <div className="scale-[0.8]">{icon}</div>
       </div>
-      <div className="flex flex-col border-b border-dashed border-gray-300 pb-[6px] w-full">
-        <div className="text-[13px] font-bold text-[#00174f] tracking-wide leading-none mb-0.5">{label}</div>
-        <div className="text-[14px] text-[#333] font-medium leading-tight" contentEditable suppressContentEditableWarning>{value}</div>
+      <div className="flex flex-col border-b border-dashed border-gray-300 pb-[4px] w-full">
+        <div className="text-[12px] font-bold text-[#00174f] tracking-wide leading-none mb-0.5">{label}</div>
+        <div className="text-[13px] text-[#333] font-medium leading-tight" contentEditable suppressContentEditableWarning>{value}</div>
       </div>
     </div>
   );
@@ -107,10 +107,10 @@ function SectionBlock({ title, items }: { title: string, items: any }) {
   const list = Array.isArray(items) ? items : [items];
   return (
     <div className="flex flex-col">
-      <h3 className="text-[#e28723] text-[16px] font-bold uppercase tracking-wider mb-3 shrink-0">{title}</h3>
-      <ul className="list-none space-y-3">
+      <h3 className="text-[#e28723] text-[15px] font-bold uppercase tracking-wider mb-2 shrink-0">{title}</h3>
+      <ul className="list-none space-y-2">
         {list.map((item: string, i: number) => (
-          <li key={i} className="flex items-start text-[14px] text-[#333] font-medium leading-relaxed">
+          <li key={i} className="flex items-start text-[13px] text-[#333] font-medium leading-relaxed">
             <svg className="w-4 h-4 text-[#e28723] mr-3 mt-[3px] shrink-0" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>

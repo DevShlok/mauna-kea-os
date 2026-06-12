@@ -30,8 +30,8 @@ export default function ReportViewerClient({ mandate, candidates, format }: { ma
       </div>
 
       <div className="max-w-screen-xl mx-auto px-6 mt-10 print:mt-0 print:px-0">
-        {format === "1" && <FormatOne mandate={mandate} candidates={candidates} />}
-        {format === "2" && <FormatTwo mandate={mandate} candidates={candidates} />}
+        {format === "1" && <FormatTwo mandate={mandate} candidates={candidates} />}
+        {format === "2" && <FormatOne mandate={mandate} candidates={candidates} />}
       </div>
     </div>
   );

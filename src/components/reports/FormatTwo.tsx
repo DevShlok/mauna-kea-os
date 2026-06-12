@@ -27,6 +27,180 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
 
   const [isScraping, setIsScraping] = useState(false);
 
+  // Drag and Drop State
+  const [page1Blocks, setPage1Blocks] = useState([
+    'notes_summary', 'famous_for', 'career_aspiration', 'relevant_experience', 'motivation'
+  ]);
+  const [page2Blocks, setPage2Blocks] = useState([
+    'key_strengths', 'areas_to_probe', 'compensation', 'recommendation'
+  ]);
+
+  const [draggedItem, setDraggedItem] = useState<{ id: string, page: number, index: number } | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, id: string, page: number, index: number) => {
+    setDraggedItem({ id, page, index });
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number, page: number) => {
+    e.preventDefault();
+    if (!draggedItem || draggedItem.page !== page || draggedItem.index === index) return;
+    
+    const isPage1 = page === 1;
+    const items = isPage1 ? [...page1Blocks] : [...page2Blocks];
+    const item = items[draggedItem.index];
+    items.splice(draggedItem.index, 1);
+    items.splice(index, 0, item);
+    
+    if (isPage1) setPage1Blocks(items);
+    else setPage2Blocks(items);
+    
+    setDraggedItem({ ...draggedItem, index });
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+  };
+
+  // Feedback conditions
+  const hasInterviewer = rp["Interviewer Feedback"] && rp["Interviewer Feedback"].trim() !== "" && !rp["Interviewer Feedback"].toLowerCase().includes("not provided");
+  const hasSuperior = rp["Superior Reference"] && rp["Superior Reference"].trim() !== "" && !rp["Superior Reference"].toLowerCase().includes("not provided");
+  const hasPeer = rp["Peer Reference"] && rp["Peer Reference"].trim() !== "" && !rp["Peer Reference"].toLowerCase().includes("not provided");
+
+  const renderBlock = (blockId: string) => {
+    switch(blockId) {
+      case 'notes_summary':
+        return (
+          <p contentEditable suppressContentEditableWarning>
+            {rp["Notes Summary"]?.join(" ") || `${cand.name} is a finance and strategy leader with extensive experience...`}
+          </p>
+        );
+      case 'famous_for':
+        if (!hasInterviewer && !hasSuperior && !hasPeer) return null;
+        return (
+          <div>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+              What is {cand.name.split(' ')[0]} famous for
+            </h3>
+            <div className="space-y-2 ml-2">
+              {hasInterviewer && (
+                <p contentEditable suppressContentEditableWarning>
+                  <strong>Interviewer Feedback:</strong> {rp["Interviewer Feedback"]}
+                </p>
+              )}
+              {hasSuperior && (
+                <p contentEditable suppressContentEditableWarning>
+                  <strong>Superior Feedback:</strong> {rp["Superior Reference"]}
+                </p>
+              )}
+              {hasPeer && (
+                <p contentEditable suppressContentEditableWarning>
+                  <strong>Peer Feedback:</strong> {rp["Peer Reference"]}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      case 'career_aspiration':
+        return (
+          <div>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+              Career aspiration
+            </h3>
+            <p contentEditable suppressContentEditableWarning>
+              Details about career aspiration can be filled here...
+            </p>
+          </div>
+        );
+      case 'relevant_experience':
+        return (
+          <div>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+              Relevant Experience
+            </h3>
+            <div className="space-y-2 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+              <li className="pl-1">
+                <strong>{experienceList[0]?.companyName} (Current):</strong> Description of relevant achievements...
+              </li>
+              <li className="pl-1">
+                <strong>{experienceList[1]?.companyName}:</strong> Description of relevant achievements...
+              </li>
+            </div>
+          </div>
+        );
+      case 'motivation':
+        return (
+          <div>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+              Motivation for the role
+            </h3>
+            <p contentEditable suppressContentEditableWarning>
+              Motivated by the opportunity to move into a broader strategic leadership role...
+            </p>
+          </div>
+        );
+      case 'key_strengths':
+        return (
+          <div>
+            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
+              Key Strengths
+            </h3>
+            <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+              {rp["Key Strengths"]?.map((s: string, idx: number) => (
+                <li key={idx} className="pl-1">{s}</li>
+              )) || (
+                <>
+                  <li className="pl-1"><strong>Empathetic Leadership:</strong> Built a high-retention team from scratch...</li>
+                  <li className="pl-1"><strong>Strategic Storytelling:</strong> Expert at translating complex financial data...</li>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      case 'areas_to_probe':
+        return (
+          <div>
+            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
+              Areas to Probe
+            </h3>
+            <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+              {rp["Risks"]?.map((r: string, idx: number) => (
+                <li key={idx} className="pl-1">{r}</li>
+              )) || (
+                <>
+                  <li className="pl-1"><strong>Delegation Balance:</strong> Due to his speed and focus on quality...</li>
+                  <li className="pl-1"><strong>Proactive Insights:</strong> While collaborative, he aims to move beyond...</li>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      case 'compensation':
+        return (
+          <div>
+            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
+              Compensation
+            </h3>
+            <p contentEditable suppressContentEditableWarning>
+              ₹ 54 lakhs fixed + ~30% variable (~₹ 16 lakhs) + annual increment eligibility
+            </p>
+          </div>
+        );
+      case 'recommendation':
+        return (
+          <div>
+            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
+              Mauna Kea Recommendation
+            </h3>
+            <p contentEditable suppressContentEditableWarning>
+              {rp["Recommendation"]?.join(" ") || `${cand.name} is a strategic finance leader with deep expertise... His profile is best suited for organizations requiring structured financial governance and enhanced business visibility.`}
+            </p>
+          </div>
+        );
+      default: return null;
+    }
+  };
+
   // Initialize with some default if empty
   useEffect(() => {
     if (experienceList.length === 0) {
@@ -191,74 +365,26 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
 
         {/* Content Blocks */}
         <div className="mt-6 text-[14px] leading-relaxed text-justify space-y-5">
-          <p contentEditable suppressContentEditableWarning>
-            {rp["Notes Summary"]?.join(" ") || `${cand.name} is a finance and strategy leader with extensive experience...`}
-          </p>
-
-          {(() => {
-            const hasInterviewer = rp["Interviewer Feedback"] && rp["Interviewer Feedback"].trim() !== "" && !rp["Interviewer Feedback"].toLowerCase().includes("not provided");
-            const hasSuperior = rp["Superior Reference"] && rp["Superior Reference"].trim() !== "" && !rp["Superior Reference"].toLowerCase().includes("not provided");
-            const hasPeer = rp["Peer Reference"] && rp["Peer Reference"].trim() !== "" && !rp["Peer Reference"].toLowerCase().includes("not provided");
-            
-            if (!hasInterviewer && !hasSuperior && !hasPeer) return null;
-
+          {page1Blocks.map((blockId, index) => {
+            const content = renderBlock(blockId);
+            if (!content) return null;
             return (
-              <div>
-                <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
-                  What is {cand.name.split(' ')[0]} famous for
-                </h3>
-                <div className="space-y-2 ml-2">
-                  {hasInterviewer && (
-                    <p contentEditable suppressContentEditableWarning>
-                      <strong>Interviewer Feedback:</strong> {rp["Interviewer Feedback"]}
-                    </p>
-                  )}
-                  {hasSuperior && (
-                    <p contentEditable suppressContentEditableWarning>
-                      <strong>Superior Feedback:</strong> {rp["Superior Reference"]}
-                    </p>
-                  )}
-                  {hasPeer && (
-                    <p contentEditable suppressContentEditableWarning>
-                      <strong>Peer Feedback:</strong> {rp["Peer Reference"]}
-                    </p>
-                  )}
+              <div 
+                key={blockId}
+                draggable
+                onDragStart={(e) => handleDragStart(e, blockId, 1, index)}
+                onDragOver={(e) => handleDragOver(e, index, 1)}
+                onDragEnd={handleDragEnd}
+                className="group relative"
+              >
+                {/* Drag handle (visible on hover) */}
+                <div className="absolute -left-7 top-1 opacity-0 group-hover:opacity-100 cursor-move text-gray-400 print:hidden p-1.5 bg-white rounded shadow-sm border border-gray-200 z-50 hover:bg-gray-50 transition-opacity">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8h16M4 16h16"></path></svg>
                 </div>
+                {content}
               </div>
             );
-          })()}
-
-          <div>
-            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
-              Career aspiration
-            </h3>
-            <p contentEditable suppressContentEditableWarning>
-              Details about career aspiration can be filled here...
-            </p>
-          </div>
-
-          <div>
-            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
-              Relevant Experience
-            </h3>
-            <div className="space-y-2 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
-              <li className="pl-1">
-                <strong>{experienceList[0]?.companyName} (Current):</strong> Description of relevant achievements...
-              </li>
-              <li className="pl-1">
-                <strong>{experienceList[1]?.companyName}:</strong> Description of relevant achievements...
-              </li>
-            </div>
-          </div>
-
-          <div>
-            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
-              Motivation for the role
-            </h3>
-            <p contentEditable suppressContentEditableWarning>
-              Motivated by the opportunity to move into a broader strategic leadership role...
-            </p>
-          </div>
+          })}
         </div>
       </div>
 
@@ -318,55 +444,26 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
 
         {/* Remaining Content Blocks */}
         <div className="text-[13px] leading-snug text-justify space-y-3">
-          <div>
-            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
-              Key Strengths
-            </h3>
-            <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
-              {rp["Key Strengths"]?.map((s: string, idx: number) => (
-                <li key={idx} className="pl-1">{s}</li>
-              )) || (
-                <>
-                  <li className="pl-1"><strong>Empathetic Leadership:</strong> Built a high-retention team from scratch...</li>
-                  <li className="pl-1"><strong>Strategic Storytelling:</strong> Expert at translating complex financial data...</li>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
-              Areas to Probe
-            </h3>
-            <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
-              {rp["Risks"]?.map((r: string, idx: number) => (
-                <li key={idx} className="pl-1">{r}</li>
-              )) || (
-                <>
-                  <li className="pl-1"><strong>Delegation Balance:</strong> Due to his speed and focus on quality...</li>
-                  <li className="pl-1"><strong>Proactive Insights:</strong> While collaborative, he aims to move beyond...</li>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
-              Compensation
-            </h3>
-            <p contentEditable suppressContentEditableWarning>
-              ₹ 54 lakhs fixed + ~30% variable (~₹ 16 lakhs) + annual increment eligibility
-            </p>
-          </div>
-
-          <div>
-            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
-              Mauna Kea Recommendation
-            </h3>
-            <p contentEditable suppressContentEditableWarning>
-              {rp["Recommendation"]?.join(" ") || `${cand.name} is a strategic finance leader with deep expertise... His profile is best suited for organizations requiring structured financial governance and enhanced business visibility.`}
-            </p>
-          </div>
+          {page2Blocks.map((blockId, index) => {
+            const content = renderBlock(blockId);
+            if (!content) return null;
+            return (
+              <div 
+                key={blockId}
+                draggable
+                onDragStart={(e) => handleDragStart(e, blockId, 2, index)}
+                onDragOver={(e) => handleDragOver(e, index, 2)}
+                onDragEnd={handleDragEnd}
+                className="group relative"
+              >
+                {/* Drag handle (visible on hover) */}
+                <div className="absolute -left-7 top-0 opacity-0 group-hover:opacity-100 cursor-move text-gray-400 print:hidden p-1.5 bg-white rounded shadow-sm border border-gray-200 z-50 hover:bg-gray-50 transition-opacity">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8h16M4 16h16"></path></svg>
+                </div>
+                {content}
+              </div>
+            );
+          })}
         </div>
 
       </div>
