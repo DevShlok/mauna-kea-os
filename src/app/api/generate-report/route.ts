@@ -51,8 +51,10 @@ export async function POST(req: Request) {
       if (!schemaObject[field]) {
         if (field === "Notes Summary") {
           schemaObject[field] = z.array(z.string()).describe("A brief 3-4 bullet point summary of overall notes, background, and fit.");
+        } else if (field === "Team Reference") {
+          schemaObject[field] = z.string().describe("Extract and summarize the Team or Subordinate feedback directly from the general Interview Notes provided. Keep it to 1-2 impactful sentences.");
         } else if (field.includes("Reference")) {
-          schemaObject[field] = z.string().describe(`Summarize the ${field} using professional executive language based on the provided notes. Keep it to 1-2 impactful sentences.`);
+          schemaObject[field] = z.string().describe(`Summarize the ${field} using professional executive language based on the provided explicit notes for it. Keep it to 1-2 impactful sentences.`);
         } else {
           schemaObject[field] = z.string().describe(`Extract or infer ${field} from the transcript. Keep it extremely brief (e.g. 'Kohler India', 'IIM L', 'INR 85L', '400+'). Leave blank if not available.`);
         }
