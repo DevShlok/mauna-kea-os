@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { candidateId, frameworkId, transcript } = await req.json();
+    const { candidateId, frameworkId, transcript, feedback } = await req.json();
 
     if (!candidateId || !frameworkId || !transcript) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -127,9 +127,17 @@ INSTRUCTIONS:
         
         const overallScore = totalWeight > 0 ? Number((totalWeightedScore / totalWeight).toFixed(1)) : 0;
 
+        // Merge direct manual feedbacks to prevent AI hallucination
+        const finalReportData = {
+          ...object,
+          "Superior Reference": feedback?.superior || "",
+          "Peer Reference": feedback?.peer || "",
+          "Team Reference": feedback?.team || "",
+        };
+
         // Update report
         await db.update(candidateReports)
-          .set({ status: "Completed", reportData: object })
+          .set({ status: "Completed", reportData: finalReportData })
           .where(eq(candidateReports.id, reportId));
           
         // Update candidate score

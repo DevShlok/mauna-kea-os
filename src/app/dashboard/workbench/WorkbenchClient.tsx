@@ -43,6 +43,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
   const [interviewNotes, setInterviewNotes] = useState("");
   const [superiorRef, setSuperiorRef] = useState("");
   const [peerRef, setPeerRef] = useState("");
+  const [teamRef, setTeamRef] = useState("");
   
   // Scoring state: { [criterionId]: number }
   const [scores, setScores] = useState<Record<number, number>>({});
@@ -137,6 +138,10 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
       .then(data => {
         if (data.exists && data.report?.reportData) {
           setReportData(data.report.reportData);
+          setInterviewNotes("");
+          setSuperiorRef(data.report.reportData["Superior Reference"] || "");
+          setPeerRef(data.report.reportData["Peer Reference"] || "");
+          setTeamRef(data.report.reportData["Team Reference"] || "");
           setReportId(data.report.id);
           setReportExistsInDb(true);
           
@@ -229,7 +234,12 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
         body: JSON.stringify({
           candidateId: selectedCandidate.externalId || selectedCandidate.id,
           frameworkId,
-          transcript: combinedTranscript
+          transcript: combinedTranscript,
+          feedback: {
+            superior: superiorRef,
+            peer: peerRef,
+            team: teamRef
+          }
         })
       });
 
@@ -415,7 +425,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
             </div>
 
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-              <h3 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2">Reference Feedback</h3>
+              <h3 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2">Reference Feedback (What is the candidate famous for?)</h3>
               <div className="space-y-4">
                 <div>
                   <div className="text-xs font-bold text-gray-500 mb-1">Superior Reference</div>
@@ -424,6 +434,10 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
                 <div>
                   <div className="text-xs font-bold text-gray-500 mb-1">Peer Reference</div>
                   <textarea rows={2} value={peerRef} onChange={e => setPeerRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-900 resize-none" placeholder="Enter peer reference..."></textarea>
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-gray-500 mb-1">Team / Subordinate Reference</div>
+                  <textarea rows={2} value={teamRef} onChange={e => setTeamRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-900 resize-none" placeholder="Enter team reference..."></textarea>
                 </div>
               </div>
             </div>
