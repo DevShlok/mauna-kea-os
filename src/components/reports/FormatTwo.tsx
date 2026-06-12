@@ -37,6 +37,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
 
   const dragItem = React.useRef<{ index: number, page: number } | null>(null);
   const dragOverItem = React.useRef<{ index: number, page: number } | null>(null);
+  const [draggableId, setDraggableId] = useState<string | null>(null);
 
   const handleDragStart = (e: React.DragEvent, page: number, index: number) => {
     dragItem.current = { index, page };
@@ -285,7 +286,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
   const headerColor = "text-[#003366]";
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-10 print:gap-0">
       <style type="text/css" media="print" dangerouslySetInnerHTML={{ __html: PageStyle }} />
 
       {/* PAGE 1 */}
@@ -374,7 +375,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
             return (
               <div 
                 key={blockId}
-                draggable
+                draggable={draggableId === blockId}
                 onDragStart={(e) => handleDragStart(e, 1, index)}
                 onDragEnter={(e) => handleDragEnter(e, 1, index)}
                 onDragOver={(e) => e.preventDefault()}
@@ -382,7 +383,11 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
                 className="group relative"
               >
                 {/* Drag handle (visible on hover) */}
-                <div className="absolute -left-7 top-1 opacity-0 group-hover:opacity-100 cursor-move text-gray-400 print:hidden p-1.5 bg-white rounded shadow-sm border border-gray-200 z-50 hover:bg-gray-50 transition-opacity">
+                <div 
+                  className="absolute -left-7 top-1 opacity-0 group-hover:opacity-100 cursor-move text-gray-400 print:hidden p-1.5 bg-white rounded shadow-sm border border-gray-200 z-50 hover:bg-gray-50 transition-opacity"
+                  onMouseEnter={() => setDraggableId(blockId)}
+                  onMouseLeave={() => setDraggableId(null)}
+                >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8h16M4 16h16"></path></svg>
                 </div>
                 {content}
@@ -454,7 +459,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
             return (
               <div 
                 key={blockId}
-                draggable
+                draggable={draggableId === blockId}
                 onDragStart={(e) => handleDragStart(e, 2, index)}
                 onDragEnter={(e) => handleDragEnter(e, 2, index)}
                 onDragOver={(e) => e.preventDefault()}
@@ -462,7 +467,11 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
                 className="group relative"
               >
                 {/* Drag handle (visible on hover) */}
-                <div className="absolute -left-7 top-0 opacity-0 group-hover:opacity-100 cursor-move text-gray-400 print:hidden p-1.5 bg-white rounded shadow-sm border border-gray-200 z-50 hover:bg-gray-50 transition-opacity">
+                <div 
+                  className="absolute -left-7 top-0 opacity-0 group-hover:opacity-100 cursor-move text-gray-400 print:hidden p-1.5 bg-white rounded shadow-sm border border-gray-200 z-50 hover:bg-gray-50 transition-opacity"
+                  onMouseEnter={() => setDraggableId(blockId)}
+                  onMouseLeave={() => setDraggableId(null)}
+                >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8h16M4 16h16"></path></svg>
                 </div>
                 {content}

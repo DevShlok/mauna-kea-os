@@ -4,7 +4,7 @@ import React from "react";
 
 export default function FormatOne({ mandate, candidates }: { mandate: any, candidates: any[] }) {
   return (
-    <div className="flex flex-col gap-10 bg-gray-100 py-10 items-center min-h-screen">
+    <div className="flex flex-col gap-10 print:gap-0 bg-gray-100 print:bg-white py-10 print:py-0 items-center min-h-screen">
       {candidates.map((cand, idx) => {
         const rp = cand.reportData || {};
         const notes = rp["Notes Summary"] || rp["Relevant Experience"] || ["Detailed notes regarding the candidate's experience and fit."];
