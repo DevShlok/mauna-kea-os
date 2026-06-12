@@ -35,35 +35,32 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
     'key_strengths', 'areas_to_probe', 'compensation', 'recommendation'
   ]);
 
-  const dragItem = React.useRef<{ index: number, page: number } | null>(null);
-  const dragOverItem = React.useRef<{ index: number, page: number } | null>(null);
-  const [draggableId, setDraggableId] = useState<string | null>(null);
+  // Block Ordering State
+  const [page1Blocks, setPage1Blocks] = useState([
+    'notes_summary', 'famous_for', 'career_aspiration', 'relevant_experience', 'motivation'
+  ]);
+  const [page2Blocks, setPage2Blocks] = useState([
+    'key_strengths', 'areas_to_probe', 'compensation', 'recommendation'
+  ]);
 
-  const handleDragStart = (e: React.DragEvent, page: number, index: number) => {
-    dragItem.current = { index, page };
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragEnter = (e: React.DragEvent, page: number, index: number) => {
-    dragOverItem.current = { index, page };
-  };
-
-  const handleDragEnd = () => {
-    if (dragItem.current && dragOverItem.current && dragItem.current.page === dragOverItem.current.page) {
-      const page = dragItem.current.page;
-      const isPage1 = page === 1;
-      const items = isPage1 ? [...page1Blocks] : [...page2Blocks];
-      
-      const draggedItemContent = items[dragItem.current.index];
-      items.splice(dragItem.current.index, 1);
-      items.splice(dragOverItem.current.index, 0, draggedItemContent);
-      
-      if (isPage1) setPage1Blocks(items);
-      else setPage2Blocks(items);
+  const moveBlock = (page: number, index: number, direction: 'up' | 'down') => {
+    const isPage1 = page === 1;
+    const blocks = isPage1 ? [...page1Blocks] : [...page2Blocks];
+    
+    if (direction === 'up' && index > 0) {
+      const temp = blocks[index - 1];
+      blocks[index - 1] = blocks[index];
+      blocks[index] = temp;
+    } else if (direction === 'down' && index < blocks.length - 1) {
+      const temp = blocks[index + 1];
+      blocks[index + 1] = blocks[index];
+      blocks[index] = temp;
+    } else {
+      return;
     }
     
-    dragItem.current = null;
-    dragOverItem.current = null;
+    if (isPage1) setPage1Blocks(blocks);
+    else setPage2Blocks(blocks);
   };
 
   // Feedback conditions
@@ -375,20 +372,26 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
             return (
               <div 
                 key={blockId}
-                draggable={draggableId === blockId}
-                onDragStart={(e) => handleDragStart(e, 1, index)}
-                onDragEnter={(e) => handleDragEnter(e, 1, index)}
-                onDragOver={(e) => e.preventDefault()}
-                onDragEnd={handleDragEnd}
                 className="group relative"
               >
-                {/* Drag handle (visible on hover) */}
-                <div 
-                  className="absolute -left-7 top-1 opacity-0 group-hover:opacity-100 cursor-move text-gray-400 print:hidden p-1.5 bg-white rounded shadow-sm border border-gray-200 z-50 hover:bg-gray-50 transition-opacity"
-                  onMouseEnter={() => setDraggableId(blockId)}
-                  onMouseLeave={() => setDraggableId(null)}
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8h16M4 16h16"></path></svg>
+                {/* Move Controls (visible on hover) */}
+                <div className="absolute -left-9 top-0 opacity-0 group-hover:opacity-100 flex flex-col gap-1 print:hidden z-50">
+                  <button 
+                    onClick={() => moveBlock(1, index, 'up')}
+                    disabled={index === 0}
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Move Up"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7"></path></svg>
+                  </button>
+                  <button 
+                    onClick={() => moveBlock(1, index, 'down')}
+                    disabled={index === page1Blocks.length - 1}
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Move Down"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>
+                  </button>
                 </div>
                 {content}
               </div>
@@ -459,20 +462,26 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
             return (
               <div 
                 key={blockId}
-                draggable={draggableId === blockId}
-                onDragStart={(e) => handleDragStart(e, 2, index)}
-                onDragEnter={(e) => handleDragEnter(e, 2, index)}
-                onDragOver={(e) => e.preventDefault()}
-                onDragEnd={handleDragEnd}
                 className="group relative"
               >
-                {/* Drag handle (visible on hover) */}
-                <div 
-                  className="absolute -left-7 top-0 opacity-0 group-hover:opacity-100 cursor-move text-gray-400 print:hidden p-1.5 bg-white rounded shadow-sm border border-gray-200 z-50 hover:bg-gray-50 transition-opacity"
-                  onMouseEnter={() => setDraggableId(blockId)}
-                  onMouseLeave={() => setDraggableId(null)}
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8h16M4 16h16"></path></svg>
+                {/* Move Controls (visible on hover) */}
+                <div className="absolute -left-9 top-0 opacity-0 group-hover:opacity-100 flex flex-col gap-1 print:hidden z-50">
+                  <button 
+                    onClick={() => moveBlock(2, index, 'up')}
+                    disabled={index === 0}
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Move Up"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7"></path></svg>
+                  </button>
+                  <button 
+                    onClick={() => moveBlock(2, index, 'down')}
+                    disabled={index === page2Blocks.length - 1}
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Move Down"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>
+                  </button>
                 </div>
                 {content}
               </div>
