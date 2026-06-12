@@ -112,20 +112,20 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
       <style type="text/css" media="print" dangerouslySetInnerHTML={{ __html: PageStyle }} />
 
       {/* PAGE 1 */}
-      <div className={`bg-white w-[794px] h-[1122px] mx-auto shadow-2xl print:shadow-none relative box-border print:scale-100 max-w-none p-[50px] overflow-hidden print:break-after-page ${fontStyle}`}>
+      <div className={`bg-white w-[794px] h-[1122px] mx-auto shadow-2xl print:shadow-none relative box-border print:scale-100 max-w-none px-[40px] py-[35px] overflow-hidden print:break-after-page ${fontStyle}`}>
         {/* Header */}
-        <div className="flex justify-center w-full mb-6 pb-4 border-b border-gray-200">
-          <h1 className="text-4xl font-serif font-medium text-black tracking-[0.4em] uppercase" contentEditable suppressContentEditableWarning>
+        <div className="flex justify-end w-full mb-4 pb-2 border-b border-gray-200">
+          <h1 className="text-3xl font-serif font-medium text-black tracking-[0.4em] uppercase" contentEditable suppressContentEditableWarning>
             MAUNA KEA
           </h1>
         </div>
 
         {/* Top Profile + Timeline Section */}
-        <div className="flex flex-row justify-between w-full h-[260px]">
+        <div className="flex flex-row justify-between w-full min-h-[160px]">
           {/* Left: Profile */}
           <div className="w-[30%] flex flex-col items-center">
-            <div className="relative w-[140px] h-[140px]">
-              <div className={`w-[140px] h-[140px] rounded-full border-4 border-black object-cover flex items-center justify-center text-5xl font-bold text-black bg-gray-50 shadow-md overflow-hidden`}>
+            <div className="relative w-[120px] h-[120px]">
+              <div className={`w-[120px] h-[120px] rounded-full border-4 border-black object-cover flex items-center justify-center text-4xl font-bold text-black bg-gray-50 shadow-md overflow-hidden`}>
                 {cand.profilePic ? (
                   <img src={cand.profilePic} alt={cand.name} className="w-full h-full object-cover" />
                 ) : (
@@ -155,7 +155,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           {/* Right: Timeline Grid */}
           <div className="w-[65%] border border-gray-100 bg-gray-50/30 rounded-xl p-4 overflow-hidden relative">
             <div className="absolute left-[39%] top-6 bottom-6 w-[2px] bg-blue-100 z-0"></div>
-            <div className="flex flex-col gap-5 z-10 relative">
+            <div className="flex flex-col gap-4 z-10 relative">
               {experienceList.map((exp, i) => (
                 <div key={i} className="flex flex-row items-center justify-between text-[11px]">
                   <div className="w-[35%] flex items-center gap-3">
@@ -190,13 +190,13 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         </div>
 
         {/* Content Blocks */}
-        <div className="mt-5 text-[14px] leading-relaxed text-justify space-y-4">
+        <div className="mt-6 text-[14px] leading-relaxed text-justify space-y-5">
           <p contentEditable suppressContentEditableWarning>
             {rp["Notes Summary"]?.join(" ") || `${cand.name} is a finance and strategy leader with extensive experience...`}
           </p>
 
           <div>
-            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
               What is {cand.name.split(' ')[0]} famous for
             </h3>
             <div className="space-y-2 ml-2">
@@ -213,7 +213,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           </div>
 
           <div>
-            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
               Career aspiration
             </h3>
             <p contentEditable suppressContentEditableWarning>
@@ -222,7 +222,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           </div>
 
           <div>
-            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
               Relevant Experience
             </h3>
             <div className="space-y-2 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
@@ -236,7 +236,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           </div>
 
           <div>
-            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
               Motivation for the role
             </h3>
             <p contentEditable suppressContentEditableWarning>
@@ -247,11 +247,11 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
       </div>
 
       {/* PAGE 2 */}
-      <div className={`bg-white w-[794px] h-[1122px] mx-auto shadow-2xl print:shadow-none relative box-border print:scale-100 max-w-none p-[50px] overflow-hidden ${fontStyle}`}>
+      <div className={`bg-white w-[794px] h-[1122px] mx-auto shadow-2xl print:shadow-none relative box-border print:scale-100 max-w-none px-[40px] py-[35px] overflow-hidden ${fontStyle}`}>
         {/* Header */}
-        <div className="flex justify-end mb-2">
-          <h1 className={`text-2xl font-bold ${headerColor}`} contentEditable suppressContentEditableWarning>
-            <span className="font-normal text-gray-700">Mauna Kea</span> International
+        <div className="flex justify-end w-full mb-3 pb-2 border-b border-gray-200">
+          <h1 className="text-3xl font-serif font-medium text-black tracking-[0.4em] uppercase" contentEditable suppressContentEditableWarning>
+            MAUNA KEA
           </h1>
         </div>
         <div className="mb-3">
@@ -301,12 +301,12 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         </div>
 
         {/* Remaining Content Blocks */}
-        <div className="text-[14px] leading-relaxed text-justify space-y-4">
+        <div className="text-[13px] leading-snug text-justify space-y-3">
           <div>
-            <h3 className={`text-[18px] font-bold ${headerColor} mb-3`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
               Key Strengths
             </h3>
-            <div className="space-y-2 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+            <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
               {rp["Key Strengths"]?.map((s: string, idx: number) => (
                 <li key={idx} className="pl-1">{s}</li>
               )) || (
@@ -319,10 +319,10 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           </div>
 
           <div>
-            <h3 className={`text-[18px] font-bold ${headerColor} mb-3`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
               Areas to Probe
             </h3>
-            <div className="space-y-2 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+            <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
               {rp["Risks"]?.map((r: string, idx: number) => (
                 <li key={idx} className="pl-1">{r}</li>
               )) || (
@@ -335,7 +335,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           </div>
 
           <div>
-            <h3 className={`text-[18px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
               Compensation
             </h3>
             <p contentEditable suppressContentEditableWarning>
@@ -344,7 +344,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           </div>
 
           <div>
-            <h3 className={`text-[18px] font-bold ${headerColor} mb-3`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
               Mauna Kea Recommendation
             </h3>
             <p contentEditable suppressContentEditableWarning>
