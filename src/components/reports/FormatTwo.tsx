@@ -114,9 +114,9 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
       {/* PAGE 1 */}
       <div className={`bg-white w-[794px] h-[1122px] mx-auto shadow-2xl print:shadow-none relative box-border print:scale-100 max-w-none p-[50px] overflow-hidden print:break-after-page ${fontStyle}`}>
         {/* Header */}
-        <div className="flex justify-end mb-4 border-b border-gray-200 pb-3">
-          <h1 className={`text-2xl font-bold ${headerColor}`} contentEditable suppressContentEditableWarning>
-            <span className="font-normal text-gray-700">Mauna Kea</span> International
+        <div className="flex justify-center w-full mb-6 pb-4 border-b border-gray-200">
+          <h1 className="text-4xl font-serif font-medium text-black tracking-[0.4em] uppercase" contentEditable suppressContentEditableWarning>
+            MAUNA KEA
           </h1>
         </div>
 
