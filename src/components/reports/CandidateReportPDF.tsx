@@ -262,7 +262,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
             onClick={() => alert("Report submitted for approval")}
             className="flex-1 py-3 bg-[#dfb259] text-[#1e3a8a] rounded-md font-bold text-[14px] hover:bg-[#cca24e] transition-colors shadow-sm"
           >
-            Submit for Approval
+            Submit
           </button>
           
           <div className="flex items-center gap-2 border border-gray-300 rounded-md px-3 bg-white h-11">

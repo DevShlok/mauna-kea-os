@@ -195,22 +195,38 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
             {rp["Notes Summary"]?.join(" ") || `${cand.name} is a finance and strategy leader with extensive experience...`}
           </p>
 
-          <div>
-            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
-              What is {cand.name.split(' ')[0]} famous for
-            </h3>
-            <div className="space-y-2 ml-2">
-              <p contentEditable suppressContentEditableWarning>
-                <strong>Team/Subordinate Feedback:</strong> {rp["Team Reference"] || "Not provided."}
-              </p>
-              <p contentEditable suppressContentEditableWarning>
-                <strong>Superior Feedback:</strong> {rp["Superior Reference"] || "Not provided."}
-              </p>
-              <p contentEditable suppressContentEditableWarning>
-                <strong>Peer Feedback:</strong> {rp["Peer Reference"] || "Not provided."}
-              </p>
-            </div>
-          </div>
+          {(() => {
+            const hasTeam = rp["Team Reference"] && rp["Team Reference"].trim() !== "" && !rp["Team Reference"].toLowerCase().includes("not provided");
+            const hasSuperior = rp["Superior Reference"] && rp["Superior Reference"].trim() !== "" && !rp["Superior Reference"].toLowerCase().includes("not provided");
+            const hasPeer = rp["Peer Reference"] && rp["Peer Reference"].trim() !== "" && !rp["Peer Reference"].toLowerCase().includes("not provided");
+            
+            if (!hasTeam && !hasSuperior && !hasPeer) return null;
+
+            return (
+              <div>
+                <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+                  What is {cand.name.split(' ')[0]} famous for
+                </h3>
+                <div className="space-y-2 ml-2">
+                  {hasTeam && (
+                    <p contentEditable suppressContentEditableWarning>
+                      <strong>Team/Subordinate Feedback:</strong> {rp["Team Reference"]}
+                    </p>
+                  )}
+                  {hasSuperior && (
+                    <p contentEditable suppressContentEditableWarning>
+                      <strong>Superior Feedback:</strong> {rp["Superior Reference"]}
+                    </p>
+                  )}
+                  {hasPeer && (
+                    <p contentEditable suppressContentEditableWarning>
+                      <strong>Peer Feedback:</strong> {rp["Peer Reference"]}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           <div>
             <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>

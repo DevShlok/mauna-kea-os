@@ -422,7 +422,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, flCandid
             </div>
 
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-              <h3 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2">Reference Feedback (What is the candidate famous for?)</h3>
+              <h3 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2">Reference Feedback</h3>
               <div className="space-y-4">
                 <div>
                   <div className="text-xs font-bold text-gray-500 mb-1">Superior Reference</div>
