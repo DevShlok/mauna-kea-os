@@ -13,7 +13,7 @@ interface CandidateReportPDFProps {
 
 export default function CandidateReportPDF({ candidate, frameworkName, reportData, onReportDataChange, onGeneratePdf, onGeneratePptx }: CandidateReportPDFProps) {
   const { scores, ...allSections } = reportData;
-  const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Notes Summary"];
+  const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Notes Summary", "_rawInputs", "error"];
   const sections = Object.fromEntries(Object.entries(allSections).filter(([k]) => !hiddenFields.includes(k)));
 
   // Track editing state per section
