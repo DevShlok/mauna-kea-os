@@ -20,7 +20,7 @@ export async function GET(req: Request) {
       .orderBy(desc(candidateReports.createdAt))
       .limit(1);
 
-    if (reports.length === 0 || reports[0].status !== "Completed") {
+    if (reports.length === 0) {
       return NextResponse.json({ exists: false });
     }
 

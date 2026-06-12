@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { candidateId, frameworkId, mandateId, transcript, feedback } = await req.json();
+    const { candidateId, frameworkId, mandateId, transcript, interviewNotes, feedback } = await req.json();
 
     if (!candidateId || !frameworkId || !transcript) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -204,9 +204,18 @@ EVALUATION PIPELINE INSTRUCTIONS:
         
         const overallScore = totalWeight > 0 ? Number((totalWeightedScore / totalWeight).toFixed(1)) : 0;
 
+        const finalReportData = {
+          ...object,
+          _rawInputs: {
+            interviewNotes,
+            superiorRef: feedback?.superior,
+            peerRef: feedback?.peer
+          }
+        };
+
         // Update report
         await db.update(candidateReports)
-          .set({ status: "Completed", reportData: object })
+          .set({ status: "Completed", reportData: finalReportData })
           .where(eq(candidateReports.id, reportId));
           
         // Update candidate score
@@ -223,22 +232,34 @@ EVALUATION PIPELINE INSTRUCTIONS:
             .where(eq(mandateCandidates.externalId, candidateId));
         } else {
           // If the candidateId represents a Mandate Candidate directly (fallback)
-          const numId = Number(candidateId);
-          if (!isNaN(numId)) {
+          const parsedStr = String(candidateId || "");
+          const isNumeric = /^\d+$/.test(parsedStr);
+          
+          if (isNumeric) {
             await db.update(mandateCandidates)
               .set({ score: overallScore, hasReport: true })
-              .where(eq(mandateCandidates.id, numId));
+              .where(eq(mandateCandidates.id, parseInt(parsedStr, 10)));
           } else {
             await db.update(mandateCandidates)
               .set({ score: overallScore, hasReport: true })
-              .where(eq(mandateCandidates.externalId, candidateId));
+              .where(eq(mandateCandidates.externalId, parsedStr));
           }
         }
       })
       .catch(async (error) => {
         console.error("AI Generation failed:", error);
         await db.update(candidateReports)
-          .set({ status: "Failed", reportData: { error: error.message } })
+          .set({ 
+            status: "Failed", 
+            reportData: { 
+              error: error.message,
+              _rawInputs: {
+                interviewNotes,
+                superiorRef: feedback?.superior,
+                peerRef: feedback?.peer
+              }
+            } 
+          })
           .where(eq(candidateReports.id, reportId));
       });
 

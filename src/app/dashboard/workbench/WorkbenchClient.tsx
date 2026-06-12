@@ -111,18 +111,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     }
   }, [mandateId, mandates]);
 
-  // Initialize scores to 7 when framework changes
-  useEffect(() => {
-    if (selectedFramework) {
-      const initialScores: Record<number, number> = {};
-      selectedFramework.categories.forEach((cat: any) => {
-        cat.criteria.forEach((cr: any) => {
-          initialScores[cr.id] = 7; // Default neutral score
-        });
-      });
-      setScores(initialScores);
-    }
-  }, [frameworkId, selectedFramework]);
+  // Scores default to 7 in the UI if undefined.
 
   // Recalculate Overall Score
   useEffect(() => {
@@ -131,7 +120,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     let totalWeight = 0;
     selectedFramework.categories.forEach((cat: any) => {
       cat.criteria.forEach((cr: any) => {
-        const val = scores[cr.id] || 0;
+        const val = scores[cr.id] !== undefined ? scores[cr.id] : 7;
         const w = Number(cr.weight) || 10;
         totalWeightedScore += (val * w);
         totalWeight += w;
@@ -176,9 +165,9 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       .then(data => {
         if (data.exists && data.report?.reportData) {
           setReportData(data.report.reportData);
-          setInterviewNotes("");
-          setSuperiorRef(data.report.reportData["Superior Reference"] || "");
-          setPeerRef(data.report.reportData["Peer Reference"] || "");
+          setInterviewNotes(data.report.reportData._rawInputs?.interviewNotes || "");
+          setSuperiorRef(data.report.reportData._rawInputs?.superiorRef || data.report.reportData["Superior Reference"] || "");
+          setPeerRef(data.report.reportData._rawInputs?.peerRef || data.report.reportData["Peer Reference"] || "");
           setReportId(data.report.id);
           setReportExistsInDb(true);
           
@@ -242,7 +231,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     if (selectedFramework) {
       selectedFramework.categories.forEach((cat: any) => {
         cat.criteria.forEach((cr: any) => {
-          manualScoresText += `- ${cr.name}: ${scores[cr.id] || 0}/10\\n`;
+          manualScoresText += `- ${cr.name}: ${scores[cr.id] !== undefined ? scores[cr.id] : 7}/10\n`;
         });
       });
     }
@@ -273,6 +262,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           frameworkId,
           mandateId: mandateId || undefined,
           transcript: combinedTranscript,
+          interviewNotes,
           feedback: {
             superior: superiorRef,
             peer: peerRef
@@ -405,7 +395,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                       </div>
                       <div className="space-y-3">
                         {cat.criteria.map((cr: any) => {
-                          const val = scores[cr.id] || 1;
+                          const val = scores[cr.id] !== undefined ? scores[cr.id] : 7;
                           return (
                             <div key={cr.id} className="flex items-center gap-4 group">
                               <div className="w-[180px]">
