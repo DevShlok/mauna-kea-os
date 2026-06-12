@@ -56,42 +56,36 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         headers: { 'Content-Type': 'application/json' }
       });
       const startData = await startRes.json();
-      if (!startData.runId) throw new Error(startData.error || "Failed to start scraper");
       
-      const poll = setInterval(async () => {
-        const statusRes = await fetch(`/api/linkedin/status?runId=${startData.runId}`);
-        const data = await statusRes.json();
+      setIsScraping(false);
+      
+      if (!startRes.ok || startData.error) {
+        throw new Error(startData.error || "Failed to fetch from Scrapingdog API");
+      }
+      
+      if (startData.success && startData.data) {
+        console.log("SCRAPINGDOG RAW DATA:", startData.data);
         
-        if (data.status === 'SUCCEEDED') {
-          clearInterval(poll);
-          setIsScraping(false);
-          console.log("APIFY RAW DATA:", data.data);
-          
-          if (data.data?.error) {
-            alert(`Apify Error: ${data.data.error}`);
-            return;
-          }
-
-          const exp = data.data?.experience || data.data?.experiences || [];
-          if (exp.length > 0) {
-            const parsedExp = exp.slice(0, 6).map((e: any) => ({
-              companyName: e.companyName || "Unknown",
-              position: e.position || "Unknown Role",
-              duration: e.duration || "",
-              startDate: e.startDate?.text || "",
-              endDate: e.endDate?.text || "Present",
-              domain: e.companyUniversalName ? e.companyUniversalName + ".com" : (e.companyName || "company").toLowerCase().replace(/[^a-z0-9]/g, '') + '.com'
-            }));
-            setExperienceList(parsedExp);
-          } else {
-            alert("LinkedIn scrape succeeded, but no experience data was found.");
-          }
-        } else if (data.status === 'FAILED') {
-          clearInterval(poll);
-          setIsScraping(false);
-          alert("LinkedIn scraping failed! The profile may be private or invalid.");
+        const exp = startData.data.experience || startData.data.experiences || [];
+        if (exp.length > 0) {
+          const parsedExp = exp.slice(0, 6).map((e: any) => ({
+            companyName: e.companyName || "Unknown",
+            position: e.position || "Unknown Role",
+            duration: e.duration || "",
+            startDate: e.startDate?.text || "",
+            endDate: e.endDate?.text || "Present",
+            // Fallback for domain if profileUrl is not available
+            domain: e.companyLinkedInProfileUrl 
+                ? e.companyLinkedInProfileUrl.split('/').pop() + '.com' 
+                : (e.companyName || "company").toLowerCase().replace(/[^a-z0-9]/g, '') + '.com'
+          }));
+          setExperienceList(parsedExp);
+        } else {
+          alert("LinkedIn scrape succeeded, but no experience data was found in the profile.");
         }
-      }, 5000);
+      } else {
+        alert("Failed to fetch LinkedIn profile: Unknown error");
+      }
     } catch (e: any) {
       setIsScraping(false);
       alert("Error: " + e.message);
