@@ -46,13 +46,13 @@ export async function POST(req: Request) {
     });
 
     // Add extra metadata fields for final reports if they don't already exist
-    const metadataFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Notes Summary", "Superior Reference", "Peer Reference", "Team Reference"];
+    const metadataFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Notes Summary", "Superior Reference", "Peer Reference", "Interviewer Feedback"];
     metadataFields.forEach(field => {
       if (!schemaObject[field]) {
         if (field === "Notes Summary") {
           schemaObject[field] = z.array(z.string()).describe("A brief 3-4 bullet point summary of overall notes, background, and fit.");
-        } else if (field === "Team Reference") {
-          schemaObject[field] = z.string().describe("Extract and summarize the Team or Subordinate feedback directly from the general Interview Notes provided. Keep it to 1-2 impactful sentences. Return an empty string if it is not provided or missing.");
+        } else if (field === "Interviewer Feedback") {
+          schemaObject[field] = z.string().describe("Extract and summarize the core Interviewer Feedback directly from the general Interview Notes provided. Keep it to 1-2 impactful sentences. Return an empty string if it is not provided or missing.");
         } else if (field.includes("Reference")) {
           schemaObject[field] = z.string().describe(`Summarize the ${field} using professional executive language based on the provided explicit notes for it. Keep it to 1-2 impactful sentences. Return an empty string if it is not provided or missing.`);
         } else {

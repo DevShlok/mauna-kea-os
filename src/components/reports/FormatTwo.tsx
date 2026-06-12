@@ -196,11 +196,11 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           </p>
 
           {(() => {
-            const hasTeam = rp["Team Reference"] && rp["Team Reference"].trim() !== "" && !rp["Team Reference"].toLowerCase().includes("not provided");
+            const hasInterviewer = rp["Interviewer Feedback"] && rp["Interviewer Feedback"].trim() !== "" && !rp["Interviewer Feedback"].toLowerCase().includes("not provided");
             const hasSuperior = rp["Superior Reference"] && rp["Superior Reference"].trim() !== "" && !rp["Superior Reference"].toLowerCase().includes("not provided");
             const hasPeer = rp["Peer Reference"] && rp["Peer Reference"].trim() !== "" && !rp["Peer Reference"].toLowerCase().includes("not provided");
             
-            if (!hasTeam && !hasSuperior && !hasPeer) return null;
+            if (!hasInterviewer && !hasSuperior && !hasPeer) return null;
 
             return (
               <div>
@@ -208,9 +208,9 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
                   What is {cand.name.split(' ')[0]} famous for
                 </h3>
                 <div className="space-y-2 ml-2">
-                  {hasTeam && (
+                  {hasInterviewer && (
                     <p contentEditable suppressContentEditableWarning>
-                      <strong>Team/Subordinate Feedback:</strong> {rp["Team Reference"]}
+                      <strong>Interviewer Feedback:</strong> {rp["Interviewer Feedback"]}
                     </p>
                   )}
                   {hasSuperior && (
