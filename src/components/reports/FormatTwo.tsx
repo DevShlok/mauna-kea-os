@@ -35,13 +35,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
     'key_strengths', 'areas_to_probe', 'compensation', 'recommendation'
   ]);
 
-  // Block Ordering State
-  const [page1Blocks, setPage1Blocks] = useState([
-    'notes_summary', 'famous_for', 'career_aspiration', 'relevant_experience', 'motivation'
-  ]);
-  const [page2Blocks, setPage2Blocks] = useState([
-    'key_strengths', 'areas_to_probe', 'compensation', 'recommendation'
-  ]);
+
 
   const moveBlock = (page: number, index: number, direction: 'up' | 'down') => {
     const isPage1 = page === 1;
