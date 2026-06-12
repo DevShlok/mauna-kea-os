@@ -27,7 +27,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
 
   const [isScraping, setIsScraping] = useState(false);
 
-  // Drag and Drop State
+  // Drag and Drop State using Refs for stability
   const [page1Blocks, setPage1Blocks] = useState([
     'notes_summary', 'famous_for', 'career_aspiration', 'relevant_experience', 'motivation'
   ]);
@@ -35,31 +35,34 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
     'key_strengths', 'areas_to_probe', 'compensation', 'recommendation'
   ]);
 
-  const [draggedItem, setDraggedItem] = useState<{ id: string, page: number, index: number } | null>(null);
+  const dragItem = React.useRef<{ index: number, page: number } | null>(null);
+  const dragOverItem = React.useRef<{ index: number, page: number } | null>(null);
 
-  const handleDragStart = (e: React.DragEvent, id: string, page: number, index: number) => {
-    setDraggedItem({ id, page, index });
+  const handleDragStart = (e: React.DragEvent, page: number, index: number) => {
+    dragItem.current = { index, page };
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOver = (e: React.DragEvent, index: number, page: number) => {
-    e.preventDefault();
-    if (!draggedItem || draggedItem.page !== page || draggedItem.index === index) return;
-    
-    const isPage1 = page === 1;
-    const items = isPage1 ? [...page1Blocks] : [...page2Blocks];
-    const item = items[draggedItem.index];
-    items.splice(draggedItem.index, 1);
-    items.splice(index, 0, item);
-    
-    if (isPage1) setPage1Blocks(items);
-    else setPage2Blocks(items);
-    
-    setDraggedItem({ ...draggedItem, index });
+  const handleDragEnter = (e: React.DragEvent, page: number, index: number) => {
+    dragOverItem.current = { index, page };
   };
 
   const handleDragEnd = () => {
-    setDraggedItem(null);
+    if (dragItem.current && dragOverItem.current && dragItem.current.page === dragOverItem.current.page) {
+      const page = dragItem.current.page;
+      const isPage1 = page === 1;
+      const items = isPage1 ? [...page1Blocks] : [...page2Blocks];
+      
+      const draggedItemContent = items[dragItem.current.index];
+      items.splice(dragItem.current.index, 1);
+      items.splice(dragOverItem.current.index, 0, draggedItemContent);
+      
+      if (isPage1) setPage1Blocks(items);
+      else setPage2Blocks(items);
+    }
+    
+    dragItem.current = null;
+    dragOverItem.current = null;
   };
 
   // Feedback conditions
@@ -372,8 +375,9 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
               <div 
                 key={blockId}
                 draggable
-                onDragStart={(e) => handleDragStart(e, blockId, 1, index)}
-                onDragOver={(e) => handleDragOver(e, index, 1)}
+                onDragStart={(e) => handleDragStart(e, 1, index)}
+                onDragEnter={(e) => handleDragEnter(e, 1, index)}
+                onDragOver={(e) => e.preventDefault()}
                 onDragEnd={handleDragEnd}
                 className="group relative"
               >
@@ -451,8 +455,9 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
               <div 
                 key={blockId}
                 draggable
-                onDragStart={(e) => handleDragStart(e, blockId, 2, index)}
-                onDragOver={(e) => handleDragOver(e, index, 2)}
+                onDragStart={(e) => handleDragStart(e, 2, index)}
+                onDragEnter={(e) => handleDragEnter(e, 2, index)}
+                onDragOver={(e) => e.preventDefault()}
                 onDragEnd={handleDragEnd}
                 className="group relative"
               >
