@@ -103,9 +103,10 @@ export async function addCandidateToMandateAction(data: any) {
 export async function addFloatListEntryAction(data: any) {
   revalidatePath("/dashboard", "layout");
   const id = "CAND-" + Date.now();
+  const candidateName = data.name || "Unknown Candidate";
   await db.insert(candidates).values({
     id,
-    name: data.name,
+    name: candidateName,
     company: data.company,
     designation: data.designation,
     email: data.email,
@@ -127,7 +128,7 @@ export async function addFloatListEntryAction(data: any) {
     currency: data.currency || "INR",
     cvFileName: data.cvFileName || null,
     notes: data.notes || null,
-    initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+    initials: candidateName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
     cvText: data.cvText || null,
     profilePic: data.profilePic || null,
   });
@@ -328,8 +329,9 @@ export async function deleteFloatListEntryAction(id: string) {
 }
 export async function editFloatListEntryAction(id: string, data: any) {
   revalidatePath("/dashboard", "layout");
+  const candidateName = data.name || "Unknown Candidate";
   await db.update(candidates).set({
-    name: data.name,
+    name: candidateName,
     company: data.company,
     designation: data.designation,
     email: data.email,
@@ -349,8 +351,8 @@ export async function editFloatListEntryAction(id: string, data: any) {
     currency: data.currency || "INR",
     cvFileName: data.cvFileName || null,
     notes: data.notes || null,
-    initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
-    profilePic: data.profilePic !== undefined ? data.profilePic : undefined,
+    initials: candidateName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+    profilePic: data.profilePic || null,
   }).where(eq(candidates.id, id));
   revalidatePath("/dashboard/float-list/database");
   revalidatePath("/dashboard/float-list/" + id);

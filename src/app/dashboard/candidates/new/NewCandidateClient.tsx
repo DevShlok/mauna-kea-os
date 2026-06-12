@@ -110,8 +110,9 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
   };
 
   const handleSave = async () => {
-    if (!form.name || !form.linkedin || (!linkedinPdfFile && !isEdit) || !form.targetCompany) {
-      alert("Please fill out all mandatory fields (Name, LinkedIn URL, Target Company, LinkedIn PDF)");
+    const hasAtLeastOnePrimary = form.name || form.linkedin || form.targetCompany || linkedinPdfFile || (isEdit && initialData?.linkedinPdf);
+    if (!hasAtLeastOnePrimary) {
+      alert("Please fill out at least one of the Primary Details (Name, LinkedIn URL, Target Company, or LinkedIn PDF)");
       return;
     }
     
@@ -194,30 +195,30 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
       <div className="flex flex-col gap-4">
 
         {/* ××××××××××××××××××××××××××××××××××××××××××× */}
-        {/* MANDATORY FIELDS                            */}
+        {/* PRIMARY DETAILS                             */}
         {/* ××××××××××××××××××××××××××××××××××××××××××× */}
         <div className="bg-white border-2 border-[#123D8D] rounded-[10px] overflow-hidden shadow-sm">
           <div className="bg-[#123D8D] px-5 py-3 text-[12px] font-bold uppercase tracking-wide text-white border-b border-[#0d2f6e] flex items-center gap-2">
-            <span className="text-red-300">●</span> Mandatory Fields
+            <span className="text-red-300">●</span> Primary Details
           </div>
           <div className="p-5">
             <div className="grid grid-cols-2 gap-5 mb-5">
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Candidate Name <span className="text-red-500">*</span></label>
+                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Candidate Name</label>
                 <input type="text" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="Full Name" />
               </div>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">LinkedIn Profile URL <span className="text-red-500">*</span></label>
+                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">LinkedIn Profile URL</label>
                 <input type="url" value={form.linkedin} onChange={e=>setForm({...form, linkedin:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="https://linkedin.com/in/..." />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-5">
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Target Company to Float <span className="text-red-500">*</span></label>
+                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Target Company to Float</label>
                 <input type="text" value={form.targetCompany} onChange={e=>setForm({...form, targetCompany:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="e.g. HDFC Bank" />
               </div>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">LinkedIn Profile PDF <span className="text-red-500">*</span></label>
+                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">LinkedIn Profile PDF</label>
                 <label className="border-2 border-dashed border-[#D4E0F0] rounded-[8px] p-4 text-center cursor-pointer hover:border-[#123D8D] hover:bg-[#DCE5F4] bg-[#f4f7fd] transition-all block relative">
                   <input type="file" accept="application/pdf" className="hidden" onChange={e => setLinkedinPdfFile(e.target.files?.[0] || null)} />
                   <div className="text-[13px] text-[#6b7a99]">{linkedinPdfFile ? '📘 Change PDF' : (isEdit && initialData.linkedinPdf ? '📘 Replace Existing PDF' : '📘 Click to upload LinkedIn PDF')}</div>
