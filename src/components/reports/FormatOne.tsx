@@ -11,7 +11,7 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
         const assessmentNotes = rp["Key Strengths"] || rp["MK Recommendation"] || ["Strong capability demonstrated."];
         
         return (
-          <div key={cand.id} className="bg-white w-[794px] h-[1122px] mx-auto shadow-xl print:shadow-none flex flex-col font-sans break-after-page mb-10 print:mb-0 border-[24px] border-white ring-[12px] ring-[#00174f] ring-inset py-[24px] px-[36px] box-border relative print:scale-100 max-w-none">
+          <div key={cand.id} className="bg-white w-[794px] h-[1122px] mx-auto shadow-xl print:shadow-none break-after-page mb-10 print:mb-0 box-border print:scale-100 max-w-none p-[20px] overflow-hidden">
             <style type="text/css" media="print">
               {`
                 @page { size: A4; margin: 0mm; }
@@ -19,7 +19,8 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
               `}
             </style>
             
-            {/* Header / Name Bar */}
+            <div className="w-full h-full border-[10px] border-[#00174f] p-[20px] flex flex-col font-sans relative">
+              {/* Header / Name Bar */}
             <div className="flex h-[38px] rounded-lg overflow-hidden shadow-sm mb-4 shrink-0">
               <div className="bg-[#e28723] w-[50px] flex items-center justify-center font-bold text-[22px] text-white shrink-0 pr-1" style={{ borderBottomRightRadius: '16px', borderTopRightRadius: '16px' }}>
                 {String(idx + 1).padStart(2, '0')}
@@ -30,10 +31,10 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
             </div>
 
             {/* Profile Info Section */}
-            <div className="flex gap-8 items-center mb-5 shrink-0">
+            <div className="flex gap-6 items-center mb-4 shrink-0">
               {/* Photo */}
-              <div className="flex flex-col items-center shrink-0 ml-2">
-                <div className="w-[160px] h-[160px] rounded-full bg-blue-50 flex items-center justify-center text-5xl font-bold text-[#00174f] border-[1px] border-gray-200 overflow-hidden shadow-inner shrink-0" style={{ boxShadow: "inset 0 4px 6px rgba(0,0,0,0.1)" }}>
+              <div className="flex flex-col items-center shrink-0 ml-1">
+                <div className="w-[140px] h-[140px] rounded-full bg-blue-50 flex items-center justify-center text-5xl font-bold text-[#00174f] border-[1px] border-gray-200 overflow-hidden shadow-inner shrink-0" style={{ boxShadow: "inset 0 4px 6px rgba(0,0,0,0.1)" }}>
                   {cand.initials || cand.name.substring(0, 2).toUpperCase()}
                 </div>
               </div>
@@ -74,7 +75,7 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
             </div>
 
             {/* Notes Sections */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               <div className="w-full border-t border-dashed border-gray-300"></div>
               <SectionBlock title="NOTES" items={notes} />
               
@@ -82,6 +83,7 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
               <SectionBlock title="ASSESSMENT NOTES" items={assessmentNotes} />
             </div>
 
+            </div>
           </div>
         );
       })}
@@ -107,10 +109,10 @@ function SectionBlock({ title, items }: { title: string, items: any }) {
   const list = Array.isArray(items) ? items : [items];
   return (
     <div className="flex flex-col">
-      <h3 className="text-[#e28723] text-[15px] font-bold uppercase tracking-wider mb-2 shrink-0">{title}</h3>
-      <ul className="list-none space-y-2">
+      <h3 className="text-[#e28723] text-[15px] font-bold uppercase tracking-wider mb-1.5 shrink-0">{title}</h3>
+      <ul className="list-none space-y-1.5">
         {list.map((item: string, i: number) => (
-          <li key={i} className="flex items-start text-[13px] text-[#333] font-medium leading-relaxed">
+          <li key={i} className="flex items-start text-[13px] text-[#333] font-medium leading-snug">
             <svg className="w-4 h-4 text-[#e28723] mr-3 mt-[3px] shrink-0" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>
