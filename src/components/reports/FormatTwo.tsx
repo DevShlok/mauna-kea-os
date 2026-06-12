@@ -107,6 +107,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
             </p>
           </div>
         );
+        
       case 'relevant_experience':
         return (
           <div>
@@ -115,10 +116,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
             </h3>
             <div className="space-y-2 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
               <li className="pl-1">
-                <strong>{experienceList[0]?.companyName} (Current):</strong> Description of relevant achievements...
-              </li>
-              <li className="pl-1">
-                <strong>{experienceList[1]?.companyName}:</strong> Description of relevant achievements...
+                <strong>{experienceList[0]?.companyName} (Current)</strong> 
               </li>
             </div>
           </div>
