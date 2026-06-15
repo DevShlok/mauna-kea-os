@@ -117,7 +117,7 @@ export async function POST(req: Request) {
     categoriesWithCriteria.forEach((cat) => {
       const criteriaObject: Record<string, z.ZodTypeAny> = {};
       cat.criteria.forEach((cr) => {
-        criteriaObject[cr.name] = z.number().min(1).max(10).describe(`Score from 1 to 10 evaluating ${cr.name}`);
+        criteriaObject[cr.name] = z.number().min(0).max(10).describe(`Score from 0 to 10 evaluating ${cr.name}`);
       });
       scoresObject[cat.name] = z.object(criteriaObject);
     });

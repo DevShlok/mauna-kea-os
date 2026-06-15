@@ -66,6 +66,7 @@ export async function createFrameworkAction(data: any, mandateIds?: string[]) {
       const res = await db.insert(frameworkCategories).values({
         frameworkId: id,
         name: cat.name,
+        weight: cat.weight || 100,
         sortOrder: i,
       });
       const catId = res[0].insertId;
@@ -404,6 +405,7 @@ export async function editFrameworkAction(id: string, data: any, mandateIds?: st
       const res = await db.insert(frameworkCategories).values({
         frameworkId: id,
         name: cat.name,
+        weight: cat.weight || 100,
         sortOrder: i,
       });
       const catId = res[0].insertId;

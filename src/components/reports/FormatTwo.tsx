@@ -407,9 +407,9 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
                 </h3>
                 <div className="ml-6 space-y-2 text-[14px]">
                   {cat.criteria.map((c: any, j: number) => {
-                    // Calculate left percentage based on 1-10 score (default 5 if not set)
-                    const score = scores?.[c.id] || 5;
-                    const leftPercent = `${((score - 1) / 9) * 100}%`;
+                    // Calculate left percentage based on 0-10 score (default 5 if not set)
+                    const score = scores?.[c.id] !== undefined ? scores[c.id] : 5;
+                    const leftPercent = `${(score / 10) * 100}%`;
                     const letter = String.fromCharCode(65 + j); // A, B, C...
                     
                     return (

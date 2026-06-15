@@ -165,6 +165,7 @@ export const frameworkCategories = mysqlTable('framework_categories', {
   id: int('id').autoincrement().primaryKey(),
   frameworkId: varchar('framework_id', { length: 20 }).notNull().references(() => frameworks.id),
   name: varchar('name', { length: 255 }).notNull(),
+  weight: int('weight').default(100),
   sortOrder: int('sort_order').default(0),
 });
 

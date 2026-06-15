@@ -115,7 +115,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
           </div>
         </div>
         <div className="text-right">
-          <h2 className="text-lg font-bold text-blue-900 font-serif">Mauna Kea <span className="text-[#0d2f6e]">International</span></h2>
+          <img src="/maunakea-logo.jpg" alt="Mauna Kea" className="h-6 object-contain ml-auto" />
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-right block w-full">{frameworkName} Assessment</p>
         </div>
       </div>
@@ -249,57 +249,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
           );
         })}
 
-        {/* DYNAMIC SCORING FRAMEWORK */}
-        {scores && (
-          <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100">
-            <h3 className="text-[13px] font-bold text-blue-900 font-serif mb-4 border-b border-blue-200 pb-2">
-              Evaluation against key criterion
-            </h3>
-            
-            <div className="space-y-4">
-              {Object.entries(scores).map(([categoryName, criteria]: [string, any], catIdx) => (
-                <div key={catIdx}>
-                  <div className="flex justify-between mb-3">
-                    <h4 className="text-sm font-bold text-gray-900">
-                      {catIdx + 1}. {categoryName}
-                    </h4>
-                    <div className="flex text-[10px] text-gray-400 font-bold w-[150px] justify-between px-2">
-                      <span>Low</span>
-                      <span>High</span>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3 pl-4">
-                    {Object.entries(criteria).map(([critName, score]: [string, any], critIdx) => {
-                      const scoreNum = Number(score) || 1;
-                      const percentage = ((scoreNum - 1) / 9) * 100;
-                      
-                      return (
-                        <div key={critIdx} className="flex justify-between items-center group">
-                          <div className="text-[13px] text-gray-700 w-[250px] truncate pr-4">
-                            {String.fromCharCode(65 + critIdx)}. {critName}
-                          </div>
-                          
-                          {/* Slider Track */}
-                          <div className="w-[150px] h-1 bg-gray-300 relative rounded-full">
-                            <div 
-                              className="absolute top-0 left-0 h-full bg-blue-500 rounded-full" 
-                              style={{ width: `${percentage}%` }}
-                            />
-                            <div 
-                              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-600 rounded-full shadow-sm"
-                              style={{ left: `calc(${percentage}% - 6px)` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* End of content */}
 
         {/* Bottom action bar */}
         <div className="flex gap-4 pt-6 border-t border-gray-200 items-center">

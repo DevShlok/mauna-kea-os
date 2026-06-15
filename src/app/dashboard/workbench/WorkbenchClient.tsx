@@ -75,26 +75,10 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     // Uncheck all boxes when loading a candidate
     setSelectedFileIds([]);
 
-    const stored = localStorage.getItem(`notes_${selectedCandidateId}`);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setInterviewNotes(parsed.interviewNotes || "");
-        setSuperiorRef(parsed.superiorRef || "");
-        setPeerRef(parsed.peerRef || "");
-      } catch (e) {}
-    } else {
-      setInterviewNotes("");
-      setSuperiorRef("");
-      setPeerRef("");
-    }
+    setInterviewNotes("");
+    setSuperiorRef("");
+    setPeerRef("");
   }, [selectedCandidateId]);
-
-  // Save notes to local storage
-  useEffect(() => {
-    if (!selectedCandidateId) return;
-    localStorage.setItem(`notes_${selectedCandidateId}`, JSON.stringify({ interviewNotes, superiorRef, peerRef }));
-  }, [interviewNotes, superiorRef, peerRef, selectedCandidateId]);
   
   // Scoring state: { [criterionId]: number }
   const [scores, setScores] = useState<Record<number, number>>({});
@@ -286,19 +270,34 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
   // Recalculate Overall Score
   useEffect(() => {
     if (!selectedFramework) return;
-    let totalWeightedScore = 0;
-    let totalWeight = 0;
+    let totalCatScores = 0;
+    let numCats = 0;
+    let actualWeightSum = 0;
+
     selectedFramework.categories.forEach((cat: any) => {
+      let catWeightedScore = 0;
+      let catWeight = 0;
+      
       cat.criteria.forEach((cr: any) => {
-        const val = scores[cr.id] !== undefined ? scores[cr.id] : 7;
-        const w = Number(cr.weight) || 10;
-        totalWeightedScore += (val * w);
-        totalWeight += w;
+        // Default to 5 since scale is now 0-10
+        const val = scores[cr.id] !== undefined ? scores[cr.id] : 5;
+        const w = Number(cr.weight) || 1; // fallback to 1 if weight is 0 or missing
+        catWeightedScore += (val * w);
+        catWeight += w;
       });
+      
+      if (catWeight > 0) {
+        const categoryScore = (catWeightedScore / catWeight);
+        const cw = Number(cat.weight) || (100 / selectedFramework.categories.length);
+        totalCatScores += (categoryScore * cw);
+        actualWeightSum += cw;
+        numCats++;
+      }
     });
     
-    if (totalWeight > 0) {
-      setOverallScore((totalWeightedScore / totalWeight).toFixed(1));
+    if (actualWeightSum > 0) {
+      // Calculate final overall score using actual weight sum
+      setOverallScore((totalCatScores / actualWeightSum).toFixed(1));
     } else {
       setOverallScore("0.0");
     }
@@ -335,7 +334,8 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       .then(data => {
         if (data.exists && data.report?.reportData) {
           setReportData(data.report.reportData);
-          setInterviewNotes(data.report.reportData._rawInputs?.interviewNotes || "");
+          // We deliberately do not restore interviewNotes to keep it clean on reload, 
+          // but we DO restore Superior and Peer references!
           setSuperiorRef(data.report.reportData._rawInputs?.superiorRef || data.report.reportData["Superior Reference"] || "");
           setPeerRef(data.report.reportData._rawInputs?.peerRef || data.report.reportData["Peer Reference"] || "");
           setReportId(data.report.id);
@@ -625,7 +625,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                       </div>
                       <div className="space-y-3">
                         {cat.criteria.map((cr: any) => {
-                          const val = scores[cr.id] !== undefined ? scores[cr.id] : 7;
+                          const val = scores[cr.id] !== undefined ? scores[cr.id] : 5;
                           return (
                             <div key={cr.id} className="flex items-center gap-4 group">
                               <div className="w-[180px]">
@@ -636,7 +636,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                               <div className="flex-1 flex items-center gap-3">
                                 <input 
                                   type="range" 
-                                  min="1" max="10" 
+                                  min="0" max="10" 
                                   value={val}
                                   onChange={(e) => setScores({ ...scores, [cr.id]: parseInt(e.target.value) })}
                                   className="w-full accent-blue-600 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"

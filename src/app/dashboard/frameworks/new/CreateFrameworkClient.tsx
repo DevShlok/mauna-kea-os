@@ -12,6 +12,7 @@ interface Criterion {
 
 interface Category {
   name: string;
+  weight: number;
   criteria: Criterion[];
 }
 
@@ -26,6 +27,7 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
   const [categories, setCategories] = useState<Category[]>(initialData?.categories && initialData.categories.length > 0 ? initialData.categories : [
     {
       name: "Financial Leadership",
+      weight: 100,
       criteria: [
         { name: "P&L Management", weight: 40 },
         { name: "Financial Controls", weight: 60 }
@@ -34,7 +36,7 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
   ]);
 
   const handleAddCategory = () => {
-    setCategories([...categories, { name: "New Category", criteria: [{ name: "New Criterion", weight: 100 }] }]);
+    setCategories([...categories, { name: "New Category", weight: 0, criteria: [{ name: "New Criterion", weight: 100 }] }]);
   };
 
   const handleRemoveCategory = (index: number) => {
@@ -48,6 +50,12 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
   const handleCategoryNameChange = (index: number, newName: string) => {
     const newCats = [...categories];
     newCats[index].name = newName;
+    setCategories(newCats);
+  };
+
+  const handleCategoryWeightChange = (index: number, newWeight: number) => {
+    const newCats = [...categories];
+    newCats[index].weight = newWeight;
     setCategories(newCats);
   };
 
@@ -77,11 +85,18 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
     e.preventDefault();
     if (!name || !industry) return;
     
-    // Validate weights sum to 100
+    // Validate category weights sum to 100
+    const catSum = categories.reduce((a, b) => a + (b.weight || 0), 0);
+    if (catSum !== 100) {
+      alert(`Category weights sum to ${catSum}%. They must exactly sum to 100%.`);
+      return;
+    }
+
+    // Validate criteria weights sum to 100
     for (let i = 0; i < categories.length; i++) {
       const sum = categories[i].criteria.reduce((a, b) => a + b.weight, 0);
       if (sum !== 100) {
-        alert(`Category "${categories[i].name}" weights sum to ${sum}%. They must exactly sum to 100%.`);
+        alert(`Category "${categories[i].name}" criteria weights sum to ${sum}%. They must exactly sum to 100%.`);
         return;
       }
     }
@@ -167,13 +182,25 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
             return (
               <div key={cIdx} className="bg-white border border-gray-200 rounded-[8px] overflow-hidden">
                 <div className="bg-[#123D8D] text-white px-4 py-3 flex justify-between items-center">
-                  <input 
-                    type="text" 
-                    value={cat.name} 
-                    onChange={(e) => handleCategoryNameChange(cIdx, e.target.value)}
-                    className="bg-transparent border-b border-blue-400 text-white font-bold outline-none placeholder-blue-300 w-1/2"
-                    placeholder="Category Name"
-                  />
+                  <div className="flex items-center gap-4 w-1/2">
+                    <input 
+                      type="text" 
+                      value={cat.name} 
+                      onChange={(e) => handleCategoryNameChange(cIdx, e.target.value)}
+                      className="bg-transparent border-b border-blue-400 text-white font-bold outline-none placeholder-blue-300 flex-1"
+                      placeholder="Category Name"
+                    />
+                    <div className="flex items-center gap-1 shrink-0">
+                      <input 
+                        type="number" 
+                        value={cat.weight === undefined ? 100 : cat.weight} 
+                        onChange={(e) => handleCategoryWeightChange(cIdx, Number(e.target.value))}
+                        className="bg-white/10 border-b border-blue-400 text-white font-bold outline-none w-16 text-center placeholder-blue-300 px-1"
+                        placeholder="%"
+                      />
+                      <span className="text-blue-200 text-xs font-bold">% Weight</span>
+                    </div>
+                  </div>
                   <button type="button" onClick={() => handleRemoveCategory(cIdx)} className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded text-xs">
                     × Remove
                   </button>
