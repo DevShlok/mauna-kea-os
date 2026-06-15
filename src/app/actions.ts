@@ -191,50 +191,6 @@ export async function addSubmissionAction(data: any) {
   return { id, candId };
 }
 
-export async function bulkAddSubmissionAction(data: { mandateId: number; candidates: any[]; client: string; role: string; consultant: string }) {
-  revalidatePath("/dashboard", "layout");
-  for (const c of data.candidates) {
-    const candId = c.id;
-    const candName = c.name;
-    
-    // 1. Create submission
-    const subId = "S-" + Date.now().toString() + "-" + Math.floor(Math.random() * 1000);
-    await db.insert(floats).values({
-      id: subId,
-      candId,
-      candName,
-      client: data.client,
-      role: data.role,
-      consultant: data.consultant || "System",
-      dateShared: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
-      status: "Shared",
-    });
-
-    // 2. Add to Mandate Pipeline
-    const existing = await db.select().from(mandateCandidates).where(
-      sql`${mandateCandidates.externalId} = ${candId} AND ${mandateCandidates.mandateId} = ${data.mandateId}`
-    );
-    if (existing.length === 0) {
-      await db.insert(mandateCandidates).values({
-        externalId: candId,
-        mandateId: Number(data.mandateId),
-        name: candName,
-        company: c.company || "",
-        role: data.role,
-        stage: "universe",
-        initials: candName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
-        score: c.score || null,
-        hasReport: !!c.score, // if they had a float list score, assume they have a report
-      });
-    }
-  }
-
-  revalidatePath(`/dashboard/mandates/${data.mandateId}`);
-  revalidatePath("/dashboard/mandates");
-  revalidatePath("/dashboard/candidates");
-  revalidatePath("/dashboard/float-list/submissions");
-  revalidatePath("/dashboard/float-list/database");
-}
 
 export async function removeCandidateFromMandateAction(data: { id: number; externalId: string; company: string; role: string; mandateId: number }) {
   revalidatePath("/dashboard", "layout");

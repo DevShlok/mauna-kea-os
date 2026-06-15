@@ -29,17 +29,6 @@ export const getMandateById = async (id: number) => {
   };
 };
 
-export async function updateMandateStatus(id: number, field: 'status' | 'internalStatus', value: string) {
-  if (field === 'status') {
-    await db.update(mandates).set({ status: value }).where(eq(mandates.id, id));
-  } else {
-    await db.update(mandates).set({ internalStatus: value }).where(eq(mandates.id, id));
-  }
-}
-
-export async function updateCandidateStage(candId: number, newStage: string) {
-  await db.update(mandateCandidates).set({ stage: newStage }).where(eq(mandateCandidates.id, candId));
-}
 
 export const getAllMandateCandidates = async () => {
   const cands = await db.select({
