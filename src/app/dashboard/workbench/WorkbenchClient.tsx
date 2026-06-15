@@ -255,7 +255,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
         const data = await res.json();
         if (data.data) {
           // Update the local state with the newly generated format data
-          setReportData(prev => ({
+          setReportData((prev: any) => ({
             ...prev,
             [`_${format}`]: data.data
           }));
