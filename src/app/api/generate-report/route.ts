@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { frameworks, frameworkCategories, frameworkCriteria, candidateReports, candidates, mandateCandidates } from "@/db/schema";
-import { eq, and, ne } from "drizzle-orm";
+import { frameworks, frameworkCategories, frameworkCriteria, candidateReports, candidates, mandateCandidates, candidateFiles } from "@/db/schema";
+import { eq, and, ne, inArray } from "drizzle-orm";
 import { generateObject } from "ai";
 import { google } from "@ai-sdk/google";
 import { z } from "zod";
@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { candidateId, frameworkId, mandateId, transcript, interviewNotes, feedback } = await req.json();
+    const { candidateId, frameworkId, mandateId, transcript, interviewNotes, feedback, selectedFileIds } = await req.json();
 
     if (!candidateId || !frameworkId || !transcript) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -92,7 +92,10 @@ export async function POST(req: Request) {
     });
 
     // Add extra metadata fields for final reports if they don't already exist
-    const metadataFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Notes Summary", "Superior Feedback", "Peer Feedback", "Team/Subordinate Feedback", "Interviewer Feedback", "Career Aspiration"];
+    const metadataFields = ["Notes Summary", "Interviewer Feedback"];
+    if (feedback?.superior) metadataFields.push("Superior Feedback");
+    if (feedback?.peer) metadataFields.push("Peer Feedback");
+    
     metadataFields.forEach(field => {
       if (!schemaObject[field]) {
         if (field === "Notes Summary") {
@@ -162,6 +165,23 @@ export async function POST(req: Request) {
       });
     }
 
+    let finalTranscript = transcript || "";
+    if (selectedFileIds && selectedFileIds.length > 0) {
+      const selectedFiles = await db.select().from(candidateFiles).where(inArray(candidateFiles.id, selectedFileIds));
+      selectedFiles.forEach(file => {
+        if (file.extractedText) {
+          finalTranscript += `\n\n--- DOCUMENT: ${file.fileName} ---\n${file.extractedText}`;
+        }
+      });
+    }
+
+    if (feedback?.superior) {
+      finalTranscript += `\n\nSUPERIOR REFERENCE:\n${feedback.superior}`;
+    }
+    if (feedback?.peer) {
+      finalTranscript += `\n\nPEER REFERENCE:\n${feedback.peer}`;
+    }
+
     generateObject({
       model: google("gemini-2.5-flash"),
       schema: DynamicSchema,
@@ -170,7 +190,7 @@ export async function POST(req: Request) {
 ${enrichedContext}
 
 TRANSCRIPT / CANDIDATE NOTES:
-${transcript}
+${finalTranscript}
 
 EVALUATION PIPELINE INSTRUCTIONS:
 1. ASSESS THE ROLE (MANDATE): First, understand the Target Sectors, Job Description, and Consultant Search Notes. This is the baseline of what the client strictly needs.

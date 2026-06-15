@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { candidates } from "@/db/schema";
+import { candidates, candidateFiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import * as mammoth from "mammoth";
 const pdfParse = require("pdf-parse-new");
 
 export async function POST(req: Request) {
@@ -17,13 +18,20 @@ export async function POST(req: Request) {
     const buffer = await file.arrayBuffer();
     const nodeBuffer = Buffer.from(buffer);
 
-    // 1. Extract text from PDF for AI Workbench
+    const ext = file.name.split(".").pop()?.toLowerCase() || "pdf";
+
+    // 1. Extract text from PDF or DOCX for AI Workbench
     let cvText = "";
     try {
-      const parsedData = await pdfParse(nodeBuffer);
-      cvText = parsedData.text;
+      if (ext === "docx" || ext === "doc") {
+        const result = await mammoth.extractRawText({ buffer: nodeBuffer });
+        cvText = result.value;
+      } else {
+        const parsedData = await pdfParse(nodeBuffer);
+        cvText = parsedData.text;
+      }
     } catch (e) {
-      console.warn("PDF text extraction failed, continuing without text:", e);
+      console.warn("Text extraction failed, continuing without text:", e);
     }
 
     // 2. Upload to Google Drive via Apps Script
@@ -33,7 +41,6 @@ export async function POST(req: Request) {
     }
 
     const base64 = nodeBuffer.toString("base64");
-    const ext = file.name.split(".").pop() || "pdf";
 
     // Fetch candidate name for a nice filename
     const candRows = await db.select().from(candidates).where(eq(candidates.id, candId));
@@ -63,6 +70,15 @@ export async function POST(req: Request) {
     await db.update(candidates)
       .set({ hasCv: true, cvText, cvFileName: driveUrl })
       .where(eq(candidates.id, candId));
+
+    // Also add to history table
+    await db.insert(candidateFiles).values({
+      candId: candId,
+      fileType: 'CV / Resume',
+      fileName: filename,
+      fileUrl: driveUrl,
+      extractedText: cvText
+    });
 
     // 4. Update Google Sheet (if configured)
     const sheetsWebhook = process.env.OS_SHEETS_WEBHOOK_URL;

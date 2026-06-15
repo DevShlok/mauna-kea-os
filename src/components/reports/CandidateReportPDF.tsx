@@ -13,8 +13,14 @@ interface CandidateReportPDFProps {
 
 export default function CandidateReportPDF({ candidate, frameworkName, reportData, onReportDataChange, onGeneratePdf, onGeneratePptx }: CandidateReportPDFProps) {
   const { scores, ...allSections } = reportData;
-  const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Notes Summary", "_rawInputs", "error"];
-  const sections = Object.fromEntries(Object.entries(allSections).filter(([k]) => !hiddenFields.includes(k)));
+  // Fields entirely hidden from UI (fetched from DB directly)
+  const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Career Aspiration", "_rawInputs", "error"];
+  
+  // Fields shown as small textareas
+  const metadataKeys = ["Notes Summary", "Interviewer Feedback", "Superior Feedback", "Peer Feedback"];
+  
+  const sections = Object.fromEntries(Object.entries(allSections).filter(([k]) => !hiddenFields.includes(k) && !metadataKeys.includes(k)));
+  const metadataFields = Object.fromEntries(Object.entries(allSections).filter(([k]) => metadataKeys.includes(k)));
 
   // Track editing state per section
   const [editingSections, setEditingSections] = useState<Record<string, boolean>>({});
@@ -122,6 +128,45 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
 
       <div className="px-6 pb-6 space-y-4">
         
+        {/* FEEDBACK & SUMMARY FIELDS (Editable) */}
+        {Object.keys(metadataFields).length > 0 && (
+          <div className="border border-[#e2e8f0] rounded-xl shadow-[0_2px_8px_rgb(0,0,0,0.04)] bg-white mb-6">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-[13px] font-bold text-[#00174f] flex items-center gap-1.5">
+                <span className="text-base">📋</span> AI Feedback & Summaries
+              </h3>
+            </div>
+            <div className="p-5 flex flex-col gap-4">
+              {Object.entries(metadataFields).map(([key, value]) => (
+                <div key={key}>
+                  <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">{key}</label>
+                  {Array.isArray(value) ? (
+                    <textarea 
+                      className="w-full text-[13px] border border-gray-200 rounded p-2 focus:border-blue-500 outline-none resize-none transition-colors" 
+                      rows={4} 
+                      value={value.join('\n')} 
+                      onChange={(e) => {
+                        const newReportData = { ...reportData, [key]: e.target.value.split('\n') };
+                        if (onReportDataChange) onReportDataChange(newReportData);
+                      }}
+                    />
+                  ) : (
+                    <textarea 
+                      className="w-full text-[13px] border border-gray-200 rounded p-2 focus:border-blue-500 outline-none resize-none transition-colors" 
+                      rows={3}
+                      value={value} 
+                      onChange={(e) => {
+                        const newReportData = { ...reportData, [key]: e.target.value };
+                        if (onReportDataChange) onReportDataChange(newReportData);
+                      }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* DYNAMIC TEXT SECTIONS — each with Accept / Edit / Redo */}
         {Object.entries(sections).map(([title, content], i) => {
           const isEditing = editingSections[title];

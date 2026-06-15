@@ -221,13 +221,13 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">LinkedIn Profile PDF</label>
                 <label className="border-2 border-dashed border-[#D4E0F0] rounded-[8px] p-4 text-center cursor-pointer hover:border-[#123D8D] hover:bg-[#DCE5F4] bg-[#f4f7fd] transition-all block relative">
                   <input type="file" accept="application/pdf" className="hidden" onChange={e => setLinkedinPdfFile(e.target.files?.[0] || null)} />
-                  <div className="text-[13px] text-[#6b7a99]">{linkedinPdfFile ? '📘 Change PDF' : (isEdit && initialData.linkedinPdf ? '📘 Replace Existing PDF' : '📘 Click to upload LinkedIn PDF')}</div>
+                  <div className="text-[13px] text-[#6b7a99]">{linkedinPdfFile ? '📘 Change PDF' : (isEdit && initialData.linkedinPdf ? '📘 Replace Existing Profile' : '📘 Click to upload LinkedIn Profile')}</div>
                   {linkedinPdfFile && <div className="text-[13px] font-bold text-[#111] mt-1 overflow-hidden text-ellipsis whitespace-nowrap">{linkedinPdfFile.name}</div>}
                 </label>
                 {isEdit && initialData.linkedinPdf && !linkedinPdfFile && (
                   <div className="mt-1.5 text-[12px] text-center">
                     <a href={initialData.linkedinPdf} target="_blank" className="text-[#123D8D] hover:underline font-semibold flex items-center justify-center gap-1">
-                      View Existing LinkedIn PDF
+                      View Existing LinkedIn Profile
                     </a>
                   </div>
                 )}

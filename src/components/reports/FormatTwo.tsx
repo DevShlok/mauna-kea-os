@@ -102,14 +102,18 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           </div>
         );
       case 'career_aspiration':
-        if (!rp["Career Aspiration"]) return null;
+        const aspirationText = rp["Career Aspiration"] || [
+          cand.dreamRoles && cand.dreamRoles.length > 0 ? `Target Roles: ${cand.dreamRoles.join(', ')}` : '',
+          cand.dreamCos && cand.dreamCos.length > 0 ? `Target Companies: ${cand.dreamCos.join(', ')}` : ''
+        ].filter(Boolean).join('. ') || "Open to relevant career growth opportunities.";
+        
         return (
           <div>
             <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
               Career aspiration
             </h3>
             <p contentEditable suppressContentEditableWarning>
-              {rp["Career Aspiration"]}
+              {aspirationText}
             </p>
           </div>
         );

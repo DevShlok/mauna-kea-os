@@ -66,6 +66,36 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
   const [superiorRef, setSuperiorRef] = useState("");
   const [peerRef, setPeerRef] = useState("");
   
+  const [selectedFileIds, setSelectedFileIds] = useState<number[]>([]);
+
+  // Load notes from local storage on candidate change
+  useEffect(() => {
+    if (!selectedCandidateId) return;
+    
+    // Uncheck all boxes when loading a candidate
+    setSelectedFileIds([]);
+
+    const stored = localStorage.getItem(`notes_${selectedCandidateId}`);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setInterviewNotes(parsed.interviewNotes || "");
+        setSuperiorRef(parsed.superiorRef || "");
+        setPeerRef(parsed.peerRef || "");
+      } catch (e) {}
+    } else {
+      setInterviewNotes("");
+      setSuperiorRef("");
+      setPeerRef("");
+    }
+  }, [selectedCandidateId]);
+
+  // Save notes to local storage
+  useEffect(() => {
+    if (!selectedCandidateId) return;
+    localStorage.setItem(`notes_${selectedCandidateId}`, JSON.stringify({ interviewNotes, superiorRef, peerRef }));
+  }, [interviewNotes, superiorRef, peerRef, selectedCandidateId]);
+  
   // Scoring state: { [criterionId]: number }
   const [scores, setScores] = useState<Record<number, number>>({});
   const [overallScore, setOverallScore] = useState("0.0");
@@ -80,7 +110,147 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
   // Toggle between Assessment Draft and Final Reports
   const [activeView, setActiveView] = useState<"draft" | "format1" | "format2">("draft");
 
+  const [candidateFilesHistory, setCandidateFilesHistory] = useState<any[]>([]);
+  const [isUploadingCv, setIsUploadingCv] = useState(false);
+  const [isUploadingLinkedin, setIsUploadingLinkedin] = useState(false);
+
+  const fetchCandidateFiles = async (candId: string) => {
+    try {
+      const res = await fetch(`/api/candidate-files?candId=${candId}`);
+      const data = await res.json();
+      if (data.success) {
+        setCandidateFilesHistory(data.files);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedCandidateId) {
+      setCandidateFilesHistory([]);
+      return;
+    }
+    const candidateRef = allCandidates.find(c => c.searchId === selectedCandidateId);
+    if (candidateRef) {
+      const candId = candidateRef.externalId || candidateRef.id;
+      fetchCandidateFiles(candId);
+    }
+  }, [selectedCandidateId, allCandidates]);
+
+  const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>, type: 'cv' | 'linkedin') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const candidateRef = allCandidates.find(c => c.searchId === selectedCandidateId);
+    if (!candidateRef) return;
+    const candId = candidateRef.externalId || candidateRef.id;
+
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("candId", candId);
+
+    if (type === 'cv') setIsUploadingCv(true);
+    else setIsUploadingLinkedin(true);
+
+    try {
+      const endpoint = type === 'cv' ? "/api/upload-cv" : "/api/upload-linkedin-pdf";
+      const res = await fetch(endpoint, { method: "POST", body: fd });
+      if (res.ok) {
+        await fetchCandidateFiles(candId);
+        // We could also refresh the router to get the updated candidate master record
+        router.refresh();
+      } else {
+        alert(`Failed to upload ${type.toUpperCase()}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert(`Error uploading ${type.toUpperCase()}`);
+    } finally {
+      if (type === 'cv') setIsUploadingCv(false);
+      else setIsUploadingLinkedin(false);
+    }
+    
+    // Clear input
+    e.target.value = '';
+  };
+
+  const [isUploadingNotes, setIsUploadingNotes] = useState(false);
+  const [isUploadingSupRef, setIsUploadingSupRef] = useState(false);
+  const [isUploadingPeerRef, setIsUploadingPeerRef] = useState(false);
+
+  const handleUploadReference = async (e: React.ChangeEvent<HTMLInputElement>, type: 'Interview Notes' | 'Superior Reference' | 'Peer Reference') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const candidateRef = allCandidates.find(c => c.searchId === selectedCandidateId);
+    if (!candidateRef) return;
+    const candId = candidateRef.externalId || candidateRef.id;
+
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("candId", candId);
+    fd.append("type", type);
+
+    if (type === 'Interview Notes') setIsUploadingNotes(true);
+    else if (type === 'Superior Reference') setIsUploadingSupRef(true);
+    else if (type === 'Peer Reference') setIsUploadingPeerRef(true);
+
+    try {
+      const res = await fetch("/api/upload-reference", { method: "POST", body: fd });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.text) {
+          if (type === 'Interview Notes') setInterviewNotes(prev => prev ? prev + "\n\n" + data.text : data.text);
+          else if (type === 'Superior Reference') setSuperiorRef(prev => prev ? prev + "\n\n" + data.text : data.text);
+          else if (type === 'Peer Reference') setPeerRef(prev => prev ? prev + "\n\n" + data.text : data.text);
+        }
+        await fetchCandidateFiles(candId);
+      } else {
+        alert(`Failed to upload ${type}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert(`Error uploading ${type}`);
+    } finally {
+      if (type === 'Interview Notes') setIsUploadingNotes(false);
+      else if (type === 'Superior Reference') setIsUploadingSupRef(false);
+      else if (type === 'Peer Reference') setIsUploadingPeerRef(false);
+    }
+    
+    e.target.value = '';
+  };
+
   const handleGenerateFormat = (format: "format1" | "format2", type: 'pdf' | 'pptx') => {
+    if (reportData) {
+      const emptyFields = [];
+      
+      // Check top-level generated fields
+      const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Career Aspiration"];
+      for (const [key, value] of Object.entries(reportData)) {
+        if (key === '_rawInputs' || key === 'error' || key === 'scores' || hiddenFields.includes(key)) continue;
+        if (!value || (typeof value === 'string' && value.trim() === '') || (Array.isArray(value) && value.length === 0)) {
+          emptyFields.push(key);
+        }
+      }
+      
+      // Check scores
+      if (reportData.scores) {
+        for (const [category, criteria] of Object.entries(reportData.scores as Record<string, any>)) {
+          for (const [criterion, score] of Object.entries(criteria)) {
+             if (score === undefined || score === null) {
+               emptyFields.push(`${criterion} (Score)`);
+             }
+          }
+        }
+      }
+
+      if (emptyFields.length > 0) {
+        alert(`Please fill in all empty fields in the drafted assessment before generating the final report:\n\n- ${emptyFields.join('\n- ')}`);
+        return;
+      }
+    }
+
     setIsGeneratingFormat(true);
     setTimeout(() => {
       setIsGeneratingFormat(false);
@@ -224,6 +394,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
 
   const handleGenerate = async () => {
     if (!selectedCandidate) return alert("Please select a candidate first.");
+    if (!frameworkId) return alert("Please select a Competency Framework or Mandate first.");
     setIsGenerating(true);
     setReportData(null);
 
@@ -245,12 +416,6 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
 
       INTERVIEW NOTES:
       ${interviewNotes}
-
-      SUPERIOR REFERENCE:
-      ${superiorRef}
-
-      PEER REFERENCE:
-      ${peerRef}
     `;
 
     try {
@@ -263,6 +428,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           mandateId: mandateId || undefined,
           transcript: combinedTranscript,
           interviewNotes,
+          selectedFileIds,
           feedback: {
             superior: superiorRef,
             peer: peerRef
@@ -281,9 +447,10 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
   };
 
   return (
-    <div className="max-w-screen-xl mx-auto pb-10">
-      <div className="flex justify-between items-center mb-6">
-        <div>
+    <div className="max-w-screen-xl mx-auto pb-10 print:pb-0">
+      <div className="print:hidden">
+        <div className="flex justify-between items-center mb-6">
+          <div>
           <h1 className="text-2xl font-bold text-gray-900 font-serif">AI Workbench</h1>
           {selectedFramework && <div className="text-[13px] text-gray-500">{selectedFramework.name} — {mandates.find(m => m.id.toString() === mandateId)?.company || "General Assessment"}</div>}
         </div>
@@ -342,45 +509,108 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           <div className="flex flex-col gap-6">
             
             {/* Candidate Files */}
-            {(selectedCandidate.cvFileName || selectedCandidate.linkedinPdf) && (
-              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col gap-3">
-                <h3 className="font-bold text-gray-900 border-b border-gray-100 pb-2">Candidate Files</h3>
-                <div className="flex gap-4">
-                  {selectedCandidate.cvFileName && (
-                    <a 
-                      href={selectedCandidate.cvFileName?.startsWith('http') ? selectedCandidate.cvFileName : "#"} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="flex items-center gap-2 px-3 py-2 bg-[#f4f7fd] text-[#123D8D] rounded-md text-[13px] font-bold border border-[#D4E0F0] hover:bg-[#e6ebf5] transition-colors"
-                      onClick={(e) => {
-                        if (!selectedCandidate.cvFileName?.startsWith('http')) {
-                          e.preventDefault();
-                          alert("This candidate's CV failed to upload to the cloud previously. Please re-upload it from the Float List.");
-                        }
-                      }}
-                    >
-                      📄 View CV / Resume
-                    </a>
-                  )}
-                  {selectedCandidate.linkedinPdf && (
-                    <a 
-                      href={selectedCandidate.linkedinPdf?.startsWith('http') ? selectedCandidate.linkedinPdf : "#"} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="flex items-center gap-2 px-3 py-2 bg-[#f0f9ff] text-[#0369a1] rounded-md text-[13px] font-bold border border-[#bae6fd] hover:bg-[#e0f2fe] transition-colors"
-                      onClick={(e) => {
-                        if (!selectedCandidate.linkedinPdf?.startsWith('http')) {
-                          e.preventDefault();
-                          alert("This candidate's LinkedIn PDF failed to upload to the cloud previously. Please re-upload it from the Float List.");
-                        }
-                      }}
-                    >
-                      📘 View LinkedIn PDF
-                    </a>
-                  )}
-                </div>
+            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col gap-4">
+              <h3 className="font-bold text-gray-900 border-b border-gray-100 pb-2">Candidate Files</h3>
+              
+              <div className="flex flex-wrap gap-4">
+                {selectedCandidate.cvFileName && (
+                  <a 
+                    href={selectedCandidate.cvFileName?.startsWith('http') ? selectedCandidate.cvFileName : "#"} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="flex items-center gap-2 px-3 py-2 bg-[#f4f7fd] text-[#123D8D] rounded-md text-[13px] font-bold border border-[#D4E0F0] hover:bg-[#e6ebf5] transition-colors"
+                  >
+                    📄 View CV / Resume
+                  </a>
+                )}
+                <label className="flex items-center gap-2 px-3 py-2 bg-white text-gray-700 rounded-md text-[13px] font-bold border border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer">
+                  {isUploadingCv ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                      Uploading...
+                    </span>
+                  ) : "➕ Add CV / Resume"}
+                  <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={(e) => handleUploadFile(e, 'cv')} disabled={isUploadingCv} />
+                </label>
+
+                {selectedCandidate.linkedinPdf && (
+                  <a 
+                    href={selectedCandidate.linkedinPdf?.startsWith('http') ? selectedCandidate.linkedinPdf : "#"} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="flex items-center gap-2 px-3 py-2 bg-[#f0f9ff] text-[#0369a1] rounded-md text-[13px] font-bold border border-[#bae6fd] hover:bg-[#e0f2fe] transition-colors"
+                  >
+                    📘 View LinkedIn Profile
+                  </a>
+                )}
+                <label className="flex items-center gap-2 px-3 py-2 bg-white text-gray-700 rounded-md text-[13px] font-bold border border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer">
+                  {isUploadingLinkedin ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                      Uploading...
+                    </span>
+                  ) : "➕ Add LinkedIn Profile"}
+                  <input type="file" className="hidden" accept=".pdf" onChange={(e) => handleUploadFile(e, 'linkedin')} disabled={isUploadingLinkedin} />
+                </label>
               </div>
-            )}
+
+              {candidateFilesHistory.filter(f => f.fileType !== 'Superior Reference' && f.fileType !== 'Peer Reference' && f.fileType !== 'Team/Subordinate Reference').length > 0 && (
+                <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-left text-[13px]">
+                    <thead className="bg-gray-50 border-b border-gray-200 text-gray-700 font-bold">
+                      <tr>
+                        <th className="px-4 py-2 border-r border-gray-200 w-10 text-center">Select</th>
+                        <th className="px-4 py-2 border-r border-gray-200">Document</th>
+                        <th className="px-4 py-2 border-r border-gray-200">Last updated on</th>
+                        <th className="px-4 py-2">File</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {candidateFilesHistory.filter(f => f.fileType !== 'Superior Reference' && f.fileType !== 'Peer Reference' && f.fileType !== 'Team/Subordinate Reference').map((file) => {
+                        const dateStr = new Date(file.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }).replace(/ /g, '-');
+                        return (
+                          <tr key={file.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-2 border-r border-gray-200 text-center">
+                              <input 
+                                type="checkbox" 
+                                className="cursor-pointer"
+                                checked={selectedFileIds.includes(file.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedFileIds(prev => [...prev, file.id]);
+                                    if (file.fileType === 'Interview Notes') {
+                                      if (file.extractedText) {
+                                        setInterviewNotes(prev => prev ? prev + "\n\n" + file.extractedText : file.extractedText);
+                                      } else {
+                                        alert("No text could be found for this document. If this is an older file, please delete it and re-upload it so the system can extract its text.");
+                                      }
+                                    }
+                                  } else {
+                                    setSelectedFileIds(prev => prev.filter(id => id !== file.id));
+                                    if (file.fileType === 'Interview Notes' && file.extractedText) {
+                                      setInterviewNotes(prev => prev.replace("\n\n" + file.extractedText, "").replace(file.extractedText + "\n\n", "").replace(file.extractedText, "").trim());
+                                    }
+                                  }
+                                }}
+                              />
+                            </td>
+                            <td className="px-4 py-2 border-r border-gray-200 font-medium text-gray-900">{file.fileType}</td>
+                            <td className="px-4 py-2 border-r border-gray-200 text-gray-600">
+                              {dateStr}
+                            </td>
+                            <td className="px-4 py-2">
+                              <a href={file.fileUrl} target="_blank" rel="noreferrer" className="text-[#123D8D] hover:underline hover:text-blue-800 break-all">
+                                {file.fileName}
+                              </a>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
 
             {/* Criteria & Manual Scores */}
             {selectedFramework && (
@@ -432,7 +662,13 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
 
             {/* Notes & Feedback */}
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-              <h3 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2">Interview Notes</h3>
+              <div className="flex justify-between items-center mb-3 border-b border-gray-100 pb-2">
+                <h3 className="font-bold text-gray-900">Interview Notes</h3>
+                <label className="cursor-pointer text-xs font-bold text-[#123D8D] bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                  {isUploadingNotes ? "Uploading..." : "📎 Upload File"}
+                  <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Interview Notes')} disabled={isUploadingNotes} />
+                </label>
+              </div>
               <textarea 
                 rows={4} 
                 value={interviewNotes}
@@ -446,11 +682,23 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
               <h3 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2">Reference Feedback</h3>
               <div className="space-y-4">
                 <div>
-                  <div className="text-xs font-bold text-gray-500 mb-1">Superior Reference</div>
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="text-xs font-bold text-gray-500">Superior Reference</div>
+                    <label className="cursor-pointer text-xs font-bold text-[#123D8D] hover:underline flex items-center gap-1">
+                      {isUploadingSupRef ? "Uploading..." : "📎 Upload File"}
+                      <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Superior Reference')} disabled={isUploadingSupRef} />
+                    </label>
+                  </div>
                   <textarea rows={2} value={superiorRef} onChange={e => setSuperiorRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-900 resize-none" placeholder="Enter superior reference..."></textarea>
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-gray-500 mb-1">Peer Reference</div>
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="text-xs font-bold text-gray-500">Peer Reference</div>
+                    <label className="cursor-pointer text-xs font-bold text-[#123D8D] hover:underline flex items-center gap-1">
+                      {isUploadingPeerRef ? "Uploading..." : "📎 Upload File"}
+                      <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Peer Reference')} disabled={isUploadingPeerRef} />
+                    </label>
+                  </div>
                   <textarea rows={2} value={peerRef} onChange={e => setPeerRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-900 resize-none" placeholder="Enter peer reference..."></textarea>
                 </div>
               </div>
@@ -523,6 +771,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           </div>
         </div>
       )}
+      </div>
 
       {/* Full Screen Report Preview Modal */}
       {(activeView === "format1" || activeView === "format2") && reportData && selectedMandate && (
@@ -546,7 +795,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           </div>
 
           {/* Modal Body / Report */}
-          <div className="print:absolute print:left-0 print:top-0 print:w-full print:bg-white print:z-[9999] print:overflow-visible print:block pb-20 animate-in fade-in zoom-in-95 duration-300 shrink-0">
+          <div className="print:absolute print:left-0 print:top-0 print:w-full print:bg-white print:z-[9999] print:overflow-visible print:block pb-20 print:pb-0 animate-in fade-in zoom-in-95 duration-300 shrink-0">
             {activeView === "format1" && (
               <FormatTwo 
                 mandate={selectedMandate} 

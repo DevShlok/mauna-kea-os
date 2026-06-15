@@ -85,6 +85,17 @@ export const candidates = mysqlTable('candidates', {
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
+// ─── CANDIDATE FILES (HISTORY) ───────────────────────────
+export const candidateFiles = mysqlTable('candidate_files', {
+  id: int('id').autoincrement().primaryKey(),
+  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
+  fileType: varchar('file_type', { length: 50 }).notNull(), // 'CV / Resume' or 'Linkedin Profile'
+  fileName: varchar('file_name', { length: 255 }).notNull(),
+  fileUrl: varchar('file_url', { length: 1000 }).notNull(),
+  extractedText: mediumtext('extracted_text'),
+  createdAt: datetime('created_at').default(sql`now()`),
+});
+
 // ─── FLOAT REFERENCES ────────────────────────────────────
 export const floatReferences = mysqlTable('float_references', {
   id: int('id').autoincrement().primaryKey(),
