@@ -249,48 +249,6 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
           );
         })}
 
-        {/* End of content */}
-
-        {/* Bottom action bar */}
-        <div className="flex gap-4 pt-6 border-t border-gray-200 items-center">
-          <button
-            onClick={() => alert("Report submitted for approval")}
-            className="flex-1 py-3 bg-[#dfb259] text-[#1e3a8a] rounded-md font-bold text-[14px] hover:bg-[#cca24e] transition-colors shadow-sm"
-          >
-            Submit
-          </button>
-          
-          <div className="flex items-center gap-2 border border-gray-300 rounded-md px-3 bg-white h-11">
-            <span className="text-[12px] font-bold text-gray-500 uppercase tracking-wide">Format:</span>
-            <select 
-              className="py-1 text-[14px] outline-none bg-transparent font-bold text-[#1e3a8a] cursor-pointer"
-              id="reportFormatSelect"
-            >
-              <option value="format1">Format 1</option>
-              <option value="format2">Format 2</option>
-            </select>
-          </div>
-
-          <button
-            onClick={() => {
-              const format = (document.getElementById('reportFormatSelect') as HTMLSelectElement).value as "format1" | "format2";
-              if (onGeneratePdf) onGeneratePdf(format);
-            }}
-            className="py-3 px-6 bg-[#1e3a8a] text-white rounded-md font-bold text-[14px] hover:bg-[#1e40af] transition-colors shadow-sm flex items-center justify-center min-w-[140px]"
-          >
-            Preview PDF
-          </button>
-          <button
-            onClick={() => {
-              const format = (document.getElementById('reportFormatSelect') as HTMLSelectElement).value as "format1" | "format2";
-              if (onGeneratePptx) onGeneratePptx(format);
-            }}
-            className="py-3 px-6 border border-gray-300 bg-white text-gray-700 rounded-md font-bold text-[14px] hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center min-w-[140px]"
-          >
-            Generate PPTX
-          </button>
-        </div>
-
       </div>
     </div>
   );

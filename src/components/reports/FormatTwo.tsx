@@ -63,14 +63,30 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
   const hasTeam = rp["Team/Subordinate Feedback"] && rp["Team/Subordinate Feedback"].trim() !== "" && !rp["Team/Subordinate Feedback"].toLowerCase().includes("not provided");
 
   const renderBlock = (blockId: string) => {
+    const f2 = rp._format2 || {};
+    
     switch(blockId) {
       case 'notes_summary':
         return (
           <p contentEditable suppressContentEditableWarning>
-            {rp["Notes Summary"]?.join(" ") || `${cand.name} is a finance and strategy leader with extensive experience...`}
+            {f2.notes_summary || rp["Notes Summary"]?.join(" ") || `${cand.name} is a finance and strategy leader with extensive experience...`}
           </p>
         );
       case 'famous_for':
+        if (f2.famous_for && f2.famous_for.length > 0) {
+          return (
+            <div>
+              <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+                What is {cand.name.split(' ')[0]} famous for
+              </h3>
+              <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+                {f2.famous_for.map((item: string, i: number) => (
+                  <li key={i} className="pl-1 leading-snug">{item}</li>
+                ))}
+              </div>
+            </div>
+          );
+        }
         if (!hasInterviewer && !hasSuperior && !hasPeer && !hasTeam) return null;
         return (
           <div>
@@ -102,7 +118,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           </div>
         );
       case 'career_aspiration':
-        const aspirationText = rp["Career Aspiration"] || [
+        const aspirationText = f2.career_aspiration || rp["Career Aspiration"] || [
           cand.dreamRoles && cand.dreamRoles.length > 0 ? `Target Roles: ${cand.dreamRoles.join(', ')}` : '',
           cand.dreamCos && cand.dreamCos.length > 0 ? `Target Companies: ${cand.dreamCos.join(', ')}` : ''
         ].filter(Boolean).join('. ') || "Open to relevant career growth opportunities.";
@@ -118,15 +134,26 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           </div>
         );
       case 'relevant_experience':
+        const exps = f2.relevant_experience || experienceList;
         return (
           <div>
             <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
               Relevant Experience
             </h3>
             <div className="space-y-2 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
-              <li className="pl-1">
-                <strong>{experienceList[0]?.companyName} (Current)</strong> 
-              </li>
+              {exps && exps.length > 0 ? exps.map((e: any, i: number) => (
+                <li key={i} className="pl-1">
+                  <strong>{e.companyName} {e.duration ? `(${e.duration})` : ''}</strong>
+                  {e.position ? ` - ${e.position}` : ''}
+                  {e.highlights && e.highlights.map((hl: string, j: number) => (
+                    <div key={j} className="text-[13px] text-gray-700 mt-1 ml-2">• {hl}</div>
+                  ))}
+                </li>
+              )) : (
+                <li className="pl-1">
+                  <strong>{cand.company || "Current Company"} (Current)</strong> 
+                </li>
+              )}
             </div>
           </div>
         );
@@ -137,65 +164,59 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
               Motivation for the role
             </h3>
             <p contentEditable suppressContentEditableWarning>
-              Motivated by the opportunity to move into a broader strategic leadership role...
+              {f2.motivation || "Motivated by the opportunity to move into a broader strategic leadership role..."}
             </p>
           </div>
         );
       case 'key_strengths':
+        const strengths = f2.key_strengths || rp["Key Strengths"] || ["Strong leadership skills", "Strategic vision"];
         return (
           <div>
             <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
               Key Strengths
             </h3>
             <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
-              {rp["Key Strengths"]?.map((s: string, idx: number) => (
-                <li key={idx} className="pl-1">{s}</li>
-              )) || (
-                <>
-                  <li className="pl-1"><strong>Empathetic Leadership:</strong> Built a high-retention team from scratch...</li>
-                  <li className="pl-1"><strong>Strategic Storytelling:</strong> Expert at translating complex financial data...</li>
-                </>
-              )}
+              {strengths.map((item: string, i: number) => (
+                <li key={i} className="pl-1 leading-snug">{item}</li>
+              ))}
             </div>
           </div>
         );
       case 'areas_to_probe':
+        const areas = f2.areas_to_probe || rp["Areas to Probe"] || ["Cultural fit", "Long-term commitment"];
         return (
           <div>
             <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
               Areas to Probe
             </h3>
             <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
-              {rp["Risks"]?.map((r: string, idx: number) => (
-                <li key={idx} className="pl-1">{r}</li>
-              )) || (
-                <>
-                  <li className="pl-1"><strong>Delegation Balance:</strong> Due to his speed and focus on quality...</li>
-                  <li className="pl-1"><strong>Proactive Insights:</strong> While collaborative, he aims to move beyond...</li>
-                </>
-              )}
+              {areas.map((item: string, i: number) => (
+                <li key={i} className="pl-1 leading-snug">{item}</li>
+              ))}
             </div>
           </div>
         );
       case 'compensation':
+        const comp = f2.compensation || { current: rp["CTC"] || cand.ctc || "Not Disclosed", expected: rp["Expected CTC"] || cand.expectedCtc || "Not Disclosed" };
         return (
           <div>
             <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
               Compensation
             </h3>
-            <p contentEditable suppressContentEditableWarning>
-              ₹ 54 lakhs fixed + ~30% variable (~₹ 16 lakhs) + annual increment eligibility
-            </p>
+            <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+              <li className="pl-1"><strong>Current:</strong> {comp.current}</li>
+              <li className="pl-1"><strong>Expected:</strong> {comp.expected}</li>
+            </div>
           </div>
         );
       case 'recommendation':
         return (
           <div>
             <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
-              Mauna Kea Recommendation
+              Recommendation
             </h3>
-            <p contentEditable suppressContentEditableWarning>
-              {rp["Recommendation"]?.join(" ") || `${cand.name} is a strategic finance leader with deep expertise... His profile is best suited for organizations requiring structured financial governance and enhanced business visibility.`}
+            <p contentEditable suppressContentEditableWarning className="text-[13px] leading-relaxed">
+              {f2.recommendation || rp["MK Recommendation"] || "Highly recommend for the role."}
             </p>
           </div>
         );

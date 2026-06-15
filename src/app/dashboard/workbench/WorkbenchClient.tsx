@@ -93,6 +93,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
 
   // Toggle between Assessment Draft and Final Reports
   const [activeView, setActiveView] = useState<"draft" | "format1" | "format2">("draft");
+  const [selectedFormat, setSelectedFormat] = useState<"format1" | "format2">("format1");
 
   const [candidateFilesHistory, setCandidateFilesHistory] = useState<any[]>([]);
   const [isUploadingCv, setIsUploadingCv] = useState(false);
@@ -205,14 +206,14 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     e.target.value = '';
   };
 
-  const handleGenerateFormat = (format: "format1" | "format2", type: 'pdf' | 'pptx') => {
+  const handleGenerateFormat = async (format: "format1" | "format2", type: 'pdf' | 'pptx') => {
     if (reportData) {
       const emptyFields = [];
       
       // Check top-level generated fields
       const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Career Aspiration"];
       for (const [key, value] of Object.entries(reportData)) {
-        if (key === '_rawInputs' || key === 'error' || key === 'scores' || hiddenFields.includes(key)) continue;
+        if (key === '_rawInputs' || key === 'error' || key === 'scores' || key.startsWith('_format') || hiddenFields.includes(key)) continue;
         if (!value || (typeof value === 'string' && value.trim() === '') || (Array.isArray(value) && value.length === 0)) {
           emptyFields.push(key);
         }
@@ -236,13 +237,42 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     }
 
     setIsGeneratingFormat(true);
-    setTimeout(() => {
+    try {
+      const candId = selectedCandidate?.externalId || selectedCandidate?.id;
+      
+      // We will ALWAYS regenerate the format to pick up any recent manual edits
+      const res = await fetch("/api/generate-format", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          candidateId: candId,
+          format: format,
+          reportData: reportData
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.data) {
+          // Update the local state with the newly generated format data
+          setReportData(prev => ({
+            ...prev,
+            [`_${format}`]: data.data
+          }));
+        }
+      } else {
+        alert("Failed to synthesize the final report format using AI.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error generating final report format.");
+    } finally {
       setIsGeneratingFormat(false);
       setActiveView(format);
       if (type === 'pptx') {
          alert("PPTX downloaded!");
       }
-    }, 2000);
+    }
   };
 
   const selectedCandidate = allCandidates.find(c => c.searchId === selectedCandidateId);
@@ -504,9 +534,9 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           <p className="text-sm">Select a candidate from the dropdown above to begin their assessment.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-6 items-start">
-          {/* LEFT COLUMN: Evaluation Setup */}
-          <div className="flex flex-col gap-6">
+        <div className="flex flex-col max-w-4xl mx-auto gap-8 items-stretch">
+          {/* Single Column Flow */}
+          <div className="flex flex-col gap-6 w-full">
             
             {/* Candidate Files */}
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col gap-4">
@@ -612,9 +642,57 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
               )}
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+{/* Notes & Feedback */}
+            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex-1">
+              <div className="flex justify-between items-center mb-3 border-b border-gray-100 pb-2">
+                <h3 className="font-bold text-gray-900">Interview Notes</h3>
+                <label className="cursor-pointer text-xs font-bold text-[#123D8D] bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                  {isUploadingNotes ? "Uploading..." : "📎 Upload File"}
+                  <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Interview Notes')} disabled={isUploadingNotes} />
+                </label>
+              </div>
+              <textarea 
+                rows={12} 
+                value={interviewNotes}
+                onChange={e => setInterviewNotes(e.target.value)}
+                placeholder="Paste interview notes here..."
+                className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-900 resize-y"
+              ></textarea>
+            </div>
+
+            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex-1">
+              <h3 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2">Reference Feedback</h3>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="text-xs font-bold text-gray-500">Superior Reference</div>
+                    <label className="cursor-pointer text-xs font-bold text-[#123D8D] hover:underline flex items-center gap-1">
+                      {isUploadingSupRef ? "Uploading..." : "📎 Upload File"}
+                      <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Superior Reference')} disabled={isUploadingSupRef} />
+                    </label>
+                  </div>
+                  <textarea rows={5} value={superiorRef} onChange={e => setSuperiorRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-900 resize-y" placeholder="Enter superior reference..."></textarea>
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="text-xs font-bold text-gray-500">Peer Reference</div>
+                    <label className="cursor-pointer text-xs font-bold text-[#123D8D] hover:underline flex items-center gap-1">
+                      {isUploadingPeerRef ? "Uploading..." : "📎 Upload File"}
+                      <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Peer Reference')} disabled={isUploadingPeerRef} />
+                    </label>
+                  </div>
+                  <textarea rows={5} value={peerRef} onChange={e => setPeerRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-900 resize-y" placeholder="Enter peer reference..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            
+</div>
+
             {/* Criteria & Manual Scores */}
             {selectedFramework && (
-              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-6">
                 <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Assessment Criteria & Scores</h3>
                 
                 <div className="space-y-6">
@@ -660,51 +738,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
               </div>
             )}
 
-            {/* Notes & Feedback */}
-            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-              <div className="flex justify-between items-center mb-3 border-b border-gray-100 pb-2">
-                <h3 className="font-bold text-gray-900">Interview Notes</h3>
-                <label className="cursor-pointer text-xs font-bold text-[#123D8D] bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
-                  {isUploadingNotes ? "Uploading..." : "📎 Upload File"}
-                  <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Interview Notes')} disabled={isUploadingNotes} />
-                </label>
-              </div>
-              <textarea 
-                rows={4} 
-                value={interviewNotes}
-                onChange={e => setInterviewNotes(e.target.value)}
-                placeholder="Paste interview notes here..."
-                className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-900 resize-none"
-              ></textarea>
-            </div>
-
-            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-              <h3 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2">Reference Feedback</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="text-xs font-bold text-gray-500">Superior Reference</div>
-                    <label className="cursor-pointer text-xs font-bold text-[#123D8D] hover:underline flex items-center gap-1">
-                      {isUploadingSupRef ? "Uploading..." : "📎 Upload File"}
-                      <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Superior Reference')} disabled={isUploadingSupRef} />
-                    </label>
-                  </div>
-                  <textarea rows={2} value={superiorRef} onChange={e => setSuperiorRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-900 resize-none" placeholder="Enter superior reference..."></textarea>
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="text-xs font-bold text-gray-500">Peer Reference</div>
-                    <label className="cursor-pointer text-xs font-bold text-[#123D8D] hover:underline flex items-center gap-1">
-                      {isUploadingPeerRef ? "Uploading..." : "📎 Upload File"}
-                      <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Peer Reference')} disabled={isUploadingPeerRef} />
-                    </label>
-                  </div>
-                  <textarea rows={2} value={peerRef} onChange={e => setPeerRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-900 resize-none" placeholder="Enter peer reference..."></textarea>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
+<div className="flex flex-col gap-2">
               {reportExistsInDb && !isGenerating && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded text-[12px] text-green-700 font-semibold">
                   ✅ Assessment draft loaded from database
@@ -731,8 +765,8 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Output Preview */}
-          <div>
+          {/* Output Preview */}
+          <div className="w-full">
             {isGeneratingFormat ? (
               <div className="bg-white border border-gray-200 rounded-xl p-10 shadow-sm flex flex-col items-center justify-center text-center h-[600px] sticky top-6">
                 <div className="w-12 h-12 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mb-6"></div>
@@ -744,15 +778,45 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
             ) : reportData ? (
               <div className="flex flex-col gap-4">
                 {activeView === "draft" && (
-                  <CandidateReportPDF 
-                    candidate={selectedCandidate} 
-                    frameworkName={selectedFramework?.name || "Assessment"} 
-                    reportData={reportData}
-                    onReportDataChange={(newData) => setReportData(newData)}
-                    onGeneratePdf={(format) => handleGenerateFormat(format, 'pdf')}
-                    onGeneratePptx={(format) => handleGenerateFormat(format, 'pptx')}
-                  />
+                  <>
+
+
+                    <CandidateReportPDF 
+                      candidate={selectedCandidate} 
+                      frameworkName={selectedFramework?.name || "Assessment"} 
+                      reportData={reportData}
+                      onReportDataChange={(newData) => setReportData(newData)}
+                      onGeneratePdf={(format) => handleGenerateFormat(format, 'pdf')}
+                      onGeneratePptx={(format) => handleGenerateFormat(format, 'pptx')}
+                    />
+                  </>
                 )}
+
+                    {/* Format Selection Dropdown */}
+                    <div className="flex flex-col items-center justify-center gap-3 mt-8 pt-6 border-t border-gray-200">
+                      <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full shadow-sm border border-gray-200">
+                        <span className="font-bold text-gray-700 text-sm">Select final format:</span>
+                        <select 
+                          value={selectedFormat}
+                          onChange={e => setSelectedFormat(e.target.value as "format1" | "format2")}
+                          className="bg-transparent text-[#123D8D] font-bold outline-none cursor-pointer"
+                        >
+                          <option value="format1">Format 1</option>
+                          <option value="format2">Format 2</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Generate Buttons */}
+                    <div className="flex justify-center gap-4 mt-6">
+                      <button onClick={() => handleGenerateFormat(selectedFormat, 'pdf')} className="px-6 py-3 bg-[#123D8D] text-white font-bold rounded shadow hover:bg-blue-800 transition-colors">
+                        Generate PDF
+                      </button>
+                      <button onClick={() => handleGenerateFormat(selectedFormat, 'pptx')} className="px-6 py-3 bg-[#123D8D] text-white font-bold rounded shadow hover:bg-blue-800 transition-colors">
+                        Generate PPTX
+                      </button>
+                    </div>
+
               </div>
             ) : isGenerating ? (
               <div className="bg-white border border-gray-200 rounded-xl p-10 shadow-sm flex flex-col items-center justify-center text-center h-[600px] sticky top-6">
