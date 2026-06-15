@@ -30,8 +30,9 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
     <div className="flex flex-col gap-10 print:gap-0 bg-gray-100 print:bg-white py-10 print:py-0 items-center min-h-screen">
       {candidates.map((cand, idx) => {
         const rp = cand.reportData || {};
-        const notes = rp["Notes Summary"] || rp["Relevant Experience"] || ["Detailed notes regarding the candidate's experience and fit."];
-        const assessmentNotes = rp["Key Strengths"] || rp["MK Recommendation"] || ["Strong capability demonstrated."];
+        const f1 = rp._format1 || {};
+        const notes = f1["Notes Summary"] || rp["Notes Summary"] || rp["Relevant Experience"] || ["Detailed notes regarding the candidate's experience and fit."];
+        const assessmentNotes = f1["Assessment Notes"] || rp["Key Strengths"] || rp["MK Recommendation"] || ["Strong capability demonstrated."];
         
         return (
           <div key={cand.id} className="bg-white w-[794px] h-[1122px] mx-auto shadow-xl print:shadow-none break-after-page mb-10 print:mb-0 box-border print:scale-100 max-w-none p-[20px] overflow-hidden">
@@ -154,19 +155,32 @@ function DetailRow({ icon, label, value }: { icon: React.ReactNode, label: strin
 }
 
 function SectionBlock({ title, items }: { title: string, items: any }) {
-  const list = Array.isArray(items) ? items : [items];
+  // Gracefully handle if items is somehow an object that isn't an array
+  let list: any[] = [];
+  if (Array.isArray(items)) {
+    list = items;
+  } else if (items && typeof items === 'object') {
+    // If it's an object with keys (like the f1 object itself), stringify or extract values
+    list = Object.values(items).flat();
+  } else {
+    list = [items];
+  }
+
   return (
-    <div className="flex flex-col">
-      <h3 className="text-[#e28723] text-[15px] font-bold uppercase tracking-wider mb-1.5 shrink-0">{title}</h3>
-      <ul className="list-none space-y-1.5">
-        {list.map((item: string, i: number) => (
+    <div className="mb-2 w-full break-inside-avoid">
+      <h3 className="text-[#e28723] font-bold text-[14px] uppercase tracking-wider mb-2" contentEditable suppressContentEditableWarning>
+        {title}
+      </h3>
+      <ul className="list-disc pl-4 space-y-1">
+        {list.map((item: any, i: number) => {
+          const textItem = typeof item === 'object' ? JSON.stringify(item) : String(item);
+          return (
           <li key={i} className="flex items-start text-[13px] text-[#333] font-medium leading-snug">
-            <svg className="w-4 h-4 text-[#e28723] mr-3 mt-[3px] shrink-0" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-            </svg>
-            <span contentEditable suppressContentEditableWarning className="flex-1 outline-none focus:bg-yellow-50">{item}</span>
+            <span className="text-[#e28723] mr-2 text-[18px] leading-[14px] mt-0.5">•</span>
+            <span contentEditable suppressContentEditableWarning className="flex-1 outline-none focus:bg-yellow-50">{textItem}</span>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </div>
   );

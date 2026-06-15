@@ -121,7 +121,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         const aspirationText = f2.career_aspiration || rp["Career Aspiration"] || [
           cand.dreamRoles && cand.dreamRoles.length > 0 ? `Target Roles: ${cand.dreamRoles.join(', ')}` : '',
           cand.dreamCos && cand.dreamCos.length > 0 ? `Target Companies: ${cand.dreamCos.join(', ')}` : ''
-        ].filter(Boolean).join('. ') || "Open to relevant career growth opportunities.";
+        ].filter(Boolean).join('. ');
         
         return (
           <div>
@@ -164,12 +164,12 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
               Motivation for the role
             </h3>
             <p contentEditable suppressContentEditableWarning>
-              {f2.motivation || "Motivated by the opportunity to move into a broader strategic leadership role..."}
+              {f2.motivation || rp["Motivation"] || ""}
             </p>
           </div>
         );
       case 'key_strengths':
-        const strengths = f2.key_strengths || rp["Key Strengths"] || ["Strong leadership skills", "Strategic vision"];
+        const strengths = f2.key_strengths || rp["Key Strengths"] || [];
         return (
           <div>
             <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
@@ -183,7 +183,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           </div>
         );
       case 'areas_to_probe':
-        const areas = f2.areas_to_probe || rp["Areas to Probe"] || ["Cultural fit", "Long-term commitment"];
+        const areas = f2.areas_to_probe || rp["Areas to Probe"] || [];
         return (
           <div>
             <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
@@ -216,7 +216,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
               Recommendation
             </h3>
             <p contentEditable suppressContentEditableWarning className="text-[13px] leading-relaxed">
-              {f2.recommendation || rp["MK Recommendation"] || "Highly recommend for the role."}
+              {f2.recommendation || rp["Recommendation"] || rp["MK Recommendation"] || ""}
             </p>
           </div>
         );

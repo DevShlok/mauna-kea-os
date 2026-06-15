@@ -92,7 +92,15 @@ export async function POST(req: Request) {
     });
 
     // Add extra metadata fields for final reports if they don't already exist
-    const metadataFields = ["Notes Summary", "Interviewer Feedback"];
+    const metadataFields = [
+      "Notes Summary", 
+      "Interviewer Feedback",
+      "Career Aspiration",
+      "Motivation",
+      "Key Strengths",
+      "Areas to Probe",
+      "Recommendation"
+    ];
     if (feedback?.superior) metadataFields.push("Superior Feedback");
     if (feedback?.peer) metadataFields.push("Peer Feedback");
     
@@ -105,7 +113,15 @@ export async function POST(req: Request) {
         } else if (field.includes("Feedback")) {
           schemaObject[field] = z.string().describe(`Summarize the ${field} using professional executive language based on the provided explicit notes for it. Keep it to 1-2 impactful sentences. Return an empty string if it is not provided or missing.`);
         } else if (field === "Career Aspiration") {
-          schemaObject[field] = z.string().describe(`Summarize the candidate's Career Aspirations strictly based on their stated Dream Roles and Dream Companies in the context. Write 1-2 sharp sentences.`);
+          schemaObject[field] = z.string().describe(`Summarize the candidate's Career Aspirations strictly based on their stated Dream Roles and Dream Companies in the context. Write 1-2 sharp sentences. Return an empty string if it is not provided or missing.`);
+        } else if (field === "Motivation") {
+          schemaObject[field] = z.string().describe(`Summarize the candidate's motivation for the role based on the interview transcript. Write a brief professional paragraph. Return an empty string if it is not provided or missing.`);
+        } else if (field === "Key Strengths") {
+          schemaObject[field] = z.array(z.string()).describe(`List 3-5 key strengths of the candidate based on the interview transcript. Return an empty array if missing.`);
+        } else if (field === "Areas to Probe") {
+          schemaObject[field] = z.array(z.string()).describe(`List 2-4 areas to probe or potential weaknesses of the candidate. Return an empty array if missing.`);
+        } else if (field === "Recommendation") {
+          schemaObject[field] = z.string().describe(`Provide a final recommendation paragraph for the candidate. Return an empty string if missing.`);
         } else {
           schemaObject[field] = z.string().describe(`Extract or infer ${field} from the transcript. Keep it extremely brief (e.g. 'Kohler India', 'IIM L', 'INR 85L', '400+'). Leave blank if not available.`);
         }
@@ -183,7 +199,7 @@ export async function POST(req: Request) {
     }
 
     generateObject({
-      model: google("gemini-2.5-flash"),
+      model: google("gemini-3.5-flash"),
       schema: DynamicSchema,
       prompt: `You are an expert executive assessor and organizational psychologist. Your objective is to evaluate the following candidate interview transcript and notes against the provided competency framework, taking into account the specific role requirements (Mandate Data).
       

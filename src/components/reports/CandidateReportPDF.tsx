@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 
 interface CandidateReportPDFProps {
   candidate: any;
@@ -13,59 +13,56 @@ interface CandidateReportPDFProps {
 
 export default function CandidateReportPDF({ candidate, frameworkName, reportData, onReportDataChange, onGeneratePdf, onGeneratePptx }: CandidateReportPDFProps) {
   const { scores, ...allSections } = reportData;
-  // Fields entirely hidden from UI (fetched from DB directly)
-  const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Career Aspiration", "_rawInputs", "error"];
+  // Fields entirely hidden from UI (fetched from DB directly or internal)
+  const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "_rawInputs", "error", "_format1", "_format2"];
   
-  // Fields shown as small textareas
-  const metadataKeys = ["Notes Summary", "Interviewer Feedback", "Superior Feedback", "Peer Feedback"];
-  
-  const sections = Object.fromEntries(Object.entries(allSections).filter(([k]) => !hiddenFields.includes(k) && !metadataKeys.includes(k)));
-  const metadataFields = Object.fromEntries(Object.entries(allSections).filter(([k]) => metadataKeys.includes(k)));
+  // All visible sections
+  const sections = Object.fromEntries(Object.entries(allSections).filter(([k]) => !hiddenFields.includes(k)));
 
   // Track editing state per section
   const [editingSections, setEditingSections] = useState<Record<string, boolean>>({});
   const [acceptedSections, setAcceptedSections] = useState<Record<string, boolean>>({});
   const [editedContent, setEditedContent] = useState<Record<string, any>>({});
-  const bodyRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  
+  // Custom Section State
+  const [isAddingSection, setIsAddingSection] = useState(false);
+  const [newSectionHeading, setNewSectionHeading] = useState("");
 
   const handleEdit = (key: string) => {
     setEditingSections(prev => ({ ...prev, [key]: true }));
     setAcceptedSections(prev => ({ ...prev, [key]: false }));
-    // Focus the section body after state update
-    setTimeout(() => {
-      const el = bodyRefs.current[key];
-      if (el) {
-        el.setAttribute("contenteditable", "true");
-        el.focus();
-      }
-    }, 50);
+    
+    // Initialize editedContent with the current value
+    const val = reportData[key];
+    setEditedContent(prev => ({
+      ...prev,
+      [key]: Array.isArray(val) ? val.join('\n') : (typeof val === "string" ? val : JSON.stringify(val))
+    }));
   };
 
   const handleAccept = (key: string) => {
-    // Save edits from contenteditable
-    const el = bodyRefs.current[key];
-    if (el) {
-      el.setAttribute("contenteditable", "false");
-    }
     setEditingSections(prev => ({ ...prev, [key]: false }));
     setAcceptedSections(prev => ({ ...prev, [key]: true }));
 
-    // Persist changes back
-    if (el && onReportDataChange) {
+    // Persist changes back only if the user actually edited it
+    if (onReportDataChange && editedContent[key] !== undefined) {
       const newSections = { ...reportData };
-      // Get the text content from the edited div
-      const updatedText = el.innerText.trim();
-      newSections[key] = updatedText;
+      const currentVal = editedContent[key] || "";
+      // Keep arrays as arrays if the original was an array (for legacy sections) 
+      // or if we detect multiple newlines in a new section that we want to be bullet points
+      const wasArray = Array.isArray(reportData[key]);
+      const isBulletList = ["Notes Summary", "Key Strengths", "Areas to Probe"].includes(key);
+      
+      if (wasArray || isBulletList) {
+        newSections[key] = currentVal.split('\n').filter((s: string) => s.trim() !== '');
+      } else {
+        newSections[key] = currentVal;
+      }
       onReportDataChange(newSections);
     }
   };
 
-  const handleRedo = (key: string) => {
-    // Reset back to original content
-    const el = bodyRefs.current[key];
-    if (el) {
-      el.setAttribute("contenteditable", "false");
-    }
+  const handleRemove = (key: string) => {
     setEditingSections(prev => ({ ...prev, [key]: false }));
     setAcceptedSections(prev => ({ ...prev, [key]: false }));
     setEditedContent(prev => {
@@ -73,18 +70,43 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
       delete next[key];
       return next;
     });
+
+    if (onReportDataChange) {
+      const newSections = { ...reportData };
+      delete newSections[key];
+      onReportDataChange(newSections);
+    }
+  };
+
+  const handleAddCustomSection = () => {
+    if (!newSectionHeading.trim()) {
+      setIsAddingSection(false);
+      return;
+    }
+    const heading = newSectionHeading.trim();
+    if (onReportDataChange) {
+      onReportDataChange({
+        ...reportData,
+        [heading]: ""
+      });
+    }
+    // Auto-open in edit mode
+    setEditingSections(prev => ({ ...prev, [heading]: true }));
+    setEditedContent(prev => ({ ...prev, [heading]: "" }));
+    setNewSectionHeading("");
+    setIsAddingSection(false);
   };
 
   const renderContent = (content: any) => {
     if (Array.isArray(content)) {
       return (
-        <div className="flex flex-col gap-2.5 mt-1">
+        <div className="flex flex-col gap-2 mt-1">
           {content.map((item, idx) => {
             const hasNumber = /^\d+[\.\)]\s/.test(item);
             // Bold the prefix if it ends with a colon
             const formattedItem = item.replace(/^(.*?:)/, '<strong>$1</strong>');
             return (
-              <div key={idx} className="text-[12px] text-[#334155] leading-relaxed font-normal flex gap-1">
+              <div key={idx} className="text-[14px] text-[#334155] leading-relaxed font-normal flex gap-1">
                 {!hasNumber && <span className="font-bold shrink-0">{idx + 1}.</span>}
                 <span dangerouslySetInnerHTML={{ __html: formattedItem }} />
               </div>
@@ -93,7 +115,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
         </div>
       );
     }
-    return <p className="text-[12px] text-[#334155] leading-relaxed mt-1 whitespace-pre-wrap font-normal">{content}</p>;
+    return <p className="text-[14px] text-[#334155] leading-relaxed mt-1 whitespace-pre-wrap font-normal">{content}</p>;
   };
 
   return (
@@ -109,7 +131,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
           </div>
           <div>
             <h1 className="text-xl font-bold text-blue-900 font-serif">{candidate.name}</h1>
-            <p className="text-[12px] font-bold text-gray-500 mt-0.5 uppercase tracking-wide">
+            <p className="text-[14px] font-bold text-gray-500 mt-0.5 uppercase tracking-wide">
               {candidate.designation || candidate.role || "Candidate"} at {candidate.company || "Unknown Company"}
             </p>
           </div>
@@ -127,47 +149,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
       </div>
 
       <div className="px-6 pb-6 space-y-4">
-        
-        {/* FEEDBACK & SUMMARY FIELDS (Editable) */}
-        {Object.keys(metadataFields).length > 0 && (
-          <div className="border border-[#e2e8f0] rounded-xl shadow-[0_2px_8px_rgb(0,0,0,0.04)] bg-white mb-6">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-[13px] font-bold text-[#00174f] flex items-center gap-1.5">
-                <span className="text-base">📋</span> AI Feedback & Summaries
-              </h3>
-            </div>
-            <div className="p-5 flex flex-col gap-4">
-              {Object.entries(metadataFields).map(([key, value]) => (
-                <div key={key}>
-                  <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">{key}</label>
-                  {Array.isArray(value) ? (
-                    <textarea 
-                      className="w-full text-[13px] border border-gray-200 rounded p-2 focus:border-blue-500 outline-none resize-none transition-colors" 
-                      rows={4} 
-                      value={value.join('\n')} 
-                      onChange={(e) => {
-                        const newReportData = { ...reportData, [key]: e.target.value.split('\n') };
-                        if (onReportDataChange) onReportDataChange(newReportData);
-                      }}
-                    />
-                  ) : (
-                    <textarea 
-                      className="w-full text-[13px] border border-gray-200 rounded p-2 focus:border-blue-500 outline-none resize-none transition-colors" 
-                      rows={3}
-                      value={value} 
-                      onChange={(e) => {
-                        const newReportData = { ...reportData, [key]: e.target.value };
-                        if (onReportDataChange) onReportDataChange(newReportData);
-                      }}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* DYNAMIC TEXT SECTIONS — each with Accept / Edit / Redo */}
+        {/* DYNAMIC TEXT SECTIONS — each with Accept / Edit / Remove */}
         {Object.entries(sections).map(([title, content], i) => {
           const isEditing = editingSections[title];
           const isAccepted = acceptedSections[title];
@@ -192,14 +174,14 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
             >
               {/* Section header bar */}
               <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                <span className="text-[13px] font-bold text-[#00174f] flex items-center gap-1.5">
+                <span className="text-[15px] font-bold text-[#00174f] flex items-center gap-1.5">
                   <span className="text-base">{icon}</span>
                   {displayTitle}
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleAccept(title)}
-                    className={`px-3 py-1.5 border rounded-md text-[12px] font-semibold transition-colors shadow-sm ${
+                    className={`px-3 py-1.5 border rounded-md text-[13px] font-semibold transition-colors shadow-sm ${
                       isAccepted
                         ? "bg-green-50 border-green-200 text-green-700 cursor-default"
                         : "bg-white border-[#e2e8f0] text-gray-700 hover:bg-gray-50"
@@ -209,7 +191,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
                   </button>
                   <button
                     onClick={() => handleEdit(title)}
-                    className={`px-3 py-1.5 border rounded-md text-[12px] font-semibold transition-colors shadow-sm ${
+                    className={`px-3 py-1.5 border rounded-md text-[13px] font-semibold transition-colors shadow-sm ${
                       isEditing
                         ? "bg-blue-50 border-blue-200 text-blue-700"
                         : "bg-white border-[#e2e8f0] text-gray-700 hover:bg-gray-50"
@@ -218,36 +200,68 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
                     Edit
                   </button>
                   <button
-                    onClick={() => handleRedo(title)}
-                    className="px-3 py-1.5 border border-[#e2e8f0] bg-white rounded-md text-[12px] font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-1"
+                    onClick={() => handleRemove(title)}
+                    className="px-3 py-1.5 border border-[#e2e8f0] bg-white rounded-md text-[13px] font-semibold text-red-600 shadow-sm hover:bg-red-50 transition-colors flex items-center gap-1"
                   >
-                    <span>↺</span> Redo
+                    <span>✕</span> Remove
                   </button>
                 </div>
               </div>
 
-              {/* Section body — becomes contentEditable on Edit */}
-              <div
-                ref={(el) => { bodyRefs.current[title] = el; }}
-                className={`px-5 pb-5 pt-1 outline-none transition-colors ${
-                  isEditing ? "bg-white cursor-text" : ""
-                }`}
-                suppressContentEditableWarning
-                onBlur={() => {
-                  // Auto-save on blur if editing
-                  if (isEditing) {
-                    const el = bodyRefs.current[title];
-                    if (el) {
-                      setEditedContent(prev => ({ ...prev, [title]: el.innerText.trim() }));
-                    }
-                  }
-                }}
-              >
-                {renderContent(editedContent[title] !== undefined ? editedContent[title] : content)}
+              {/* Section body */}
+              <div className="px-5 pb-5 pt-1 transition-colors">
+                {isEditing ? (
+                  <textarea
+                    className="w-full text-[14px] border border-blue-200 rounded p-3 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-y transition-colors min-h-[100px] leading-relaxed"
+                    value={editedContent[title] !== undefined ? editedContent[title] : ""}
+                    onChange={(e) => setEditedContent(prev => ({ ...prev, [title]: e.target.value }))}
+                  />
+                ) : (
+                  renderContent(content)
+                )}
               </div>
             </div>
           );
         })}
+
+        {/* Add Section Functionality */}
+        <div className="mt-8 flex justify-center">
+          {isAddingSection ? (
+            <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 w-full max-w-md shadow-sm">
+              <input 
+                type="text" 
+                placeholder="New Section Heading (e.g. Technical Skills)"
+                className="flex-1 border border-gray-300 rounded px-3 py-2 text-[14px] outline-none focus:border-blue-500"
+                value={newSectionHeading}
+                onChange={(e) => setNewSectionHeading(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddCustomSection();
+                  if (e.key === 'Escape') setIsAddingSection(false);
+                }}
+                autoFocus
+              />
+              <button 
+                onClick={handleAddCustomSection}
+                className="bg-blue-900 text-white px-4 py-2 rounded text-[14px] font-semibold hover:bg-blue-800 transition-colors"
+              >
+                Add
+              </button>
+              <button 
+                onClick={() => setIsAddingSection(false)}
+                className="text-gray-500 hover:text-gray-700 px-2"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => setIsAddingSection(true)}
+              className="flex items-center gap-2 text-blue-700 font-bold hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors border border-dashed border-blue-300"
+            >
+              <span>+</span> Add Custom Section
+            </button>
+          )}
+        </div>
 
       </div>
     </div>
