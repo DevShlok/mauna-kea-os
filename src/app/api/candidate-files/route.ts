@@ -24,3 +24,21 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Failed to fetch candidate files" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const fileId = parseInt(searchParams.get('id') || '0', 10);
+
+    if (!fileId) {
+      return NextResponse.json({ error: "id is required" }, { status: 400 });
+    }
+
+    await db.delete(candidateFiles).where(eq(candidateFiles.id, fileId));
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("Delete Candidate File Error:", error);
+    return NextResponse.json({ error: "Failed to delete candidate file" }, { status: 500 });
+  }
+}

@@ -2,7 +2,8 @@
 import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { addSubmissionAction, addReferenceAction, deleteFloatListEntryAction } from "@/app/actions";
+import { addSubmissionAction, addReferenceAction, deleteFloatListEntryAction, logCandidateActivityAction } from "@/app/actions";
+import { useUser } from "@clerk/nextjs";
 
 function Tile({ id, icon, name, meta, content, isOpen, toggle }: any) {
   return (
@@ -26,15 +27,114 @@ function Tile({ id, icon, name, meta, content, isOpen, toggle }: any) {
 
 export default function FlCandidateClient({ candidate, mandates = [] }: { candidate: any; mandates?: any[] }) {
   const router = useRouter();
-  const [activeTiles, setActiveTiles] = useState<Record<string, boolean>>({});
+  const { user } = useUser();
+  const getInitialFiles = () => {
+    let files = candidate?.files ? [...candidate.files] : [];
+    
+    if (candidate?.hasCv && candidate?.cvFileName?.startsWith('http')) {
+      const hasCvInFiles = files.some((f: any) => f.fileType.toLowerCase().includes('cv') || f.fileType.toLowerCase().includes('resume'));
+      if (!hasCvInFiles) {
+        files.push({
+          id: -1,
+          fileType: 'CV / Resume',
+          fileName: candidate.cvFileName.split('/').pop() || 'Legacy_CV.pdf',
+          fileUrl: candidate.cvFileName,
+          createdAt: candidate.createdAt || new Date().toISOString()
+        });
+      }
+    }
+
+    if (candidate?.linkedinPdf && candidate?.linkedinPdf.startsWith('http')) {
+      const hasLiInFiles = files.some((f: any) => f.fileType.toLowerCase().includes('linkedin'));
+      if (!hasLiInFiles) {
+        files.push({
+          id: -2,
+          fileType: 'LinkedIn Profile',
+          fileName: 'Legacy_LinkedIn.pdf',
+          fileUrl: candidate.linkedinPdf,
+          createdAt: candidate.createdAt || new Date().toISOString()
+        });
+      }
+    }
+    return files;
+  };
+
+  const [activeTiles, setActiveTiles] = useState<Record<string, boolean>>({'cv': true});
   const [isSubModalOpen, setIsSubModalOpen] = useState(false);
   const [subForm, setSubForm] = useState({ client: "", role: "", consultant: "", mandateId: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingLinkedin, setIsUploadingLinkedin] = useState(false);
   const [isRefModalOpen, setIsRefModalOpen] = useState(false);
   const [refForm, setRefForm] = useState({ type: "Superior", name: "", org: "", rel: "", text: "" });
   const [isSubmittingRef, setIsSubmittingRef] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [candidateFiles, setCandidateFiles] = useState<any[]>(getInitialFiles());
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{fileId: number, fileName: string} | null>(null);
+
+  const [activeLogTab, setActiveLogTab] = useState("Meeting");
+  const [logForm, setLogForm] = useState({ note: "", type: "In-person meeting", meetingFor: "Exploration", date: "", time: "" });
+  const [isLogging, setIsLogging] = useState(false);
+
+  const handleLogActivity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!logForm.note) return;
+    setIsLogging(true);
+    let logType = activeLogTab;
+    let finalNote = logForm.note;
+    
+    if (activeLogTab === "Meeting") {
+      logType = `Meeting (${logForm.type})`;
+      const consultantName = user?.fullName || "Consultant";
+      const formattedDate = logForm.date 
+        ? new Date(logForm.date).toLocaleDateString("en-GB", {day: "2-digit", month: "short", year: "2-digit"}).replace(/ /g, '-')
+        : "Unknown date";
+      const timeStr = logForm.time ? ` ${logForm.time}` : "";
+      const meetingForStr = logForm.meetingFor.toLowerCase();
+      finalNote = `${consultantName} consultant met ${candidate.name} candidate on ${formattedDate}${timeStr} for ${meetingForStr}.\n\nNotes: ${logForm.note}`;
+    }
+    else if (activeLogTab === "Email") logType = "Email";
+    else if (activeLogTab === "Task") logType = `Task: ${logForm.type}`;
+    
+    try {
+      await logCandidateActivityAction({
+        candId: candidate.id,
+        type: logType,
+        note: finalNote,
+        date: logForm.date,
+        time: logForm.time,
+        consultant: user?.fullName || "System"
+      });
+      setLogForm({ note: "", type: "In-person meeting", meetingFor: "Exploration", date: "", time: "" });
+      alert("Activity logged successfully!");
+      router.refresh();
+    } catch (err: any) {
+      alert(`Error logging activity: ${err.message}`);
+    }
+    setIsLogging(false);
+  };
+
+  const handleDeleteFile = async (fileId: number, fileName: string) => {
+    setDeleteConfirmation({ fileId, fileName });
+  };
+
+  const confirmDeleteFile = async () => {
+    if (!deleteConfirmation) return;
+    const { fileId } = deleteConfirmation;
+    try {
+      const res = await fetch(`/api/candidate-files?id=${fileId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setCandidateFiles(prev => prev.filter(f => f.id !== fileId));
+      } else {
+        alert("Failed to delete file");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting file");
+    } finally {
+      setDeleteConfirmation(null);
+    }
+  };
 
   const handleUploadCV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -48,6 +148,15 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
     try {
       const res = await fetch("/api/upload-cv", { method: "POST", body: formData });
       if (res.ok) {
+        const data = await res.json();
+        // Optimistically add the file to the list
+        setCandidateFiles(prev => [...prev, {
+          id: Math.random(), // Temporary ID until page reload
+          fileType: 'CV / Resume',
+          fileName: `${candidate.name} - CV.pdf`,
+          fileUrl: data.url,
+          createdAt: new Date().toISOString()
+        }]);
         alert("CV uploaded successfully!");
         router.refresh();
       } else {
@@ -58,6 +167,40 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
       alert(`Error uploading CV: ${err.message}`);
     }
     setIsUploading(false);
+    e.target.value = '';
+  };
+
+  const handleUploadLinkedIn = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingLinkedin(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("candId", candidate.id);
+
+    try {
+      const res = await fetch("/api/upload-linkedin-pdf", { method: "POST", body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        setCandidateFiles(prev => [...prev, {
+          id: Math.random(),
+          fileType: 'LinkedIn Profile',
+          fileName: `${candidate.name} - LinkedIn.pdf`,
+          fileUrl: data.url,
+          createdAt: new Date().toISOString()
+        }]);
+        alert("LinkedIn PDF uploaded successfully!");
+        router.refresh();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(`Upload failed: ${errData.error || res.statusText}`);
+      }
+    } catch (err: any) {
+      alert(`Error uploading LinkedIn PDF: ${err.message}`);
+    }
+    setIsUploadingLinkedin(false);
+    e.target.value = '';
   };
 
   const handleAddSubmission = async (e: React.FormEvent) => {
@@ -73,7 +216,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
       candCompany: candidate.company,
       client: subForm.client,
       role: subForm.role,
-      consultant: subForm.consultant,
+      consultant: "Sahil Bhatia",
       mandateId: subForm.mandateId
     });
     setIsSubmitting(false);
@@ -181,60 +324,74 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
       <div className="flex flex-col mb-6">
         {/* Tile 1: CV */}
         <Tile 
-          id="cv" icon="📄" name="CV / Resume" meta={candidate.hasCv ? '1 file uploaded' : 'No file uploaded'} 
+          id="cv" icon="📄" name="Documents & Files" meta={candidateFiles.length > 0 ? `${candidateFiles.length} file(s) uploaded` : 'No files uploaded'} 
           isOpen={activeTiles['cv']} toggle={toggleTile}
           content={
             <div>
-              <div className="border-2 border-dashed border-[#D4E0F0] rounded-[10px] p-6 text-center cursor-pointer hover:border-[#123D8D] bg-[#f4f7fd] transition-colors relative mb-3">
-                <input type="file" accept="application/pdf" className="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full" onChange={handleUploadCV} disabled={isUploading} title="Upload CV" />
-                <div className="text-[24px] mb-2">📎</div>
-                <div className="font-semibold text-[#111] mb-1 text-[14px]">{candidate.hasCv ? 'Replace CV' : 'Upload CV'}</div>
-                <div className="text-[12px] text-[#6b7a99]">{isUploading ? 'Uploading...' : 'PDF format'}</div>
+              <div className="flex gap-3 mb-4">
+                <label className="flex-1 px-4 py-2 bg-[#DCE5F4] text-[#123D8D] rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#c5d3ec] transition-colors text-center border border-[#bacce6]">
+                  <input type="file" accept="application/pdf" className="hidden" onChange={handleUploadLinkedIn} disabled={isUploadingLinkedin} />
+                  {isUploadingLinkedin ? 'Uploading...' : '📘 Upload LinkedIn Profile'}
+                </label>
+                <label className="flex-1 px-4 py-2 bg-[#123D8D] text-white rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#0d2f6e] transition-colors text-center shadow-sm">
+                  <input type="file" accept="application/pdf,.doc,.docx" className="hidden" onChange={handleUploadCV} disabled={isUploading} />
+                  {isUploading ? 'Uploading...' : '📄 Upload CV / Resume'}
+                </label>
               </div>
 
-              {candidate.hasCv && (
-                <div className="flex items-center gap-2 p-2 bg-[#f4f7fd] rounded-md text-[13px] mb-3">
-                  <span>📄</span>
-                  <span className="flex-1 font-semibold">{candidate.cvFileName?.split('/').pop() || `${candidate.name.replace(' ', '_')}_CV.pdf`}</span>
-                  <a 
-                    href={candidate.cvFileName?.startsWith('http') ? candidate.cvFileName : "#"} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="px-3 py-1 bg-white text-[#123D8D] rounded text-[12px] font-bold border border-[#D4E0F0] hover:bg-gray-50 z-20"
-                    onClick={(e) => {
-                      if (!candidate.cvFileName?.startsWith('http')) {
-                        e.preventDefault();
-                        alert("File hasn't been successfully uploaded to the cloud. Please try uploading the CV again.");
-                      }
-                    }}
-                  >
-                    View / Download
-                  </a>
-                </div>
-              )}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-gray-50 text-gray-700">
+                    <tr>
+                      <th className="px-4 py-2 border-r border-gray-200 w-32">Type</th>
+                      <th className="px-4 py-2 border-r border-gray-200 w-32">Date</th>
+                      <th className="px-4 py-2 border-r border-gray-200">File</th>
+                      <th className="px-4 py-2 w-16 text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {candidateFiles.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-6 text-center text-gray-400 italic">
+                          No files uploaded yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      candidateFiles.map((file) => {
+                        const dateStr = new Date(file.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }).replace(/ /g, '-');
+                        return (
+                          <tr key={file.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-2 border-r border-gray-200 font-medium text-gray-900">{file.fileType}</td>
+                            <td className="px-4 py-2 border-r border-gray-200 text-gray-600">{dateStr}</td>
+                            <td className="px-4 py-2 border-r border-gray-200">
+                              <a href={file.fileUrl} target="_blank" rel="noreferrer" className="text-[#123D8D] hover:underline hover:text-blue-800 break-all">
+                                {file.fileName}
+                              </a>
+                            </td>
+                            <td className="px-4 py-2 text-center">
+                              {file.id > 0 ? (
+                                <button 
+                                  onClick={() => handleDeleteFile(file.id, file.fileName)}
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition-colors"
+                                  title="Delete File"
+                                >
+                                  ❌
+                                </button>
+                              ) : (
+                                <span className="text-gray-400 text-xs" title="Legacy files cannot be deleted from here">--</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
 
-              {candidate.linkedinPdf && (
-                <div className="flex items-center gap-2 p-2 bg-[#f0f9ff] rounded-md text-[13px] mb-3 border border-[#bae6fd]">
-                  <span>📘</span>
-                  <span className="flex-1 font-semibold">LinkedIn_Profile.pdf</span>
-                  <a 
-                    href={candidate.linkedinPdf?.startsWith('http') ? candidate.linkedinPdf : "#"} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="px-3 py-1 bg-white text-[#0369a1] rounded text-[12px] font-bold border border-[#bae6fd] hover:bg-white z-20"
-                    onClick={(e) => {
-                      if (!candidate.linkedinPdf?.startsWith('http')) {
-                        e.preventDefault();
-                        alert("LinkedIn PDF hasn't been successfully uploaded to the cloud. Please try uploading it again.");
-                      }
-                    }}
-                  >
-                    View / Download
-                  </a>
-                </div>
-              )}
-
-              <button className="px-3 py-1.5 rounded-md text-[12px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">Extract Tags via AI</button>
+              <div className="mt-4">
+                <button className="px-3 py-1.5 rounded-md text-[12px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">Extract Tags via AI</button>
+              </div>
             </div>
           }
         />
@@ -333,6 +490,108 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
         />
       </div>
 
+      <div className="bg-white border border-[#D4E0F0] rounded-[10px] p-5 shadow-sm mb-6">
+        <div className="flex justify-between items-center mb-5">
+          <span className="font-serif text-[16px] font-bold text-[#111]">Conversation & Activity Log</span>
+          <span className="text-[12px] font-bold uppercase tracking-wide text-[#6b7a99] bg-[#f4f7fd] px-2.5 py-1 rounded-md">{candidate?.activities?.length || 0} activities recorded</span>
+        </div>
+        
+        <div className="flex flex-col gap-5">
+          {/* Tabs */}
+          <div className="flex border-b border-[#D4E0F0]">
+            {["Meeting", "Email", "Event"].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveLogTab(tab)}
+                className={`px-4 py-2.5 text-[13px] font-bold border-b-2 ${activeLogTab === tab ? 'border-[#123D8D] text-[#123D8D]' : 'border-transparent text-[#6b7a99] hover:text-[#111]'}`}
+              >
+                {tab === "Meeting" ? "🗣️ Log a meeting" : tab === "Email" ? "✉️ Log an email" : "📅 Add follow up"}
+              </button>
+            ))}
+          </div>
+
+          {/* Form Content */}
+          <form onSubmit={handleLogActivity} className="bg-[#f8fafc] border border-[#e2e8f0] rounded-lg p-4 flex flex-col gap-4">
+            {activeLogTab === "Meeting" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Meeting Type <span className="text-red-500">*</span></label>
+                  <select required value={logForm.type} onChange={e=>setLogForm({...logForm, type: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]">
+                    <option value="In-person meeting">In-person meeting</option>
+                    <option value="Phone call">Phone call</option>
+                    <option value="Video call">Video call</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Meeting For <span className="text-red-500">*</span></label>
+                  <select required value={logForm.meetingFor} onChange={e=>setLogForm({...logForm, meetingFor: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]">
+                    <option value="Exploration">Exploration</option>
+                    <option value="Discuss about potential position">Discuss about potential position</option>
+                    <option value="Job brief">Job brief</option>
+                    <option value="Interview preparation/ set up">Interview preparation/ set up</option>
+                    <option value="Interview feedback">Interview feedback</option>
+                    <option value="Offer conversation">Offer conversation</option>
+                  </select>
+                </div>
+              </div>
+            )}
+            {(activeLogTab === "Meeting" || activeLogTab === "Event") && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Date</label>
+                  <input type="date" value={logForm.date} onChange={e=>setLogForm({...logForm, date: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Time</label>
+                  <input type="time" value={logForm.time} onChange={e=>setLogForm({...logForm, time: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" />
+                </div>
+              </div>
+            )}
+            <div>
+              <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">
+                {activeLogTab === "Email" ? "Email Body / Notes" : "Notes / Description"} <span className="text-red-500">*</span>
+              </label>
+              <textarea required rows={3} value={logForm.note} onChange={e=>setLogForm({...logForm, note: e.target.value})} className="w-full border-[1.5px] border-[#D4E0F0] rounded-md p-3 text-[13px] outline-none bg-white focus:border-[#123D8D] resize-vertical" placeholder={`Enter ${activeLogTab.toLowerCase()} details here...`}></textarea>
+            </div>
+            <div className="flex justify-end">
+              <button type="submit" disabled={isLogging} className="px-5 py-2 rounded-md text-[13px] font-bold bg-[#123D8D] text-white hover:bg-[#0d2f6e] transition-all">
+                {isLogging ? "Saving..." : `Save ${activeLogTab}`}
+              </button>
+            </div>
+          </form>
+
+          {/* Activity Timeline */}
+          <div className="mt-4">
+            <h4 className="text-[14px] font-bold text-[#111] mb-4">Activity Timeline</h4>
+            <div className="flex flex-col gap-0">
+              {candidate?.activities?.length > 0 ? [...candidate.activities].sort((a,b) => b.id - a.id).map((act: any, idx: number) => (
+                <div key={act.id} className="flex gap-4 relative pb-6 group">
+                  {idx !== candidate.activities.length - 1 && <div className="absolute top-8 bottom-0 left-[19px] w-[2px] bg-[#e2e8f0] group-hover:bg-[#cbd5e1] transition-colors"></div>}
+                  <div className="w-10 h-10 rounded-full bg-[#f1f5f9] border-2 border-[#e2e8f0] flex items-center justify-center shrink-0 z-10 text-[16px]">
+                    {act.type.includes('Meeting') ? '🗣️' : act.type.includes('Email') ? '✉️' : act.type.includes('Task') ? '✅' : '📅'}
+                  </div>
+                  <div className="flex-1 bg-white border border-[#e2e8f0] rounded-lg p-4 shadow-sm group-hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <div className="text-[13px] font-bold text-[#111]">{act.type}</div>
+                        <div className="text-[11px] font-medium text-[#6b7a99] mt-0.5">Logged by {act.consultant}</div>
+                      </div>
+                      <div className="text-[11px] font-semibold text-[#94a3b8] bg-[#f8fafc] px-2 py-1 rounded">
+                        {act.date} {act.time && `at ${act.time}`}
+                      </div>
+                    </div>
+                    <div className="text-[13px] text-[#475569] leading-relaxed whitespace-pre-wrap">{act.note}</div>
+                  </div>
+                </div>
+              )) : (
+                <div className="text-[13px] text-[#6b7a99] italic text-center py-4 bg-[#f8fafc] rounded-lg border border-dashed border-[#cbd5e1]">No activities logged yet.</div>
+              )}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <div className="bg-white border border-[#D4E0F0] rounded-[10px] p-5 shadow-sm">
         <div className="flex justify-between items-center mb-4">
           <span className="font-serif text-[16px] font-bold text-[#111]">Submission History</span>
@@ -345,6 +604,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
                 <tr>
                   <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Client</th>
                   <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Role</th>
+                  <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Type</th>
                   <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Consultant</th>
                   <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Date Shared</th>
                   <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Status</th>
@@ -355,6 +615,11 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
                   <tr key={s.id} className="hover:bg-[#fafbff]">
                     <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[13px] font-semibold text-[#111]">{s.client}</td>
                     <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[13px]">{s.role}</td>
+                    <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[13px]">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${s.type === 'Mandate' ? 'bg-[#eef2ff] text-[#4f46e5]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>
+                        {s.type}
+                      </span>
+                    </td>
                     <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[13px]">{s.consultant}</td>
                     <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[13px] text-[#6b7a99]">{s.dateShared}</td>
                     <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[13px]">
@@ -370,6 +635,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
             No submissions yet — click "+ Add Submission" to submit this candidate to a client.
           </div>
         )}
+
       </div>
 
       {isSubModalOpen && (
@@ -409,10 +675,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
                 <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Role <span className="text-red-500">*</span></label>
                 <input required value={subForm.role} readOnly={!!subForm.mandateId} onChange={e=>setSubForm({...subForm, role: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none focus:border-[#123D8D] disabled:bg-gray-50" placeholder="E.g. Chief Financial Officer" />
               </div>
-              <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Consultant</label>
-                <input value={subForm.consultant} onChange={e=>setSubForm({...subForm, consultant: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" placeholder="Consultant Name" />
-              </div>
+
               <div className="flex gap-2.5 justify-end mt-2">
                 <button type="button" onClick={() => setIsSubModalOpen(false)} className="px-4 py-2 rounded-md text-[13px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all">Cancel</button>
                 <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md text-[13px] font-semibold bg-[#D8B15B] text-[#0d2f6e] hover:bg-[#e8c97a] transition-all">
@@ -472,6 +735,36 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
           </div>
         </div>
       )}
+      {deleteConfirmation && (
+        <div className="fixed inset-0 bg-[#111]/50 flex items-center justify-center z-[100] backdrop-blur-sm">
+          <div className="bg-white rounded-[10px] shadow-lg w-[400px] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[18px] font-bold text-[#111] flex justify-between items-center">
+              Delete File
+              <button onClick={() => setDeleteConfirmation(null)} className="text-[#6b7a99] hover:text-[#111]">✕</button>
+            </div>
+            <div className="p-5">
+              <p className="text-[14px] text-[#4a5568] mb-6">
+                Are you sure you want to permanently delete <strong>{deleteConfirmation.fileName}</strong>? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button 
+                  onClick={() => setDeleteConfirmation(null)}
+                  className="px-4 py-2 border border-[#D4E0F0] rounded-[6px] text-[#4a5568] text-[13px] font-bold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmDeleteFile}
+                  className="px-4 py-2 bg-red-600 text-white rounded-[6px] text-[13px] font-bold hover:bg-red-700 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

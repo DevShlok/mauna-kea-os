@@ -4,7 +4,7 @@ import { unstable_cache } from 'next/cache';
 import {
   mandates, mandateCandidates, candidates, floats, floatReferences,
   floatFollowUps, floatActivities, frameworks, frameworkCategories,
-  frameworkCriteria, platformUsers, candidateReports
+  frameworkCriteria, platformUsers, candidateReports, candidateFiles
 } from './schema';
 
 // ─── MANDATES ────────────────────────────────────────────
@@ -89,9 +89,66 @@ export const getCandidateById = async (id: string) => {
   const [cand] = await db.select().from(candidates).where(eq(candidates.id, id));
   if (!cand) return null;
   const activities = await db.select().from(floatActivities).where(eq(floatActivities.candId, id));
-  const submissions = await db.select().from(floats).where(eq(floats.candId, id));
+  
+  // Fetch float submissions
+  const floatSubmissions = await db.select().from(floats).where(eq(floats.candId, id));
+  
+  // Fetch mandate submissions
+  const mCands = await db.select({
+    id: mandateCandidates.id,
+    dateShared: mandateCandidates.createdAt,
+    status: mandateCandidates.stage,
+    client: mandates.company,
+    role: mandates.role,
+    consultant: sql<string>`'System'`
+  })
+  .from(mandateCandidates)
+  .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id))
+  .where(eq(mandateCandidates.externalId, id));
+
+  const submissionsMap = new Map();
+
+  for (const m of mCands) {
+    const key = `${m.client}-${m.role}`;
+    submissionsMap.set(key, { 
+      id: 'mnd-' + m.id, 
+      client: m.client, 
+      role: m.role, 
+      consultant: m.consultant, 
+      dateShared: m.dateShared ? new Date(m.dateShared).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : '', 
+      status: m.status, 
+      via: [],
+      type: "Mandate"
+    });
+  }
+
+  for (const s of floatSubmissions) {
+    const key = `${s.client}-${s.role}`;
+    if (submissionsMap.has(key)) {
+      const existing = submissionsMap.get(key);
+      existing.id = s.id;
+      existing.via = (s.via ?? []) as string[];
+      // Keep type as "Mandate" because it matches a mandate pipeline
+    } else {
+      submissionsMap.set(key, { 
+        id: s.id, 
+        client: s.client, 
+        role: s.role, 
+        consultant: s.consultant, 
+        dateShared: s.dateShared, 
+        status: s.status, 
+        via: (s.via ?? []) as string[],
+        type: "Float"
+      });
+    }
+  }
+
+  const submissions = Array.from(submissionsMap.values());
+
   const followUps = await db.select().from(floatFollowUps).where(eq(floatFollowUps.candId, id));
   const references = await db.select().from(floatReferences).where(eq(floatReferences.candId, id));
+  const files = await db.select().from(candidateFiles).where(eq(candidateFiles.candId, id));
+  
   return {
     ...cand,
     qual: (cand.qual ?? []) as string[],
@@ -99,9 +156,10 @@ export const getCandidateById = async (id: string) => {
     dreamCos: (cand.dreamCos ?? []) as string[],
     expTags: (cand.expTags ?? []) as string[],
     activities,
-    submissions: submissions.map(s => ({ ...s, via: (s.via ?? []) as string[] })),
+    submissions,
     followUps,
     references,
+    files,
   };
 };
 

@@ -61,6 +61,7 @@ export const candidates = mysqlTable('candidates', {
   company: varchar('company', { length: 255 }),
   designation: varchar('designation', { length: 255 }),
   exp: int('exp'),
+  tenure: int('tenure'),
   ctc: int('ctc'),
   fixedCtc: int('fixed_ctc'),
   variableCtc: int('variable_ctc'),

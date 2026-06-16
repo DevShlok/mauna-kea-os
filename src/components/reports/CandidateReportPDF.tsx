@@ -106,7 +106,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
             // Bold the prefix if it ends with a colon
             const formattedItem = item.replace(/^(.*?:)/, '<strong>$1</strong>');
             return (
-              <div key={idx} className="text-[14px] text-[#334155] leading-relaxed font-normal flex gap-1">
+              <div key={idx} className="text-[16px] text-[#334155] leading-relaxed font-normal flex gap-1">
                 {!hasNumber && <span className="font-bold shrink-0">{idx + 1}.</span>}
                 <span dangerouslySetInnerHTML={{ __html: formattedItem }} />
               </div>
@@ -115,7 +115,14 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
         </div>
       );
     }
-    return <p className="text-[14px] text-[#334155] leading-relaxed mt-1 whitespace-pre-wrap font-normal">{content}</p>;
+    if (content !== null && typeof content === 'object' && !Array.isArray(content)) {
+      return (
+        <pre className="text-[16px] text-[#334155] leading-relaxed mt-1 whitespace-pre-wrap font-normal font-mono bg-gray-50 p-2 rounded border border-gray-100">
+          {JSON.stringify(content, null, 2)}
+        </pre>
+      );
+    }
+    return <p className="text-[16px] text-[#334155] leading-relaxed mt-1 whitespace-pre-wrap font-normal">{content}</p>;
   };
 
   return (

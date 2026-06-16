@@ -73,7 +73,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
       candCompany: candidate.company,
       client: subForm.client,
       role: subForm.role,
-      consultant: subForm.consultant,
+      consultant: "Sahil Bhatia",
       mandateId: subForm.mandateId
     });
     setIsSubmitting(false);
@@ -409,10 +409,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
                 <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Role <span className="text-red-500">*</span></label>
                 <input required value={subForm.role} readOnly={!!subForm.mandateId} onChange={e=>setSubForm({...subForm, role: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none focus:border-[#123D8D] disabled:bg-gray-50" placeholder="E.g. Chief Financial Officer" />
               </div>
-              <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Consultant</label>
-                <input value={subForm.consultant} onChange={e=>setSubForm({...subForm, consultant: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" placeholder="Consultant Name" />
-              </div>
+
               <div className="flex gap-2.5 justify-end mt-2">
                 <button type="button" onClick={() => setIsSubModalOpen(false)} className="px-4 py-2 rounded-md text-[13px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all">Cancel</button>
                 <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md text-[13px] font-semibold bg-[#D8B15B] text-[#0d2f6e] hover:bg-[#e8c97a] transition-all">

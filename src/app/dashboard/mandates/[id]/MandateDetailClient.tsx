@@ -239,7 +239,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                   className="px-2 py-1 border border-gray-200 text-red-500 hover:bg-red-50 rounded text-xs transition-colors"
                   title="Remove File"
                 >
-                  🗑️
+                  ❌
                 </button>
               )}
             </div>
@@ -275,7 +275,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                     className="px-2 py-1 border border-gray-200 text-red-500 hover:bg-red-50 rounded text-xs transition-colors"
                     title="Remove File"
                   >
-                    🗑️
+                    ❌
                   </button>
                 )}
                 <button onClick={() => setTextModal({ isOpen: true, type: "notes", text: mandate.interviewNotesText || "" })} className="px-3 py-1 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">
@@ -316,7 +316,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                   className="px-2 py-1 border border-gray-200 text-red-500 hover:bg-red-50 rounded text-xs transition-colors"
                   title="Remove File"
                 >
-                  🗑️
+                  ❌
                 </button>
               )}
             </div>

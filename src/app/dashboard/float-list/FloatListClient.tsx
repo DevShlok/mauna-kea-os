@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
-export default function FloatListClient({ mandates }: { mandates: any[] }) {
+export default function FloatListClient({ mandates, floats, allCandidatesMaster }: { mandates: any[], floats?: any[], allCandidatesMaster?: any[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("");
@@ -12,9 +12,39 @@ export default function FloatListClient({ mandates }: { mandates: any[] }) {
   const [companyFilter, setCompanyFilter] = useState("");
   const [designationFilter, setDesignationFilter] = useState("");
 
-  const allCandidates = mandates.flatMap((m) =>
+  const mandateCandidates = mandates.flatMap((m) =>
     m.candidates.map((c: any) => ({ ...c, mandateRole: m.role, mandateCompany: m.company, mandateId: m.id }))
   );
+
+  const floatedCandidates: any[] = [];
+  if (floats && allCandidatesMaster) {
+    const floatMap = new Map();
+    for (const f of floats) {
+      if (f.client === "General" && !floatMap.has(f.candId)) {
+        floatMap.set(f.candId, true);
+        const cand = allCandidatesMaster.find(c => c.id === f.candId);
+        if (cand) {
+          floatedCandidates.push({
+            id: 'float-' + cand.id,
+            externalId: cand.id,
+            name: cand.name,
+            company: cand.company,
+            role: cand.designation,
+            stage: f.status || 'Shared',
+            score: cand.score,
+            hasReport: cand.hasReport,
+            initials: cand.initials,
+            mandateRole: 'General Float',
+            mandateCompany: 'General',
+            mandateId: 0,
+            isFloatOnly: true
+          });
+        }
+      }
+    }
+  }
+
+  const allCandidates = [...mandateCandidates, ...floatedCandidates];
 
   // Extract unique values for filters
   const uniqueMandates = Array.from(new Set(allCandidates.map(c => `${c.mandateRole} @ ${c.mandateCompany}`))).sort();
@@ -89,7 +119,7 @@ export default function FloatListClient({ mandates }: { mandates: any[] }) {
             </thead>
             <tbody>
               {filtered.map((c, i) => (
-                <tr key={i} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId)}>
+                <tr key={i} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => c.isFloatOnly ? router.push("/dashboard/candidates/" + c.externalId) : router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId)}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded bg-blue-900 text-white flex items-center justify-center text-xs font-bold">{c.initials}</div>
@@ -106,7 +136,7 @@ export default function FloatListClient({ mandates }: { mandates: any[] }) {
                     ) : <span className="text-gray-300">-</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <button className="px-3 py-1 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800" onClick={(e) => { e.stopPropagation(); router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId); }}>View</button>
+                    <button className="px-3 py-1 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800" onClick={(e) => { e.stopPropagation(); c.isFloatOnly ? router.push("/dashboard/candidates/" + c.externalId) : router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId); }}>View</button>
                   </td>
                 </tr>
               ))}

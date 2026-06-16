@@ -80,6 +80,17 @@ export async function POST(req: Request) {
       extractedText: cvText
     });
 
+    const { floatActivities } = await import("@/db/schema");
+    const now = new Date();
+    await db.insert(floatActivities).values({
+      candId: candId,
+      type: "Event (Update CV)",
+      note: `CV / Resume uploaded: ${filename}`,
+      consultant: "System",
+      date: now.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+      time: now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }),
+    });
+
     // 4. Update Google Sheet (if configured)
     const sheetsWebhook = process.env.OS_SHEETS_WEBHOOK_URL;
     if (sheetsWebhook) {

@@ -164,6 +164,31 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
   const [isUploadingSupRef, setIsUploadingSupRef] = useState(false);
   const [isUploadingPeerRef, setIsUploadingPeerRef] = useState(false);
 
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{fileId: number, fileName: string} | null>(null);
+
+  const handleDeleteFile = async (fileId: number, fileName: string) => {
+    setDeleteConfirmation({ fileId, fileName });
+  };
+
+  const confirmDeleteFile = async () => {
+    if (!deleteConfirmation) return;
+    const { fileId } = deleteConfirmation;
+    try {
+      const res = await fetch(`/api/candidate-files?id=${fileId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setCandidateFilesHistory(prev => prev.filter(f => f.id !== fileId));
+        setSelectedFileIds(prev => prev.filter(id => id !== fileId));
+      } else {
+        alert("Failed to delete file");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting file");
+    } finally {
+      setDeleteConfirmation(null);
+    }
+  };
+
   const handleUploadReference = async (e: React.ChangeEvent<HTMLInputElement>, type: 'Interview Notes' | 'Superior Reference' | 'Peer Reference') => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -543,16 +568,6 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
               <h3 className="font-bold text-gray-900 border-b border-gray-100 pb-2">Candidate Files</h3>
               
               <div className="flex flex-wrap gap-4">
-                {selectedCandidate.cvFileName && (
-                  <a 
-                    href={selectedCandidate.cvFileName?.startsWith('http') ? selectedCandidate.cvFileName : "#"} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="flex items-center gap-2 px-3 py-2 bg-[#f4f7fd] text-[#123D8D] rounded-md text-[13px] font-bold border border-[#D4E0F0] hover:bg-[#e6ebf5] transition-colors"
-                  >
-                    📄 View CV / Resume
-                  </a>
-                )}
                 <label className="flex items-center gap-2 px-3 py-2 bg-white text-gray-700 rounded-md text-[13px] font-bold border border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer">
                   {isUploadingCv ? (
                     <span className="flex items-center gap-2">
@@ -563,16 +578,6 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                   <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={(e) => handleUploadFile(e, 'cv')} disabled={isUploadingCv} />
                 </label>
 
-                {selectedCandidate.linkedinPdf && (
-                  <a 
-                    href={selectedCandidate.linkedinPdf?.startsWith('http') ? selectedCandidate.linkedinPdf : "#"} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="flex items-center gap-2 px-3 py-2 bg-[#f0f9ff] text-[#0369a1] rounded-md text-[13px] font-bold border border-[#bae6fd] hover:bg-[#e0f2fe] transition-colors"
-                  >
-                    📘 View LinkedIn Profile
-                  </a>
-                )}
                 <label className="flex items-center gap-2 px-3 py-2 bg-white text-gray-700 rounded-md text-[13px] font-bold border border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer">
                   {isUploadingLinkedin ? (
                     <span className="flex items-center gap-2">
@@ -592,7 +597,8 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                         <th className="px-4 py-2 border-r border-gray-200 w-10 text-center">Select</th>
                         <th className="px-4 py-2 border-r border-gray-200">Document</th>
                         <th className="px-4 py-2 border-r border-gray-200">Last updated on</th>
-                        <th className="px-4 py-2">File</th>
+                        <th className="px-4 py-2 border-r border-gray-200">File</th>
+                        <th className="px-4 py-2 w-16 text-center">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -628,10 +634,19 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                             <td className="px-4 py-2 border-r border-gray-200 text-gray-600">
                               {dateStr}
                             </td>
-                            <td className="px-4 py-2">
+                            <td className="px-4 py-2 border-r border-gray-200">
                               <a href={file.fileUrl} target="_blank" rel="noreferrer" className="text-[#123D8D] hover:underline hover:text-blue-800 break-all">
                                 {file.fileName}
                               </a>
+                            </td>
+                            <td className="px-4 py-2 text-center">
+                              <button 
+                                onClick={() => handleDeleteFile(file.id, file.fileName)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition-colors"
+                                title="Delete File"
+                              >
+                                ❌
+                              </button>
                             </td>
                           </tr>
                         );
@@ -881,7 +896,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           <div className="bg-white rounded-xl shadow-2xl w-[1000px] h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Float Database</h2>
+                <h2 className="text-xl font-bold text-gray-900">Candidate Database</h2>
                 <p className="text-xs text-gray-500 mt-1">Select a candidate to assess in the AI Workbench</p>
               </div>
               <button onClick={() => setIsCandidateModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-500 transition-colors">✕</button>
@@ -981,6 +996,36 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           </div>
         </div>
       )}
+    {deleteConfirmation && (
+      <div className="fixed inset-0 bg-[#111]/50 flex items-center justify-center z-[100] backdrop-blur-sm">
+        <div className="bg-white rounded-[10px] shadow-lg w-[400px] overflow-hidden">
+          <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[18px] font-bold text-[#111] flex justify-between items-center">
+            Delete File
+            <button onClick={() => setDeleteConfirmation(null)} className="text-[#6b7a99] hover:text-[#111]">✕</button>
+          </div>
+          <div className="p-5">
+            <p className="text-[14px] text-[#4a5568] mb-6">
+              Are you sure you want to permanently delete <strong>{deleteConfirmation.fileName}</strong>? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setDeleteConfirmation(null)}
+                className="px-4 py-2 border border-[#D4E0F0] rounded-[6px] text-[#4a5568] text-[13px] font-bold hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDeleteFile}
+                className="px-4 py-2 bg-red-600 text-white rounded-[6px] text-[13px] font-bold hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
     </div>
   );
 }

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { addFloatListEntryAction, editFloatListEntryAction } from "@/app/actions";
+import { addFloatListEntryAction, editFloatListEntryAction, bulkAddSubmissionAction } from "@/app/actions";
 
 export default function NewCandidateClient({ initialData }: { initialData?: any }) {
   const router = useRouter();
@@ -19,6 +19,7 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
     fixedCtc: initialData?.fixedCtc || "",
     variableCtc: initialData?.variableCtc || "",
     expected: initialData?.expected || "", 
+    tenure: initialData?.tenure || "", 
     notice: initialData?.notice !== null && initialData?.notice !== undefined ? String(initialData?.notice) : "90", 
     status: initialData?.status || "Active", 
     linkedin: initialData?.linkedin || "",
@@ -35,6 +36,39 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
   const [dreamCompanies, setDreamCompanies] = useState<string[]>(initialData?.dreamCos || []);
   const [linkedinPdfFile, setLinkedinPdfFile] = useState<File | null>(null);
   const [cvPdfFile, setCvPdfFile] = useState<File | null>(null);
+  const getInitialFiles = () => {
+    let files = initialData?.files ? [...initialData.files] : [];
+    
+    if (initialData?.hasCv && initialData?.cvFileName?.startsWith('http')) {
+      const hasCvInFiles = files.some((f: any) => f.fileType.toLowerCase().includes('cv') || f.fileType.toLowerCase().includes('resume'));
+      if (!hasCvInFiles) {
+        files.push({
+          id: -1,
+          fileType: 'CV / Resume',
+          fileName: initialData.cvFileName.split('/').pop() || 'Legacy_CV.pdf',
+          fileUrl: initialData.cvFileName,
+          createdAt: initialData.createdAt || new Date().toISOString()
+        });
+      }
+    }
+
+    if (initialData?.linkedinPdf && initialData?.linkedinPdf.startsWith('http')) {
+      const hasLiInFiles = files.some((f: any) => f.fileType.toLowerCase().includes('linkedin'));
+      if (!hasLiInFiles) {
+        files.push({
+          id: -2,
+          fileType: 'LinkedIn Profile',
+          fileName: 'Legacy_LinkedIn.pdf',
+          fileUrl: initialData.linkedinPdf,
+          createdAt: initialData.createdAt || new Date().toISOString()
+        });
+      }
+    }
+    return files;
+  };
+
+  const [candidateFiles, setCandidateFiles] = useState<any[]>(getInitialFiles());
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{fileId: number, fileName: string} | null>(null);
   const [profilePicBase64, setProfilePicBase64] = useState<string | null>(initialData?.profilePic || null);
   const [isSaving, setIsSaving] = useState(false);
   const [showAdditional, setShowAdditional] = useState(!!isEdit);
@@ -42,6 +76,28 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
   const defaultQuals = ['CA','MBA','CFA','CS','B.Tech','M.Tech','Chartered Engineer','PhD','LLB'];
   const locations = ["Mumbai", "Delhi", "Bengaluru", "Chennai", "Hyderabad", "Pune", "Remote"];
   const currencies = ["INR", "USD", "GBP", "EUR", "SGD", "AED"];
+
+  const handleDeleteFile = async (fileId: number, fileName: string) => {
+    setDeleteConfirmation({ fileId, fileName });
+  };
+
+  const confirmDeleteFile = async () => {
+    if (!deleteConfirmation) return;
+    const { fileId } = deleteConfirmation;
+    try {
+      const res = await fetch(`/api/candidate-files?id=${fileId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setCandidateFiles(prev => prev.filter(f => f.id !== fileId));
+      } else {
+        alert("Failed to delete file");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting file");
+    } finally {
+      setDeleteConfirmation(null);
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,6 +182,7 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
         mobile: form.mobile,
         location: form.location,
         exp: form.exp ? Number(form.exp) : null,
+        tenure: form.tenure ? Number(form.tenure) : null,
         ctc: form.ctc ? Number(form.ctc) : null,
         fixedCtc: form.fixedCtc ? Number(form.fixedCtc) : null,
         variableCtc: form.variableCtc ? Number(form.variableCtc) : null,
@@ -189,7 +246,7 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
         <span className="text-[#111]">{isEdit ? "Edit Candidate" : "Add Candidate"}</span>
       </div>
       <div className="flex items-center justify-between mb-5">
-        <div className="font-serif text-[22px] font-bold text-[#111]">{isEdit ? `Edit ${initialData.name}` : "Add New Candidate to Float List"}</div>
+        <div className="font-serif text-[22px] font-bold text-[#111]">{isEdit ? `Edit ${initialData.name}` : "Add New Candidate"}</div>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -221,16 +278,9 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">LinkedIn Profile PDF</label>
                 <label className="border-2 border-dashed border-[#D4E0F0] rounded-[8px] p-4 text-center cursor-pointer hover:border-[#123D8D] hover:bg-[#DCE5F4] bg-[#f4f7fd] transition-all block relative">
                   <input type="file" accept="application/pdf" className="hidden" onChange={e => setLinkedinPdfFile(e.target.files?.[0] || null)} />
-                  <div className="text-[13px] text-[#6b7a99]">{linkedinPdfFile ? '📘 Change PDF' : (isEdit && initialData.linkedinPdf ? '📘 Replace Existing Profile' : '📘 Click to upload LinkedIn Profile')}</div>
+                  <div className="text-[13px] text-[#6b7a99]">{linkedinPdfFile ? '📘 Change PDF' : '📘 Click to upload LinkedIn Profile'}</div>
                   {linkedinPdfFile && <div className="text-[13px] font-bold text-[#111] mt-1 overflow-hidden text-ellipsis whitespace-nowrap">{linkedinPdfFile.name}</div>}
                 </label>
-                {isEdit && initialData.linkedinPdf && !linkedinPdfFile && (
-                  <div className="mt-1.5 text-[12px] text-center">
-                    <a href={initialData.linkedinPdf} target="_blank" className="text-[#123D8D] hover:underline font-semibold flex items-center justify-center gap-1">
-                      View Existing LinkedIn Profile
-                    </a>
-                  </div>
-                )}
               </div>
             </div>
             
@@ -311,6 +361,10 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Total Experience (yrs)</label>
                 <input type="number" value={form.exp} onChange={e=>setForm({...form, exp:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" min="0" />
               </div>
+              <div>
+                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Tenure in current company (yrs)</label>
+                <input type="number" value={form.tenure} onChange={e=>setForm({...form, tenure:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" min="0" step="0.1" />
+              </div>
             </div>
 
             {/* Compensation & Status */}
@@ -379,7 +433,7 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
 
             {/* Experience Tags */}
             <div className="border-t border-[#f0f0f0] pt-5 mb-3">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Past Roles & Experience</div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Prior Experience</div>
             </div>
             <p className="text-[12px] text-[#6b7a99] mb-2.5">Add each experience as &quot;Title - Company&quot;</p>
             <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#123D8D] transition-colors mb-6">
@@ -424,27 +478,70 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
             <div className="border-t border-[#f0f0f0] pt-5 mb-3">
               <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Documents & Notes</div>
             </div>
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-2 gap-8 mb-6">
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Upload CV</label>
                 <label className="border-2 border-dashed border-[#D4E0F0] rounded-[8px] p-6 text-center cursor-pointer hover:border-[#123D8D] hover:bg-[#DCE5F4] bg-[#f4f7fd] transition-all block relative">
                   <input type="file" accept="application/pdf,.doc,.docx" className="hidden" onChange={e => setCvPdfFile(e.target.files?.[0] || null)} />
                   <div className="text-[28px] opacity-40 mb-2">📄</div>
-                  <div className="text-[13px] text-[#6b7a99]">{cvPdfFile ? 'Change CV' : (isEdit && initialData.hasCv ? 'Replace Existing CV' : 'Click to upload CV')}</div>
+                  <div className="text-[13px] text-[#6b7a99]">{cvPdfFile ? 'Change CV' : 'Click to upload CV'}</div>
                   {cvPdfFile && <div className="text-[14px] font-bold text-[#111] mt-2 overflow-hidden text-ellipsis whitespace-nowrap">{cvPdfFile.name}</div>}
                 </label>
-                {isEdit && initialData.hasCv && !cvPdfFile && (
-                  <div className="mt-2 text-[12px] text-center">
-                    <a href={`/uploads/cvs/${initialData.id}.pdf`} target="_blank" className="text-[#123D8D] hover:underline font-semibold flex items-center justify-center gap-1">
-                      View Existing CV
-                    </a>
-                  </div>
-                )}
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Additional Notes</label>
-                <textarea rows={5} value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})} className="w-full border-[1.5px] border-[#D4E0F0] rounded-md p-3 text-[14px] outline-none bg-white focus:border-[#123D8D] resize-vertical min-h-[140px]" placeholder="Any extra information..."></textarea>
+                <textarea rows={5} value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})} className="w-full border-[1.5px] border-[#D4E0F0] rounded-md p-3 text-[14px] outline-none bg-white focus:border-[#123D8D] resize-vertical h-[155px]" placeholder="Any extra information..."></textarea>
               </div>
+            </div>
+
+            <div className="border border-gray-200 rounded-lg overflow-hidden mt-6 mb-2">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50 text-gray-700">
+                  <tr>
+                    <th className="px-4 py-2 border-r border-gray-200 w-32">Type</th>
+                    <th className="px-4 py-2 border-r border-gray-200 w-32">Date</th>
+                    <th className="px-4 py-2 border-r border-gray-200">File</th>
+                    <th className="px-4 py-2 w-16 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {candidateFiles.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-6 text-center text-gray-400 italic">
+                        No files uploaded yet. Upload a CV or LinkedIn Profile above.
+                      </td>
+                    </tr>
+                  ) : (
+                    candidateFiles.map((file) => {
+                      const dateStr = new Date(file.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }).replace(/ /g, '-');
+                      return (
+                        <tr key={file.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-2 border-r border-gray-200 font-medium text-gray-900">{file.fileType}</td>
+                          <td className="px-4 py-2 border-r border-gray-200 text-gray-600">{dateStr}</td>
+                          <td className="px-4 py-2 border-r border-gray-200">
+                            <a href={file.fileUrl} target="_blank" rel="noreferrer" className="text-[#123D8D] hover:underline hover:text-blue-800 break-all">
+                              {file.fileName}
+                            </a>
+                          </td>
+                          <td className="px-4 py-2 text-center">
+                            {file.id > 0 ? (
+                              <button 
+                                onClick={() => handleDeleteFile(file.id, file.fileName)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition-colors"
+                                title="Delete File"
+                              >
+                                ❌
+                              </button>
+                            ) : (
+                              <span className="text-gray-400 text-xs" title="Legacy files cannot be deleted from here">--</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
 
           </div>}
@@ -455,9 +552,40 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
       <div className="flex gap-2.5 justify-end py-6">
         <button onClick={() => router.push('/dashboard/candidates')} className="px-5 py-2.5 rounded-md text-[14px] font-semibold text-[#6b7a99] border border-[#D4E0F0] hover:bg-[#f4f7fd] transition-all">Cancel</button>
         <button disabled={isSaving} onClick={handleSave} className="px-6 py-2.5 rounded-md text-[14px] font-bold bg-[#D8B15B] text-[#0d2f6e] hover:bg-[#e8c97a] transition-all">
-          {isSaving ? "Saving..." : (isEdit ? "Update Candidate" : "Add to Float List")}
+          {isSaving ? "Saving..." : (isEdit ? "Update Candidate" : "Add Candidate")}
         </button>
       </div>
+
+      {deleteConfirmation && (
+        <div className="fixed inset-0 bg-[#111]/50 flex items-center justify-center z-[100] backdrop-blur-sm">
+          <div className="bg-white rounded-[10px] shadow-lg w-[400px] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[18px] font-bold text-[#111] flex justify-between items-center">
+              Delete File
+              <button onClick={() => setDeleteConfirmation(null)} className="text-[#6b7a99] hover:text-[#111]">✕</button>
+            </div>
+            <div className="p-5">
+              <p className="text-[14px] text-[#4a5568] mb-6">
+                Are you sure you want to permanently delete <strong>{deleteConfirmation.fileName}</strong>? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button 
+                  onClick={() => setDeleteConfirmation(null)}
+                  className="px-4 py-2 border border-[#D4E0F0] rounded-[6px] text-[#4a5568] text-[13px] font-bold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmDeleteFile}
+                  className="px-4 py-2 bg-red-600 text-white rounded-[6px] text-[13px] font-bold hover:bg-red-700 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports } from "@/db/schema";
-import { eq, sql, and } from "drizzle-orm";
+import { eq, sql, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function createMandateAction(data: any) {
@@ -114,6 +114,7 @@ export async function addFloatListEntryAction(data: any) {
     mobile: data.mobile,
     location: data.location,
     exp: data.exp ? Number(data.exp) : null,
+    tenure: data.tenure ? Number(data.tenure) : null,
     ctc: data.ctc ? Number(data.ctc) : null,
     fixedCtc: data.fixedCtc ? Number(data.fixedCtc) : null,
     variableCtc: data.variableCtc ? Number(data.variableCtc) : null,
@@ -274,52 +275,6 @@ export async function addReferenceAction(data: any) {
   revalidatePath("/dashboard/float-list/" + data.candId);
 }
 
-export async function deleteFloatListEntryAction(id: string) {
-  revalidatePath("/dashboard", "layout");
-  await db.delete(floats).where(eq(floats.candId, id));
-  await db.delete(floatFollowUps).where(eq(floatFollowUps.candId, id));
-  await db.delete(floatActivities).where(eq(floatActivities.candId, id));
-  await db.delete(floatReferences).where(eq(floatReferences.candId, id));
-  await db.delete(candidateReports).where(eq(candidateReports.candidateId, id));
-  await db.delete(candidates).where(eq(candidates.id, id));
-  revalidatePath("/dashboard/float-list/database");
-}
-export async function editFloatListEntryAction(id: string, data: any) {
-  revalidatePath("/dashboard", "layout");
-  const candidateName = data.name || "Unknown Candidate";
-  await db.update(candidates).set({
-    name: candidateName,
-    company: data.company,
-    designation: data.designation,
-    email: data.email,
-    mobile: data.mobile,
-    location: data.location,
-    exp: data.exp ? Number(data.exp) : null,
-    ctc: data.ctc ? Number(data.ctc) : null,
-    fixedCtc: data.fixedCtc ? Number(data.fixedCtc) : null,
-    variableCtc: data.variableCtc ? Number(data.variableCtc) : null,
-    expected: data.expected ? Number(data.expected) : null,
-    notice: data.notice ? Number(data.notice) : null,
-    status: data.status || "Active",
-    qual: data.qual || [],
-    expTags: data.expTags || [],
-    linkedin: data.linkedin || null,
-    targetCompany: data.targetCompany || null,
-    currency: data.currency || "INR",
-    cvFileName: data.cvFileName || null,
-    notes: data.notes || null,
-    initials: candidateName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
-    profilePic: data.profilePic || null,
-  }).where(eq(candidates.id, id));
-  revalidatePath("/dashboard/float-list/database");
-  revalidatePath("/dashboard/float-list/" + id);
-  return id;
-}
-export async function updateCandidateStatusAction(id: string, status: string) {
-  revalidatePath("/dashboard", "layout");
-  await db.update(candidates).set({ status }).where(eq(candidates.id, id));
-  revalidatePath("/dashboard/float-list/database");
-}
 
 export async function updateMandateCandidateStageAction(candId: number, stage: string, mandateId: number) {
   revalidatePath("/dashboard", "layout");
@@ -409,4 +364,154 @@ export async function deleteSubmissionAction(id: string) {
   await db.delete(floats).where(eq(floats.id, id));
   revalidatePath('/dashboard/float-list');
   revalidatePath('/dashboard/float-list/submissions');
+}
+
+export async function deleteFloatListEntryAction(id: string) {
+  revalidatePath("/dashboard", "layout");
+  await db.delete(mandateCandidates).where(eq(mandateCandidates.externalId, id));
+  await db.delete(floats).where(eq(floats.candId, id));
+  await db.delete(floatFollowUps).where(eq(floatFollowUps.candId, id));
+  await db.delete(floatActivities).where(eq(floatActivities.candId, id));
+  await db.delete(floatReferences).where(eq(floatReferences.candId, id));
+  await db.delete(candidateReports).where(eq(candidateReports.candidateId, id));
+  await db.delete(candidates).where(eq(candidates.id, id));
+  revalidatePath("/dashboard/float-list/database");
+  revalidatePath("/dashboard/mandates");
+  revalidatePath("/dashboard/float-list/submissions");
+  revalidatePath("/dashboard/candidates");
+}
+
+export async function editFloatListEntryAction(id: string, data: any) {
+  revalidatePath("/dashboard", "layout");
+  const candidateName = data.name || "Unknown Candidate";
+  await db.update(candidates).set({
+    name: candidateName,
+    company: data.company,
+    designation: data.designation,
+    email: data.email,
+    mobile: data.mobile,
+    location: data.location,
+    exp: data.exp ? Number(data.exp) : null,
+    tenure: data.tenure ? Number(data.tenure) : null,
+    ctc: data.ctc ? Number(data.ctc) : null,
+    fixedCtc: data.fixedCtc ? Number(data.fixedCtc) : null,
+    variableCtc: data.variableCtc ? Number(data.variableCtc) : null,
+    expected: data.expected ? Number(data.expected) : null,
+    notice: data.notice ? Number(data.notice) : null,
+    status: data.status || "Active",
+    qual: data.qual || [],
+    dreamRoles: data.dreamRoles || [],
+    dreamCos: data.dreamCos || [],
+    expTags: data.expTags || [],
+    linkedin: data.linkedin || null,
+    targetCompany: data.targetCompany || null,
+    currency: data.currency || "INR",
+    cvFileName: data.cvFileName || null,
+    notes: data.notes || null,
+    initials: candidateName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+    profilePic: data.profilePic || null,
+  }).where(eq(candidates.id, id));
+  revalidatePath("/dashboard/float-list/database");
+  revalidatePath("/dashboard/float-list/" + id);
+  return id;
+}
+
+export async function updateCandidateStatusAction(id: string, status: string) {
+  revalidatePath("/dashboard", "layout");
+  await db.update(candidates).set({ status }).where(eq(candidates.id, id));
+  revalidatePath("/dashboard/float-list/database");
+}
+
+export async function bulkAssignToMandateAction(data: { mandateId: number; candIds: string[]; role: string }) {
+  revalidatePath("/dashboard", "layout");
+  const cands = await db.select().from(candidates).where(inArray(candidates.id, data.candIds));
+  
+  for (const c of cands) {
+    const existing = await db.select().from(mandateCandidates).where(
+      sql`${mandateCandidates.externalId} = ${c.id} AND ${mandateCandidates.mandateId} = ${data.mandateId}`
+    );
+    if (existing.length === 0) {
+      await db.insert(mandateCandidates).values({
+        externalId: c.id,
+        mandateId: Number(data.mandateId),
+        name: c.name,
+        company: c.company || "",
+        role: data.role,
+        stage: "universe",
+        initials: c.initials || c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+        score: c.score || null,
+        hasReport: !!c.score,
+      });
+
+      const mandateRows = await db.select().from(mandates).where(eq(mandates.id, data.mandateId));
+      const mandate = mandateRows[0];
+      if (mandate) {
+        const subId = "SUB-" + Date.now() + Math.floor(Math.random() * 1000);
+        await db.insert(floats).values({
+          id: subId,
+          candId: c.id,
+          candName: c.name,
+          client: mandate.company,
+          role: mandate.role,
+          consultant: mandate.consultant || "System",
+          dateShared: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+          status: "Shared",
+        });
+      }
+    }
+  }
+
+  revalidatePath(`/dashboard/mandates/${data.mandateId}`);
+  revalidatePath("/dashboard/mandates");
+  revalidatePath("/dashboard/candidates");
+  revalidatePath("/dashboard/float-list/submissions");
+}
+
+export async function bulkAddSubmissionAction(data: { candIds: string[]; client: string; role: string; consultant: string; status?: string }) {
+  revalidatePath("/dashboard", "layout");
+  const cands = await db.select().from(candidates).where(inArray(candidates.id, data.candIds));
+
+  for (const c of cands) {
+    const subId = "S-" + Date.now().toString() + "-" + Math.floor(Math.random() * 1000);
+    await db.insert(floats).values({
+      id: subId,
+      candId: c.id,
+      candName: c.name,
+      client: data.client,
+      role: data.role,
+      consultant: data.consultant || "System",
+      dateShared: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+      status: data.status || "Shared",
+    });
+  }
+
+  revalidatePath("/dashboard/float-list");
+  revalidatePath("/dashboard/float-list/submissions");
+  revalidatePath("/dashboard/candidates");
+}
+
+export async function logCandidateActivityAction(data: {
+  candId: string;
+  type: string;
+  note: string;
+  consultant?: string;
+  date?: string;
+  time?: string;
+}) {
+  revalidatePath("/dashboard", "layout");
+  
+  const now = new Date();
+  const dateStr = data.date || now.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  const timeStr = data.time || now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+
+  await db.insert(floatActivities).values({
+    candId: data.candId,
+    type: data.type,
+    note: data.note,
+    consultant: data.consultant || "System",
+    date: dateStr,
+    time: timeStr,
+  });
+
+  revalidatePath(`/dashboard/candidates/${data.candId}`);
 }
