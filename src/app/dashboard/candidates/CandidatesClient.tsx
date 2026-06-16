@@ -110,7 +110,6 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
   const [companiesFilter, setCompaniesFilter] = useState<string[]>([]);
   const [designationsFilter, setDesignationsFilter] = useState<string[]>([]);
   const [qualsFilter, setQualsFilter] = useState<string[]>([]);
-  const [priorEmployersFilter, setPriorEmployersFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   
   const [expRange, setExpRange] = useState({ min: '', max: '' });
@@ -218,8 +217,6 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
     
     const matchQual = qualsFilter.length === 0 || (c.qual && c.qual.some((q: any) => qualsFilter.includes(typeof q === 'string' ? q : q.degree)));
     
-    const matchPriorEmployer = priorEmployersFilter.length === 0 || (c.expTags && c.expTags.some((t: string) => priorEmployersFilter.some(pe => t.includes(pe))));
-
     const matchExp = 
       (!expRange.min || (c.exp !== null && c.exp >= Number(expRange.min))) && 
       (!expRange.max || (c.exp !== null && c.exp <= Number(expRange.max)));
@@ -233,7 +230,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
       (!ctcRange.min || ctcLacs >= Number(ctcRange.min)) && 
       (!ctcRange.max || ctcLacs <= Number(ctcRange.max));
 
-    return matchSearch && matchCompany && matchDesignation && matchStatus && matchQual && matchPriorEmployer && matchExp && matchTenure && matchCtc;
+    return matchSearch && matchCompany && matchDesignation && matchStatus && matchQual && matchExp && matchTenure && matchCtc;
   });
 
   const clearAllFilters = () => {
@@ -241,7 +238,6 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
     setCompaniesFilter([]);
     setDesignationsFilter([]);
     setQualsFilter([]);
-    setPriorEmployersFilter([]);
     setStatusFilter([]);
     setExpRange({ min: '', max: '' });
     setTenureRange({ min: '', max: '' });
@@ -281,7 +277,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
             <span className="text-gray-400">⚲</span>
             <input type="text" placeholder="Search by name, company or designation…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full text-sm outline-none bg-transparent"/>
           </div>
-          {(search || companiesFilter.length > 0 || designationsFilter.length > 0 || qualsFilter.length > 0 || priorEmployersFilter.length > 0 || statusFilter.length > 0 || expRange.min || expRange.max || tenureRange.min || tenureRange.max || ctcRange.min || ctcRange.max) && (
+          {(search || companiesFilter.length > 0 || designationsFilter.length > 0 || qualsFilter.length > 0 || statusFilter.length > 0 || expRange.min || expRange.max || tenureRange.min || tenureRange.max || ctcRange.min || ctcRange.max) && (
             <button onClick={clearAllFilters} className="px-3 py-2 text-[13px] text-[#1d4ed8] font-semibold hover:underline">
               Clear All Filters
             </button>
@@ -301,12 +297,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
               <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Qualification</label>
               <MultiSelect options={uniqueQuals} selected={qualsFilter} onChange={setQualsFilter} placeholder="Any" />
             </div>
-            <div>
-              <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Prior employer (ex-)</label>
-              <MultiSelect options={uniquePriorEmployers} selected={priorEmployersFilter} onChange={setPriorEmployersFilter} placeholder="Any" />
-            </div>
-            
-            <div>
+<div>
               <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Experience (yrs)</label>
               <div className="flex items-center gap-2 mb-2">
                 <input type="number" placeholder="Min" value={expRange.min} onChange={e => {
