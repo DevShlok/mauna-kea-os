@@ -200,14 +200,16 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
   const uniqueQuals = Array.from(new Set(candidates.flatMap(c => 
     c.qual ? c.qual.map((q: any) => typeof q === 'string' ? q : q.degree).filter(Boolean) : []
   ))).sort();
-  const uniquePriorEmployers = Array.from(new Set(candidates.flatMap(c => {
-    if (!c.expTags) return [];
-    return c.expTags.map((t: string) => {
-      const parts = t.split(' - ');
-      return parts.length > 1 ? parts[1].trim() : t;
-    });
-  }).filter(Boolean))).sort();
   const uniqueStatuses = Array.from(new Set(candidates.map(c => c.status).filter(Boolean))).sort();
+
+  const maxExpData = candidates.length > 0 ? Math.max(...candidates.map(c => c.exp || 0)) : 0;
+  const maxExp = Math.max(10, Math.ceil(maxExpData));
+
+  const maxTenureData = candidates.length > 0 ? Math.max(...candidates.map(c => c.tenure || 0)) : 0;
+  const maxTenure = Math.max(5, Math.ceil(maxTenureData));
+
+  const maxCtcData = candidates.length > 0 ? Math.max(...candidates.map(c => c.ctc || 0)) : 0;
+  const maxCtc = Math.max(50, Math.ceil(maxCtcData / 10) * 10);
 
   const filtered = candidates.filter((c) => {
     const matchSearch = search ? (c.name.toLowerCase().includes(search.toLowerCase()) || c.company?.toLowerCase().includes(search.toLowerCase()) || c.designation?.toLowerCase().includes(search.toLowerCase())) : true;
@@ -311,7 +313,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
                   setExpRange({...expRange, max: val});
                 }} className="w-1/2 h-[38px] border-[1.5px] border-[#e4e8f0] rounded-[10px] px-3 text-[13px] outline-none focus:border-[#1d4ed8] bg-white"/>
               </div>
-              <DualRangeSlider min={0} max={40} step={1} value={expRange} onChange={setExpRange} />
+              <DualRangeSlider min={0} max={maxExp} step={1} value={expRange} onChange={setExpRange} />
             </div>
             <div>
               <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Tenure, current org (yrs)</label>
@@ -327,7 +329,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
                   setTenureRange({...tenureRange, max: val});
                 }} className="w-1/2 h-[38px] border-[1.5px] border-[#e4e8f0] rounded-[10px] px-3 text-[13px] outline-none focus:border-[#1d4ed8] bg-white" step="0.1"/>
               </div>
-              <DualRangeSlider min={0} max={25} step={0.5} value={tenureRange} onChange={setTenureRange} />
+              <DualRangeSlider min={0} max={maxTenure} step={0.5} value={tenureRange} onChange={setTenureRange} />
             </div>
             <div>
               <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">CTC (₹ Lakhs)</label>
@@ -343,7 +345,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
                   setCtcRange({...ctcRange, max: val});
                 }} className="w-1/2 h-[38px] border-[1.5px] border-[#e4e8f0] rounded-[10px] px-3 text-[13px] outline-none focus:border-[#1d4ed8] bg-white" step="1"/>
               </div>
-              <DualRangeSlider min={0} max={500} step={5} value={ctcRange} onChange={setCtcRange} />
+              <DualRangeSlider min={0} max={maxCtc} step={5} value={ctcRange} onChange={setCtcRange} />
             </div>
             <div>
               <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Status</label>
