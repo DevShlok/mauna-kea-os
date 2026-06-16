@@ -279,6 +279,13 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
             <span className="text-gray-400">⚲</span>
             <input type="text" placeholder="Search by name, company or designation…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full text-sm outline-none bg-transparent"/>
           </div>
+          <button 
+            onClick={() => setShowFilters(!showFilters)} 
+            className={`px-4 py-2.5 rounded-[11px] text-[13px] font-bold border-[1.5px] transition-all flex items-center gap-2 ${showFilters ? 'bg-[#eef2fb] text-[#1d4ed8] border-[#1d4ed8]' : 'bg-white text-[#4a5568] border-[#e4e8f0] hover:bg-[#f8fafc]'}`}
+          >
+            <span>{showFilters ? 'Hide Filters' : 'Advanced Filters'}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+          </button>
           {(search || companiesFilter.length > 0 || designationsFilter.length > 0 || qualsFilter.length > 0 || statusFilter.length > 0 || expRange.min || expRange.max || tenureRange.min || tenureRange.max || ctcRange.min || ctcRange.max) && (
             <button onClick={clearAllFilters} className="px-3 py-2 text-[13px] text-[#1d4ed8] font-semibold hover:underline">
               Clear All Filters
@@ -286,7 +293,8 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
           )}
         </div>
         
-        <div className="mt-4 pt-4 border-t border-[#e4e8f0] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {showFilters && (
+          <div className="mt-4 pt-4 border-t border-[#e4e8f0] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Current company</label>
               <MultiSelect options={uniqueCompanies} selected={companiesFilter} onChange={setCompaniesFilter} placeholder="Any" />
@@ -352,6 +360,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
               <MultiSelect options={uniqueStatuses} selected={statusFilter} onChange={setStatusFilter} placeholder="Any" />
             </div>
           </div>
+        )}
         </div>
       
       {/* Bulk Action Bar */}
