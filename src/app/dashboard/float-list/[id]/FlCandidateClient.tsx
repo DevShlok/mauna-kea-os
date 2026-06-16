@@ -133,9 +133,17 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
           <div className="font-serif text-[22px] font-bold text-[#111] mb-1">{candidate.name}</div>
           <div className="text-[13px] font-semibold text-[#123D8D] mb-2">{candidate.designation} · {candidate.company}</div>
           <div className="flex gap-3 items-center text-[12px] text-[#6b7a99] mb-3 flex-wrap">
-            {candidate.qual?.map((q: string) => (
-              <span key={q} className="px-2 py-[1px] bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[3px] text-[10px] font-bold whitespace-nowrap">{q}</span>
-            ))}
+            {candidate.qual?.map((q: any, idx: number) => {
+              if (typeof q === 'string') {
+                return <span key={idx} className="px-2 py-[1px] bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[3px] text-[10px] font-bold whitespace-nowrap">{q}</span>;
+              }
+              return (
+                <span key={idx} className="px-2 py-[1px] bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[3px] text-[10px] whitespace-nowrap">
+                  <span className="font-bold">{q.degree}</span>
+                  {(q.institute || q.year) && <span> · {q.institute}{q.institute && q.year ? ' · ' : ''}{q.year}</span>}
+                </span>
+              );
+            })}
             <span>📍 {candidate.location}</span>
             <span>💼 {candidate.exp} yrs</span>
           </div>

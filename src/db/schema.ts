@@ -68,7 +68,7 @@ export const candidates = mysqlTable('candidates', {
   expected: int('expected'),
   notice: int('notice'),
   status: varchar('status', { length: 50 }).default('Active'),
-  qual: json('qual').$type<string[]>().default([]),
+  qual: json('qual').$type<any[]>().default([]),
   dreamRoles: json('dream_roles').$type<string[]>().default([]),
   dreamCos: json('dream_cos').$type<string[]>().default([]),
   expTags: json('exp_tags').$type<string[]>().default([]),

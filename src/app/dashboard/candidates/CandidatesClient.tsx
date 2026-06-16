@@ -207,11 +207,17 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
                   <td className="px-4 py-4">
                     <div className="flex flex-col gap-1">
                       {c.qual && c.qual.length > 0 ? (
-                        (c.qual as string[]).slice(0, 2).map((q: string, idx) => (
-                          <div key={idx} className="text-[12px] text-gray-900">
-                            <b>{q}</b>
-                          </div>
-                        ))
+                        (c.qual as any[]).slice(0, 2).map((q: any, idx: number) => {
+                          if (typeof q === 'string') {
+                            return <div key={idx} className="text-[12px] text-gray-900"><b>{q}</b></div>;
+                          }
+                          return (
+                            <div key={idx} className="text-[12px] text-gray-900 leading-tight">
+                              <b>{q.degree}</b>
+                              {(q.institute || q.year) && <span className="text-[#8a93a3]"> · {q.institute}{q.institute && q.year ? ' · ' : ''}{q.year}</span>}
+                            </div>
+                          );
+                        })
                       ) : (
                         <span className="text-[#8a93a3] text-xs">-</span>
                       )}

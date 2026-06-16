@@ -29,8 +29,13 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
     notes: initialData?.notes || ""
   });
   
-  const [quals, setQuals] = useState<string[]>(initialData?.qual || []);
-  const [customQual, setCustomQual] = useState("");
+  const [quals, setQuals] = useState<any[]>(() => {
+    return (initialData?.qual || []).map((q: any) => {
+      if (typeof q === 'string') return { degree: q, institute: '', year: '' };
+      return q;
+    });
+  });
+  const [newQual, setNewQual] = useState({ degree: "", institute: "", year: "" });
   const [expTags, setExpTags] = useState<string[]>(initialData?.expTags || []);
   const [dreamRoles, setDreamRoles] = useState<string[]>(initialData?.dreamRoles || []);
   const [dreamCompanies, setDreamCompanies] = useState<string[]>(initialData?.dreamCos || []);
@@ -138,16 +143,14 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
     reader.readAsDataURL(file);
   };
 
-  const handleCheckbox = (q: string) => {
-    if (quals.includes(q)) setQuals(quals.filter(x => x !== q));
-    else setQuals([...quals, q]);
-  };
-
-  const handleAddCustomQual = () => {
-    if (customQual.trim() && !quals.includes(customQual.trim())) {
-      setQuals([...quals, customQual.trim()]);
-      setCustomQual("");
+  const handleAddQual = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    if (!newQual.degree) {
+      alert("Please enter the degree/qualification.");
+      return;
     }
+    setQuals([...quals, newQual]);
+    setNewQual({ degree: "", institute: "", year: "" });
   };
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string[]>>, tags: string[]) => {
@@ -411,23 +414,21 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
             <div className="border-t border-[#f0f0f0] pt-5 mb-3">
               <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Qualifications</div>
             </div>
-            <div className="flex flex-wrap gap-3 mb-4">
-              {defaultQuals.map(q => (
-                <label key={q} className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#D4E0F0] bg-[#f4f7fd] text-[13px] text-[#444] cursor-pointer hover:bg-[#e6edf8] hover:border-[#123D8D] transition-colors">
-                  <input type="checkbox" checked={quals.includes(q)} onChange={() => handleCheckbox(q)} className="w-3.5 h-3.5 accent-[#123D8D]" />
-                  {q}
-                </label>
-              ))}
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              <input type="text" value={newQual.degree} onChange={e=>setNewQual({...newQual, degree: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" placeholder="Degree (e.g. MBA)" />
+              <input type="text" value={newQual.institute} onChange={e=>setNewQual({...newQual, institute: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" placeholder="Institute (e.g. ISB Hyderabad)" />
+              <input type="text" value={newQual.year} onChange={e=>setNewQual({...newQual, year: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" placeholder="Year (e.g. 2012)" />
+              <button onClick={handleAddQual} type="button" className="h-9 px-3 rounded-md text-[13px] font-semibold text-[#123D8D] bg-[#DCE5F4] hover:bg-[#c5d3ec] transition-all border border-[#bacce6]">Add Qualification</button>
             </div>
-            <div className="flex items-center gap-2 mb-3">
-              <input type="text" value={customQual} onChange={e=>setCustomQual(e.target.value)} onKeyDown={(e) => { if(e.key==='Enter') handleAddCustomQual(); }} className="h-9 w-64 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" placeholder="Add custom qualification..." />
-              <button onClick={handleAddCustomQual} className="px-3 py-1.5 rounded-md text-[13px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">Add</button>
-            </div>
-            <div className="flex flex-wrap gap-1.5 mb-6">
-              {quals.map(q => (
-                <span key={q} className="px-2 py-1 bg-[#DCE5F4] text-[#123D8D] rounded-[12px] text-[12px] font-semibold flex items-center gap-1.5">
-                  {q} <span className="cursor-pointer font-bold opacity-60 hover:opacity-100" onClick={() => removeTag(q, setQuals, quals)}>×</span>
-                </span>
+            <div className="flex flex-col gap-2 mb-6">
+              {quals.map((q, idx) => (
+                <div key={idx} className="flex justify-between items-center bg-[#f8fafc] border border-[#e2e8f0] px-4 py-2.5 rounded-lg">
+                  <div>
+                    <span className="font-bold text-[#111]">{q.degree}</span>
+                    {(q.institute || q.year) && <span className="text-[#6b7a99] text-[13px]"> · {q.institute}{q.institute && q.year ? ' · ' : ''}{q.year}</span>}
+                  </div>
+                  <span className="cursor-pointer font-bold text-red-400 hover:text-red-600 px-2" onClick={() => setQuals(quals.filter((_, i) => i !== idx))}>×</span>
+                </div>
               ))}
             </div>
 

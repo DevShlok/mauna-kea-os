@@ -23,7 +23,7 @@ export async function GET() {
       c.expected ? `${c.currency || 'INR'} ${c.expected}L` : "",
       c.notice || "",
       c.status || "",
-      ((c.qual as string[]) || []).join("; "),
+      ((c.qual as any[]) || []).map(q => typeof q === 'string' ? q : `${q.degree}${q.institute ? ` - ${q.institute}` : ''}${q.year ? ` (${q.year})` : ''}`).join("; "),
       c.linkedin || "",
       c.targetCompany || ""
     ]);

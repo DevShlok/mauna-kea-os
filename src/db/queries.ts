@@ -78,7 +78,7 @@ export const getCandidates = async () => {
   const rows = await db.select().from(candidates).orderBy(candidates.id);
   return rows.map(c => ({
     ...c,
-    qual: (c.qual ?? []) as string[],
+    qual: (c.qual ?? []) as any[],
     dreamRoles: (c.dreamRoles ?? []) as string[],
     dreamCos: (c.dreamCos ?? []) as string[],
     expTags: (c.expTags ?? []) as string[],
@@ -151,7 +151,7 @@ export const getCandidateById = async (id: string) => {
   
   return {
     ...cand,
-    qual: (cand.qual ?? []) as string[],
+    qual: (cand.qual ?? []) as any[],
     dreamRoles: (cand.dreamRoles ?? []) as string[],
     dreamCos: (cand.dreamCos ?? []) as string[],
     expTags: (cand.expTags ?? []) as string[],

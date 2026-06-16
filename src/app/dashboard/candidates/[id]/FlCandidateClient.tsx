@@ -73,7 +73,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
   const [deleteConfirmation, setDeleteConfirmation] = useState<{fileId: number, fileName: string} | null>(null);
 
   const [activeLogTab, setActiveLogTab] = useState("Meeting");
-  const [logForm, setLogForm] = useState({ note: "", type: "In-person meeting", meetingFor: "Exploration", date: "", time: "" });
+  const [logForm, setLogForm] = useState({ note: "", type: "In-person meeting", meetingFor: "Exploration", emailType: "Email received from Candidate with Resume/ showing interest", clientName: "", roleName: "", date: "", time: "" });
   const [isLogging, setIsLogging] = useState(false);
 
   const handleLogActivity = async (e: React.FormEvent) => {
@@ -93,8 +93,18 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
       const meetingForStr = logForm.meetingFor.toLowerCase();
       finalNote = `${consultantName} consultant met ${candidate.name} candidate on ${formattedDate}${timeStr} for ${meetingForStr}.\n\nNotes: ${logForm.note}`;
     }
-    else if (activeLogTab === "Email") logType = "Email";
-    else if (activeLogTab === "Task") logType = `Task: ${logForm.type}`;
+    else if (activeLogTab === "Email") {
+      logType = `Email: ${logForm.emailType}`;
+      if (logForm.emailType === "Email sent to Client for profile") {
+        const consultantName = user?.fullName || "Consultant";
+        const formattedDate = logForm.date 
+          ? new Date(logForm.date).toLocaleDateString("en-GB", {day: "2-digit", month: "short", year: "2-digit"}).replace(/ /g, '-')
+          : "Unknown date";
+        const timeStr = logForm.time ? ` ${logForm.time}` : "";
+        finalNote = `${candidate.name} (candidate) profile sent to ${logForm.clientName} Client for ${logForm.roleName} role on ${formattedDate}${timeStr} by ${consultantName} (consultant).\n\nNotes: ${logForm.note}`;
+      }
+    }
+    else if (activeLogTab === "Event") logType = `Event`;
     
     try {
       await logCandidateActivityAction({
@@ -105,7 +115,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
         time: logForm.time,
         consultant: user?.fullName || "System"
       });
-      setLogForm({ note: "", type: "In-person meeting", meetingFor: "Exploration", date: "", time: "" });
+      setLogForm({ note: "", type: "In-person meeting", meetingFor: "Exploration", emailType: "Email received from Candidate with Resume/ showing interest", clientName: "", roleName: "", date: "", time: "" });
       alert("Activity logged successfully!");
       router.refresh();
     } catch (err: any) {
@@ -276,9 +286,17 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
           <div className="font-serif text-[22px] font-bold text-[#111] mb-1">{candidate.name}</div>
           <div className="text-[13px] font-semibold text-[#123D8D] mb-2">{candidate.designation} · {candidate.company}</div>
           <div className="flex gap-3 items-center text-[12px] text-[#6b7a99] mb-3 flex-wrap">
-            {candidate.qual?.map((q: string) => (
-              <span key={q} className="px-2 py-[1px] bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[3px] text-[10px] font-bold whitespace-nowrap">{q}</span>
-            ))}
+            {candidate.qual?.map((q: any, idx: number) => {
+              if (typeof q === 'string') {
+                return <span key={idx} className="px-2 py-[1px] bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[3px] text-[10px] font-bold whitespace-nowrap">{q}</span>;
+              }
+              return (
+                <span key={idx} className="px-2 py-[1px] bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[3px] text-[10px] whitespace-nowrap">
+                  <span className="font-bold">{q.degree}</span>
+                  {(q.institute || q.year) && <span> · {q.institute}{q.institute && q.year ? ' · ' : ''}{q.year}</span>}
+                </span>
+              );
+            })}
             <span>📍 {candidate.location}</span>
             <span>💼 {candidate.exp} yrs</span>
           </div>
@@ -535,7 +553,33 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
                 </div>
               </div>
             )}
-            {(activeLogTab === "Meeting" || activeLogTab === "Event") && (
+            {activeLogTab === "Email" && (
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Email Type <span className="text-red-500">*</span></label>
+                  <select required value={logForm.emailType} onChange={e=>setLogForm({...logForm, emailType: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]">
+                    <option value="Email received from Candidate with Resume/ showing interest">Email received from Candidate with Resume/ showing interest</option>
+                    <option value="Contract- NDA for confidential roles">Contract- NDA for confidential roles</option>
+                    <option value="Email sent to Client for profile">Email sent to Client for profile</option>
+                    <option value="Offer acceptance email from future employer">Offer acceptance email from future employer</option>
+                    <option value="Resignation & resignation acceptance email from current employes">Resignation & resignation acceptance email from current employes</option>
+                    <option value="Joining confirmation (On DOJ)">Joining confirmation (On DOJ)</option>
+                  </select>
+                </div>
+                {logForm.emailType === "Email sent to Client for profile" && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Client Name <span className="text-red-500">*</span></label>
+                      <input required type="text" value={logForm.clientName} onChange={e=>setLogForm({...logForm, clientName: e.target.value})} placeholder="e.g. ABC Ltd" className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Role <span className="text-red-500">*</span></label>
+                      <input required type="text" value={logForm.roleName} onChange={e=>setLogForm({...logForm, roleName: e.target.value})} placeholder="e.g. Finance controller" className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Date</label>
@@ -546,7 +590,6 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
                   <input type="time" value={logForm.time} onChange={e=>setLogForm({...logForm, time: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" />
                 </div>
               </div>
-            )}
             <div>
               <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">
                 {activeLogTab === "Email" ? "Email Body / Notes" : "Notes / Description"} <span className="text-red-500">*</span>
