@@ -1,16 +1,123 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Candidate } from "@/db/schema";
 import { bulkAddSubmissionAction, bulkAssignToMandateAction, updateCandidateStatusAction } from "@/app/actions";
+
+const MultiSelect = ({ options, selected, onChange, placeholder }: any) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggle = (opt: string) => {
+    if (selected.includes(opt)) onChange(selected.filter((x: string) => x !== opt));
+    else onChange([...selected, opt]);
+  };
+
+  return (
+    <div className="relative w-full" ref={ref}>
+      <div 
+        onClick={() => setOpen(!open)}
+        className="w-full min-h-[42px] border-[1.5px] border-[#e4e8f0] rounded-[10px] px-3 py-2 text-[13px] bg-white cursor-pointer flex justify-between items-center hover:border-[#1d4ed8] transition-colors"
+      >
+        <span className={selected.length === 0 ? "text-[#8a93a3]" : "text-gray-900 truncate pr-4 font-medium"}>
+          {selected.length === 0 ? placeholder : selected.join(", ")}
+        </span>
+        <span className="text-[#8a93a3] text-[10px]">▼</span>
+      </div>
+      {open && (
+        <div className="absolute top-full mt-1 left-0 w-[240px] bg-white border border-[#e4e8f0] rounded-[10px] shadow-xl z-50 max-h-[300px] overflow-y-auto p-1">
+          {options.length === 0 ? (
+            <div className="px-3 py-2 text-[12px] text-gray-500">No options</div>
+          ) : (
+            options.map((opt: string) => (
+              <label key={opt} className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#f4f7fd] rounded-[6px] cursor-pointer text-[13px] text-gray-800 transition-colors">
+                <input type="checkbox" checked={selected.includes(opt)} onChange={() => toggle(opt)} className="w-[15px] h-[15px] accent-[#1d4ed8] cursor-pointer" />
+                <span className="truncate">{opt}</span>
+              </label>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+const DualRangeSlider = ({ min, max, step, value, onChange }: any) => {
+  const minVal = value.min === '' ? min : Number(value.min);
+  const maxVal = value.max === '' ? max : Number(value.max);
+
+  const handleMinChange = (e: any) => {
+    const v = Math.min(Number(e.target.value), maxVal);
+    onChange({ ...value, min: v.toString() });
+  };
+
+  const handleMaxChange = (e: any) => {
+    const v = Math.max(Number(e.target.value), minVal);
+    onChange({ ...value, max: v.toString() });
+  };
+
+  const minPercent = ((minVal - min) / (max - min)) * 100;
+  const maxPercent = ((maxVal - min) / (max - min)) * 100;
+
+  return (
+    <div className="relative w-[92%] mx-auto h-[5px] bg-[#e4e8f0] rounded-full mt-5 mb-3">
+      <div 
+        className="absolute h-full bg-[#1d4ed8] rounded-full" 
+        style={{ left: `${minPercent}%`, width: `${maxPercent - minPercent}%` }} 
+      />
+      <input 
+        type="range" 
+        min={min} 
+        max={max} 
+        step={step} 
+        value={minVal} 
+        onChange={handleMinChange}
+        className="absolute w-full h-[5px] opacity-0 cursor-pointer pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto"
+        style={{ zIndex: minVal > max - (max-min)*0.1 ? 5 : 3 }}
+      />
+      <input 
+        type="range" 
+        min={min} 
+        max={max} 
+        step={step} 
+        value={maxVal} 
+        onChange={handleMaxChange}
+        className="absolute w-full h-[5px] opacity-0 cursor-pointer pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto"
+        style={{ zIndex: 4 }}
+      />
+      <div className="absolute top-1/2 -translate-y-1/2 w-[14px] h-[14px] bg-white border-[2.5px] border-[#1d4ed8] rounded-full pointer-events-none shadow-sm" style={{ left: `calc(${minPercent}% - 7px)` }} />
+      <div className="absolute top-1/2 -translate-y-1/2 w-[14px] h-[14px] bg-white border-[2.5px] border-[#1d4ed8] rounded-full pointer-events-none shadow-sm" style={{ left: `calc(${maxPercent}% - 7px)` }} />
+    </div>
+  );
+};
 
 export default function CandidatesClient({ candidates, mandates }: { candidates: Candidate[], mandates: any[] }) {
   const router = useRouter();
   
   const [search, setSearch] = useState("");
-  const [companyFilter, setCompanyFilter] = useState("");
-  const [designationFilter, setDesignationFilter] = useState("");
+  const [companiesFilter, setCompaniesFilter] = useState<string[]>([]);
+  const [designationsFilter, setDesignationsFilter] = useState<string[]>([]);
+  const [qualsFilter, setQualsFilter] = useState<string[]>([]);
+  const [priorEmployersFilter, setPriorEmployersFilter] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  
+  const [expRange, setExpRange] = useState({ min: '', max: '' });
+  const [tenureRange, setTenureRange] = useState({ min: '', max: '' });
+  const [ctcRange, setCtcRange] = useState({ min: '', max: '' });
+
+  const [showFilters, setShowFilters] = useState(false);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   
@@ -91,13 +198,55 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
 
   const uniqueCompanies = Array.from(new Set(candidates.map(c => c.company).filter(Boolean))).sort();
   const uniqueDesignations = Array.from(new Set(candidates.map(c => c.designation).filter(Boolean))).sort();
+  const uniqueQuals = Array.from(new Set(candidates.flatMap(c => 
+    c.qual ? c.qual.map((q: any) => typeof q === 'string' ? q : q.degree).filter(Boolean) : []
+  ))).sort();
+  const uniquePriorEmployers = Array.from(new Set(candidates.flatMap(c => {
+    if (!c.expTags) return [];
+    return c.expTags.map((t: string) => {
+      const parts = t.split(' - ');
+      return parts.length > 1 ? parts[1].trim() : t;
+    });
+  }).filter(Boolean))).sort();
+  const uniqueStatuses = Array.from(new Set(candidates.map(c => c.status).filter(Boolean))).sort();
 
   const filtered = candidates.filter((c) => {
-    const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) || c.company?.toLowerCase().includes(search.toLowerCase());
-    const matchCompany = !companyFilter || c.company === companyFilter;
-    const matchDesignation = !designationFilter || c.designation === designationFilter;
-    return matchSearch && matchCompany && matchDesignation;
+    const matchSearch = search ? (c.name.toLowerCase().includes(search.toLowerCase()) || c.company?.toLowerCase().includes(search.toLowerCase()) || c.designation?.toLowerCase().includes(search.toLowerCase())) : true;
+    const matchCompany = companiesFilter.length === 0 || companiesFilter.includes(c.company || '');
+    const matchDesignation = designationsFilter.length === 0 || designationsFilter.includes(c.designation || '');
+    const matchStatus = statusFilter.length === 0 || statusFilter.includes(c.status || 'Active');
+    
+    const matchQual = qualsFilter.length === 0 || (c.qual && c.qual.some((q: any) => qualsFilter.includes(typeof q === 'string' ? q : q.degree)));
+    
+    const matchPriorEmployer = priorEmployersFilter.length === 0 || (c.expTags && c.expTags.some((t: string) => priorEmployersFilter.some(pe => t.includes(pe))));
+
+    const matchExp = 
+      (!expRange.min || (c.exp !== null && c.exp >= Number(expRange.min))) && 
+      (!expRange.max || (c.exp !== null && c.exp <= Number(expRange.max)));
+
+    const matchTenure = 
+      (!tenureRange.min || (c.tenure !== null && c.tenure >= Number(tenureRange.min))) && 
+      (!tenureRange.max || (c.tenure !== null && c.tenure <= Number(tenureRange.max)));
+
+    const ctcLacs = c.ctc || 0;
+    const matchCtc = 
+      (!ctcRange.min || ctcLacs >= Number(ctcRange.min)) && 
+      (!ctcRange.max || ctcLacs <= Number(ctcRange.max));
+
+    return matchSearch && matchCompany && matchDesignation && matchStatus && matchQual && matchPriorEmployer && matchExp && matchTenure && matchCtc;
   });
+
+  const clearAllFilters = () => {
+    setSearch('');
+    setCompaniesFilter([]);
+    setDesignationsFilter([]);
+    setQualsFilter([]);
+    setPriorEmployersFilter([]);
+    setStatusFilter([]);
+    setExpRange({ min: '', max: '' });
+    setTenureRange({ min: '', max: '' });
+    setCtcRange({ min: '', max: '' });
+  };
 
   const toggleAll = () => {
     if (selectedIds.size === filtered.length) {
@@ -126,26 +275,91 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
       </div>
       
       {/* Filters Bar */}
-      <div className="flex flex-wrap gap-3 mb-4 bg-white p-4 border border-[#e4e8f0] rounded-[16px] shadow-[0_1px_2px_rgba(16,33,80,0.04)]">
-        <div className="flex-1 flex items-center gap-2 border-[1.5px] border-[#e4e8f0] rounded-[11px] px-4 py-2.5">
-          <span className="text-gray-400">⚲</span>
-          <input type="text" placeholder="Search by name, company or designation…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full text-sm outline-none bg-transparent"/>
+      <div className="mb-4 bg-white p-4 border border-[#e4e8f0] rounded-[16px] shadow-[0_1px_2px_rgba(16,33,80,0.04)]">
+        <div className="flex flex-wrap gap-3 items-center">
+          <div className="flex-1 flex items-center gap-2 border-[1.5px] border-[#e4e8f0] rounded-[11px] px-4 py-2.5 focus-within:border-[#1d4ed8] transition-colors">
+            <span className="text-gray-400">⚲</span>
+            <input type="text" placeholder="Search by name, company or designation…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full text-sm outline-none bg-transparent"/>
+          </div>
+          {(search || companiesFilter.length > 0 || designationsFilter.length > 0 || qualsFilter.length > 0 || priorEmployersFilter.length > 0 || statusFilter.length > 0 || expRange.min || expRange.max || tenureRange.min || tenureRange.max || ctcRange.min || ctcRange.max) && (
+            <button onClick={clearAllFilters} className="px-3 py-2 text-[13px] text-[#1d4ed8] font-semibold hover:underline">
+              Clear All Filters
+            </button>
+          )}
         </div>
         
-        <select value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)} className="px-3 py-2.5 border-[1.5px] border-[#e4e8f0] rounded-[10px] text-sm bg-white outline-none focus:border-[#1d4ed8]">
-          <option value="">Current company</option>
-          {uniqueCompanies.map((c: any) => <option key={c} value={c}>{c}</option>)}
-        </select>
-
-        <select value={designationFilter} onChange={(e) => setDesignationFilter(e.target.value)} className="px-3 py-2.5 border-[1.5px] border-[#e4e8f0] rounded-[10px] text-sm bg-white outline-none focus:border-[#1d4ed8]">
-          <option value="">Current designation</option>
-          {uniqueDesignations.map((d: any) => <option key={d} value={d}>{d}</option>)}
-        </select>
-        
-        <button onClick={() => {setSearch(''); setCompanyFilter(''); setDesignationFilter('');}} className="px-3 py-2 text-[13px] text-[#1d4ed8] font-semibold hover:underline">
-          Clear
-        </button>
-      </div>
+        <div className="mt-4 pt-4 border-t border-[#e4e8f0] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Current company</label>
+              <MultiSelect options={uniqueCompanies} selected={companiesFilter} onChange={setCompaniesFilter} placeholder="Any" />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Current designation</label>
+              <MultiSelect options={uniqueDesignations} selected={designationsFilter} onChange={setDesignationsFilter} placeholder="Any" />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Qualification</label>
+              <MultiSelect options={uniqueQuals} selected={qualsFilter} onChange={setQualsFilter} placeholder="Any" />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Prior employer (ex-)</label>
+              <MultiSelect options={uniquePriorEmployers} selected={priorEmployersFilter} onChange={setPriorEmployersFilter} placeholder="Any" />
+            </div>
+            
+            <div>
+              <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Experience (yrs)</label>
+              <div className="flex items-center gap-2 mb-2">
+                <input type="number" placeholder="Min" value={expRange.min} onChange={e => {
+                  let val = e.target.value;
+                  if(expRange.max && Number(val) > Number(expRange.max)) val = expRange.max;
+                  setExpRange({...expRange, min: val});
+                }} className="w-1/2 h-[38px] border-[1.5px] border-[#e4e8f0] rounded-[10px] px-3 text-[13px] outline-none focus:border-[#1d4ed8] bg-white"/>
+                <input type="number" placeholder="Max" value={expRange.max} onChange={e => {
+                  let val = e.target.value;
+                  if(expRange.min && val !== '' && Number(val) < Number(expRange.min)) val = expRange.min;
+                  setExpRange({...expRange, max: val});
+                }} className="w-1/2 h-[38px] border-[1.5px] border-[#e4e8f0] rounded-[10px] px-3 text-[13px] outline-none focus:border-[#1d4ed8] bg-white"/>
+              </div>
+              <DualRangeSlider min={0} max={40} step={1} value={expRange} onChange={setExpRange} />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Tenure, current org (yrs)</label>
+              <div className="flex items-center gap-2 mb-2">
+                <input type="number" placeholder="Min" value={tenureRange.min} onChange={e => {
+                  let val = e.target.value;
+                  if(tenureRange.max && Number(val) > Number(tenureRange.max)) val = tenureRange.max;
+                  setTenureRange({...tenureRange, min: val});
+                }} className="w-1/2 h-[38px] border-[1.5px] border-[#e4e8f0] rounded-[10px] px-3 text-[13px] outline-none focus:border-[#1d4ed8] bg-white" step="0.1"/>
+                <input type="number" placeholder="Max" value={tenureRange.max} onChange={e => {
+                  let val = e.target.value;
+                  if(tenureRange.min && val !== '' && Number(val) < Number(tenureRange.min)) val = tenureRange.min;
+                  setTenureRange({...tenureRange, max: val});
+                }} className="w-1/2 h-[38px] border-[1.5px] border-[#e4e8f0] rounded-[10px] px-3 text-[13px] outline-none focus:border-[#1d4ed8] bg-white" step="0.1"/>
+              </div>
+              <DualRangeSlider min={0} max={25} step={0.5} value={tenureRange} onChange={setTenureRange} />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">CTC (₹ Lakhs)</label>
+              <div className="flex items-center gap-2 mb-2">
+                <input type="number" placeholder="Min" value={ctcRange.min} onChange={e => {
+                  let val = e.target.value;
+                  if(ctcRange.max && Number(val) > Number(ctcRange.max)) val = ctcRange.max;
+                  setCtcRange({...ctcRange, min: val});
+                }} className="w-1/2 h-[38px] border-[1.5px] border-[#e4e8f0] rounded-[10px] px-3 text-[13px] outline-none focus:border-[#1d4ed8] bg-white" step="1"/>
+                <input type="number" placeholder="Max" value={ctcRange.max} onChange={e => {
+                  let val = e.target.value;
+                  if(ctcRange.min && val !== '' && Number(val) < Number(ctcRange.min)) val = ctcRange.min;
+                  setCtcRange({...ctcRange, max: val});
+                }} className="w-1/2 h-[38px] border-[1.5px] border-[#e4e8f0] rounded-[10px] px-3 text-[13px] outline-none focus:border-[#1d4ed8] bg-white" step="1"/>
+              </div>
+              <DualRangeSlider min={0} max={500} step={5} value={ctcRange} onChange={setCtcRange} />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Status</label>
+              <MultiSelect options={uniqueStatuses} selected={statusFilter} onChange={setStatusFilter} placeholder="Any" />
+            </div>
+          </div>
+        </div>
       
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (
@@ -267,7 +481,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={10} className="px-4 py-10 text-center text-[#8a93a3] text-[13.5px]">
-                    No candidates match these filters. <button onClick={() => {setSearch(''); setCompanyFilter(''); setDesignationFilter('');}} className="text-[#1d4ed8] font-semibold">Clear filters</button>
+                    No candidates match these filters. <button onClick={clearAllFilters} className="text-[#1d4ed8] font-semibold">Clear filters</button>
                   </td>
                 </tr>
               )}
