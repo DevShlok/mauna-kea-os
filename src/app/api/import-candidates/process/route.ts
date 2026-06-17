@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { candidates } from "@/db/schema";
+import { candidates, candidateFiles } from "@/db/schema";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -53,6 +53,34 @@ export async function POST(req: Request) {
     });
 
     await db.insert(candidates).values(payload);
+
+    // Populate candidate_files for the Documents & Files section
+    const filesPayload: any[] = [];
+    mappedCandidates.forEach((c: any, index: number) => {
+      const candId = payload[index].id;
+      
+      if (c.cvDriveLink) {
+        filesPayload.push({
+          candId: candId,
+          fileType: 'CV / Resume',
+          fileName: 'Imported_CV_Resume',
+          fileUrl: String(c.cvDriveLink).substring(0, 1000)
+        });
+      }
+      
+      if (c.linkedinPdfDriveLink) {
+        filesPayload.push({
+          candId: candId,
+          fileType: 'Linkedin Profile',
+          fileName: 'Imported_LinkedIn_PDF',
+          fileUrl: String(c.linkedinPdfDriveLink).substring(0, 1000)
+        });
+      }
+    });
+
+    if (filesPayload.length > 0) {
+      await db.insert(candidateFiles).values(filesPayload);
+    }
 
     return NextResponse.json({ success: true, count: payload.length });
   } catch (error) {

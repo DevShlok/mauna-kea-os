@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports } from "@/db/schema";
+import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles } from "@/db/schema";
 import { eq, sql, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -374,6 +374,7 @@ export async function deleteFloatListEntryAction(id: string) {
   await db.delete(floatActivities).where(eq(floatActivities.candId, id));
   await db.delete(floatReferences).where(eq(floatReferences.candId, id));
   await db.delete(candidateReports).where(eq(candidateReports.candidateId, id));
+  await db.delete(candidateFiles).where(eq(candidateFiles.candId, id));
   await db.delete(candidates).where(eq(candidates.id, id));
   revalidatePath("/dashboard/float-list/database");
   revalidatePath("/dashboard/mandates");

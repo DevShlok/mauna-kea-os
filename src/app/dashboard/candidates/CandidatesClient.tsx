@@ -176,7 +176,19 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
           worksheet.eachRow((row, rowNumber) => {
             const rowData: any[] = [];
             row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-              rowData[colNumber - 1] = cell.value?.toString() || "";
+              let val: any = cell.value;
+              if (val !== null && typeof val === 'object') {
+                if ('hyperlink' in val) {
+                  val = val.hyperlink;
+                } else if ('text' in val) {
+                  val = val.text;
+                } else if ('result' in val) {
+                  val = val.result;
+                } else if ('richText' in val && Array.isArray(val.richText)) {
+                  val = val.richText.map((rt: any) => rt.text).join('');
+                }
+              }
+              rowData[colNumber - 1] = val?.toString() || "";
             });
             rows.push(rowData);
           });
