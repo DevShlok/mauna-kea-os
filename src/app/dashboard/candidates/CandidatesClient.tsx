@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { Candidate } from "@/db/schema";
-import { bulkAddSubmissionAction, bulkAssignToMandateAction, updateCandidateStatusAction } from "@/app/actions";
+import { bulkAddSubmissionAction, bulkAssignToMandateAction, updateCandidateStatusAction, deleteMultipleCandidatesAction } from "@/app/actions";
 
 const MultiSelect = ({ options, selected, onChange, placeholder }: any) => {
   const [open, setOpen] = useState(false);
@@ -110,6 +110,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
 
   // Import States
   const [isImporting, setIsImporting] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [importMapping, setImportMapping] = useState<any>(null);
   const [importFileData, setImportFileData] = useState<any[]>([]);
   const [importHeaders, setImportHeaders] = useState<string[]>([]);
@@ -390,6 +391,21 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
     } catch (e) {
       console.error(e);
       alert("Failed to assign candidates.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    setIsSubmitting(true);
+    try {
+      await deleteMultipleCandidatesAction(Array.from(selectedIds));
+      setSelectedIds(new Set());
+      setIsDeleteDialogOpen(false);
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to delete candidates.");
     } finally {
       setIsSubmitting(false);
     }
@@ -690,6 +706,10 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
             <button onClick={handleBulkFloatSubmit} disabled={isSubmitting} className="px-3 py-2 bg-[#1f9d57] text-white rounded-[9px] text-[13px] font-bold shadow-md hover:brightness-105 disabled:opacity-50">
               {isSubmitting ? "Floating..." : "➤ Float"}
             </button>
+            <button onClick={() => setIsDeleteDialogOpen(true)} className="px-3 py-2 bg-red-500 text-white rounded-[9px] text-[13px] font-bold shadow-md hover:brightness-105 flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              Delete
+            </button>
             <button onClick={() => setSelectedIds(new Set())} className="text-[#a9b7da] font-semibold text-[13px] hover:text-white px-2">
               Clear
             </button>
@@ -882,6 +902,36 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
               <button onClick={confirmImport} disabled={isImporting} className="px-6 py-2 bg-[#123D8D] text-white rounded-lg text-sm font-bold shadow-md hover:bg-[#0d2f6e] transition-colors disabled:opacity-50">
                 {isImporting ? "Importing..." : `Import ${importFileData.length} Candidates`}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {isDeleteDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0d2f6e]/40 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-[20px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <h3 className="font-serif text-[20px] font-bold text-gray-900 mb-2">Delete Candidates</h3>
+              <p className="text-[#4a5568] text-sm">
+                Are you sure you want to delete <b className="text-red-600">{selectedIds.size}</b> candidate{selectedIds.size > 1 ? "s" : ""}? This action cannot be undone. All associated files and reports will be deleted permanently.
+              </p>
+              
+              <div className="mt-6 flex justify-end gap-3">
+                <button 
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                  className="px-5 py-2.5 rounded-xl font-bold text-sm text-[#4a5568] hover:bg-gray-100 transition-colors"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleDeleteSelected}
+                  className="px-5 py-2.5 rounded-xl font-bold text-sm bg-red-600 text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-50"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Deleting..." : "Delete Permanently"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

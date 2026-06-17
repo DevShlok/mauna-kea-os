@@ -382,6 +382,23 @@ export async function deleteFloatListEntryAction(id: string) {
   revalidatePath("/dashboard/candidates");
 }
 
+export async function deleteMultipleCandidatesAction(ids: string[]) {
+  if (!ids || ids.length === 0) return;
+  revalidatePath("/dashboard", "layout");
+  await db.delete(mandateCandidates).where(inArray(mandateCandidates.externalId, ids));
+  await db.delete(floats).where(inArray(floats.candId, ids));
+  await db.delete(floatFollowUps).where(inArray(floatFollowUps.candId, ids));
+  await db.delete(floatActivities).where(inArray(floatActivities.candId, ids));
+  await db.delete(floatReferences).where(inArray(floatReferences.candId, ids));
+  await db.delete(candidateReports).where(inArray(candidateReports.candidateId, ids));
+  await db.delete(candidateFiles).where(inArray(candidateFiles.candId, ids));
+  await db.delete(candidates).where(inArray(candidates.id, ids));
+  revalidatePath("/dashboard/float-list/database");
+  revalidatePath("/dashboard/mandates");
+  revalidatePath("/dashboard/float-list/submissions");
+  revalidatePath("/dashboard/candidates");
+}
+
 export async function editFloatListEntryAction(id: string, data: any) {
   revalidatePath("/dashboard", "layout");
   const candidateName = data.name || "Unknown Candidate";
