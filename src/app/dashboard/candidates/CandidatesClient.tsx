@@ -571,13 +571,13 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
         <div className="flex gap-3 items-center">
           {isImporting && <span className="text-sm text-gray-500 font-bold animate-pulse">Processing...</span>}
           <label className={`px-5 py-2.5 bg-white border border-[#e4e8f0] text-[#4a5568] rounded-lg text-sm font-bold shadow-sm hover:bg-[#f8fafc] transition-colors inline-flex items-center gap-2 cursor-pointer ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Import
             <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} />
           </label>
 
           <button onClick={exportToExcel} className="px-5 py-2.5 bg-white border border-[#e4e8f0] text-[#4a5568] rounded-lg text-sm font-bold shadow-sm hover:bg-[#f8fafc] transition-colors inline-flex items-center gap-2">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
             Export
           </button>
           <Link href="/dashboard/candidates/new" className="px-5 py-2.5 bg-[#D8B15B] text-[#0d2f6e] rounded-lg text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors inline-block">
