@@ -47,7 +47,7 @@ export default function ClientDetailClient({ client, mandates }: { client: Clien
           <Link href="/dashboard/clients" className="text-gray-500 hover:text-[#133255] transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div className="text-[12px] text-gray-500">Home / Clients / {client.name}</div>
+          <div className="text-[14px] text-gray-500">Home / Clients / {client.name}</div>
         </div>
 
         {/* Client Header */}
@@ -59,7 +59,7 @@ export default function ClientDetailClient({ client, mandates }: { client: Clien
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-serif font-bold text-[#133255]">{client.name}</h1>
-                <span className={`px-2.5 py-1 text-[11px] font-bold rounded-full border ${client.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
+                <span className={`px-2.5 py-1 text-[13px] font-bold rounded-full border ${client.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
                   {client.status}
                 </span>
               </div>
@@ -104,24 +104,24 @@ export default function ClientDetailClient({ client, mandates }: { client: Clien
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Location</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Consultant</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Opened</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Action</th>
+                  <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Location</th>
+                  <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Consultant</th>
+                  <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Opened</th>
+                  <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {displayedMandates.map(m => (
                   <tr key={m.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-[13px] text-gray-900">{m.role}</td>
-                    <td className="px-6 py-4 text-[13px] text-gray-600 capitalize">{m.status}</td>
-                    <td className="px-6 py-4 text-[13px] text-gray-600">{m.geography || "-"}</td>
-                    <td className="px-6 py-4 text-[13px] text-gray-600">{m.consultant || "-"}</td>
-                    <td className="px-6 py-4 text-[13px] text-gray-600">{m.opened || "-"}</td>
+                    <td className="px-6 py-4 font-bold text-[15px] text-gray-900">{m.role}</td>
+                    <td className="px-6 py-4 text-[15px] text-gray-600 capitalize">{m.status}</td>
+                    <td className="px-6 py-4 text-[15px] text-gray-600">{m.geography || "-"}</td>
+                    <td className="px-6 py-4 text-[15px] text-gray-600">{m.consultant || "-"}</td>
+                    <td className="px-6 py-4 text-[15px] text-gray-600">{m.opened || "-"}</td>
                     <td className="px-6 py-4 text-right">
-                      <Link href={`/dashboard/mandates/${m.id}`} className="text-[12px] font-bold text-[#133255] hover:underline">
+                      <Link href={`/dashboard/mandates/${m.id}`} className="text-[14px] font-bold text-[#133255] hover:underline">
                         View Mandate
                       </Link>
                     </td>

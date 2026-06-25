@@ -50,8 +50,8 @@ export default function Page() {
           <circle cx="640" cy="150" r="1" fill="rgba(255,255,255,0.4)"/>
         </svg>
         <div className="absolute bottom-8 left-8 text-white">
-          <div className="font-serif text-[18px] font-bold tracking-[1px]">MK | MAUNA KEA INTERNATIONAL</div>
-          <div className="text-[10px] tracking-[3px] text-white/65 mt-1">EXECUTIVE SEARCH & ADVISORY</div>
+          <div className="font-serif text-[19px] font-bold tracking-[1px]">MK | MAUNA KEA INTERNATIONAL</div>
+          <div className="text-[12px] tracking-[3px] text-white/65 mt-1">EXECUTIVE SEARCH & ADVISORY</div>
         </div>
       </div>
 
@@ -59,14 +59,14 @@ export default function Page() {
       <div className="w-[38%] h-full bg-white flex flex-col items-center justify-center overflow-y-auto">
         <div className="w-full max-w-[400px] flex flex-col">
           <div className="flex items-center gap-3 mb-1 justify-start ml-2">
-            <span className="font-serif text-[32px] font-bold text-[#111]">MK</span>
+            <span className="font-serif text-[33px] font-bold text-[#111]">MK</span>
             <span className="w-[1px] h-[36px] bg-[#ccc]"></span>
             <span className="flex flex-col">
-              <span className="font-serif text-[18px] font-bold text-[#111]">MAUNA KEA</span>
-              <span className="text-[11px] text-[#6b7a99] tracking-[1px] -mt-1 uppercase">International</span>
+              <span className="font-serif text-[19px] font-bold text-[#111]">MAUNA KEA</span>
+              <span className="text-[13px] text-[#6b7a99] tracking-[1px] -mt-1 uppercase">International</span>
             </span>
           </div>
-          <div className="text-[10px] uppercase tracking-[2px] text-[#6b7a99] text-left mb-8 ml-2">Executive Search & Advisory</div>
+          <div className="text-[12px] uppercase tracking-[2px] text-[#6b7a99] text-left mb-8 ml-2">Executive Search & Advisory</div>
           
           <SignIn 
             path="/sign-in" 
@@ -77,12 +77,12 @@ export default function Page() {
               elements: {
                 rootBox: "w-full",
                 card: "shadow-none w-full bg-transparent p-0",
-                headerTitle: "font-serif text-[20px] font-bold text-[#111] text-left ml-2",
+                headerTitle: "font-serif text-[21px] font-bold text-[#111] text-left ml-2",
                 headerSubtitle: "hidden",
                 socialButtonsBlockButton: "h-[44px] border-[1.5px] border-[#D1D5DB] rounded-md hover:bg-[#f5f5f5]",
-                formFieldLabel: "text-[12px] font-semibold text-[#444] uppercase tracking-[0.5px]",
+                formFieldLabel: "text-[14px] font-semibold text-[#444] uppercase tracking-[0.5px]",
                 formFieldInput: "h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md focus:border-[#133255]",
-                formButtonPrimary: "h-[44px] bg-[#133255] hover:bg-[#0e3178] rounded-md text-[15px] font-semibold tracking-[0.3px]"
+                formButtonPrimary: "h-[44px] bg-[#133255] hover:bg-[#0e3178] rounded-md text-[17px] font-semibold tracking-[0.3px]"
               }
             }}
           />

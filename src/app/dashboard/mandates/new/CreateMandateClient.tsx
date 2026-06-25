@@ -228,7 +228,7 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
                      onClick={() => document.getElementById(`upload-${doc.id}`)?.click()}>
                   <div className="text-xl mb-1">📎</div>
                   <div className="text-xs font-bold text-gray-700">Click to upload</div>
-                  <div className="text-[10px] text-gray-400 mt-1">PDF, DOCX, PPTX</div>
+                  <div className="text-[12px] text-gray-400 mt-1">PDF, DOCX, PPTX</div>
                 </div>
                 <input type="file" id={`upload-${doc.id}`} className="hidden" />
                 <button 
@@ -240,7 +240,7 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
                   {isExtracting[doc.id] ? "Extracting..." : extractedStatus[doc.id] ? "✓ Extracted" : "OCR & Extract"}
                 </button>
                 {extractedStatus[doc.id] && (
-                  <div className="mt-2 bg-[#f8fafc] border border-gray-200 p-2 rounded text-[11px] text-gray-600">
+                  <div className="mt-2 bg-[#f8fafc] border border-gray-200 p-2 rounded text-[13px] text-gray-600">
                     <span className="font-bold text-[#133255] uppercase block mb-1">Summary</span>
                     Extracted text stored in database context.
                   </div>

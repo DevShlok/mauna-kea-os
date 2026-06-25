@@ -183,10 +183,13 @@ export const platformUsers = mysqlTable('platform_users', {
   id: varchar('id', { length: 10 }).primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull(),
-  role: varchar('role', { length: 50 }),
+  role: varchar('role', { length: 50 }).default('candidate'), // admin | consultant | client | candidate
   status: varchar('status', { length: 20 }).default('Active'),
   lastLogin: varchar('last_login', { length: 100 }),
   initials: varchar('initials', { length: 5 }),
+  linkedClientId: varchar('linked_client_id', { length: 20 }), // set when role=client
+  linkedCandidateId: varchar('linked_candidate_id', { length: 20 }), // set when role=candidate
+  lastActive: datetime('last_active'),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 

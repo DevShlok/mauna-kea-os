@@ -10,11 +10,14 @@ import {
   Database,
   Send,
   LogOut,
-  Building2
+  Building2,
+  ChevronRight,
+  Plus
 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/nextjs";
+import { useState, useRef } from "react";
 
-export function Sidebar() {
+export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidateId }: { userRole?: string; linkedClientId?: string; linkedCandidateId?: string; }) {
   const pathname = usePathname();
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -22,71 +25,146 @@ export function Sidebar() {
   const fullName = user?.fullName || "User";
   const initials = fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "MK";
 
-  const navItems: any[] = [
-    { section: "Search Delivery" },
-    { label: "Clients", icon: Building2, href: "/dashboard/clients" },
-    { label: "Mandates", icon: ClipboardList, href: "/dashboard/mandates", badge: 4 },
-    { label: "Float List", icon: Send, href: "/dashboard/float-list" },
-    { label: "AI Workbench", icon: BrainCircuit, href: "/dashboard/workbench" },
-    { label: "Frameworks", icon: Scale, href: "/dashboard/frameworks" },
-    { section: "Master Database" },
-    { label: "Candidates", icon: Database, href: "/dashboard/candidates" },
-    { label: "Submissions", icon: ClipboardList, href: "/dashboard/float-list/submissions" },
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = (title: string) => {
+    if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current);
+    setHoveredCategory(title);
+  };
+
+  const handleMouseLeave = () => {
+    leaveTimeoutRef.current = setTimeout(() => {
+      setHoveredCategory(null);
+    }, 150);
+  };
+
+  const categories = [
+    {
+      title: "Clients",
+      icon: Building2,
+      visibleTo: ["admin", "consultant", "client"],
+      children: [
+        { label: "Client Database", href: "/dashboard/clients", visibleTo: ["admin", "consultant", "client"] },
+        { label: "Mandates", href: "/dashboard/mandates", visibleTo: ["admin", "consultant", "client"] },
+        { label: "Add Client", href: "/dashboard/clients/new", icon: Plus, visibleTo: ["admin", "consultant", "client"] },
+        { label: "Add Mandate", href: "/dashboard/mandates/new", icon: Plus, visibleTo: ["admin", "consultant", "client"] },
+      ]
+    },
+    {
+      title: "Candidates",
+      icon: Database,
+      visibleTo: ["admin", "consultant", "candidate"],
+      children: [
+        { label: "Candidate Database", href: "/dashboard/candidates", visibleTo: ["admin", "consultant", "candidate"] },
+        { label: "Float List", href: "/dashboard/float-list", visibleTo: ["admin", "consultant"] },
+        { label: "Add Candidate", href: "/dashboard/candidates/new", icon: Plus, visibleTo: ["admin", "consultant", "candidate"] },
+        { label: "Add to Float List", href: "/dashboard/candidates", icon: Plus, visibleTo: ["admin", "consultant"] },
+        { label: "Submissions", href: "/dashboard/float-list/submissions", visibleTo: ["admin", "consultant"] },
+      ]
+    },
+    {
+      title: "Productivity Tools",
+      icon: BrainCircuit,
+      visibleTo: ["admin", "consultant", "client"],
+      children: [
+        { label: "AI Workbench", href: "/dashboard/workbench", visibleTo: ["admin", "consultant", "client"] },
+        { label: "Frameworks", href: "/dashboard/frameworks", visibleTo: ["admin", "consultant"] },
+        { label: "Add Frameworks", href: "/dashboard/frameworks/new", icon: Plus, visibleTo: ["admin", "consultant"] },
+      ]
+    },
+    {
+      title: "Admin",
+      icon: Users,
+      visibleTo: ["admin"],
+      children: [
+        { label: "Users", href: "/dashboard/admin/users", visibleTo: ["admin"] },
+        { label: "Add a User", href: "/dashboard/admin/users/new", icon: Plus, visibleTo: ["admin"] },
+      ]
+    }
   ];
 
   return (
-    <div className="w-[230px] min-w-[230px] h-screen bg-[#0b1f3a] flex flex-col overflow-y-auto shrink-0 text-white">
-      <Link href="/dashboard" className="flex items-center gap-2 p-5 pb-4 border-b border-white/10 hover:bg-white/5 transition-colors">
-        <div className="bg-[#D8B15B] text-[#133255] font-serif text-lg font-bold w-9 h-9 flex items-center justify-center rounded">MK</div>
+    <div className="w-[270px] min-w-[270px] h-screen bg-[#0b1f3a] flex flex-col overflow-y-auto overflow-x-hidden shrink-0 text-white">
+      <Link href="/dashboard" className="flex items-center gap-3 p-5 pb-4 border-b border-white/10 hover:bg-white/5 transition-colors">
+        <div className="bg-[#D8B15B] text-[#133255] font-serif text-lg font-bold w-10 h-10 flex items-center justify-center rounded">MK</div>
         <div>
-          <span className="font-serif text-[13px] font-bold block leading-tight">Mauna Kea</span>
-          <span className="text-[9px] text-white/55 tracking-wider block">EXECUTIVE SEARCH OS</span>
+          <span className="font-serif text-[16px] font-bold block leading-tight">Mauna Kea</span>
+          <span className="text-[11px] text-white/55 tracking-wider block">EXECUTIVE SEARCH OS</span>
         </div>
       </Link>
 
-      <div className="flex-1 py-4">
-        {navItems.map((item, idx) => {
-          if (item.section) {
-            return (
-              <div key={idx} className="px-4 pt-4 pb-1.5 text-[9px] font-bold tracking-widest text-white/40 uppercase">
-                {item.section}
-              </div>
-            );
-          }
+      <div className="flex-1 py-4 flex flex-col gap-1">
+        {categories.filter(cat => cat.visibleTo.includes(userRole)).map((category, idx) => {
+          const isHovered = hoveredCategory === category.title;
+          const isActive = category.children.some(child => pathname?.startsWith(child.href) && child.href !== "/dashboard");
+          const isExpanded = isHovered;
+          const isHighlighted = isHovered || isActive;
 
-          const Icon = item.icon!;
-          const isActive = pathname?.startsWith(item.href || "");
+          const visibleChildren = category.children.filter(child => child.visibleTo.includes(userRole));
+
+          if (visibleChildren.length === 0) return null;
 
           return (
-            <Link
-              key={idx}
-              href={item.href!}
-              className={`flex items-center gap-2.5 px-4 py-2.5 text-[13px] transition-all relative ${
-                isActive ? "bg-white/15 text-white font-semibold" : "text-white/75 hover:bg-white/10 hover:text-white"
-              }`}
+            <div 
+              key={idx} 
+              className="flex flex-col"
+              onMouseEnter={() => handleMouseEnter(category.title)}
+              onMouseLeave={handleMouseLeave}
             >
-              <Icon className="w-[18px] h-[18px] shrink-0" />
-              <span>{item.label}</span>
-              {item.badge && (
-                <span className={`ml-auto text-[10px] font-bold rounded-full px-1.5 min-w-[20px] text-center ${item.badgeColor || "bg-[#D8B15B] text-[#133255]"}`}>
-                  {item.badge}
-                </span>
-              )}
-            </Link>
+              <div 
+                className={`flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-all duration-200 ${
+                  isHighlighted ? "bg-white/10 text-white font-bold scale-[1.02]" : "text-white/70 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <category.icon className="w-[19px] h-[19px] shrink-0" />
+                <span className="text-[15px] flex-1 tracking-wide">{category.title}</span>
+                <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? "rotate-90 text-white" : "text-white/30"}`} />
+              </div>
+              
+              <div 
+                className={`grid transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+              >
+                <div className="overflow-hidden flex flex-col bg-[#06152a]/50">
+                  <div className="flex flex-col py-1">
+                  {visibleChildren.map((child, childIdx) => {
+                    const isChildActive = pathname === child.href;
+                    return (
+                      <Link
+                        key={childIdx}
+                        href={child.href}
+                        className={`flex items-center gap-2.5 pl-[48px] pr-5 py-2.5 text-[14px] transition-all duration-200
+                          ${isChildActive ? "text-white font-semibold" : "text-white/60 hover:text-white hover:bg-white/5"}
+                        `}
+                        style={{
+                          transform: isExpanded ? "translateX(0)" : "translateX(-8px)",
+                          opacity: isExpanded ? 1 : 0,
+                          transitionDelay: isExpanded ? `${childIdx * 30}ms` : "0ms"
+                        }}
+                      >
+                        {child.icon && <child.icon className="w-4 h-4 shrink-0 opacity-70" />}
+                        <span>{child.label}</span>
+                      </Link>
+                    );
+                  })}
+                  </div>
+                </div>
+              </div>
+            </div>
           );
         })}
       </div>
 
-      <div className="mt-auto p-3.5 border-t border-white/10 flex items-center gap-2.5">
-        <div className="w-[34px] h-[34px] bg-[#D8B15B] text-[#133255] rounded-full flex items-center justify-center font-serif text-[13px] font-bold shrink-0">
+      <div className="mt-auto p-4 border-t border-white/10 flex items-center gap-3">
+        <div className="w-[38px] h-[38px] bg-[#D8B15B] text-[#133255] rounded-full flex items-center justify-center font-serif text-[15px] font-bold shrink-0">
           {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <span className="text-white text-xs font-semibold block truncate">{fullName}</span>
-          <span className="text-white/50 text-[10px] block">Admin</span>
+          <span className="text-white text-[15px] font-semibold block truncate">{fullName}</span>
+          <span className="text-white/50 text-[12px] block capitalize">{userRole}</span>
         </div>
         <button onClick={() => signOut({ redirectUrl: '/sign-in' })} className="text-white/45 hover:text-white transition-colors p-1" title="Sign Out">
-          <LogOut className="w-[14px] h-[14px]" />
+          <LogOut className="w-4 h-4" />
         </button>
       </div>
     </div>

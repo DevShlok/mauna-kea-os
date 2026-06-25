@@ -1,7 +1,17 @@
-import { getCandidates, getMandates } from "@/db/queries";
+import { getCandidates, getMandates, getUserByEmail } from "@/db/queries";
 import CandidatesClient from "./CandidatesClient";
+import { currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 export default async function CandidatesPage() {
+  const user = await currentUser();
+  if (user?.primaryEmailAddress?.emailAddress) {
+    const pUser = await getUserByEmail(user.primaryEmailAddress.emailAddress);
+    if (pUser?.role === "candidate" && pUser.linkedCandidateId) {
+      redirect(`/dashboard/candidates/${pUser.linkedCandidateId}`);
+    }
+  }
+
   const candidates = await getCandidates();
   const mandates = await getMandates();
   

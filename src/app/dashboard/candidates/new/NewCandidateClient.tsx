@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { addFloatListEntryAction, editFloatListEntryAction, bulkAddSubmissionAction } from "@/app/actions";
 
-export default function NewCandidateClient({ initialData }: { initialData?: any }) {
+export default function NewCandidateClient({ initialData, userRole = "consultant", readOnly = false, linkedCandidateId, mandates = [] }: { initialData?: any; userRole?: string; readOnly?: boolean; linkedCandidateId?: string; mandates?: any[] }) {
   const router = useRouter();
   const isEdit = !!initialData;
   const [form, setForm] = useState({ 
@@ -243,13 +243,13 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
-      <div className="text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-6 flex gap-1 cursor-pointer">
+      <div className="text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-6 flex gap-1 cursor-pointer">
         <Link href="/dashboard" className="hover:text-[#111]">Home</Link> / 
         <Link href="/dashboard/candidates" className="hover:text-[#111]">Candidate Database</Link> / 
         <span className="text-[#111]">{isEdit ? "Edit Candidate" : "Add Candidate"}</span>
       </div>
       <div className="flex items-center justify-between mb-5">
-        <div className="font-serif text-[22px] font-bold text-[#111]">{isEdit ? `Edit ${initialData.name}` : "Add New Candidate"}</div>
+        <div className="font-serif text-[23px] font-bold text-[#111]">{isEdit ? `Edit ${initialData.name}` : "Add New Candidate"}</div>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -258,52 +258,52 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
         {/* PRIMARY DETAILS                             */}
         {/* ××××××××××××××××××××××××××××××××××××××××××× */}
         <div className="bg-white border-2 border-[#133255] rounded-[10px] overflow-hidden shadow-sm">
-          <div className="bg-[#133255] px-5 py-3 text-[12px] font-bold uppercase tracking-wide text-white border-b border-[#133255] flex items-center gap-2">
+          <div className="bg-[#133255] px-5 py-3 text-[14px] font-bold uppercase tracking-wide text-white border-b border-[#133255] flex items-center gap-2">
             <span className="text-red-300">●</span> Primary Details
           </div>
           <div className="p-5">
             <div className="grid grid-cols-2 gap-5 mb-5">
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Candidate Name</label>
-                <input type="text" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Full Name" />
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Candidate Name</label>
+                <input type="text" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Full Name" />
               </div>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">LinkedIn Profile URL</label>
-                <input type="url" value={form.linkedin} onChange={e=>setForm({...form, linkedin:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="https://linkedin.com/in/..." />
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">LinkedIn Profile URL</label>
+                <input type="url" value={form.linkedin} onChange={e=>setForm({...form, linkedin:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="https://linkedin.com/in/..." />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-5">
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Target Company to Float</label>
-                <input type="text" value={form.targetCompany} onChange={e=>setForm({...form, targetCompany:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. HDFC Bank" />
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Target Company to Float</label>
+                <input type="text" value={form.targetCompany} onChange={e=>setForm({...form, targetCompany:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. HDFC Bank" />
               </div>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">LinkedIn Profile PDF</label>
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">LinkedIn Profile PDF</label>
                 <label className="border-2 border-dashed border-[#D4E0F0] rounded-[8px] p-4 text-center cursor-pointer hover:border-[#133255] hover:bg-[#DCE5F4] bg-[#f4f7fd] transition-all block relative">
                   <input type="file" accept="application/pdf" className="hidden" onChange={e => setLinkedinPdfFile(e.target.files?.[0] || null)} />
-                  <div className="text-[13px] text-[#6b7a99]">{linkedinPdfFile ? '📘 Change PDF' : '📘 Click to upload LinkedIn Profile'}</div>
-                  {linkedinPdfFile && <div className="text-[13px] font-bold text-[#111] mt-1 overflow-hidden text-ellipsis whitespace-nowrap">{linkedinPdfFile.name}</div>}
+                  <div className="text-[15px] text-[#6b7a99]">{linkedinPdfFile ? '📘 Change PDF' : '📘 Click to upload LinkedIn Profile'}</div>
+                  {linkedinPdfFile && <div className="text-[15px] font-bold text-[#111] mt-1 overflow-hidden text-ellipsis whitespace-nowrap">{linkedinPdfFile.name}</div>}
                 </label>
               </div>
             </div>
             
             {/* Profile Picture Upload */}
             <div className="mt-5 border-t border-[#D4E0F0] pt-5">
-              <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2"></label>
+              <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2"></label>
               <div className="flex items-center gap-5">
                 <div className="w-[80px] h-[80px] rounded-full bg-[#f4f7fd] border-2 border-dashed border-[#D4E0F0] flex items-center justify-center overflow-hidden shrink-0">
                   {profilePicBase64 ? (
                     <img src={profilePicBase64} alt="Profile preview" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-[20px] opacity-40">👤</span>
+                    <span className="text-[21px] opacity-40">👤</span>
                   )}
                 </div>
-                <label className="border-[1.5px] border-[#D4E0F0] rounded-[6px] px-4 py-2 text-[13px] font-bold text-[#6b7a99] hover:bg-[#f4f7fd] cursor-pointer transition-colors cursor-pointer">
+                <label className="border-[1.5px] border-[#D4E0F0] rounded-[6px] px-4 py-2 text-[15px] font-bold text-[#6b7a99] hover:bg-[#f4f7fd] cursor-pointer transition-colors cursor-pointer">
                   <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                   Upload Image
                 </label>
                 {profilePicBase64 && (
-                  <button onClick={() => setProfilePicBase64(null)} className="text-[13px] text-red-500 font-bold hover:underline">Remove</button>
+                  <button onClick={() => setProfilePicBase64(null)} className="text-[15px] text-red-500 font-bold hover:underline">Remove</button>
                 )}
               </div>
             </div>
@@ -317,30 +317,30 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
         <div className="bg-white border border-[#D4E0F0] rounded-[10px] overflow-hidden shadow-sm">
           <div 
             onClick={() => setShowAdditional(!showAdditional)}
-            className="bg-[#f4f7fd] px-5 py-3 text-[12px] font-bold uppercase tracking-wide text-[#133255] border-b border-[#D4E0F0] flex items-center justify-between cursor-pointer hover:bg-[#e8eef8] transition-colors select-none"
+            className="bg-[#f4f7fd] px-5 py-3 text-[14px] font-bold uppercase tracking-wide text-[#133255] border-b border-[#D4E0F0] flex items-center justify-between cursor-pointer hover:bg-[#e8eef8] transition-colors select-none"
           >
             <span className="flex items-center gap-2">
               <span className={`transition-transform duration-200 inline-block ${showAdditional ? 'rotate-90' : 'rotate-0'}`}>▶</span>
               Additional Details
             </span>
-            <span className="text-[10px] font-normal normal-case text-[#6b7a99]">{showAdditional ? 'Click to collapse' : 'Click to expand — Optional'}</span>
+            <span className="text-[12px] font-normal normal-case text-[#6b7a99]">{showAdditional ? 'Click to collapse' : 'Click to expand — Optional'}</span>
           </div>
           {showAdditional && <div className="p-5">
 
             {/* Contact & Location */}
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Contact & Location</div>
+            <div className="text-[13px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Contact & Location</div>
             <div className="grid grid-cols-3 gap-5 mb-6">
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Mobile Number</label>
-                <input type="text" value={form.mobile} onChange={e=>setForm({...form, mobile:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="+91 XXXXX XXXXX" />
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Mobile Number</label>
+                <input type="text" value={form.mobile} onChange={e=>setForm({...form, mobile:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="+91 XXXXX XXXXX" />
               </div>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Email Address</label>
-                <input type="email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="email@domain.com" />
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Email Address</label>
+                <input type="email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="email@domain.com" />
               </div>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Location</label>
-                <select value={form.location} onChange={e=>setForm({...form, location:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]">
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Location</label>
+                <select value={form.location} onChange={e=>setForm({...form, location:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]">
                   <option value="">Select Location</option>
                   {locations.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
@@ -349,83 +349,85 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
 
             {/* Professional */}
             <div className="border-t border-[#f0f0f0] pt-5 mb-3">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Professional Details</div>
+              <div className="text-[13px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Professional Details</div>
             </div>
             <div className="grid grid-cols-3 gap-5 mb-6">
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current Company</label>
-                <input type="text" value={form.company} onChange={e=>setForm({...form, company:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Company Name" />
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current Company</label>
+                <input type="text" value={form.company} onChange={e=>setForm({...form, company:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Company Name" />
               </div>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current Designation</label>
-                <input type="text" value={form.designation} onChange={e=>setForm({...form, designation:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Title" />
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current Designation</label>
+                <input type="text" value={form.designation} onChange={e=>setForm({...form, designation:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Title" />
               </div>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Total Experience (yrs)</label>
-                <input type="number" value={form.exp} onChange={e=>setForm({...form, exp:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" min="0" />
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Total Experience (yrs)</label>
+                <input type="number" value={form.exp} onChange={e=>setForm({...form, exp:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" min="0" />
               </div>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Tenure in current company (yrs)</label>
-                <input type="number" value={form.tenure} onChange={e=>setForm({...form, tenure:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" min="0" step="0.1" />
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Tenure in current company (yrs)</label>
+                <input type="number" value={form.tenure} onChange={e=>setForm({...form, tenure:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" min="0" step="0.1" />
               </div>
             </div>
 
             {/* Compensation & Status */}
             <div className="border-t border-[#f0f0f0] pt-5 mb-3">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Compensation & Status</div>
+              <div className="text-[13px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Compensation & Status</div>
             </div>
             <div className="grid grid-cols-3 gap-5 mb-6">
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current CTC (Total)</label>
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current CTC (Total)</label>
                 <div className="flex gap-2">
-                  <select value={form.currency} onChange={e=>setForm({...form, currency:e.target.value})} className="w-20 h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-2 text-[14px] outline-none bg-white focus:border-[#133255]">
+                  <select value={form.currency} onChange={e=>setForm({...form, currency:e.target.value})} className="w-20 h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-2 text-[16px] outline-none bg-white focus:border-[#133255]">
                     {currencies.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
-                  <input type="number" value={form.ctc} onChange={e=>setForm({...form, ctc:e.target.value})} className="flex-1 h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
+                  <input type="number" value={form.ctc} onChange={e=>setForm({...form, ctc:e.target.value})} className="flex-1 h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
                 </div>
               </div>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Fixed CTC</label>
-                <input type="number" value={form.fixedCtc} onChange={e=>setForm({...form, fixedCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Fixed CTC</label>
+                <input type="number" value={form.fixedCtc} onChange={e=>setForm({...form, fixedCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
               </div>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Variable CTC</label>
-                <input type="number" value={form.variableCtc} onChange={e=>setForm({...form, variableCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Variable CTC</label>
+                <input type="number" value={form.variableCtc} onChange={e=>setForm({...form, variableCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
               </div>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Expected CTC</label>
-                <input type="number" value={form.expected} onChange={e=>setForm({...form, expected:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Expected CTC</label>
+                <input type="number" value={form.expected} onChange={e=>setForm({...form, expected:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
               </div>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Notice Period (days)</label>
-                <input type="number" value={form.notice} onChange={e=>setForm({...form, notice:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" min="0" max="365" />
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Notice Period (days)</label>
+                <input type="number" value={form.notice} onChange={e=>setForm({...form, notice:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" min="0" max="365" />
               </div>
-              <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Activity Status</label>
-                <select value={form.status} onChange={e=>setForm({...form, status:e.target.value})} className={`w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] font-bold outline-none bg-white focus:border-[#133255] ${statusColor}`}>
-                  <option className="text-green-600">Active</option>
-                  <option className="text-yellow-600">Passive</option>
-                  <option className="text-red-600">Not Interested</option>
-                </select>
-              </div>
+              {!readOnly && (
+                <div>
+                  <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Activity Status</label>
+                  <select value={form.status} onChange={e=>setForm({...form, status:e.target.value})} className={`w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] font-bold outline-none bg-white focus:border-[#133255] ${statusColor}`}>
+                    <option className="text-green-600">Active</option>
+                    <option className="text-yellow-600">Passive</option>
+                    <option className="text-red-600">Not Interested</option>
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Qualifications */}
             <div className="border-t border-[#f0f0f0] pt-5 mb-3">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Qualifications</div>
+              <div className="text-[13px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Qualifications</div>
             </div>
             <div className="grid grid-cols-4 gap-3 mb-4">
-              <input type="text" value={newQual.degree} onChange={e=>setNewQual({...newQual, degree: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]" placeholder="Degree (e.g. MBA)" />
-              <input type="text" value={newQual.institute} onChange={e=>setNewQual({...newQual, institute: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]" placeholder="Institute (e.g. ISB Hyderabad)" />
-              <input type="text" value={newQual.year} onChange={e=>setNewQual({...newQual, year: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]" placeholder="Year (e.g. 2012)" />
-              <button onClick={handleAddQual} type="button" className="h-9 px-3 rounded-md text-[13px] font-semibold text-[#133255] bg-[#DCE5F4] hover:bg-[#c5d3ec] transition-all border border-[#bacce6]">Add Qualification</button>
+              <input type="text" value={newQual.degree} onChange={e=>setNewQual({...newQual, degree: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" placeholder="Degree (e.g. MBA)" />
+              <input type="text" value={newQual.institute} onChange={e=>setNewQual({...newQual, institute: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" placeholder="Institute (e.g. ISB Hyderabad)" />
+              <input type="text" value={newQual.year} onChange={e=>setNewQual({...newQual, year: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" placeholder="Year (e.g. 2012)" />
+              <button onClick={handleAddQual} type="button" className="h-9 px-3 rounded-md text-[15px] font-semibold text-[#133255] bg-[#DCE5F4] hover:bg-[#c5d3ec] transition-all border border-[#bacce6]">Add Qualification</button>
             </div>
             <div className="flex flex-col gap-2 mb-6">
               {quals.map((q, idx) => (
                 <div key={idx} className="flex justify-between items-center bg-[#f8fafc] border border-[#e2e8f0] px-4 py-2.5 rounded-lg">
                   <div>
                     <span className="font-bold text-[#111]">{q.degree}</span>
-                    {(q.institute || q.year) && <span className="text-[#6b7a99] text-[13px]"> · {q.institute}{q.institute && q.year ? ' · ' : ''}{q.year}</span>}
+                    {(q.institute || q.year) && <span className="text-[#6b7a99] text-[15px]"> · {q.institute}{q.institute && q.year ? ' · ' : ''}{q.year}</span>}
                   </div>
                   <span className="cursor-pointer font-bold text-red-400 hover:text-red-600 px-2" onClick={() => setQuals(quals.filter((_, i) => i !== idx))}>×</span>
                 </div>
@@ -434,65 +436,67 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
 
             {/* Experience Tags */}
             <div className="border-t border-[#f0f0f0] pt-5 mb-3">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Prior Experience</div>
+              <div className="text-[13px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Prior Experience</div>
             </div>
-            <p className="text-[12px] text-[#6b7a99] mb-2.5">Add each experience as &quot;Title - Company&quot;</p>
+            <p className="text-[14px] text-[#6b7a99] mb-2.5">Add each experience as &quot;Title - Company&quot;</p>
             <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#133255] transition-colors mb-6">
               {expTags.map(t => (
-                <span key={t} className="px-2.5 py-1 bg-[#DCE5F4] text-[#133255] rounded-[12px] text-[12px] font-semibold flex items-center gap-1.5">
+                <span key={t} className="px-2.5 py-1 bg-[#DCE5F4] text-[#133255] rounded-[12px] text-[14px] font-semibold flex items-center gap-1.5">
                   {t} <span className="cursor-pointer font-bold opacity-60 hover:opacity-100" onClick={() => removeTag(t, setExpTags, expTags)}>×</span>
                 </span>
               ))}
-              <input type="text" className="border-none outline-none text-[14px] min-w-[200px] flex-1 bg-transparent h-8 px-2" placeholder="e.g. CFO - HDFC Bank, then Enter..." onKeyDown={e => handleAddTag(e, setExpTags, expTags)} />
+              <input type="text" className="border-none outline-none text-[16px] min-w-[200px] flex-1 bg-transparent h-8 px-2" placeholder="e.g. CFO - HDFC Bank, then Enter..." onKeyDown={e => handleAddTag(e, setExpTags, expTags)} />
             </div>
 
             {/* Career Aspirations */}
             <div className="border-t border-[#f0f0f0] pt-5 mb-3">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Career Aspirations</div>
+              <div className="text-[13px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Career Aspirations</div>
             </div>
             <div className="grid grid-cols-2 gap-5 mb-6">
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Dream Roles</label>
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Dream Roles</label>
                 <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#133255] transition-colors">
                   {dreamRoles.map(t => (
-                    <span key={t} className="px-2.5 py-1 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-[12px] text-[12px] font-semibold flex items-center gap-1.5">
+                    <span key={t} className="px-2.5 py-1 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-[12px] text-[14px] font-semibold flex items-center gap-1.5">
                       {t} <span className="cursor-pointer font-bold opacity-60 hover:opacity-100 hover:text-red-500" onClick={() => removeTag(t, setDreamRoles, dreamRoles)}>×</span>
                     </span>
                   ))}
-                  <input type="text" className="border-none outline-none text-[14px] min-w-[120px] flex-1 bg-transparent h-8 px-2" placeholder="e.g. CFO, then Enter..." onKeyDown={e => handleAddTag(e, setDreamRoles, dreamRoles)} />
+                  <input type="text" className="border-none outline-none text-[16px] min-w-[120px] flex-1 bg-transparent h-8 px-2" placeholder="e.g. CFO, then Enter..." onKeyDown={e => handleAddTag(e, setDreamRoles, dreamRoles)} />
                 </div>
               </div>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Dream Companies</label>
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Dream Companies</label>
                 <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#133255] transition-colors">
                   {dreamCompanies.map(t => (
-                    <span key={t} className="px-2.5 py-1 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-[12px] text-[12px] font-semibold flex items-center gap-1.5">
+                    <span key={t} className="px-2.5 py-1 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-[12px] text-[14px] font-semibold flex items-center gap-1.5">
                       {t} <span className="cursor-pointer font-bold opacity-60 hover:opacity-100 hover:text-red-500" onClick={() => removeTag(t, setDreamCompanies, dreamCompanies)}>×</span>
                     </span>
                   ))}
-                  <input type="text" className="border-none outline-none text-[14px] min-w-[120px] flex-1 bg-transparent h-8 px-2" placeholder="e.g. Kotak, then Enter..." onKeyDown={e => handleAddTag(e, setDreamCompanies, dreamCompanies)} />
+                  <input type="text" className="border-none outline-none text-[16px] min-w-[120px] flex-1 bg-transparent h-8 px-2" placeholder="e.g. Kotak, then Enter..." onKeyDown={e => handleAddTag(e, setDreamCompanies, dreamCompanies)} />
                 </div>
               </div>
             </div>
 
             {/* Documents & Notes */}
             <div className="border-t border-[#f0f0f0] pt-5 mb-3">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Documents & Notes</div>
+              <div className="text-[13px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Documents & Notes</div>
             </div>
-            <div className="grid grid-cols-2 gap-8 mb-6">
+            <div className={`grid ${readOnly ? 'grid-cols-1' : 'grid-cols-2'} gap-8 mb-6`}>
               <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Upload CV</label>
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Upload CV</label>
                 <label className="border-2 border-dashed border-[#D4E0F0] rounded-[8px] p-6 text-center cursor-pointer hover:border-[#133255] hover:bg-[#DCE5F4] bg-[#f4f7fd] transition-all block relative">
                   <input type="file" accept="application/pdf,.doc,.docx" className="hidden" onChange={e => setCvPdfFile(e.target.files?.[0] || null)} />
-                  <div className="text-[28px] opacity-40 mb-2">📄</div>
-                  <div className="text-[13px] text-[#6b7a99]">{cvPdfFile ? 'Change CV' : 'Click to upload CV'}</div>
-                  {cvPdfFile && <div className="text-[14px] font-bold text-[#111] mt-2 overflow-hidden text-ellipsis whitespace-nowrap">{cvPdfFile.name}</div>}
+                  <div className="text-[29px] opacity-40 mb-2">📄</div>
+                  <div className="text-[15px] text-[#6b7a99]">{cvPdfFile ? 'Change CV' : 'Click to upload CV'}</div>
+                  {cvPdfFile && <div className="text-[16px] font-bold text-[#111] mt-2 overflow-hidden text-ellipsis whitespace-nowrap">{cvPdfFile.name}</div>}
                 </label>
               </div>
-              <div>
-                <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Additional Notes</label>
-                <textarea rows={5} value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})} className="w-full border-[1.5px] border-[#D4E0F0] rounded-md p-3 text-[14px] outline-none bg-white focus:border-[#133255] resize-vertical h-[155px]" placeholder="Any extra information..."></textarea>
-              </div>
+              {!readOnly && (
+                <div>
+                  <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Additional Notes</label>
+                  <textarea rows={5} value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})} className="w-full border-[1.5px] border-[#D4E0F0] rounded-md p-3 text-[16px] outline-none bg-white focus:border-[#133255] resize-vertical h-[155px]" placeholder="Any extra information..."></textarea>
+                </div>
+              )}
             </div>
 
             <div className="border border-gray-200 rounded-lg overflow-hidden mt-6 mb-2">
@@ -551,8 +555,8 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
       </div>
 
       <div className="flex gap-2.5 justify-end py-6">
-        <button onClick={() => router.push('/dashboard/candidates')} className="px-5 py-2.5 rounded-md text-[14px] font-semibold text-[#6b7a99] border border-[#D4E0F0] hover:bg-[#f4f7fd] transition-all">Cancel</button>
-        <button disabled={isSaving} onClick={handleSave} className="px-6 py-2.5 rounded-md text-[14px] font-bold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a] transition-all">
+        <button onClick={() => router.push('/dashboard/candidates')} className="px-5 py-2.5 rounded-md text-[16px] font-semibold text-[#6b7a99] border border-[#D4E0F0] hover:bg-[#f4f7fd] transition-all">Cancel</button>
+        <button disabled={isSaving} onClick={handleSave} className="px-6 py-2.5 rounded-md text-[16px] font-bold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a] transition-all">
           {isSaving ? "Saving..." : (isEdit ? "Update Candidate" : "Add Candidate")}
         </button>
       </div>
@@ -560,24 +564,24 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
       {deleteConfirmation && (
         <div className="fixed inset-0 bg-[#111]/50 flex items-center justify-center z-[100] backdrop-blur-sm">
           <div className="bg-white rounded-[10px] shadow-lg w-[400px] overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[18px] font-bold text-[#111] flex justify-between items-center">
+            <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[19px] font-bold text-[#111] flex justify-between items-center">
               Delete File
               <button onClick={() => setDeleteConfirmation(null)} className="text-[#6b7a99] hover:text-[#111]">✕</button>
             </div>
             <div className="p-5">
-              <p className="text-[14px] text-[#4a5568] mb-6">
+              <p className="text-[16px] text-[#4a5568] mb-6">
                 Are you sure you want to permanently delete <strong>{deleteConfirmation.fileName}</strong>? This action cannot be undone.
               </p>
               <div className="flex justify-end gap-3">
                 <button 
                   onClick={() => setDeleteConfirmation(null)}
-                  className="px-4 py-2 border border-[#D4E0F0] rounded-[6px] text-[#4a5568] text-[13px] font-bold hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 border border-[#D4E0F0] rounded-[6px] text-[#4a5568] text-[15px] font-bold hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={confirmDeleteFile}
-                  className="px-4 py-2 bg-red-600 text-white rounded-[6px] text-[13px] font-bold hover:bg-red-700 transition-colors"
+                  className="px-4 py-2 bg-red-600 text-white rounded-[6px] text-[15px] font-bold hover:bg-red-700 transition-colors"
                 >
                   Delete
                 </button>

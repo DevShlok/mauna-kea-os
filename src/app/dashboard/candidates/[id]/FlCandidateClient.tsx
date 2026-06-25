@@ -9,12 +9,12 @@ function Tile({ id, icon, name, meta, content, isOpen, toggle }: any) {
   return (
     <div className="bg-white border border-[#D4E0F0] rounded-[10px] shadow-sm overflow-hidden mb-3">
       <div className="flex items-center gap-4 p-4 cursor-pointer hover:bg-[#fafbfd]" onClick={() => toggle(id)}>
-        <span className="text-[24px]">{icon}</span>
+        <span className="text-[25px]">{icon}</span>
         <div className="flex-1">
-          <div className="text-[15px] font-bold text-[#111]">{name}</div>
-          <div className="text-[12px] text-[#6b7a99]">{meta}</div>
+          <div className="text-[17px] font-bold text-[#111]">{name}</div>
+          <div className="text-[14px] text-[#6b7a99]">{meta}</div>
         </div>
-        <span className={`text-[#D4E0F0] text-[12px] transform transition-transform ${isOpen ? "rotate-90" : ""}`}>▶</span>
+        <span className={`text-[#D4E0F0] text-[14px] transform transition-transform ${isOpen ? "rotate-90" : ""}`}>▶</span>
       </div>
       {isOpen && (
         <div className="px-4 pb-4 border-t border-[#D4E0F0] pt-4 mt-0">
@@ -25,7 +25,7 @@ function Tile({ id, icon, name, meta, content, isOpen, toggle }: any) {
   );
 }
 
-export default function FlCandidateClient({ candidate, mandates = [] }: { candidate: any; mandates?: any[] }) {
+export default function FlCandidateClient({ candidate, mandates = [], userRole = "consultant", readOnly = false }: { candidate: any; mandates?: any[]; userRole?: string; readOnly?: boolean }) {
   const router = useRouter();
   const { user } = useUser();
   const getInitialFiles = () => {
@@ -272,26 +272,26 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
-      <div className="text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-6 flex gap-1 cursor-pointer">
+      <div className="text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-6 flex gap-1 cursor-pointer">
         <Link href="/dashboard" className="hover:text-[#111]">Home</Link> / 
         <Link href="/dashboard/candidates" className="hover:text-[#111]">Candidate Database</Link> / 
         <span className="text-[#111]">{candidate.name}</span>
       </div>
 
       <div className="bg-white border border-[#D4E0F0] rounded-[10px] p-6 mb-6 shadow-sm flex items-start gap-5">
-        <div className="w-16 h-16 rounded-full flex items-center justify-center font-serif text-[24px] bg-[#D8B15B] text-[#133255] flex-shrink-0">
+        <div className="w-16 h-16 rounded-full flex items-center justify-center font-serif text-[25px] bg-[#D8B15B] text-[#133255] flex-shrink-0">
           {candidate.initials}
         </div>
         <div className="flex-1">
-          <div className="font-serif text-[22px] font-bold text-[#111] mb-1">{candidate.name}</div>
-          <div className="text-[13px] font-semibold text-[#133255] mb-2">{candidate.designation} · {candidate.company}</div>
-          <div className="flex gap-3 items-center text-[12px] text-[#6b7a99] mb-3 flex-wrap">
+          <div className="font-serif text-[23px] font-bold text-[#111] mb-1">{candidate.name}</div>
+          <div className="text-[15px] font-semibold text-[#133255] mb-2">{candidate.designation} · {candidate.company}</div>
+          <div className="flex gap-3 items-center text-[14px] text-[#6b7a99] mb-3 flex-wrap">
             {candidate.qual?.map((q: any, idx: number) => {
               if (typeof q === 'string') {
-                return <span key={idx} className="px-2 py-[1px] bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[3px] text-[10px] font-bold whitespace-nowrap">{q}</span>;
+                return <span key={idx} className="px-2 py-[1px] bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[3px] text-[12px] font-bold whitespace-nowrap">{q}</span>;
               }
               return (
-                <span key={idx} className="px-2 py-[1px] bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[3px] text-[10px] whitespace-nowrap">
+                <span key={idx} className="px-2 py-[1px] bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[3px] text-[12px] whitespace-nowrap">
                   <span className="font-bold">{q.degree}</span>
                   {(q.institute || q.year) && <span> · {q.institute}{q.institute && q.year ? ' · ' : ''}{q.year}</span>}
                 </span>
@@ -301,37 +301,37 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
             <span>💼 {candidate.exp} yrs</span>
           </div>
           <div className="flex gap-2 items-center flex-wrap mb-4">
-            <span className={`px-2.5 py-1 rounded-[4px] text-[11px] font-bold tracking-wide uppercase border ${statusClass}`}>{candidate.status}</span>
+            <span className={`px-2.5 py-1 rounded-[4px] text-[13px] font-bold tracking-wide uppercase border ${statusClass}`}>{candidate.status}</span>
             {candidate.score ? (
-              <span className="px-2 py-1 rounded-[4px] text-[11px] font-bold bg-[#DCE5F4] text-[#133255]">Score: {candidate.score}/10</span>
+              <span className="px-2 py-1 rounded-[4px] text-[13px] font-bold bg-[#DCE5F4] text-[#133255]">Score: {candidate.score}/10</span>
             ) : (
-              <span className="text-[12px] text-[#6b7a99]">Not assessed</span>
+              <span className="text-[14px] text-[#6b7a99]">Not assessed</span>
             )}
-            <span className="text-[12px] text-[#6b7a99]">Notice: {candidate.notice} days</span>
+            <span className="text-[14px] text-[#6b7a99]">Notice: {candidate.notice} days</span>
           </div>
 
           <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-4">
-            <div className="text-[12px]"><span className="font-bold text-[#6b7a99]">Target Company:</span> <span className="font-medium text-[#111]">{candidate.targetCompany || 'Not specified'}</span></div>
-            <div className="text-[12px]"><span className="font-bold text-[#6b7a99]">LinkedIn:</span> {candidate.linkedin ? <a href={candidate.linkedin} target="_blank" className="text-[#133255] underline">View Profile</a> : 'Not provided'}</div>
+            <div className="text-[14px]"><span className="font-bold text-[#6b7a99]">Target Company:</span> <span className="font-medium text-[#111]">{candidate.targetCompany || 'Not specified'}</span></div>
+            <div className="text-[14px]"><span className="font-bold text-[#6b7a99]">LinkedIn:</span> {candidate.linkedin ? <a href={candidate.linkedin} target="_blank" className="text-[#133255] underline">View Profile</a> : 'Not provided'}</div>
           </div>
 
           {candidate.notes && (
-            <div className="mb-4 p-3 bg-[#fff9ed] border border-[#f5e1b5] rounded-md text-[12px] text-[#444]">
+            <div className="mb-4 p-3 bg-[#fff9ed] border border-[#f5e1b5] rounded-md text-[14px] text-[#444]">
               <span className="font-bold text-[#b38a36] block mb-1">Additional Notes</span>
               <p className="italic">"{candidate.notes}"</p>
             </div>
           )}
 
           <div className="flex gap-2 mt-2">
-            <Link href="/dashboard/candidates" className="px-3 py-1.5 rounded-md text-[12px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">← Back</Link>
-            <button onClick={() => setIsSubModalOpen(true)} className="px-3 py-1.5 rounded-md text-[12px] font-semibold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a] transition-all">Submit to Client</button>
-            <button className="px-3 py-1.5 rounded-md text-[12px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">Export</button>
+            <Link href="/dashboard/candidates" className="px-3 py-1.5 rounded-md text-[14px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">← Back</Link>
+            <button onClick={() => setIsSubModalOpen(true)} className="px-3 py-1.5 rounded-md text-[14px] font-semibold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a] transition-all">Submit to Client</button>
+            <button className="px-3 py-1.5 rounded-md text-[14px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">Export</button>
             <div className="flex-1"></div>
-            <Link href={`/dashboard/candidates/${candidate.id}/edit`} className="px-3 py-1.5 rounded-md text-[12px] font-semibold text-[#133255] bg-[#DCE5F4] hover:bg-[#c5d3ec] transition-all border border-[#bacce6]">Edit Profile</Link>
+            <Link href={`/dashboard/candidates/${candidate.id}/edit`} className="px-3 py-1.5 rounded-md text-[14px] font-semibold text-[#133255] bg-[#DCE5F4] hover:bg-[#c5d3ec] transition-all border border-[#bacce6]">Edit Profile</Link>
             <button 
               onClick={handleDeleteCandidate} 
               disabled={isDeleting}
-              className="px-3 py-1.5 rounded-md text-[12px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-all border border-red-200"
+              className="px-3 py-1.5 rounded-md text-[14px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-all border border-red-200"
             >
               {isDeleting ? "Deleting..." : "Delete Candidate"}
             </button>
@@ -347,11 +347,11 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
           content={
             <div>
               <div className="flex gap-3 mb-4">
-                <label className="flex-1 px-4 py-2 bg-[#DCE5F4] text-[#133255] rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#c5d3ec] transition-colors text-center border border-[#bacce6]">
+                <label className="flex-1 px-4 py-2 bg-[#DCE5F4] text-[#133255] rounded-lg text-[15px] font-bold cursor-pointer hover:bg-[#c5d3ec] transition-colors text-center border border-[#bacce6]">
                   <input type="file" accept="application/pdf" className="hidden" onChange={handleUploadLinkedIn} disabled={isUploadingLinkedin} />
                   {isUploadingLinkedin ? 'Uploading...' : '📘 Upload LinkedIn Profile'}
                 </label>
-                <label className="flex-1 px-4 py-2 bg-[#133255] text-white rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#133255] transition-colors text-center shadow-sm">
+                <label className="flex-1 px-4 py-2 bg-[#133255] text-white rounded-lg text-[15px] font-bold cursor-pointer hover:bg-[#133255] transition-colors text-center shadow-sm">
                   <input type="file" accept="application/pdf,.doc,.docx" className="hidden" onChange={handleUploadCV} disabled={isUploading} />
                   {isUploading ? 'Uploading...' : '📄 Upload CV / Resume'}
                 </label>
@@ -408,7 +408,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
               </div>
 
               <div className="mt-4">
-                <button className="px-3 py-1.5 rounded-md text-[12px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">Extract Tags via AI</button>
+                <button className="px-3 py-1.5 rounded-md text-[14px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">Extract Tags via AI</button>
               </div>
             </div>
           }
@@ -422,15 +422,15 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
             candidate.score ? (
               <div>
                 <div className="p-3 bg-[#DCE5F4] rounded-lg flex justify-between items-center mt-2 mb-3">
-                  <span className="text-[14px] font-bold text-[#133255]">Overall Score</span>
-                  <span className="px-2 py-1 rounded-[4px] text-[13px] font-bold bg-white text-[#133255]">{candidate.score}/10</span>
+                  <span className="text-[16px] font-bold text-[#133255]">Overall Score</span>
+                  <span className="px-2 py-1 rounded-[4px] text-[15px] font-bold bg-white text-[#133255]">{candidate.score}/10</span>
                 </div>
-                <button onClick={() => router.push(`/dashboard/workbench?flCandId=${candidate.id}`)} className="px-3 py-1.5 rounded-md text-[12px] font-semibold bg-[#133255] text-white hover:bg-[#133255] transition-all">Open in Workbench</button>
+                <button onClick={() => router.push(`/dashboard/workbench?flCandId=${candidate.id}`)} className="px-3 py-1.5 rounded-md text-[14px] font-semibold bg-[#133255] text-white hover:bg-[#133255] transition-all">Open in Workbench</button>
               </div>
             ) : (
               <div className="text-center p-5 text-[#6b7a99]">
                 <div className="mb-3">No assessment completed yet</div>
-                <button onClick={() => router.push(`/dashboard/workbench?flCandId=${candidate.id}`)} className="px-3 py-1.5 rounded-md text-[12px] font-semibold bg-[#133255] text-white hover:bg-[#133255] transition-all">Start Assessment</button>
+                <button onClick={() => router.push(`/dashboard/workbench?flCandId=${candidate.id}`)} className="px-3 py-1.5 rounded-md text-[14px] font-semibold bg-[#133255] text-white hover:bg-[#133255] transition-all">Start Assessment</button>
               </div>
             )
           }
@@ -446,14 +446,14 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
                 <div key={i} className="mb-3 p-3 bg-[#fafbfd] border border-[#D4E0F0] rounded-md">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-bold text-[#111]">{r.name}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 bg-[#e0e5f0] text-[#444] rounded">{r.type}</span>
+                    <span className="text-[12px] font-bold uppercase tracking-wide px-1.5 py-0.5 bg-[#e0e5f0] text-[#444] rounded">{r.type}</span>
                   </div>
-                  <div className="text-[12px] text-[#6b7a99] mb-2">{r.org} · {r.rel}</div>
-                  <div className="text-[13px] text-[#444] italic">"{r.text}"</div>
+                  <div className="text-[14px] text-[#6b7a99] mb-2">{r.org} · {r.rel}</div>
+                  <div className="text-[15px] text-[#444] italic">"{r.text}"</div>
                 </div>
               ))}
-              {refCards.length === 0 && <div className="text-[#6b7a99] text-[13px] mb-3">No references added yet.</div>}
-              <button onClick={() => setIsRefModalOpen(true)} className="mt-2 px-3 py-1.5 rounded-md text-[12px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">+ Add Reference</button>
+              {refCards.length === 0 && <div className="text-[#6b7a99] text-[15px] mb-3">No references added yet.</div>}
+              <button onClick={() => setIsRefModalOpen(true)} className="mt-2 px-3 py-1.5 rounded-md text-[14px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">+ Add Reference</button>
             </div>
           }
         />
@@ -465,21 +465,21 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
           content={
             <div className="grid grid-cols-2 gap-5">
               <div>
-                <div className="text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">DREAM ROLES</div>
+                <div className="text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">DREAM ROLES</div>
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {candidate.dreamRoles?.map((r: string) => (
-                    <span key={r} className="px-2 py-0.5 bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[3px] text-[11px] font-bold">{r}</span>
+                    <span key={r} className="px-2 py-0.5 bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[3px] text-[13px] font-bold">{r}</span>
                   ))}
-                  {!candidate.dreamRoles?.length && <span className="text-[12px] text-[#6b7a99]">None added</span>}
+                  {!candidate.dreamRoles?.length && <span className="text-[14px] text-[#6b7a99]">None added</span>}
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">DREAM COMPANIES</div>
+                <div className="text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">DREAM COMPANIES</div>
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {candidate.dreamCos?.map((c: string) => (
-                    <span key={c} className="px-2 py-0.5 bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[3px] text-[11px] font-bold">{c}</span>
+                    <span key={c} className="px-2 py-0.5 bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[3px] text-[13px] font-bold">{c}</span>
                   ))}
-                  {!candidate.dreamCos?.length && <span className="text-[12px] text-[#6b7a99]">None added</span>}
+                  {!candidate.dreamCos?.length && <span className="text-[14px] text-[#6b7a99]">None added</span>}
                 </div>
               </div>
             </div>
@@ -499,8 +499,8 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
                 ['Expected', `${candidate.currency || 'INR'} ` + (candidate.expected >= 100 ? (candidate.expected / 100).toFixed(1).replace(/\.0$/, '') + 'Cr' : candidate.expected + 'L')]
               ].map(([l, v]) => (
                 <div key={l} className="text-center p-3 bg-[#f4f7fd] rounded-lg">
-                  <div className="text-[10px] font-bold uppercase text-[#6b7a99] tracking-wide mb-1">{l}</div>
-                  <div className="font-serif text-[18px] font-bold text-[#133255]">{v}</div>
+                  <div className="text-[12px] font-bold uppercase text-[#6b7a99] tracking-wide mb-1">{l}</div>
+                  <div className="font-serif text-[19px] font-bold text-[#133255]">{v}</div>
                 </div>
               ))}
             </div>
@@ -508,11 +508,13 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
         />
       </div>
 
-      <div className="bg-white border border-[#D4E0F0] rounded-[10px] p-5 shadow-sm mb-6">
-        <div className="flex justify-between items-center mb-5">
-          <span className="font-serif text-[16px] font-bold text-[#111]">Conversation & Activity Log</span>
-          <span className="text-[12px] font-bold uppercase tracking-wide text-[#6b7a99] bg-[#f4f7fd] px-2.5 py-1 rounded-md">{candidate?.activities?.length || 0} activities recorded</span>
-        </div>
+      {!readOnly && (
+        <>
+          <div className="bg-white border border-[#D4E0F0] rounded-[10px] p-5 shadow-sm mb-6">
+            <div className="flex justify-between items-center mb-5">
+              <span className="font-serif text-[17px] font-bold text-[#111]">Conversation & Activity Log</span>
+              <span className="text-[14px] font-bold uppercase tracking-wide text-[#6b7a99] bg-[#f4f7fd] px-2.5 py-1 rounded-md">{candidate?.activities?.length || 0} activities recorded</span>
+            </div>
         
         <div className="flex flex-col gap-5">
           {/* Tabs */}
@@ -521,7 +523,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
               <button
                 key={tab}
                 onClick={() => setActiveLogTab(tab)}
-                className={`px-4 py-2.5 text-[13px] font-bold border-b-2 ${activeLogTab === tab ? 'border-[#133255] text-[#133255]' : 'border-transparent text-[#6b7a99] hover:text-[#111]'}`}
+                className={`px-4 py-2.5 text-[15px] font-bold border-b-2 ${activeLogTab === tab ? 'border-[#133255] text-[#133255]' : 'border-transparent text-[#6b7a99] hover:text-[#111]'}`}
               >
                 {tab === "Meeting" ? "🗣️ Log a meeting" : tab === "Email" ? "✉️ Log an email" : "📅 Add follow up"}
               </button>
@@ -533,16 +535,16 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
             {activeLogTab === "Meeting" && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Meeting Type <span className="text-red-500">*</span></label>
-                  <select required value={logForm.type} onChange={e=>setLogForm({...logForm, type: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]">
+                  <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Meeting Type <span className="text-red-500">*</span></label>
+                  <select required value={logForm.type} onChange={e=>setLogForm({...logForm, type: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]">
                     <option value="In-person meeting">In-person meeting</option>
                     <option value="Phone call">Phone call</option>
                     <option value="Video call">Video call</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Meeting For <span className="text-red-500">*</span></label>
-                  <select required value={logForm.meetingFor} onChange={e=>setLogForm({...logForm, meetingFor: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]">
+                  <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Meeting For <span className="text-red-500">*</span></label>
+                  <select required value={logForm.meetingFor} onChange={e=>setLogForm({...logForm, meetingFor: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]">
                     <option value="Exploration">Exploration</option>
                     <option value="Discuss about potential position">Discuss about potential position</option>
                     <option value="Job brief">Job brief</option>
@@ -556,8 +558,8 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
             {activeLogTab === "Email" && (
               <div className="flex flex-col gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Email Type <span className="text-red-500">*</span></label>
-                  <select required value={logForm.emailType} onChange={e=>setLogForm({...logForm, emailType: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]">
+                  <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Email Type <span className="text-red-500">*</span></label>
+                  <select required value={logForm.emailType} onChange={e=>setLogForm({...logForm, emailType: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]">
                     <option value="Email received from Candidate with Resume/ showing interest">Email received from Candidate with Resume/ showing interest</option>
                     <option value="Contract- NDA for confidential roles">Contract- NDA for confidential roles</option>
                     <option value="Email sent to Client for profile">Email sent to Client for profile</option>
@@ -569,12 +571,12 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
                 {logForm.emailType === "Email sent to Client for profile" && (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Client Name <span className="text-red-500">*</span></label>
-                      <input required type="text" value={logForm.clientName} onChange={e=>setLogForm({...logForm, clientName: e.target.value})} placeholder="e.g. ABC Ltd" className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]" />
+                      <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Client Name <span className="text-red-500">*</span></label>
+                      <input required type="text" value={logForm.clientName} onChange={e=>setLogForm({...logForm, clientName: e.target.value})} placeholder="e.g. ABC Ltd" className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Role <span className="text-red-500">*</span></label>
-                      <input required type="text" value={logForm.roleName} onChange={e=>setLogForm({...logForm, roleName: e.target.value})} placeholder="e.g. Finance controller" className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]" />
+                      <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Role <span className="text-red-500">*</span></label>
+                      <input required type="text" value={logForm.roleName} onChange={e=>setLogForm({...logForm, roleName: e.target.value})} placeholder="e.g. Finance controller" className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" />
                     </div>
                   </div>
                 )}
@@ -582,22 +584,22 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
             )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Date</label>
-                  <input type="date" value={logForm.date} onChange={e=>setLogForm({...logForm, date: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]" />
+                  <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Date</label>
+                  <input type="date" value={logForm.date} onChange={e=>setLogForm({...logForm, date: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Time</label>
-                  <input type="time" value={logForm.time} onChange={e=>setLogForm({...logForm, time: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]" />
+                  <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Time</label>
+                  <input type="time" value={logForm.time} onChange={e=>setLogForm({...logForm, time: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" />
                 </div>
               </div>
             <div>
-              <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">
+              <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">
                 {activeLogTab === "Email" ? "Email Body / Notes" : "Notes / Description"} <span className="text-red-500">*</span>
               </label>
-              <textarea required rows={3} value={logForm.note} onChange={e=>setLogForm({...logForm, note: e.target.value})} className="w-full border-[1.5px] border-[#D4E0F0] rounded-md p-3 text-[13px] outline-none bg-white focus:border-[#133255] resize-vertical" placeholder={`Enter ${activeLogTab.toLowerCase()} details here...`}></textarea>
+              <textarea required rows={3} value={logForm.note} onChange={e=>setLogForm({...logForm, note: e.target.value})} className="w-full border-[1.5px] border-[#D4E0F0] rounded-md p-3 text-[15px] outline-none bg-white focus:border-[#133255] resize-vertical" placeholder={`Enter ${activeLogTab.toLowerCase()} details here...`}></textarea>
             </div>
             <div className="flex justify-end">
-              <button type="submit" disabled={isLogging} className="px-5 py-2 rounded-md text-[13px] font-bold bg-[#133255] text-white hover:bg-[#133255] transition-all">
+              <button type="submit" disabled={isLogging} className="px-5 py-2 rounded-md text-[15px] font-bold bg-[#133255] text-white hover:bg-[#133255] transition-all">
                 {isLogging ? "Saving..." : `Save ${activeLogTab}`}
               </button>
             </div>
@@ -605,29 +607,29 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
 
           {/* Activity Timeline */}
           <div className="mt-4">
-            <h4 className="text-[14px] font-bold text-[#111] mb-4">Activity Timeline</h4>
+            <h4 className="text-[16px] font-bold text-[#111] mb-4">Activity Timeline</h4>
             <div className="flex flex-col gap-0">
               {candidate?.activities?.length > 0 ? [...candidate.activities].sort((a,b) => b.id - a.id).map((act: any, idx: number) => (
                 <div key={act.id} className="flex gap-4 relative pb-6 group">
                   {idx !== candidate.activities.length - 1 && <div className="absolute top-8 bottom-0 left-[19px] w-[2px] bg-[#e2e8f0] group-hover:bg-[#cbd5e1] transition-colors"></div>}
-                  <div className="w-10 h-10 rounded-full bg-[#f1f5f9] border-2 border-[#e2e8f0] flex items-center justify-center shrink-0 z-10 text-[16px]">
+                  <div className="w-10 h-10 rounded-full bg-[#f1f5f9] border-2 border-[#e2e8f0] flex items-center justify-center shrink-0 z-10 text-[17px]">
                     {act.type.includes('Meeting') ? '🗣️' : act.type.includes('Email') ? '✉️' : act.type.includes('Task') ? '✅' : '📅'}
                   </div>
                   <div className="flex-1 bg-white border border-[#e2e8f0] rounded-lg p-4 shadow-sm group-hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <div className="text-[13px] font-bold text-[#111]">{act.type}</div>
-                        <div className="text-[11px] font-medium text-[#6b7a99] mt-0.5">Logged by {act.consultant}</div>
+                        <div className="text-[15px] font-bold text-[#111]">{act.type}</div>
+                        <div className="text-[13px] font-medium text-[#6b7a99] mt-0.5">Logged by {act.consultant}</div>
                       </div>
-                      <div className="text-[11px] font-semibold text-[#94a3b8] bg-[#f8fafc] px-2 py-1 rounded">
+                      <div className="text-[13px] font-semibold text-[#94a3b8] bg-[#f8fafc] px-2 py-1 rounded">
                         {act.date} {act.time && `at ${act.time}`}
                       </div>
                     </div>
-                    <div className="text-[13px] text-[#475569] leading-relaxed whitespace-pre-wrap">{act.note}</div>
+                    <div className="text-[15px] text-[#475569] leading-relaxed whitespace-pre-wrap">{act.note}</div>
                   </div>
                 </div>
               )) : (
-                <div className="text-[13px] text-[#6b7a99] italic text-center py-4 bg-[#f8fafc] rounded-lg border border-dashed border-[#cbd5e1]">No activities logged yet.</div>
+                <div className="text-[15px] text-[#6b7a99] italic text-center py-4 bg-[#f8fafc] rounded-lg border border-dashed border-[#cbd5e1]">No activities logged yet.</div>
               )}
             </div>
           </div>
@@ -637,36 +639,36 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
 
       <div className="bg-white border border-[#D4E0F0] rounded-[10px] p-5 shadow-sm">
         <div className="flex justify-between items-center mb-4">
-          <span className="font-serif text-[16px] font-bold text-[#111]">Submission History</span>
-          <button onClick={() => setIsSubModalOpen(true)} className="px-3 py-1.5 rounded-md text-[12px] font-semibold bg-[#133255] text-white hover:bg-[#133255] transition-all">+ Add Submission</button>
+          <span className="font-serif text-[17px] font-bold text-[#111]">Submission History</span>
+          <button onClick={() => setIsSubModalOpen(true)} className="px-3 py-1.5 rounded-md text-[14px] font-semibold bg-[#133255] text-white hover:bg-[#133255] transition-all">+ Add Submission</button>
         </div>
         {subHistory.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr>
-                  <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Client</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Role</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Type</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Consultant</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Date Shared</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Status</th>
+                  <th className="text-left px-3 py-2.5 text-[13px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Client</th>
+                  <th className="text-left px-3 py-2.5 text-[13px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Role</th>
+                  <th className="text-left px-3 py-2.5 text-[13px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Type</th>
+                  <th className="text-left px-3 py-2.5 text-[13px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Consultant</th>
+                  <th className="text-left px-3 py-2.5 text-[13px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Date Shared</th>
+                  <th className="text-left px-3 py-2.5 text-[13px] font-bold uppercase tracking-wide text-[#6b7a99] border-b-2 border-[#D4E0F0] whitespace-nowrap bg-[#fafbfd]">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {subHistory.map((s: any) => (
                   <tr key={s.id} className="hover:bg-[#fafbff]">
-                    <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[13px] font-semibold text-[#111]">{s.client}</td>
-                    <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[13px]">{s.role}</td>
-                    <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[13px]">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${s.type === 'Mandate' ? 'bg-[#eef2ff] text-[#4f46e5]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>
+                    <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[15px] font-semibold text-[#111]">{s.client}</td>
+                    <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[15px]">{s.role}</td>
+                    <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[15px]">
+                      <span className={`px-2 py-0.5 rounded text-[12px] font-bold ${s.type === 'Mandate' ? 'bg-[#eef2ff] text-[#4f46e5]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>
                         {s.type}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[13px]">{s.consultant}</td>
-                    <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[13px] text-[#6b7a99]">{s.dateShared}</td>
-                    <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[13px]">
-                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#e0f5e9] text-[#137a43]">{s.status}</span>
+                    <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[15px]">{s.consultant}</td>
+                    <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[15px] text-[#6b7a99]">{s.dateShared}</td>
+                    <td className="px-3 py-2.5 border-b border-[#f0f0f0] align-middle text-[15px]">
+                      <span className="px-2 py-0.5 rounded text-[13px] font-bold bg-[#e0f5e9] text-[#137a43]">{s.status}</span>
                     </td>
                   </tr>
                 ))}
@@ -674,23 +676,25 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
             </table>
           </div>
         ) : (
-          <div className="py-6 text-center text-[#6b7a99] text-[13px]">
+          <div className="py-6 text-center text-[#6b7a99] text-[15px]">
             No submissions yet — click "+ Add Submission" to submit this candidate to a client.
           </div>
         )}
 
-      </div>
+          </div>
+        </>
+      )}
 
       {isSubModalOpen && (
         <div className="fixed inset-0 bg-[#111]/50 flex items-center justify-center z-50 backdrop-blur-sm">
           <div className="bg-white rounded-[10px] shadow-lg w-[400px] overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[18px] font-bold text-[#111] flex justify-between items-center">
+            <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[19px] font-bold text-[#111] flex justify-between items-center">
               Submit to Client
               <button onClick={() => setIsSubModalOpen(false)} className="text-[#6b7a99] hover:text-[#111]">✕</button>
             </div>
             <form onSubmit={handleAddSubmission} className="p-5 flex flex-col gap-4">
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Submit to active mandate?</label>
+                <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Submit to active mandate?</label>
                 <select
                   value={subForm.mandateId}
                   onChange={e => {
@@ -702,7 +706,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
                       setSubForm({...subForm, mandateId: "", client: "", role: ""});
                     }
                   }}
-                  className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]"
+                  className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]"
                 >
                   <option value="">-- No, manual entry --</option>
                   {mandates.map(m => (
@@ -711,17 +715,17 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Client Company <span className="text-red-500">*</span></label>
-                <input required value={subForm.client} readOnly={!!subForm.mandateId} onChange={e=>setSubForm({...subForm, client: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none focus:border-[#133255] disabled:bg-gray-50" placeholder="E.g. HDFC Bank" />
+                <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Client Company <span className="text-red-500">*</span></label>
+                <input required value={subForm.client} readOnly={!!subForm.mandateId} onChange={e=>setSubForm({...subForm, client: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none focus:border-[#133255] disabled:bg-gray-50" placeholder="E.g. HDFC Bank" />
               </div>
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Role <span className="text-red-500">*</span></label>
-                <input required value={subForm.role} readOnly={!!subForm.mandateId} onChange={e=>setSubForm({...subForm, role: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none focus:border-[#133255] disabled:bg-gray-50" placeholder="E.g. Chief Financial Officer" />
+                <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Role <span className="text-red-500">*</span></label>
+                <input required value={subForm.role} readOnly={!!subForm.mandateId} onChange={e=>setSubForm({...subForm, role: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none focus:border-[#133255] disabled:bg-gray-50" placeholder="E.g. Chief Financial Officer" />
               </div>
 
               <div className="flex gap-2.5 justify-end mt-2">
-                <button type="button" onClick={() => setIsSubModalOpen(false)} className="px-4 py-2 rounded-md text-[13px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md text-[13px] font-semibold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a] transition-all">
+                <button type="button" onClick={() => setIsSubModalOpen(false)} className="px-4 py-2 rounded-md text-[15px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all">Cancel</button>
+                <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md text-[15px] font-semibold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a] transition-all">
                   {isSubmitting ? "Submitting..." : "Submit Candidate"}
                 </button>
               </div>
@@ -733,15 +737,15 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
       {isRefModalOpen && (
         <div className="fixed inset-0 bg-[#111]/50 flex items-center justify-center z-50 backdrop-blur-sm">
           <div className="bg-white rounded-[10px] shadow-lg w-[450px] overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[18px] font-bold text-[#111] flex justify-between items-center">
+            <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[19px] font-bold text-[#111] flex justify-between items-center">
               Add Reference
               <button onClick={() => setIsRefModalOpen(false)} className="text-[#6b7a99] hover:text-[#111]">✕</button>
             </div>
             <form onSubmit={handleAddReference} className="p-5 flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Type <span className="text-red-500">*</span></label>
-                  <select required value={refForm.type} onChange={e=>setRefForm({...refForm, type: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]">
+                  <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Type <span className="text-red-500">*</span></label>
+                  <select required value={refForm.type} onChange={e=>setRefForm({...refForm, type: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]">
                     <option value="Superior">Superior</option>
                     <option value="Peer">Peer</option>
                     <option value="Subordinate">Subordinate</option>
@@ -750,27 +754,27 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Name <span className="text-red-500">*</span></label>
-                  <input required value={refForm.name} onChange={e=>setRefForm({...refForm, name: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]" placeholder="Reference Name" />
+                  <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Name <span className="text-red-500">*</span></label>
+                  <input required value={refForm.name} onChange={e=>setRefForm({...refForm, name: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" placeholder="Reference Name" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Organization <span className="text-red-500">*</span></label>
-                  <input required value={refForm.org} onChange={e=>setRefForm({...refForm, org: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]" placeholder="Company Name" />
+                  <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Organization <span className="text-red-500">*</span></label>
+                  <input required value={refForm.org} onChange={e=>setRefForm({...refForm, org: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" placeholder="Company Name" />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Relationship</label>
-                  <input value={refForm.rel} onChange={e=>setRefForm({...refForm, rel: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. Former Manager" />
+                  <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Relationship</label>
+                  <input value={refForm.rel} onChange={e=>setRefForm({...refForm, rel: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. Former Manager" />
                 </div>
               </div>
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Feedback / Notes</label>
-                <textarea rows={3} value={refForm.text} onChange={e=>setRefForm({...refForm, text: e.target.value})} className="w-full border-[1.5px] border-[#D4E0F0] rounded-md p-3 text-[13px] outline-none bg-white focus:border-[#133255] resize-none" placeholder="Reference feedback..."></textarea>
+                <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Feedback / Notes</label>
+                <textarea rows={3} value={refForm.text} onChange={e=>setRefForm({...refForm, text: e.target.value})} className="w-full border-[1.5px] border-[#D4E0F0] rounded-md p-3 text-[15px] outline-none bg-white focus:border-[#133255] resize-none" placeholder="Reference feedback..."></textarea>
               </div>
               <div className="flex gap-2.5 justify-end mt-2">
-                <button type="button" onClick={() => setIsRefModalOpen(false)} className="px-4 py-2 rounded-md text-[13px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all">Cancel</button>
-                <button type="submit" disabled={isSubmittingRef} className="px-4 py-2 rounded-md text-[13px] font-semibold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a] transition-all">
+                <button type="button" onClick={() => setIsRefModalOpen(false)} className="px-4 py-2 rounded-md text-[15px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all">Cancel</button>
+                <button type="submit" disabled={isSubmittingRef} className="px-4 py-2 rounded-md text-[15px] font-semibold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a] transition-all">
                   {isSubmittingRef ? "Saving..." : "Add Reference"}
                 </button>
               </div>
@@ -781,24 +785,24 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
       {deleteConfirmation && (
         <div className="fixed inset-0 bg-[#111]/50 flex items-center justify-center z-[100] backdrop-blur-sm">
           <div className="bg-white rounded-[10px] shadow-lg w-[400px] overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[18px] font-bold text-[#111] flex justify-between items-center">
+            <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[19px] font-bold text-[#111] flex justify-between items-center">
               Delete File
               <button onClick={() => setDeleteConfirmation(null)} className="text-[#6b7a99] hover:text-[#111]">✕</button>
             </div>
             <div className="p-5">
-              <p className="text-[14px] text-[#4a5568] mb-6">
+              <p className="text-[16px] text-[#4a5568] mb-6">
                 Are you sure you want to permanently delete <strong>{deleteConfirmation.fileName}</strong>? This action cannot be undone.
               </p>
               <div className="flex justify-end gap-3">
                 <button 
                   onClick={() => setDeleteConfirmation(null)}
-                  className="px-4 py-2 border border-[#D4E0F0] rounded-[6px] text-[#4a5568] text-[13px] font-bold hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 border border-[#D4E0F0] rounded-[6px] text-[#4a5568] text-[15px] font-bold hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={confirmDeleteFile}
-                  className="px-4 py-2 bg-red-600 text-white rounded-[6px] text-[13px] font-bold hover:bg-red-700 transition-colors"
+                  className="px-4 py-2 bg-red-600 text-white rounded-[6px] text-[15px] font-bold hover:bg-red-700 transition-colors"
                 >
                   Delete
                 </button>

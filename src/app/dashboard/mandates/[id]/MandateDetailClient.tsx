@@ -491,12 +491,12 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                   <label className="flex-1 border border-gray-200 rounded-lg p-3 cursor-pointer flex flex-col gap-1 items-center hover:border-blue-500">
                     <input type="radio" name="format" value="1" checked={reportFormat === "1"} onChange={(e) => setReportFormat(e.target.value)} className="mb-2" />
                     <span className="text-sm font-bold text-gray-800 text-center">Multi-Candidate</span>
-                    <span className="text-[10px] text-gray-500 text-center">Shortlist format (Horizontal)</span>
+                    <span className="text-[12px] text-gray-500 text-center">Shortlist format (Horizontal)</span>
                   </label>
                   <label className="flex-1 border border-gray-200 rounded-lg p-3 cursor-pointer flex flex-col gap-1 items-center hover:border-blue-500">
                     <input type="radio" name="format" value="2" checked={reportFormat === "2"} onChange={(e) => setReportFormat(e.target.value)} className="mb-2" />
                     <span className="text-sm font-bold text-gray-800 text-center">Single Profile</span>
-                    <span className="text-[10px] text-gray-500 text-center">Detailed format (Vertical)</span>
+                    <span className="text-[12px] text-gray-500 text-center">Detailed format (Vertical)</span>
                   </label>
                 </div>
               </div>
@@ -515,7 +515,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                       />
                       <span className="text-sm text-gray-800">{c.name}</span>
                       <span className="text-xs text-gray-400">({c.company})</span>
-                      {!c.hasReport && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded ml-auto">No Draft</span>}
+                      {!c.hasReport && <span className="text-[12px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded ml-auto">No Draft</span>}
                     </label>
                   ))}
                 </div>

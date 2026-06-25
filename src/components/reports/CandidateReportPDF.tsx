@@ -106,7 +106,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
             // Bold the prefix if it ends with a colon
             const formattedItem = item.replace(/^(.*?:)/, '<strong>$1</strong>');
             return (
-              <div key={idx} className="text-[16px] text-[#334155] leading-relaxed font-normal flex gap-1">
+              <div key={idx} className="text-[17px] text-[#334155] leading-relaxed font-normal flex gap-1">
                 {!hasNumber && <span className="font-bold shrink-0">{idx + 1}.</span>}
                 <span dangerouslySetInnerHTML={{ __html: formattedItem }} />
               </div>
@@ -117,12 +117,12 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
     }
     if (content !== null && typeof content === 'object' && !Array.isArray(content)) {
       return (
-        <pre className="text-[16px] text-[#334155] leading-relaxed mt-1 whitespace-pre-wrap font-normal font-mono bg-gray-50 p-2 rounded border border-gray-100">
+        <pre className="text-[17px] text-[#334155] leading-relaxed mt-1 whitespace-pre-wrap font-normal font-mono bg-gray-50 p-2 rounded border border-gray-100">
           {JSON.stringify(content, null, 2)}
         </pre>
       );
     }
-    return <p className="text-[16px] text-[#334155] leading-relaxed mt-1 whitespace-pre-wrap font-normal">{content}</p>;
+    return <p className="text-[17px] text-[#334155] leading-relaxed mt-1 whitespace-pre-wrap font-normal">{content}</p>;
   };
 
   return (
@@ -132,27 +132,27 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
         <div className="flex items-center gap-4">
           <div className="w-20 h-20 rounded-full bg-[#133255] text-white flex items-center justify-center text-3xl font-bold shrink-0 border-4 border-white shadow-md relative">
             {candidate.initials}
-            <div className="absolute bottom-0 right-0 w-6 h-6 bg-[#0a66c2] text-white rounded flex items-center justify-center text-[10px] font-bold border-2 border-white">
+            <div className="absolute bottom-0 right-0 w-6 h-6 bg-[#0a66c2] text-white rounded flex items-center justify-center text-[12px] font-bold border-2 border-white">
               in
             </div>
           </div>
           <div>
             <h1 className="text-xl font-bold text-[#133255] font-serif">{candidate.name}</h1>
-            <p className="text-[14px] font-bold text-gray-500 mt-0.5 uppercase tracking-wide">
+            <p className="text-[16px] font-bold text-gray-500 mt-0.5 uppercase tracking-wide">
               {candidate.designation || candidate.role || "Candidate"} at {candidate.company || "Unknown Company"}
             </p>
           </div>
         </div>
         <div className="text-right">
           <img src="/maunakea-logo.jpg" alt="Mauna Kea" className="h-6 object-contain ml-auto" />
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-right block w-full">{frameworkName} Assessment</p>
+          <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-right block w-full">{frameworkName} Assessment</p>
         </div>
       </div>
 
       {/* AI Draft badge */}
       <div className="px-6 pb-3 flex items-center justify-between border-b border-gray-100 mb-5">
-        <h2 className="text-[16px] font-bold text-gray-900 font-serif tracking-tight">AI-Generated Assessment Draft</h2>
-        <span className="text-[10px] bg-[#d1fae5] text-[#065f46] px-2 py-0.5 rounded-full font-bold shadow-sm">AI Draft</span>
+        <h2 className="text-[17px] font-bold text-gray-900 font-serif tracking-tight">AI-Generated Assessment Draft</h2>
+        <span className="text-[12px] bg-[#d1fae5] text-[#065f46] px-2 py-0.5 rounded-full font-bold shadow-sm">AI Draft</span>
       </div>
 
       <div className="px-6 pb-6 space-y-4">
@@ -181,14 +181,14 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
             >
               {/* Section header bar */}
               <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                <span className="text-[15px] font-bold text-[#00174f] flex items-center gap-1.5">
+                <span className="text-[17px] font-bold text-[#00174f] flex items-center gap-1.5">
                   <span className="text-base">{icon}</span>
                   {displayTitle}
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleAccept(title)}
-                    className={`px-3 py-1.5 border rounded-md text-[13px] font-semibold transition-colors shadow-sm ${
+                    className={`px-3 py-1.5 border rounded-md text-[15px] font-semibold transition-colors shadow-sm ${
                       isAccepted
                         ? "bg-green-50 border-green-200 text-green-700 cursor-default"
                         : "bg-white border-[#e2e8f0] text-gray-700 hover:bg-gray-50"
@@ -198,7 +198,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
                   </button>
                   <button
                     onClick={() => handleEdit(title)}
-                    className={`px-3 py-1.5 border rounded-md text-[13px] font-semibold transition-colors shadow-sm ${
+                    className={`px-3 py-1.5 border rounded-md text-[15px] font-semibold transition-colors shadow-sm ${
                       isEditing
                         ? "bg-blue-50 border-blue-200 text-[#133255]"
                         : "bg-white border-[#e2e8f0] text-gray-700 hover:bg-gray-50"
@@ -208,7 +208,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
                   </button>
                   <button
                     onClick={() => handleRemove(title)}
-                    className="px-3 py-1.5 border border-[#e2e8f0] bg-white rounded-md text-[13px] font-semibold text-red-600 shadow-sm hover:bg-red-50 transition-colors flex items-center gap-1"
+                    className="px-3 py-1.5 border border-[#e2e8f0] bg-white rounded-md text-[15px] font-semibold text-red-600 shadow-sm hover:bg-red-50 transition-colors flex items-center gap-1"
                   >
                     <span>✕</span> Remove
                   </button>
@@ -219,7 +219,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
               <div className="px-5 pb-5 pt-1 transition-colors">
                 {isEditing ? (
                   <textarea
-                    className="w-full text-[14px] border border-blue-200 rounded p-3 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-y transition-colors min-h-[100px] leading-relaxed"
+                    className="w-full text-[16px] border border-blue-200 rounded p-3 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-y transition-colors min-h-[100px] leading-relaxed"
                     value={editedContent[title] !== undefined ? editedContent[title] : ""}
                     onChange={(e) => setEditedContent(prev => ({ ...prev, [title]: e.target.value }))}
                   />
@@ -238,7 +238,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
               <input 
                 type="text" 
                 placeholder="New Section Heading (e.g. Technical Skills)"
-                className="flex-1 border border-gray-300 rounded px-3 py-2 text-[14px] outline-none focus:border-blue-500"
+                className="flex-1 border border-gray-300 rounded px-3 py-2 text-[16px] outline-none focus:border-blue-500"
                 value={newSectionHeading}
                 onChange={(e) => setNewSectionHeading(e.target.value)}
                 onKeyDown={(e) => {
@@ -249,7 +249,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
               />
               <button 
                 onClick={handleAddCustomSection}
-                className="bg-[#133255] text-white px-4 py-2 rounded text-[14px] font-semibold hover:bg-[#133255] transition-colors"
+                className="bg-[#133255] text-white px-4 py-2 rounded text-[16px] font-semibold hover:bg-[#133255] transition-colors"
               >
                 Add
               </button>

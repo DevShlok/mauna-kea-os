@@ -231,6 +231,11 @@ export const getPlatformUsers = async () => {
   return db.select().from(platformUsers);
 };
 
+export const getUserByEmail = async (email: string) => {
+  const [user] = await db.select().from(platformUsers).where(eq(platformUsers.email, email));
+  return user || null;
+};
+
 // ─── ANALYTICS ───────────────────────────────────────────
 export const getAnalyticsData = async () => {
   const [mandateCount] = await db.select({ count: sql<number>`count(*)` }).from(mandates);

@@ -13,9 +13,10 @@ interface WorkbenchClientProps {
   candidates: any[];
   mandateCandidates: any[];
   mandates: any[];
+  readOnly?: boolean;
 }
 
-export default function WorkbenchClient({ initialCandidate, frameworks, candidates, mandateCandidates, mandates }: WorkbenchClientProps) {
+export default function WorkbenchClient({ initialCandidate, frameworks, candidates, mandateCandidates, mandates, readOnly = false }: WorkbenchClientProps) {
   const router = useRouter();
   
   const allCandidates = useMemo(() => {
@@ -506,9 +507,9 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       <div className="print:hidden">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <div className="text-[12px] text-gray-500 mb-1">Home / AI Workbench</div>
+            <div className="text-[14px] text-gray-500 mb-1">Home / AI Workbench</div>
             <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">AI Workbench</h1>
-            {selectedFramework && <div className="text-[13px] text-gray-500 mt-2">{selectedFramework.name} — {mandates.find(m => m.id.toString() === mandateId)?.company || "General Assessment"}</div>}
+            {selectedFramework && <div className="text-[15px] text-gray-500 mt-2">{selectedFramework.name} — {mandates.find(m => m.id.toString() === mandateId)?.company || "General Assessment"}</div>}
           </div>
         </div>
 
@@ -568,31 +569,33 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col gap-4">
               <h3 className="font-bold text-gray-900 border-b border-gray-100 pb-2">Candidate Files</h3>
               
-              <div className="flex flex-wrap gap-4">
-                <label className="flex items-center gap-2 px-3 py-2 bg-white text-gray-700 rounded-md text-[13px] font-bold border border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer">
-                  {isUploadingCv ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                      Uploading...
-                    </span>
-                  ) : "➕ Add CV / Resume"}
-                  <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={(e) => handleUploadFile(e, 'cv')} disabled={isUploadingCv} />
-                </label>
+              {!readOnly && (
+                <div className="flex flex-wrap gap-4">
+                  <label className="flex items-center gap-2 px-3 py-2 bg-white text-gray-700 rounded-md text-[15px] font-bold border border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer">
+                    {isUploadingCv ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Uploading...
+                      </span>
+                    ) : "➕ Add CV / Resume"}
+                    <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={(e) => handleUploadFile(e, 'cv')} disabled={isUploadingCv} />
+                  </label>
 
-                <label className="flex items-center gap-2 px-3 py-2 bg-white text-gray-700 rounded-md text-[13px] font-bold border border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer">
-                  {isUploadingLinkedin ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                      Uploading...
-                    </span>
-                  ) : "➕ Add LinkedIn Profile"}
-                  <input type="file" className="hidden" accept=".pdf" onChange={(e) => handleUploadFile(e, 'linkedin')} disabled={isUploadingLinkedin} />
-                </label>
-              </div>
+                  <label className="flex items-center gap-2 px-3 py-2 bg-white text-gray-700 rounded-md text-[15px] font-bold border border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer">
+                    {isUploadingLinkedin ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Uploading...
+                      </span>
+                    ) : "➕ Add LinkedIn Profile"}
+                    <input type="file" className="hidden" accept=".pdf" onChange={(e) => handleUploadFile(e, 'linkedin')} disabled={isUploadingLinkedin} />
+                  </label>
+                </div>
+              )}
 
               {candidateFilesHistory.filter(f => f.fileType !== 'Superior Reference' && f.fileType !== 'Peer Reference' && f.fileType !== 'Team/Subordinate Reference').length > 0 && (
                 <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden">
-                  <table className="w-full text-left text-[13px]">
+                  <table className="w-full text-left text-[15px]">
                     <thead className="bg-gray-50 border-b border-gray-200 text-gray-700 font-bold">
                       <tr>
                         <th className="px-4 py-2 border-r border-gray-200 w-10 text-center">Select</th>
@@ -673,7 +676,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                 value={interviewNotes}
                 onChange={e => setInterviewNotes(e.target.value)}
                 placeholder="Paste interview notes here..."
-                className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-[#133255] resize-y"
+                className="w-full px-3 py-2 border border-gray-200 rounded text-[15px] outline-none focus:border-[#133255] resize-y"
               ></textarea>
             </div>
 
@@ -688,7 +691,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                       <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Superior Reference')} disabled={isUploadingSupRef} />
                     </label>
                   </div>
-                  <textarea rows={5} value={superiorRef} onChange={e => setSuperiorRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-[#133255] resize-y" placeholder="Enter superior reference..."></textarea>
+                  <textarea rows={5} value={superiorRef} onChange={e => setSuperiorRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[15px] outline-none focus:border-[#133255] resize-y" placeholder="Enter superior reference..."></textarea>
                 </div>
                 <div>
                   <div className="flex justify-between items-center mb-1">
@@ -698,7 +701,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                       <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Peer Reference')} disabled={isUploadingPeerRef} />
                     </label>
                   </div>
-                  <textarea rows={5} value={peerRef} onChange={e => setPeerRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-[#133255] resize-y" placeholder="Enter peer reference..."></textarea>
+                  <textarea rows={5} value={peerRef} onChange={e => setPeerRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[15px] outline-none focus:border-[#133255] resize-y" placeholder="Enter peer reference..."></textarea>
                 </div>
               </div>
             </div>
@@ -723,8 +726,8 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                           return (
                             <div key={cr.id} className="flex items-center gap-4 group">
                               <div className="w-[180px]">
-                                <div className="text-[13px] font-bold text-gray-800">{cr.name}</div>
-                                <div className="text-[10px] text-gray-500 uppercase">{cr.weight}% Weight</div>
+                                <div className="text-[15px] font-bold text-gray-800">{cr.name}</div>
+                                <div className="text-[12px] text-gray-500 uppercase">{cr.weight}% Weight</div>
                               </div>
                               
                               <div className="flex-1 flex items-center gap-3">
@@ -754,31 +757,33 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
               </div>
             )}
 
-<div className="flex flex-col gap-2">
-              {reportExistsInDb && !isGenerating && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded text-[12px] text-green-700 font-semibold">
-                  ✅ Assessment draft loaded from database
-                </div>
-              )}
-              {isLoadingReport && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded text-[12px] text-[#133255]">
-                  <span className="w-3 h-3 border-2 border-[#133255] border-t-transparent rounded-full animate-spin"></span>
-                  Loading existing assessment...
-                </div>
-              )}
-              <button 
-                onClick={handleGenerate} 
-                disabled={isGenerating || isLoadingReport}
-                className={`w-full py-3 rounded font-bold flex justify-center items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                  reportExistsInDb
-                    ? "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-300 text-sm"
-                    : "bg-amber-600 text-white hover:bg-amber-700"
-                }`}
-              >
-                {isGenerating ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span> : null}
-                {isGenerating ? "AI is thinking..." : reportExistsInDb ? "🔄 Regenerate Assessment" : "Generate Assessment Draft"}
-              </button>
-            </div>
+            {!readOnly && (
+              <div className="flex flex-col gap-2">
+                {reportExistsInDb && !isGenerating && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded text-[14px] text-green-700 font-semibold">
+                    ✅ Assessment draft loaded from database
+                  </div>
+                )}
+                {isLoadingReport && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded text-[14px] text-[#133255]">
+                    <span className="w-3 h-3 border-2 border-[#133255] border-t-transparent rounded-full animate-spin"></span>
+                    Loading existing assessment...
+                  </div>
+                )}
+                <button 
+                  onClick={handleGenerate} 
+                  disabled={isGenerating || isLoadingReport}
+                  className={`w-full py-3 rounded font-bold flex justify-center items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                    reportExistsInDb
+                      ? "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-300 text-sm"
+                      : "bg-amber-600 text-white hover:bg-amber-700"
+                  }`}
+                >
+                  {isGenerating ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span> : null}
+                  {isGenerating ? "AI is thinking..." : reportExistsInDb ? "🔄 Regenerate Assessment" : "Generate Assessment Draft"}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Output Preview */}
@@ -971,7 +976,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                                 console.error(err);
                               }
                             }}
-                            className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide border cursor-pointer outline-none ${
+                            className={`px-2 py-1 rounded text-[12px] font-bold uppercase tracking-wide border cursor-pointer outline-none ${
                               c.status === 'Active' || !c.status ? 'bg-green-50 text-green-700 border-green-200' : 
                               c.status === 'Passive' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
                               c.status === 'Not Interested' ? 'bg-red-50 text-red-700 border-red-200' :
@@ -1000,24 +1005,24 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     {deleteConfirmation && (
       <div className="fixed inset-0 bg-[#111]/50 flex items-center justify-center z-[100] backdrop-blur-sm">
         <div className="bg-white rounded-[10px] shadow-lg w-[400px] overflow-hidden">
-          <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[18px] font-bold text-[#111] flex justify-between items-center">
+          <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[19px] font-bold text-[#111] flex justify-between items-center">
             Delete File
             <button onClick={() => setDeleteConfirmation(null)} className="text-[#6b7a99] hover:text-[#111]">✕</button>
           </div>
           <div className="p-5">
-            <p className="text-[14px] text-[#4a5568] mb-6">
+            <p className="text-[16px] text-[#4a5568] mb-6">
               Are you sure you want to permanently delete <strong>{deleteConfirmation.fileName}</strong>? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button 
                 onClick={() => setDeleteConfirmation(null)}
-                className="px-4 py-2 border border-[#D4E0F0] rounded-[6px] text-[#4a5568] text-[13px] font-bold hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 border border-[#D4E0F0] rounded-[6px] text-[#4a5568] text-[15px] font-bold hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button 
                 onClick={confirmDeleteFile}
-                className="px-4 py-2 bg-red-600 text-white rounded-[6px] text-[13px] font-bold hover:bg-red-700 transition-colors"
+                className="px-4 py-2 bg-red-600 text-white rounded-[6px] text-[15px] font-bold hover:bg-red-700 transition-colors"
               >
                 Delete
               </button>

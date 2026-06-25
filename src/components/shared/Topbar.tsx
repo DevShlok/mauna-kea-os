@@ -4,7 +4,7 @@ import { Search, Bell } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 
-export function Topbar() {
+export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
   const pathname = usePathname();
 
   // Simple title mapping
@@ -18,7 +18,7 @@ export function Topbar() {
     <div className="h-[56px] bg-white border-b border-[#D4E0F0] flex items-center px-6 gap-4 shrink-0 shadow-sm">
       <div className="flex-1">
         <span className="font-serif text-base font-bold text-[#111] block">{title}</span>
-        <span className="text-[11px] text-[#6b7a99] block">{subtitle}</span>
+        <span className="text-[12px] text-[#6b7a99] block">{subtitle}</span>
       </div>
       
       <div className="relative">
@@ -26,7 +26,7 @@ export function Topbar() {
         <input 
           type="text" 
           placeholder="Search..." 
-          className="w-[200px] h-[34px] border-[1.5px] border-[#D4E0F0] rounded-full pl-9 pr-3 text-[13px] outline-none transition-all focus:border-[#133255] focus:w-[240px] bg-[#f9fafc]"
+          className="w-[200px] h-[34px] border-[1.5px] border-[#D4E0F0] rounded-full pl-9 pr-3 text-[14px] outline-none transition-all focus:border-[#133255] focus:w-[240px] bg-[#f9fafc]"
         />
       </div>
 
@@ -35,9 +35,26 @@ export function Topbar() {
         <div className="absolute top-[5px] right-[5px] w-2 h-2 bg-[#C0392B] rounded-full border-2 border-white"></div>
       </button>
 
-      <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#fde8e8] text-[#C0392B]">
-        Admin
-      </span>
+      {userRole === "admin" && (
+        <span className="px-2.5 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider bg-[#fde8e8] text-[#C0392B]">
+          Admin
+        </span>
+      )}
+      {userRole === "consultant" && (
+        <span className="px-2.5 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800">
+          Consultant
+        </span>
+      )}
+      {userRole === "client" && (
+        <span className="px-2.5 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider bg-green-100 text-green-800">
+          Client
+        </span>
+      )}
+      {userRole === "candidate" && (
+        <span className="px-2.5 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800">
+          Candidate
+        </span>
+      )}
 
       <div className="flex items-center justify-center">
         <UserButton />

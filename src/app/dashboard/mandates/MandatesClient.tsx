@@ -42,7 +42,7 @@ export default function MandatesClient({ initialMandates }: { initialMandates: M
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex justify-between items-end mb-8">
         <div>
-          <div className="text-[12px] text-gray-500 mb-1">Home / Mandates</div>
+          <div className="text-[14px] text-gray-500 mb-1">Home / Mandates</div>
           <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">All Mandates</h1>
         </div>
         <Link href="/dashboard/mandates/new" className="px-5 py-2.5 bg-[#D8B15B] text-[#133255] rounded-lg text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors inline-block mb-1">

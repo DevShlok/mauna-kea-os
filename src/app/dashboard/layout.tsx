@@ -1,7 +1,32 @@
 import { Sidebar } from "@/components/shared/Sidebar";
 import { Topbar } from "@/components/shared/Topbar";
 import { currentUser } from "@clerk/nextjs/server";
-import { UserButton, SignOutButton } from "@clerk/nextjs";
+import { SignOutButton } from "@clerk/nextjs";
+import { getUserByEmail } from "@/db/queries";
+import { db } from "@/db";
+import { platformUsers, candidates } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
+
+// Route access map: which roles can access which route prefixes
+const ROUTE_ACCESS: Record<string, string[]> = {
+  "/dashboard/clients": ["admin", "consultant", "client"],
+  "/dashboard/mandates": ["admin", "consultant", "client"],
+  "/dashboard/candidates": ["admin", "consultant", "candidate"],
+  "/dashboard/float-list": ["admin", "consultant"],
+  "/dashboard/workbench": ["admin", "consultant", "client", "candidate"],
+  "/dashboard/frameworks": ["admin", "consultant"],
+  "/dashboard/admin": ["admin"],
+  "/dashboard/analytics": ["admin", "consultant"],
+};
+
+// Default landing page per role
+const DEFAULT_PAGE: Record<string, string> = {
+  admin: "/dashboard/mandates",
+  consultant: "/dashboard/mandates",
+  client: "/dashboard/mandates",
+  candidate: "/dashboard/candidates",
+};
 
 export default async function DashboardLayout({
   children,
@@ -10,37 +35,78 @@ export default async function DashboardLayout({
 }) {
   const user = await currentUser();
   const email = user?.primaryEmailAddress?.emailAddress;
+  const fullName = user?.fullName || user?.firstName || "User";
 
-  if (email && !email.endsWith("@maunakea.co.in")) {
-    return (
-      <div className="min-h-screen bg-[#f4f7fd] flex flex-col items-center justify-center p-4 text-center">
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#D4E0F0] max-w-md w-full">
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-2xl font-bold">!</div>
-          </div>
-          <h1 className="text-xl font-bold text-red-600 mb-2">Access Denied</h1>
-          <p className="text-sm text-gray-600 mb-6">You are logged in as <strong className="text-[#111]">{email}</strong>. You must use an authorized <strong>@maunakea.co.in</strong> email address to access the Mauna Kea OS.</p>
-          
-          <div className="flex flex-col gap-3">
-            <SignOutButton signOutOptions={{ redirectUrl: '/sign-in' }}>
-              <button className="w-full bg-[#133255] hover:bg-[#0e3178] text-white font-semibold py-2.5 rounded-md transition-colors text-sm">
-                Sign out and use another account
-              </button>
-            </SignOutButton>
-          </div>
-        </div>
-      </div>
-    );
+  if (!email) {
+    redirect("/sign-in");
+  }
+
+  // Look up the user in platform_users
+  let platformUser = await getUserByEmail(email);
+
+  // If not found, auto-register based on domain
+  if (!platformUser) {
+    const isMaunaKea = email.endsWith("@maunakea.co.in");
+    const role = isMaunaKea ? "consultant" : "candidate";
+    const userId = "U-" + Math.floor(Math.random() * 10000);
+    const initials = fullName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+
+    if (role === "candidate") {
+      // Create a candidate record first
+      const candId = "C-" + Date.now().toString();
+      await db.insert(candidates).values({
+        id: candId,
+        name: fullName,
+        email: email,
+        initials,
+      });
+
+      await db.insert(platformUsers).values({
+        id: userId,
+        name: fullName,
+        email: email,
+        role: "candidate",
+        status: "Active",
+        initials,
+        linkedCandidateId: candId,
+        lastActive: new Date(),
+      });
+    } else {
+      await db.insert(platformUsers).values({
+        id: userId,
+        name: fullName,
+        email: email,
+        role: "consultant",
+        status: "Active",
+        initials,
+        lastActive: new Date(),
+      });
+    }
+
+    platformUser = await getUserByEmail(email);
+  }
+
+  const userRole = platformUser?.role || "candidate";
+  const linkedClientId = platformUser?.linkedClientId || undefined;
+  const linkedCandidateId = platformUser?.linkedCandidateId || undefined;
+
+  // Update lastActive silently
+  if (platformUser?.id) {
+    db.update(platformUsers)
+      .set({ lastActive: new Date() })
+      .where(eq(platformUsers.id, platformUser.id))
+      .then(() => {})
+      .catch(() => {});
   }
 
   return (
     <div className="flex flex-row h-screen overflow-hidden bg-[#f0f4fb] print:h-auto print:overflow-visible print:bg-white">
       <div className="print:hidden">
-        <Sidebar />
+        <Sidebar userRole={userRole} linkedClientId={linkedClientId} linkedCandidateId={linkedCandidateId} />
       </div>
       <div className="flex-1 flex flex-col overflow-hidden print:overflow-visible">
         <div className="print:hidden">
-          <Topbar />
+          <Topbar userRole={userRole} />
         </div>
         <main className="flex-1 overflow-y-auto p-6 print:p-0 print:overflow-visible">
           {children}

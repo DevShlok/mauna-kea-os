@@ -1,4 +1,8 @@
-import { getMandateCandidateByExtId, getFrameworks, getCandidates, getAllMandateCandidates, getMandates, getCandidateById } from "@/db/queries";
+import { getMandateCandidateByExtId, getFrameworks, getCandidates, getAllMandateCandidates, getMandates, getCandidateById, getUserByEmail } from "@/db/queries";
+import { currentUser } from "@clerk/nextjs/server";
+import { db } from "@/db";
+import { clients } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import WorkbenchClient from "@/app/dashboard/workbench/WorkbenchClient";
 
 export default async function WorkbenchPage({ searchParams }: { searchParams: Promise<{ candId?: string, mandateId?: string, flCandId?: string }> }) {
@@ -12,13 +16,40 @@ export default async function WorkbenchPage({ searchParams }: { searchParams: Pr
     initialCandidate = await getCandidateById(flCandId);
   }
 
-  const [frameworksList, candidates, mandateCandidates, mandatesList] = await Promise.all([
+  let [frameworksList, candidates, mandateCandidates, mandatesList] = await Promise.all([
     getFrameworks(),
     getCandidates(),
     getAllMandateCandidates(),
     getMandates()
   ]);
   
+  let readOnly = false;
+  const user = await currentUser();
+  if (user?.primaryEmailAddress?.emailAddress) {
+    const pUser = await getUserByEmail(user.primaryEmailAddress.emailAddress);
+    if (pUser?.role === "client" && pUser.linkedClientId) {
+      readOnly = true;
+      const [client] = await db.select().from(clients).where(eq(clients.id, pUser.linkedClientId));
+      if (client) {
+        mandatesList = mandatesList.filter(m => m.company === client.name);
+        const allowedMandateIds = mandatesList.map(m => m.id);
+        mandateCandidates = mandateCandidates.filter(mc => allowedMandateIds.includes(mc.mandateId));
+        // Client shouldn't see candidates from the general float list (unless submitted to their mandates)
+        // so we filter out all `candidates` (master DB) to force them to select from `mandateCandidates`
+        candidates = [];
+      } else {
+        mandatesList = [];
+        mandateCandidates = [];
+        candidates = [];
+      }
+    } else if (pUser?.role === "candidate" && pUser.linkedCandidateId) {
+      readOnly = true;
+      mandatesList = [];
+      mandateCandidates = [];
+      candidates = candidates.filter(c => c.id.toString() === pUser.linkedCandidateId);
+    }
+  }
+
   return (
     <WorkbenchClient 
       initialCandidate={initialCandidate} 
@@ -26,6 +57,7 @@ export default async function WorkbenchPage({ searchParams }: { searchParams: Pr
       candidates={candidates}
       mandateCandidates={mandateCandidates}
       mandates={mandatesList}
+      readOnly={readOnly}
     />
   );
 }

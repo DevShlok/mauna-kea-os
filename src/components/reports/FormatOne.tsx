@@ -51,7 +51,7 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
                   <button 
                     onClick={() => fetchLinkedInExp(cand.id, cand.linkedin)}
                     disabled={isLoading[cand.id]}
-                    className="bg-[#133255] text-white text-[12px] px-3 py-1.5 rounded hover:bg-[#133255] disabled:opacity-50"
+                    className="bg-[#133255] text-white text-[14px] px-3 py-1.5 rounded hover:bg-[#133255] disabled:opacity-50"
                   >
                     {isLoading[cand.id] ? "Fetching Experience..." : "Fetch LinkedIn Exp"}
                   </button>
@@ -60,10 +60,10 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
 
               {/* Header / Name Bar */}
             <div className="flex h-[38px] rounded-lg overflow-hidden shadow-sm mb-4 shrink-0">
-              <div className="bg-[#e28723] w-[50px] flex items-center justify-center font-bold text-[22px] text-white shrink-0 pr-1" style={{ borderBottomRightRadius: '16px', borderTopRightRadius: '16px' }}>
+              <div className="bg-[#e28723] w-[50px] flex items-center justify-center font-bold text-[23px] text-white shrink-0 pr-1" style={{ borderBottomRightRadius: '16px', borderTopRightRadius: '16px' }}>
                 {String(idx + 1).padStart(2, '0')}
               </div>
-              <div className="bg-[#00174f] flex-1 flex items-center pl-4 text-white text-[18px] font-bold uppercase tracking-wide" contentEditable suppressContentEditableWarning>
+              <div className="bg-[#00174f] flex-1 flex items-center pl-4 text-white text-[19px] font-bold uppercase tracking-wide" contentEditable suppressContentEditableWarning>
                 {cand.name}
               </div>
             </div>
@@ -147,8 +147,8 @@ function DetailRow({ icon, label, value }: { icon: React.ReactNode, label: strin
         <div className="scale-[0.8]">{icon}</div>
       </div>
       <div className="flex flex-col border-b border-dashed border-gray-300 pb-[4px] w-full">
-        <div className="text-[12px] font-bold text-[#00174f] tracking-wide leading-none mb-0.5">{label}</div>
-        <div className="text-[13px] text-[#333] font-medium leading-tight" contentEditable suppressContentEditableWarning>{value}</div>
+        <div className="text-[14px] font-bold text-[#00174f] tracking-wide leading-none mb-0.5">{label}</div>
+        <div className="text-[15px] text-[#333] font-medium leading-tight" contentEditable suppressContentEditableWarning>{value}</div>
       </div>
     </div>
   );
@@ -168,15 +168,15 @@ function SectionBlock({ title, items }: { title: string, items: any }) {
 
   return (
     <div className="mb-2 w-full break-inside-avoid">
-      <h3 className="text-[#e28723] font-bold text-[14px] uppercase tracking-wider mb-2" contentEditable suppressContentEditableWarning>
+      <h3 className="text-[#e28723] font-bold text-[16px] uppercase tracking-wider mb-2" contentEditable suppressContentEditableWarning>
         {title}
       </h3>
       <ul className="list-disc pl-4 space-y-1">
         {list.map((item: any, i: number) => {
           const textItem = typeof item === 'object' ? JSON.stringify(item) : String(item);
           return (
-          <li key={i} className="flex items-start text-[13px] text-[#333] font-medium leading-snug">
-            <span className="text-[#e28723] mr-2 text-[18px] leading-[14px] mt-0.5">•</span>
+          <li key={i} className="flex items-start text-[15px] text-[#333] font-medium leading-snug">
+            <span className="text-[#e28723] mr-2 text-[19px] leading-[14px] mt-0.5">•</span>
             <span contentEditable suppressContentEditableWarning className="flex-1 outline-none focus:bg-yellow-50">{textItem}</span>
           </li>
           );

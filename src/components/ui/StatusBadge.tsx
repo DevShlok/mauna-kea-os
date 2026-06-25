@@ -39,7 +39,7 @@ export function StatusBadge({ status, type = 'stage' }: StatusBadgeProps) {
 
   return (
     <span
-      className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${colorClass}`}
+      className={`inline-block px-2 py-0.5 rounded-full text-[13px] font-bold uppercase tracking-wider ${colorClass}`}
     >
       {label}
     </span>

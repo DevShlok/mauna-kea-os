@@ -247,7 +247,7 @@ export async function addFollowUpAction(data: any) {
   return { id, candId };
 }
 
-export async function addPlatformUserAction(data: { name: string; email: string; role: string }) {
+export async function addPlatformUserAction(data: { name: string; email: string; role: string; linkedClientId?: string; linkedCandidateId?: string }) {
   revalidatePath("/dashboard", "layout");
   const id = "U-" + Math.floor(Math.random() * 10000);
   await db.insert(platformUsers).values({
@@ -257,9 +257,62 @@ export async function addPlatformUserAction(data: { name: string; email: string;
     role: data.role,
     status: "Active",
     initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+    linkedClientId: data.linkedClientId || null,
+    linkedCandidateId: data.linkedCandidateId || null,
+    lastActive: new Date(),
   });
-  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard/admin/users");
+  revalidatePath("/dashboard/admin/users");
   return id;
+}
+
+export async function updatePlatformUserAction(id: string, data: { name: string; email: string; role: string; linkedClientId?: string; linkedCandidateId?: string }) {
+  revalidatePath("/dashboard", "layout");
+  await db.update(platformUsers).set({
+    name: data.name,
+    email: data.email,
+    role: data.role,
+    linkedClientId: data.linkedClientId || null,
+    linkedCandidateId: data.linkedCandidateId || null,
+  }).where(eq(platformUsers.id, id));
+  revalidatePath("/dashboard/admin/users");
+}
+
+export async function deletePlatformUserAction(id: string) {
+  revalidatePath("/dashboard", "layout");
+  await db.delete(platformUsers).where(eq(platformUsers.id, id));
+  revalidatePath("/dashboard/admin/users");
+}
+
+export async function autoRegisterCandidateAction(data: { name: string; email: string }) {
+  // 1. Create a candidate record
+  const candId = "C-" + Date.now().toString();
+  await db.insert(candidates).values({
+    id: candId,
+    name: data.name,
+    email: data.email,
+    initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+  });
+
+  // 2. Create a platform_user record linked to the candidate
+  const userId = "U-" + Math.floor(Math.random() * 10000);
+  await db.insert(platformUsers).values({
+    id: userId,
+    name: data.name,
+    email: data.email,
+    role: "candidate",
+    status: "Active",
+    initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+    linkedCandidateId: candId,
+    lastActive: new Date(),
+  });
+
+  revalidatePath("/dashboard", "layout");
+  return { userId, candId };
+}
+
+export async function updateLastActiveAction(userId: string) {
+  await db.update(platformUsers).set({ lastActive: new Date() }).where(eq(platformUsers.id, userId));
 }
 
 export async function addReferenceAction(data: any) {
@@ -359,11 +412,7 @@ export async function deleteMandateAction(id: number) {
   revalidatePath('/dashboard/mandates');
 }
 
-export async function deletePlatformUserAction(id: string) {
-  revalidatePath("/dashboard/settings");
-  await db.delete(platformUsers).where(eq(platformUsers.id, id));
-  return true;
-}
+
 
 // ─── CLIENTS ACTIONS ────────────────────────────────────────
 

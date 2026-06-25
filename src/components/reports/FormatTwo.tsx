@@ -76,7 +76,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         if (f2.famous_for && f2.famous_for.length > 0) {
           return (
             <div>
-              <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+              <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
                 What is {cand.name.split(' ')[0]} famous for
               </h3>
               <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
@@ -90,7 +90,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         if (!hasInterviewer && !hasSuperior && !hasPeer && !hasTeam) return null;
         return (
           <div>
-            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
               What is {cand.name.split(' ')[0]} famous for
             </h3>
             <div className="space-y-2 ml-2">
@@ -125,7 +125,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         
         return (
           <div>
-            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
               Career aspiration
             </h3>
             <p contentEditable suppressContentEditableWarning>
@@ -137,7 +137,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         const exps = f2.relevant_experience || experienceList;
         return (
           <div>
-            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
               Relevant Experience
             </h3>
             <div className="space-y-2 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
@@ -146,7 +146,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
                   <strong>{e.companyName} {e.duration ? `(${e.duration})` : ''}</strong>
                   {e.position ? ` - ${e.position}` : ''}
                   {e.highlights && e.highlights.map((hl: string, j: number) => (
-                    <div key={j} className="text-[13px] text-gray-700 mt-1 ml-2">• {hl}</div>
+                    <div key={j} className="text-[15px] text-gray-700 mt-1 ml-2">• {hl}</div>
                   ))}
                 </li>
               )) : (
@@ -160,7 +160,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
       case 'motivation':
         return (
           <div>
-            <h3 className={`text-[17px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
               Motivation for the role
             </h3>
             <p contentEditable suppressContentEditableWarning>
@@ -172,7 +172,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         const strengths = f2.key_strengths || rp["Key Strengths"] || [];
         return (
           <div>
-            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
               Key Strengths
             </h3>
             <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
@@ -186,7 +186,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         const areas = f2.areas_to_probe || rp["Areas to Probe"] || [];
         return (
           <div>
-            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
               Areas to Probe
             </h3>
             <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
@@ -200,7 +200,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         const comp = f2.compensation || { current: rp["CTC"] || cand.ctc || "Not Disclosed", expected: rp["Expected CTC"] || cand.expectedCtc || "Not Disclosed" };
         return (
           <div>
-            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
               Compensation
             </h3>
             <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
@@ -212,10 +212,10 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
       case 'recommendation':
         return (
           <div>
-            <h3 className={`text-[16px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
               Recommendation
             </h3>
-            <p contentEditable suppressContentEditableWarning className="text-[13px] leading-relaxed">
+            <p contentEditable suppressContentEditableWarning className="text-[15px] leading-relaxed">
               {f2.recommendation || rp["Recommendation"] || rp["MK Recommendation"] || ""}
             </p>
           </div>
@@ -321,12 +321,12 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
             <button 
               onClick={fetchLinkedIn}
               disabled={isScraping}
-              className="mt-3 print:hidden bg-[#133255] hover:bg-[#133255] text-white text-[10px] font-bold py-1 px-3 rounded-full flex items-center justify-center shadow-sm"
+              className="mt-3 print:hidden bg-[#133255] hover:bg-[#133255] text-white text-[12px] font-bold py-1 px-3 rounded-full flex items-center justify-center shadow-sm"
             >
               {isScraping ? "Scraping..." : "Fetch LinkedIn"}
             </button>
             
-            <h2 className={`text-[20px] font-bold mt-4 text-center ${headerColor}`} contentEditable suppressContentEditableWarning>
+            <h2 className={`text-[21px] font-bold mt-4 text-center ${headerColor}`} contentEditable suppressContentEditableWarning>
               {cand.name}
             </h2>
           </div>
@@ -336,7 +336,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
             <div className="absolute left-[39%] top-6 bottom-6 w-[2px] bg-blue-100 z-0"></div>
             <div className="flex flex-col gap-4 z-10 relative">
               {experienceList.map((exp, i) => (
-                <div key={i} className="flex flex-row items-center justify-between text-[11px]">
+                <div key={i} className="flex flex-row items-center justify-between text-[13px]">
                   <div className="w-[35%] flex items-center gap-3">
                     <img 
                       src={`https://logo.clearbit.com/${exp.domain}`} 
@@ -369,7 +369,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         </div>
 
         {/* Content Blocks */}
-        <div className="mt-6 text-[14px] leading-relaxed text-justify space-y-5">
+        <div className="mt-6 text-[16px] leading-relaxed text-justify space-y-5">
           {page1Blocks.map((blockId, index) => {
             const content = renderBlock(blockId);
             if (!content) return null;
@@ -413,7 +413,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           </h1>
         </div>
         <div className="mb-3">
-          <h2 className={`text-[20px] font-bold ${headerColor}`}>Evaluation against key criterion</h2>
+          <h2 className={`text-[21px] font-bold ${headerColor}`}>Evaluation against key criterion</h2>
         </div>
 
         {/* Framework Evaluation Table */}
@@ -421,10 +421,10 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           {framework ? (
             framework.categories.map((cat: any, i: number) => (
               <div key={cat.id} className={i !== 0 ? "mt-4" : ""}>
-                <h3 className="font-bold text-[16px] text-gray-900 mb-2">
+                <h3 className="font-bold text-[17px] text-gray-900 mb-2">
                   {i + 1}. {cat.name}
                 </h3>
-                <div className="ml-6 space-y-2 text-[14px]">
+                <div className="ml-6 space-y-2 text-[16px]">
                   {cat.criteria.map((c: any, j: number) => {
                     // Calculate left percentage based on 0-10 score (default 5 if not set)
                     const score = scores?.[c.id] !== undefined ? scores[c.id] : 5;
@@ -436,7 +436,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
                         <div className="w-[55%]">
                           {letter}. {c.name}
                         </div>
-                        <div className="w-[45%] flex items-center justify-between text-[11px] text-gray-500 font-sans tracking-wide">
+                        <div className="w-[45%] flex items-center justify-between text-[13px] text-gray-500 font-sans tracking-wide">
                           <span className="mr-3">Low</span>
                           <div className="flex-grow relative h-[1px] bg-gray-400">
                             <div 
@@ -459,7 +459,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         </div>
 
         {/* Remaining Content Blocks */}
-        <div className="text-[13px] leading-snug text-justify space-y-3">
+        <div className="text-[15px] leading-snug text-justify space-y-3">
           {page2Blocks.map((blockId, index) => {
             const content = renderBlock(blockId);
             if (!content) return null;
