@@ -7,12 +7,21 @@ import { UserButton } from "@clerk/nextjs";
 export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
   const pathname = usePathname();
 
-  // Simple title mapping
   let title = "Dashboard";
   let subtitle = "Welcome back";
-  if (pathname?.includes("mandates")) { title = "Mandates"; subtitle = "Active search mandates"; }
-  if (pathname?.includes("float-list")) { title = "Float List"; subtitle = "Talent pipeline dashboard"; }
-  if (pathname?.includes("workbench")) { title = "AI Workbench"; subtitle = "Generate assessment report"; }
+
+  if (pathname?.startsWith("/dashboard/clients/new")) { title = "Clients"; subtitle = "Add Client"; }
+  else if (pathname?.startsWith("/dashboard/clients")) { title = "Clients"; subtitle = "Client Database"; }
+  else if (pathname?.startsWith("/dashboard/mandates/new")) { title = "Clients"; subtitle = "Add Mandate"; }
+  else if (pathname?.startsWith("/dashboard/mandates")) { title = "Clients"; subtitle = "Mandates"; }
+  else if (pathname?.startsWith("/dashboard/candidates/new")) { title = "Candidates"; subtitle = "Add Candidate"; }
+  else if (pathname?.startsWith("/dashboard/candidates")) { title = "Candidates"; subtitle = "Candidate Database"; }
+  else if (pathname?.startsWith("/dashboard/float-list/submissions")) { title = "Candidates"; subtitle = "Submissions"; }
+  else if (pathname?.startsWith("/dashboard/float-list")) { title = "Candidates"; subtitle = "Float List"; }
+  else if (pathname?.startsWith("/dashboard/workbench")) { title = "Productivity Tools"; subtitle = "AI Workbench"; }
+  else if (pathname?.startsWith("/dashboard/frameworks")) { title = "Productivity Tools"; subtitle = "Frameworks"; }
+  else if (pathname?.startsWith("/dashboard/admin/users/new")) { title = "Admin"; subtitle = "Add a User"; }
+  else if (pathname?.startsWith("/dashboard/admin/users")) { title = "Admin"; subtitle = "Users"; }
 
   return (
     <div className="h-[56px] bg-white border-b border-[#D4E0F0] flex items-center px-6 gap-4 shrink-0 shadow-sm">
