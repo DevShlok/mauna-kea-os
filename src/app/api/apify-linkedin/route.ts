@@ -30,8 +30,6 @@ export async function POST(req: Request) {
       if (items[0].errorMessage) {
         return NextResponse.json({ error: items[0].errorMessage }, { status: 403 });
       }
-      console.log("APIFY RAW DATA KEYS:", Object.keys(items[0]));
-      console.log("APIFY RAW DATA PREVIEW:", JSON.stringify(items[0]).substring(0, 500));
       return NextResponse.json({ data: items[0] });
     } else {
       return NextResponse.json({ error: "No data found for this URL" }, { status: 404 });

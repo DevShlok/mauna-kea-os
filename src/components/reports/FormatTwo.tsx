@@ -257,8 +257,6 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
       
       if (data.error) throw new Error(data.error);
       
-      console.log("APIFY RAW DATA:", data.data);
-
       const exp = data.data?.experiences || data.data?.experience || [];
       if (exp.length > 0) {
         const parsedExp = exp.slice(0, 6).map((e: any) => ({
