@@ -104,7 +104,7 @@ const DualRangeSlider = ({ min, max, step, value, onChange }: any) => {
   );
 };
 
-export default function CandidatesClient({ candidates, mandates }: { candidates: Candidate[], mandates: any[] }) {
+export default function CandidatesClient({ candidates, mandates }: { candidates: Omit<Candidate, "cvText" | "profilePic">[], mandates: any[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isBulkMode = searchParams.get("mode") === "float";
