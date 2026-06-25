@@ -274,7 +274,7 @@ export default function FlCandidateClient({ candidate, mandates = [] }: { candid
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] mb-6 flex gap-1 cursor-pointer">
         <Link href="/dashboard" className="hover:text-[#111]">Home</Link> / 
-        <Link href="/dashboard/candidates" className="hover:text-[#111]">Candidate DB</Link> / 
+        <Link href="/dashboard/candidates" className="hover:text-[#111]">Candidate Database</Link> / 
         <span className="text-[#111]">{candidate.name}</span>
       </div>
 

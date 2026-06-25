@@ -65,7 +65,7 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
       <div className="flex justify-between items-center mb-8">
         <div>
           <div className="text-[12px] text-gray-500 mb-1">Home / Candidates</div>
-          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">Candidate Database</h1>
+          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">Float Database</h1>
         </div>
       </div>
       

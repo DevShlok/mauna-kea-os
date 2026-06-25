@@ -577,8 +577,8 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <div className="text-[12px] text-gray-500 mb-1">Home / Master Database</div>
-          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">Candidate DB</h1>
+          <div className="text-[12px] text-gray-500 mb-1">Home / Candidate Database</div>
+          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">Candidate Database</h1>
         </div>
         <div className="flex gap-3 items-center">
           {isImporting && <span className="text-sm text-gray-500 font-bold animate-pulse">Processing...</span>}

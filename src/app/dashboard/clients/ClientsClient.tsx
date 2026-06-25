@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Client, Mandate } from "@/db/schema";
 import { Search } from "lucide-react";
-import { createClientAction } from "@/app/actions";
+import { createClientAction, updateClientAction } from "@/app/actions";
 
 export default function ClientsClient({ clients, mandates }: { clients: Client[], mandates: Mandate[] }) {
   const router = useRouter();
@@ -13,11 +13,16 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
   const [verticalFilter, setVerticalFilter] = useState("All verticals");
   const [statusFilter, setStatusFilter] = useState("All status");
 
+  const [localClients, setLocalClients] = useState(clients);
+  useEffect(() => {
+    setLocalClients(clients);
+  }, [clients]);
+
   const [isAdding, setIsAdding] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({ name: "", accountId: "", vertical: "", owner: "", status: "Active" });
 
-  const filteredClients = clients.filter(c => {
+  const filteredClients = localClients.filter(c => {
     if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !(c.vertical && c.vertical.toLowerCase().includes(search.toLowerCase()))) return false;
     if (verticalFilter !== "All verticals" && c.vertical !== verticalFilter) return false;
     if (statusFilter !== "All status" && c.status !== statusFilter) return false;
@@ -26,6 +31,12 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
 
   const getLiveMandatesCount = (clientName: string) => {
     return mandates.filter(m => m.company === clientName && m.status !== 'Closed' && m.status !== 'Lost').length;
+  };
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    setLocalClients(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c));
+    await updateClientAction(id, { status: newStatus });
+    router.refresh();
   };
 
   const handleAddSubmit = async (e: React.FormEvent) => {
@@ -43,7 +54,7 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
         <div className="text-[12px] text-gray-500 mb-1">Home / Clients</div>
-        <h1 className="text-3xl font-serif font-bold text-[#133255] mb-8 tracking-tight">Client database</h1>
+        <h1 className="text-3xl font-serif font-bold text-[#133255] mb-8 tracking-tight">Client Database</h1>
 
         {/* Action Bar */}
         <div className="flex items-center gap-4 mb-6">
@@ -107,11 +118,20 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
                   <td className="px-6 py-4 text-[13px] text-gray-600">{c.vertical || "-"}</td>
                   <td className="px-6 py-4 text-[13px] font-semibold text-gray-900">{getLiveMandatesCount(c.name)}</td>
                   <td className="px-6 py-4 text-[13px] text-gray-600">{c.owner || "-"}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-[11px] font-bold rounded-full flex items-center gap-1.5 w-fit ${c.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${c.status === 'Active' ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
-                      {c.status}
-                    </span>
+                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                    <select
+                      value={c.status || "Active"}
+                      onChange={(e) => handleStatusChange(c.id, e.target.value)}
+                      className={`px-2 py-1 text-[11px] font-bold rounded outline-none border cursor-pointer ${
+                        c.status === 'Active' ? 'bg-green-100 text-green-700 border-green-200' :
+                        c.status === 'Prospect' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                        'bg-yellow-100 text-yellow-700 border-yellow-200'
+                      }`}
+                    >
+                      <option value="Active" className="bg-white text-gray-900">Active</option>
+                      <option value="Prospect" className="bg-white text-gray-900">Prospect</option>
+                      <option value="Inactive" className="bg-white text-gray-900">Inactive</option>
+                    </select>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
