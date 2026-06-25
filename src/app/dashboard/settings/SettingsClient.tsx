@@ -16,7 +16,7 @@ export default function SettingsClient({ initialUsers }: { initialUsers: any[] }
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Platform Settings</h1>
       <div className="flex gap-1 mb-6 border-b border-gray-200">
         {[["users","User Management"],["master","Master Data"]].map(([t, label]) => (
-          <button key={t} onClick={() => setTab(t)} className={"px-4 py-2.5 text-sm font-bold border-b-2 transition-colors " + (tab === t ? "border-blue-900 text-blue-900" : "border-transparent text-gray-400 hover:text-gray-700")}>
+          <button key={t} onClick={() => setTab(t)} className={"px-4 py-2.5 text-sm font-bold border-b-2 transition-colors " + (tab === t ? "border-[#133255] text-[#133255]" : "border-transparent text-gray-400 hover:text-gray-700")}>
             {label}
           </button>
         ))}
@@ -25,7 +25,7 @@ export default function SettingsClient({ initialUsers }: { initialUsers: any[] }
       {tab === "users" && (
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
           <div className="p-4 border-b border-gray-100 flex justify-end">
-            <button onClick={() => setIsAdding(true)} className="px-4 py-2 bg-yellow-500 text-blue-900 rounded text-xs font-bold hover:bg-yellow-400">+ Add User</button>
+            <button onClick={() => setIsAdding(true)} className="px-4 py-2 bg-yellow-500 text-[#133255] rounded text-xs font-bold hover:bg-yellow-400">+ Add User</button>
           </div>
           <table className="w-full text-sm">
             <thead><tr className="bg-gray-50 border-b-2 border-gray-200">
@@ -41,13 +41,13 @@ export default function SettingsClient({ initialUsers }: { initialUsers: any[] }
                 <tr key={u.id} className="border-b border-gray-50 hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded bg-blue-900 text-white flex items-center justify-center text-xs font-bold">{u.initials}</div>
+                      <div className="w-8 h-8 rounded bg-[#133255] text-white flex items-center justify-center text-xs font-bold">{u.initials}</div>
                       <span className="font-semibold text-gray-800">{u.name}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-gray-500">{u.email}</td>
                   <td className="px-4 py-3">
-                    <span className={"px-2 py-0.5 rounded-full text-xs font-bold capitalize " + (u.role === "admin" ? "bg-red-100 text-red-800" : u.role === "management" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800")}>{u.role}</span>
+                    <span className={"px-2 py-0.5 rounded-full text-xs font-bold capitalize " + (u.role === "admin" ? "bg-red-100 text-red-800" : u.role === "management" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-[#133255]")}>{u.role}</span>
                   </td>
                   <td className="px-4 py-3"><span className="px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-xs font-bold">{u.status}</span></td>
                   <td className="px-4 py-3 text-gray-400 text-xs">{u.lastLogin}</td>
@@ -78,8 +78,8 @@ export default function SettingsClient({ initialUsers }: { initialUsers: any[] }
                 ))}
               </div>
               <div className="flex gap-2">
-                <input type="text" placeholder="Add new item..." className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-xs outline-none focus:border-blue-900"/>
-                <button className="px-3 py-1.5 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800">Add</button>
+                <input type="text" placeholder="Add new item..." className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-xs outline-none focus:border-[#133255]"/>
+                <button className="px-3 py-1.5 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Add</button>
               </div>
             </div>
           ))}
@@ -113,7 +113,7 @@ export default function SettingsClient({ initialUsers }: { initialUsers: any[] }
             }} className="p-5 flex flex-col gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-600 mb-1">Full Name *</label>
-                <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-blue-900" />
+                <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]" />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-600 mb-1">Email *</label>
@@ -129,7 +129,7 @@ export default function SettingsClient({ initialUsers }: { initialUsers: any[] }
               </div>
               <div className="flex justify-end gap-2 mt-4">
                 <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800">Add User</button>
+                <button type="submit" className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Add User</button>
               </div>
             </form>
           </div>

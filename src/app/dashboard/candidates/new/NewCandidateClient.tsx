@@ -257,29 +257,29 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
         {/* ××××××××××××××××××××××××××××××××××××××××××× */}
         {/* PRIMARY DETAILS                             */}
         {/* ××××××××××××××××××××××××××××××××××××××××××× */}
-        <div className="bg-white border-2 border-[#123D8D] rounded-[10px] overflow-hidden shadow-sm">
-          <div className="bg-[#123D8D] px-5 py-3 text-[12px] font-bold uppercase tracking-wide text-white border-b border-[#0d2f6e] flex items-center gap-2">
+        <div className="bg-white border-2 border-[#133255] rounded-[10px] overflow-hidden shadow-sm">
+          <div className="bg-[#133255] px-5 py-3 text-[12px] font-bold uppercase tracking-wide text-white border-b border-[#133255] flex items-center gap-2">
             <span className="text-red-300">●</span> Primary Details
           </div>
           <div className="p-5">
             <div className="grid grid-cols-2 gap-5 mb-5">
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Candidate Name</label>
-                <input type="text" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="Full Name" />
+                <input type="text" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Full Name" />
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">LinkedIn Profile URL</label>
-                <input type="url" value={form.linkedin} onChange={e=>setForm({...form, linkedin:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="https://linkedin.com/in/..." />
+                <input type="url" value={form.linkedin} onChange={e=>setForm({...form, linkedin:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="https://linkedin.com/in/..." />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-5">
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Target Company to Float</label>
-                <input type="text" value={form.targetCompany} onChange={e=>setForm({...form, targetCompany:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="e.g. HDFC Bank" />
+                <input type="text" value={form.targetCompany} onChange={e=>setForm({...form, targetCompany:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. HDFC Bank" />
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">LinkedIn Profile PDF</label>
-                <label className="border-2 border-dashed border-[#D4E0F0] rounded-[8px] p-4 text-center cursor-pointer hover:border-[#123D8D] hover:bg-[#DCE5F4] bg-[#f4f7fd] transition-all block relative">
+                <label className="border-2 border-dashed border-[#D4E0F0] rounded-[8px] p-4 text-center cursor-pointer hover:border-[#133255] hover:bg-[#DCE5F4] bg-[#f4f7fd] transition-all block relative">
                   <input type="file" accept="application/pdf" className="hidden" onChange={e => setLinkedinPdfFile(e.target.files?.[0] || null)} />
                   <div className="text-[13px] text-[#6b7a99]">{linkedinPdfFile ? '📘 Change PDF' : '📘 Click to upload LinkedIn Profile'}</div>
                   {linkedinPdfFile && <div className="text-[13px] font-bold text-[#111] mt-1 overflow-hidden text-ellipsis whitespace-nowrap">{linkedinPdfFile.name}</div>}
@@ -317,7 +317,7 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
         <div className="bg-white border border-[#D4E0F0] rounded-[10px] overflow-hidden shadow-sm">
           <div 
             onClick={() => setShowAdditional(!showAdditional)}
-            className="bg-[#f4f7fd] px-5 py-3 text-[12px] font-bold uppercase tracking-wide text-[#123D8D] border-b border-[#D4E0F0] flex items-center justify-between cursor-pointer hover:bg-[#e8eef8] transition-colors select-none"
+            className="bg-[#f4f7fd] px-5 py-3 text-[12px] font-bold uppercase tracking-wide text-[#133255] border-b border-[#D4E0F0] flex items-center justify-between cursor-pointer hover:bg-[#e8eef8] transition-colors select-none"
           >
             <span className="flex items-center gap-2">
               <span className={`transition-transform duration-200 inline-block ${showAdditional ? 'rotate-90' : 'rotate-0'}`}>▶</span>
@@ -332,15 +332,15 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
             <div className="grid grid-cols-3 gap-5 mb-6">
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Mobile Number</label>
-                <input type="text" value={form.mobile} onChange={e=>setForm({...form, mobile:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="+91 XXXXX XXXXX" />
+                <input type="text" value={form.mobile} onChange={e=>setForm({...form, mobile:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="+91 XXXXX XXXXX" />
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Email Address</label>
-                <input type="email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="email@domain.com" />
+                <input type="email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="email@domain.com" />
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Location</label>
-                <select value={form.location} onChange={e=>setForm({...form, location:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]">
+                <select value={form.location} onChange={e=>setForm({...form, location:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]">
                   <option value="">Select Location</option>
                   {locations.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
@@ -354,19 +354,19 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
             <div className="grid grid-cols-3 gap-5 mb-6">
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current Company</label>
-                <input type="text" value={form.company} onChange={e=>setForm({...form, company:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="Company Name" />
+                <input type="text" value={form.company} onChange={e=>setForm({...form, company:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Company Name" />
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current Designation</label>
-                <input type="text" value={form.designation} onChange={e=>setForm({...form, designation:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="Title" />
+                <input type="text" value={form.designation} onChange={e=>setForm({...form, designation:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Title" />
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Total Experience (yrs)</label>
-                <input type="number" value={form.exp} onChange={e=>setForm({...form, exp:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" min="0" />
+                <input type="number" value={form.exp} onChange={e=>setForm({...form, exp:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" min="0" />
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Tenure in current company (yrs)</label>
-                <input type="number" value={form.tenure} onChange={e=>setForm({...form, tenure:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" min="0" step="0.1" />
+                <input type="number" value={form.tenure} onChange={e=>setForm({...form, tenure:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" min="0" step="0.1" />
               </div>
             </div>
 
@@ -378,31 +378,31 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current CTC (Total)</label>
                 <div className="flex gap-2">
-                  <select value={form.currency} onChange={e=>setForm({...form, currency:e.target.value})} className="w-20 h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-2 text-[14px] outline-none bg-white focus:border-[#123D8D]">
+                  <select value={form.currency} onChange={e=>setForm({...form, currency:e.target.value})} className="w-20 h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-2 text-[14px] outline-none bg-white focus:border-[#133255]">
                     {currencies.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
-                  <input type="number" value={form.ctc} onChange={e=>setForm({...form, ctc:e.target.value})} className="flex-1 h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="Amount" />
+                  <input type="number" value={form.ctc} onChange={e=>setForm({...form, ctc:e.target.value})} className="flex-1 h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
                 </div>
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Fixed CTC</label>
-                <input type="number" value={form.fixedCtc} onChange={e=>setForm({...form, fixedCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="Amount" />
+                <input type="number" value={form.fixedCtc} onChange={e=>setForm({...form, fixedCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Variable CTC</label>
-                <input type="number" value={form.variableCtc} onChange={e=>setForm({...form, variableCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="Amount" />
+                <input type="number" value={form.variableCtc} onChange={e=>setForm({...form, variableCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Expected CTC</label>
-                <input type="number" value={form.expected} onChange={e=>setForm({...form, expected:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" placeholder="Amount" />
+                <input type="number" value={form.expected} onChange={e=>setForm({...form, expected:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Notice Period (days)</label>
-                <input type="number" value={form.notice} onChange={e=>setForm({...form, notice:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#123D8D]" min="0" max="365" />
+                <input type="number" value={form.notice} onChange={e=>setForm({...form, notice:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" min="0" max="365" />
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Activity Status</label>
-                <select value={form.status} onChange={e=>setForm({...form, status:e.target.value})} className={`w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] font-bold outline-none bg-white focus:border-[#123D8D] ${statusColor}`}>
+                <select value={form.status} onChange={e=>setForm({...form, status:e.target.value})} className={`w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] font-bold outline-none bg-white focus:border-[#133255] ${statusColor}`}>
                   <option className="text-green-600">Active</option>
                   <option className="text-yellow-600">Passive</option>
                   <option className="text-red-600">Not Interested</option>
@@ -415,10 +415,10 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
               <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Qualifications</div>
             </div>
             <div className="grid grid-cols-4 gap-3 mb-4">
-              <input type="text" value={newQual.degree} onChange={e=>setNewQual({...newQual, degree: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" placeholder="Degree (e.g. MBA)" />
-              <input type="text" value={newQual.institute} onChange={e=>setNewQual({...newQual, institute: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" placeholder="Institute (e.g. ISB Hyderabad)" />
-              <input type="text" value={newQual.year} onChange={e=>setNewQual({...newQual, year: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#123D8D]" placeholder="Year (e.g. 2012)" />
-              <button onClick={handleAddQual} type="button" className="h-9 px-3 rounded-md text-[13px] font-semibold text-[#123D8D] bg-[#DCE5F4] hover:bg-[#c5d3ec] transition-all border border-[#bacce6]">Add Qualification</button>
+              <input type="text" value={newQual.degree} onChange={e=>setNewQual({...newQual, degree: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]" placeholder="Degree (e.g. MBA)" />
+              <input type="text" value={newQual.institute} onChange={e=>setNewQual({...newQual, institute: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]" placeholder="Institute (e.g. ISB Hyderabad)" />
+              <input type="text" value={newQual.year} onChange={e=>setNewQual({...newQual, year: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[13px] outline-none bg-white focus:border-[#133255]" placeholder="Year (e.g. 2012)" />
+              <button onClick={handleAddQual} type="button" className="h-9 px-3 rounded-md text-[13px] font-semibold text-[#133255] bg-[#DCE5F4] hover:bg-[#c5d3ec] transition-all border border-[#bacce6]">Add Qualification</button>
             </div>
             <div className="flex flex-col gap-2 mb-6">
               {quals.map((q, idx) => (
@@ -437,9 +437,9 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
               <div className="text-[11px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Prior Experience</div>
             </div>
             <p className="text-[12px] text-[#6b7a99] mb-2.5">Add each experience as &quot;Title - Company&quot;</p>
-            <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#123D8D] transition-colors mb-6">
+            <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#133255] transition-colors mb-6">
               {expTags.map(t => (
-                <span key={t} className="px-2.5 py-1 bg-[#DCE5F4] text-[#123D8D] rounded-[12px] text-[12px] font-semibold flex items-center gap-1.5">
+                <span key={t} className="px-2.5 py-1 bg-[#DCE5F4] text-[#133255] rounded-[12px] text-[12px] font-semibold flex items-center gap-1.5">
                   {t} <span className="cursor-pointer font-bold opacity-60 hover:opacity-100" onClick={() => removeTag(t, setExpTags, expTags)}>×</span>
                 </span>
               ))}
@@ -453,7 +453,7 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
             <div className="grid grid-cols-2 gap-5 mb-6">
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Dream Roles</label>
-                <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#123D8D] transition-colors">
+                <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#133255] transition-colors">
                   {dreamRoles.map(t => (
                     <span key={t} className="px-2.5 py-1 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-[12px] text-[12px] font-semibold flex items-center gap-1.5">
                       {t} <span className="cursor-pointer font-bold opacity-60 hover:opacity-100 hover:text-red-500" onClick={() => removeTag(t, setDreamRoles, dreamRoles)}>×</span>
@@ -464,7 +464,7 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Dream Companies</label>
-                <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#123D8D] transition-colors">
+                <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#133255] transition-colors">
                   {dreamCompanies.map(t => (
                     <span key={t} className="px-2.5 py-1 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-[12px] text-[12px] font-semibold flex items-center gap-1.5">
                       {t} <span className="cursor-pointer font-bold opacity-60 hover:opacity-100 hover:text-red-500" onClick={() => removeTag(t, setDreamCompanies, dreamCompanies)}>×</span>
@@ -482,7 +482,7 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
             <div className="grid grid-cols-2 gap-8 mb-6">
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Upload CV</label>
-                <label className="border-2 border-dashed border-[#D4E0F0] rounded-[8px] p-6 text-center cursor-pointer hover:border-[#123D8D] hover:bg-[#DCE5F4] bg-[#f4f7fd] transition-all block relative">
+                <label className="border-2 border-dashed border-[#D4E0F0] rounded-[8px] p-6 text-center cursor-pointer hover:border-[#133255] hover:bg-[#DCE5F4] bg-[#f4f7fd] transition-all block relative">
                   <input type="file" accept="application/pdf,.doc,.docx" className="hidden" onChange={e => setCvPdfFile(e.target.files?.[0] || null)} />
                   <div className="text-[28px] opacity-40 mb-2">📄</div>
                   <div className="text-[13px] text-[#6b7a99]">{cvPdfFile ? 'Change CV' : 'Click to upload CV'}</div>
@@ -491,7 +491,7 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
               </div>
               <div>
                 <label className="block text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Additional Notes</label>
-                <textarea rows={5} value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})} className="w-full border-[1.5px] border-[#D4E0F0] rounded-md p-3 text-[14px] outline-none bg-white focus:border-[#123D8D] resize-vertical h-[155px]" placeholder="Any extra information..."></textarea>
+                <textarea rows={5} value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})} className="w-full border-[1.5px] border-[#D4E0F0] rounded-md p-3 text-[14px] outline-none bg-white focus:border-[#133255] resize-vertical h-[155px]" placeholder="Any extra information..."></textarea>
               </div>
             </div>
 
@@ -520,7 +520,7 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
                           <td className="px-4 py-2 border-r border-gray-200 font-medium text-gray-900">{file.fileType}</td>
                           <td className="px-4 py-2 border-r border-gray-200 text-gray-600">{dateStr}</td>
                           <td className="px-4 py-2 border-r border-gray-200">
-                            <a href={file.fileUrl} target="_blank" rel="noreferrer" className="text-[#123D8D] hover:underline hover:text-blue-800 break-all">
+                            <a href={file.fileUrl} target="_blank" rel="noreferrer" className="text-[#133255] hover:underline hover:text-[#133255] break-all">
                               {file.fileName}
                             </a>
                           </td>
@@ -552,7 +552,7 @@ export default function NewCandidateClient({ initialData }: { initialData?: any 
 
       <div className="flex gap-2.5 justify-end py-6">
         <button onClick={() => router.push('/dashboard/candidates')} className="px-5 py-2.5 rounded-md text-[14px] font-semibold text-[#6b7a99] border border-[#D4E0F0] hover:bg-[#f4f7fd] transition-all">Cancel</button>
-        <button disabled={isSaving} onClick={handleSave} className="px-6 py-2.5 rounded-md text-[14px] font-bold bg-[#D8B15B] text-[#0d2f6e] hover:bg-[#e8c97a] transition-all">
+        <button disabled={isSaving} onClick={handleSave} className="px-6 py-2.5 rounded-md text-[14px] font-bold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a] transition-all">
           {isSaving ? "Saving..." : (isEdit ? "Update Candidate" : "Add Candidate")}
         </button>
       </div>

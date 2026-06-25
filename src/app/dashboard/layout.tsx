@@ -23,7 +23,7 @@ export default async function DashboardLayout({
           
           <div className="flex flex-col gap-3">
             <SignOutButton signOutOptions={{ redirectUrl: '/sign-in' }}>
-              <button className="w-full bg-[#123D8D] hover:bg-[#0e3178] text-white font-semibold py-2.5 rounded-md transition-colors text-sm">
+              <button className="w-full bg-[#133255] hover:bg-[#0e3178] text-white font-semibold py-2.5 rounded-md transition-colors text-sm">
                 Sign out and use another account
               </button>
             </SignOutButton>

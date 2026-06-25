@@ -159,9 +159,9 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex items-center gap-2 text-sm text-gray-400 font-semibold mb-6">
-        <Link href="/dashboard" className="hover:text-blue-900">Home</Link>
+        <Link href="/dashboard" className="hover:text-[#133255]">Home</Link>
         <span>/</span>
-        <Link href="/dashboard/mandates" className="hover:text-blue-900">Mandates</Link>
+        <Link href="/dashboard/mandates" className="hover:text-[#133255]">Mandates</Link>
         <span>/</span>
         <span className="text-gray-800">{mandate.company} - {mandate.role}</span>
       </div>
@@ -177,15 +177,15 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
         <div className="flex gap-2">
           <button onClick={handleDeleteMandate} disabled={isDeleting} className="px-4 py-2 border border-red-200 text-red-600 bg-red-50 rounded text-xs font-bold hover:bg-red-100">{isDeleting ? "Deleting..." : "Delete"}</button>
           <button onClick={() => { setEditForm(mandate); setIsEditingMandate(true); }} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Edit</button>
-          <button className="px-4 py-2 bg-yellow-500 text-blue-900 rounded text-xs font-bold hover:bg-yellow-400">Send to Client Portal</button>
-          <button onClick={() => setIsReportModalOpen(true)} className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800">Generate Report</button>
+          <button className="px-4 py-2 bg-yellow-500 text-[#133255] rounded text-xs font-bold hover:bg-yellow-400">Send to Client Portal</button>
+          <button onClick={() => setIsReportModalOpen(true)} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Generate Report</button>
         </div>
       </div>
       <div className="flex h-10 rounded-xl overflow-hidden border border-gray-200 mb-8">
         {PIPELINE_STAGES.map((st, i) => {
           let cls = "bg-white text-gray-400";
-          if (i < currentIdx) cls = "bg-blue-100 text-blue-800 font-bold";
-          if (i === currentIdx) cls = "bg-blue-900 text-white font-bold";
+          if (i < currentIdx) cls = "bg-blue-100 text-[#133255] font-bold";
+          if (i === currentIdx) cls = "bg-[#133255] text-white font-bold";
           return (
             <div key={st} className={"flex-1 flex items-center justify-center text-xs uppercase tracking-wide border-r border-gray-200 last:border-r-0 " + cls}>
               {stageLabel(st)}
@@ -214,7 +214,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
               <div>
                 <div className="text-sm font-semibold text-gray-800">Job Description</div>
                 {mandate.jdUrl
-                  ? <a href={mandate.jdUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-700 underline hover:text-blue-900 mt-1 block">View in Drive ↗</a>
+                  ? <a href={mandate.jdUrl} target="_blank" rel="noreferrer" className="text-xs text-[#133255] underline hover:text-[#133255] mt-1 block">View in Drive ↗</a>
                   : <div className="text-xs text-gray-400">{uploadingDoc === "jd" ? "Uploading..." : "No PDF/Word uploaded"}</div>
                 }
               </div>
@@ -251,7 +251,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
               <div>
                 <div className="text-sm font-semibold text-gray-800">Interview Notes</div>
                 {mandate.interviewNotesText ? <div className="text-xs text-green-600 font-medium">Text saved</div> : <div className="text-xs text-gray-400">No text added</div>}
-                {mandate.interviewNotesUrl && <a href={mandate.interviewNotesUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-700 underline hover:text-blue-900 block mt-1">View in Drive ↗</a>}
+                {mandate.interviewNotesUrl && <a href={mandate.interviewNotesUrl} target="_blank" rel="noreferrer" className="text-xs text-[#133255] underline hover:text-[#133255] block mt-1">View in Drive ↗</a>}
               </div>
               <div className="flex gap-2 items-center">
                 <label className={`px-3 py-1 border rounded text-xs font-bold cursor-pointer transition-colors ${
@@ -291,7 +291,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
               <div>
                 <div className="text-sm font-semibold text-gray-800">Additional Docs</div>
                 {mandate.additionalDocsUrl
-                  ? <a href={mandate.additionalDocsUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-700 underline hover:text-blue-900 mt-1 block">View in Drive ↗</a>
+                  ? <a href={mandate.additionalDocsUrl} target="_blank" rel="noreferrer" className="text-xs text-[#133255] underline hover:text-[#133255] mt-1 block">View in Drive ↗</a>
                   : <div className="text-xs text-gray-400">{uploadingDoc === "docs" ? "Uploading..." : "No PDF/Word uploaded"}</div>
                 }
               </div>
@@ -330,7 +330,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
               value={searchNotes}
               onChange={e => setSearchNotes(e.target.value)}
               onBlur={handleSaveSearchNotes}
-              className="flex-1 min-h-24 p-3 border border-gray-200 rounded text-sm outline-none focus:border-blue-900 resize-none" 
+              className="flex-1 min-h-24 p-3 border border-gray-200 rounded text-sm outline-none focus:border-[#133255] resize-none" 
               placeholder="Add internal notes..."
             />
           </div>
@@ -339,7 +339,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
         <div className="p-5 border-b border-gray-100 flex justify-between items-center">
           <h3 className="font-bold text-gray-900 text-base">Candidate Pipeline</h3>
-          <button onClick={handleAddCandidateClick} className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800">+ Add Candidate</button>
+          <button onClick={handleAddCandidateClick} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">+ Add Candidate</button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -359,7 +359,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                 <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded bg-blue-900 text-white flex items-center justify-center text-xs font-bold shrink-0">{c.initials}</div>
+                      <div className="w-8 h-8 rounded bg-[#133255] text-white flex items-center justify-center text-xs font-bold shrink-0">{c.initials}</div>
                       <div>
                         <div className="font-semibold text-gray-800">{c.name}</div>
                         <div className="text-xs text-gray-400">{c.role} - {c.company}</div>
@@ -378,7 +378,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                   </td>
                   <td className="px-4 py-3">
                     {c.hasReport ? (
-                      <button className="px-3 py-1 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800" onClick={() => router.push("/dashboard/workbench?candId=" + c.externalId + "&mandateId=" + mandate.id)}>View Report</button>
+                      <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={() => router.push("/dashboard/workbench?candId=" + c.externalId + "&mandateId=" + mandate.id)}>View Report</button>
                     ) : <span className="text-gray-300 text-xs">No report</span>}
                   </td>
                   <td className="px-4 py-3">
@@ -406,12 +406,12 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                 required
                 value={textModal.text} 
                 onChange={e => setTextModal({...textModal, text: e.target.value})} 
-                className="flex-1 w-full p-4 border border-gray-200 rounded text-sm outline-none resize-none focus:border-blue-900"
+                className="flex-1 w-full p-4 border border-gray-200 rounded text-sm outline-none resize-none focus:border-[#133255]"
                 placeholder={`Paste your ${textModal.type === "jd" ? "Job Description" : "Interview Notes"} here...`}
               />
               <div className="flex justify-end gap-2 shrink-0">
                 <button type="button" onClick={() => setTextModal({ ...textModal, isOpen: false })} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Cancel</button>
-                <button type="submit" disabled={uploadingDoc !== null} className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800 disabled:opacity-50">
+                <button type="submit" disabled={uploadingDoc !== null} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255] disabled:opacity-50">
                   {uploadingDoc !== null ? "Saving to Drive..." : "Save Text"}
                 </button>
               </div>
@@ -470,7 +470,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
               </div>
               <div className="flex justify-end gap-2 mt-4">
                 <button type="button" onClick={() => setIsEditingMandate(false)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Cancel</button>
-                <button type="submit" disabled={isEditingSubmit} className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800 disabled:opacity-50">
+                <button type="submit" disabled={isEditingSubmit} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255] disabled:opacity-50">
                   {isEditingSubmit ? "Saving..." : "Save Changes"}
                 </button>
               </div>
@@ -527,7 +527,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                     if (selectedReportCands.length === 0) return alert("Select at least one candidate");
                     router.push(`/dashboard/mandates/${mandate.id}/report?format=${reportFormat}&cands=${selectedReportCands.join(",")}`);
                   }}
-                  className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800"
+                  className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]"
                 >
                   Generate
                 </button>

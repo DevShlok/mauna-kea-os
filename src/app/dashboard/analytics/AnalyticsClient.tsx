@@ -59,12 +59,12 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
           <option>Finova Tech</option>
           <option>Capital Group</option>
         </select>
-        <button className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800">Apply</button>
+        <button className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Apply</button>
       </div>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
         {TABS.map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={"px-4 py-2.5 text-sm font-bold border-b-2 transition-colors " + (tab === t ? "border-blue-900 text-blue-900" : "border-transparent text-gray-400 hover:text-gray-700")}>
+          <button key={t} onClick={() => setTab(t)} className={"px-4 py-2.5 text-sm font-bold border-b-2 transition-colors " + (tab === t ? "border-[#133255] text-[#133255]" : "border-transparent text-gray-400 hover:text-gray-700")}>
             {t}
           </button>
         ))}
@@ -79,7 +79,7 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
                 <div key={d.l} className="flex items-center gap-3 mb-2">
                   <div className="w-20 text-xs text-gray-400 text-right shrink-0">{d.l}</div>
                   <div className="flex-1 bg-gray-100 rounded h-6 overflow-hidden">
-                    <div className="bg-blue-900 h-full rounded flex items-center px-2" style={{ width: ((d.n / 12) * 100) + "%" }}>
+                    <div className="bg-[#133255] h-full rounded flex items-center px-2" style={{ width: ((d.n / 12) * 100) + "%" }}>
                       <span className="text-white text-xs font-bold">{d.n}</span>
                     </div>
                   </div>
@@ -91,7 +91,7 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
                 {[{l:"Active Mandates",v:analyticsData.activeMandates},{l:"Placed YTD",v:"8",green:true},{l:"Avg. Days to Offer",v:"67"},{l:"Revenue YTD",v:"1.8Cr",gold:true}].map((s) => (
                   <div key={s.l} className="text-center p-4 bg-gray-50 rounded-xl">
                     <div className="text-xs text-gray-400 font-bold uppercase mb-1">{s.l}</div>
-                    <div className={"text-2xl font-bold " + (s.green ? "text-green-700" : s.gold ? "text-yellow-600" : "text-blue-900")}>
+                    <div className={"text-2xl font-bold " + (s.green ? "text-green-700" : s.gold ? "text-yellow-600" : "text-[#133255]")}>
                       {s.gold ? "₹" : ""}{s.v}
                     </div>
                   </div>
@@ -112,7 +112,7 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
               <tbody>
                 {mandates.map((m: any) => (
                   <tr key={m.id} className="border-b border-gray-50">
-                    <td className="px-4 py-3 font-semibold text-blue-900">{m.company}</td>
+                    <td className="px-4 py-3 font-semibold text-[#133255]">{m.company}</td>
                     <td className="px-4 py-3 text-gray-600">{m.role}</td>
                     <td className="px-4 py-3 text-gray-500">{m.consultant}</td>
                     <td className="px-4 py-3"><StatusBadge status={m.status || ""} /></td>
@@ -135,7 +135,7 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
                 <div className="w-16 text-xs text-gray-400 text-right shrink-0">{d.name.split(" ")[0]}</div>
                 <div className="flex-1 bg-gray-100 rounded h-6 overflow-hidden">
                   <div className="bg-yellow-500 h-full rounded flex items-center px-2" style={{ width: (d.placed * 25) + "%" }}>
-                    <span className="text-blue-900 text-xs font-bold">{d.placed}</span>
+                    <span className="text-[#133255] text-xs font-bold">{d.placed}</span>
                   </div>
                 </div>
               </div>
@@ -184,7 +184,7 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
                 const cls = d > 90 ? "text-red-600 font-bold" : d > 60 ? "text-orange-500 font-bold" : "text-green-700 font-bold";
                 return (
                   <tr key={m.id} className="border-b border-gray-50">
-                    <td className="px-4 py-3 font-semibold text-blue-900">{m.company}</td>
+                    <td className="px-4 py-3 font-semibold text-[#133255]">{m.company}</td>
                     <td className="px-4 py-3 text-gray-600">{m.role}</td>
                     <td className={"px-4 py-3 " + cls}>{d} days</td>
                     <td className="px-4 py-3"><StatusBadge status={m.status || ""} /></td>
@@ -210,8 +210,8 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
               ))}
             </div>
             <div className="flex gap-2 mt-4">
-              <button className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800">Save Report</button>
-              <button className="px-4 py-2 bg-yellow-500 text-blue-900 rounded text-xs font-bold hover:bg-yellow-400">Export</button>
+              <button className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Save Report</button>
+              <button className="px-4 py-2 bg-yellow-500 text-[#133255] rounded text-xs font-bold hover:bg-yellow-400">Export</button>
             </div>
           </div>
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
@@ -227,7 +227,7 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
               <tbody>
                 {mandates.map((m: any) => (
                   <tr key={m.id} className="border-b border-gray-50">
-                    <td className="px-4 py-3 text-blue-900 font-semibold">{m.company}</td>
+                    <td className="px-4 py-3 text-[#133255] font-semibold">{m.company}</td>
                     <td className="px-4 py-3 text-gray-600">{m.role}</td>
                     <td className="px-4 py-3 text-gray-500">{m.ctc}</td>
                     <td className="px-4 py-3 text-gray-500">{m.geography}</td>

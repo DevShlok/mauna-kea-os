@@ -6,7 +6,7 @@ import { addFollowUpAction } from "@/app/actions";
 const STATUS_STYLES: Record<string, string> = {
   today: "bg-orange-100 text-orange-800 border-orange-200",
   overdue: "bg-red-100 text-red-800 border-red-200",
-  upcoming: "bg-blue-100 text-blue-800 border-blue-200",
+  upcoming: "bg-blue-100 text-[#133255] border-blue-200",
 };
 
 export default function FollowUpsClient({ initialFollowUps }: { initialFollowUps: any[] }) {
@@ -28,12 +28,12 @@ export default function FollowUpsClient({ initialFollowUps }: { initialFollowUps
         </div>
         <div className="text-right">
           <div className="text-xs text-gray-400">{f.consultant}</div>
-          <div className={"text-xs font-bold mt-1 " + (f.status === "overdue" ? "text-red-600" : f.status === "today" ? "text-orange-600" : "text-blue-700")}>Due: {f.dueDate}</div>
+          <div className={"text-xs font-bold mt-1 " + (f.status === "overdue" ? "text-red-600" : f.status === "today" ? "text-orange-600" : "text-[#133255]")}>Due: {f.dueDate}</div>
         </div>
       </div>
       <div className="mt-2 text-xs text-gray-600 bg-gray-50 rounded p-2">{f.note}</div>
       <div className="flex gap-2 mt-3">
-        <button className="px-3 py-1 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800" onClick={(e) => { e.stopPropagation(); }}>Mark Done</button>
+        <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={(e) => { e.stopPropagation(); }}>Mark Done</button>
         <button className="px-3 py-1 border border-gray-200 text-gray-500 rounded text-xs font-bold hover:bg-gray-50" onClick={(e) => { e.stopPropagation(); }}>Snooze</button>
         <button className="px-3 py-1 border border-gray-200 text-gray-500 rounded text-xs font-bold hover:bg-gray-50" onClick={(e) => { e.stopPropagation(); router.push("/dashboard/float-list/" + f.candId); }}>View Profile</button>
       </div>
@@ -44,11 +44,11 @@ export default function FollowUpsClient({ initialFollowUps }: { initialFollowUps
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Follow-Ups</h1>
-        <button onClick={() => setIsAdding(true)} className="px-4 py-2 bg-yellow-500 text-blue-900 rounded text-xs font-bold hover:bg-yellow-400">+ Add Follow-Up</button>
+        <button onClick={() => setIsAdding(true)} className="px-4 py-2 bg-yellow-500 text-[#133255] rounded text-xs font-bold hover:bg-yellow-400">+ Add Follow-Up</button>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
-        {[{label:"Overdue",count:overdue.length,cls:"text-red-600"},{label:"Due Today",count:today.length,cls:"text-orange-600"},{label:"Upcoming",count:upcoming.length,cls:"text-blue-700"}].map((s) => (
+        {[{label:"Overdue",count:overdue.length,cls:"text-red-600"},{label:"Due Today",count:today.length,cls:"text-orange-600"},{label:"Upcoming",count:upcoming.length,cls:"text-[#133255]"}].map((s) => (
           <div key={s.label} className="bg-white border border-gray-200 rounded-xl p-5 text-center shadow-sm">
             <div className="text-xs font-bold text-gray-400 uppercase mb-1">{s.label}</div>
             <div className={"text-4xl font-bold " + s.cls}>{s.count}</div>
@@ -73,8 +73,8 @@ export default function FollowUpsClient({ initialFollowUps }: { initialFollowUps
           {today.length === 0 && <div className="text-center text-gray-300 text-sm py-8">All clear!</div>}
         </div>
         <div>
-          <h2 className="text-sm font-bold text-blue-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-blue-600 inline-block"/>
+          <h2 className="text-sm font-bold text-[#133255] uppercase tracking-wider mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#133255] inline-block"/>
             Upcoming ({upcoming.length})
           </h2>
           {upcoming.map((f) => <Card key={f.id} f={f}/>)}
@@ -126,7 +126,7 @@ export default function FollowUpsClient({ initialFollowUps }: { initialFollowUps
               </div>
               <div className="flex justify-end gap-2 mt-2">
                 <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800">Add Follow-Up</button>
+                <button type="submit" className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Add Follow-Up</button>
               </div>
             </form>
           </div>

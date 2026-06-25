@@ -43,17 +43,17 @@ export default function CandidateProfileClient({ mandates }: { mandates: any[] }
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex items-center gap-2 text-sm text-gray-400 font-semibold mb-6">
-        <Link href="/dashboard" className="hover:text-blue-900">Home</Link>
+        <Link href="/dashboard" className="hover:text-[#133255]">Home</Link>
         <span>/</span>
-        <Link href="/dashboard/mandates" className="hover:text-blue-900">Mandates</Link>
+        <Link href="/dashboard/mandates" className="hover:text-[#133255]">Mandates</Link>
         <span>/</span>
-        <Link href={"/dashboard/mandates/" + mandate.id} className="hover:text-blue-900">{mandate.role}</Link>
+        <Link href={"/dashboard/mandates/" + mandate.id} className="hover:text-[#133255]">{mandate.role}</Link>
         <span>/</span>
         <span className="text-gray-800">{candidate.name}</span>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex items-start gap-5 mb-6">
-        <div className="w-16 h-16 rounded-full bg-yellow-500 text-blue-900 flex items-center justify-center text-2xl font-bold shrink-0">
+        <div className="w-16 h-16 rounded-full bg-yellow-500 text-[#133255] flex items-center justify-center text-2xl font-bold shrink-0">
           {candidate.initials}
         </div>
         <div className="flex-1">
@@ -69,7 +69,7 @@ export default function CandidateProfileClient({ mandates }: { mandates: any[] }
         <div className="flex gap-2">
           <button onClick={() => router.back()} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">← Back</button>
           <button onClick={() => alert("Edit candidate details (Coming Soon)")} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Edit</button>
-          <button onClick={() => router.push("/dashboard/workbench?candId=" + candidate.id + "&mandateId=" + mandate.id)} className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800">Open in Workbench</button>
+          <button onClick={() => router.push("/dashboard/workbench?candId=" + candidate.id + "&mandateId=" + mandate.id)} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Open in Workbench</button>
           <button onClick={handleDelete} disabled={isDeleting} className="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded text-xs font-bold hover:bg-red-100">{isDeleting ? 'Deleting...' : 'Delete'}</button>
         </div>
       </div>
@@ -83,10 +83,10 @@ export default function CandidateProfileClient({ mandates }: { mandates: any[] }
                 <div key={cr.name} className="mb-4">
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-700">{cr.name}</span>
-                    <span className="font-bold text-blue-900">{cr.score}%</span>
+                    <span className="font-bold text-[#133255]">{cr.score}%</span>
                   </div>
                   <div className="bg-gray-100 rounded-full h-2 overflow-hidden">
-                    <div className="bg-blue-900 h-full rounded-full transition-all" style={{ width: (cr.score || 0) + "%" }}/>
+                    <div className="bg-[#133255] h-full rounded-full transition-all" style={{ width: (cr.score || 0) + "%" }}/>
                   </div>
                 </div>
               ))}
@@ -105,7 +105,7 @@ export default function CandidateProfileClient({ mandates }: { mandates: any[] }
           <div className="flex flex-col gap-4">
             {[["2022-Present", "HDFC Bank", "Deputy CFO"], ["2018-2022", "Axis Bank", "VP Finance"], ["2014-2018", "Deloitte", "Senior Manager"]].map(([yr, co, rol]) => (
               <div key={yr} className="flex gap-3">
-                <div className="w-1 bg-blue-900 rounded-full shrink-0 mt-1"/>
+                <div className="w-1 bg-[#133255] rounded-full shrink-0 mt-1"/>
                 <div>
                   <div className="font-bold text-sm text-gray-900">{co}</div>
                   <div className="text-xs text-gray-400">{rol} · {yr}</div>
@@ -114,7 +114,7 @@ export default function CandidateProfileClient({ mandates }: { mandates: any[] }
             ))}
           </div>
           <div className="mt-5 pt-5 border-t border-gray-100">
-            <div className="text-sm font-bold text-blue-900 mb-2">MK Recommendation</div>
+            <div className="text-sm font-bold text-[#133255] mb-2">MK Recommendation</div>
             <div className="text-sm text-gray-600 leading-relaxed">
               {candidate.score && candidate.score >= 8
                 ? <><strong className="text-green-700">Strong Hire.</strong> Candidate demonstrates exceptional leadership and strategic acumen aligned with the mandate requirements.</>

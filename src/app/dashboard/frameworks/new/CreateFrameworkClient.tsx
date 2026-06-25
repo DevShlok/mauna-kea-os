@@ -124,14 +124,14 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
     }
   };
 
-  const inp = "w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-blue-900";
+  const inp = "w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]";
   const section = "bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mb-6";
-  const sectionHead = "bg-gray-50 border-b border-gray-200 px-5 py-3 font-bold text-xs uppercase tracking-wider text-blue-900";
+  const sectionHead = "bg-gray-50 border-b border-gray-200 px-5 py-3 font-bold text-xs uppercase tracking-wider text-[#133255]";
 
   return (
     <div className="max-w-3xl mx-auto pb-10">
       <div className="flex items-center gap-2 text-sm text-gray-400 font-semibold mb-6">
-        <Link href="/dashboard/frameworks" className="hover:text-[#123D8D]">Frameworks</Link>
+        <Link href="/dashboard/frameworks" className="hover:text-[#133255]">Frameworks</Link>
         <span>/</span>
         <span className="text-gray-800">{isEdit ? `Edit ${initialData.name}` : "Create New Framework"}</span>
       </div>
@@ -164,7 +164,7 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
                             setMandateIds(mandateIds.filter(id => id !== m.id.toString()));
                           }
                         }}
-                        className="accent-[#123D8D] w-4 h-4"
+                        className="accent-[#133255] w-4 h-4"
                       />
                       <span className="text-gray-800 font-bold">{m.company}</span>
                       <span className="text-gray-500 text-xs border-l border-gray-300 pl-2 ml-1">{m.role}</span>
@@ -181,7 +181,7 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
             const sum = cat.criteria.reduce((a, b) => a + b.weight, 0);
             return (
               <div key={cIdx} className="bg-white border border-gray-200 rounded-[8px] overflow-hidden">
-                <div className="bg-[#123D8D] text-white px-4 py-3 flex justify-between items-center">
+                <div className="bg-[#133255] text-white px-4 py-3 flex justify-between items-center">
                   <div className="flex items-center gap-4 w-1/2">
                     <input 
                       type="text" 
@@ -213,7 +213,7 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
                         type="text" 
                         value={cr.name} 
                         onChange={(e) => handleCriterionChange(cIdx, crIdx, 'name', e.target.value)}
-                        className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-sm outline-none focus:border-[#123D8D]"
+                        className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]"
                         placeholder="Criterion name"
                         required
                       />
@@ -223,7 +223,7 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
                         min={0}
                         max={100}
                         onChange={(e) => handleCriterionChange(cIdx, crIdx, 'weight', e.target.value)}
-                        className="w-20 px-3 py-1.5 border border-gray-200 rounded text-sm outline-none focus:border-[#123D8D] text-center"
+                        className="w-20 px-3 py-1.5 border border-gray-200 rounded text-sm outline-none focus:border-[#133255] text-center"
                         required
                       />
                       <span className="text-gray-500 font-bold">%</span>
@@ -239,7 +239,7 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
                     </div>
                   )}
 
-                  <button type="button" onClick={() => handleAddCriterion(cIdx)} className="mt-2 text-sm text-[#123D8D] font-bold hover:underline self-start">
+                  <button type="button" onClick={() => handleAddCriterion(cIdx)} className="mt-2 text-sm text-[#133255] font-bold hover:underline self-start">
                     + Add Criterion
                   </button>
                 </div>
@@ -261,7 +261,7 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
           <button type="button" onClick={() => router.push("/dashboard/frameworks")} className="px-5 py-2.5 border border-gray-200 text-gray-700 rounded text-sm font-bold hover:bg-gray-50">
             Cancel
           </button>
-          <button type="submit" className="px-6 py-2.5 bg-[#123D8D] text-white rounded text-sm font-bold hover:bg-blue-800 shadow-sm transition-colors">
+          <button type="submit" className="px-6 py-2.5 bg-[#133255] text-white rounded text-sm font-bold hover:bg-[#133255] shadow-sm transition-colors">
             {isEdit ? "Update Framework" : "Save Framework"}
           </button>
         </div>

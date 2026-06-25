@@ -51,7 +51,7 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
                   <button 
                     onClick={() => fetchLinkedInExp(cand.id, cand.linkedin)}
                     disabled={isLoading[cand.id]}
-                    className="bg-[#123D8D] text-white text-[12px] px-3 py-1.5 rounded hover:bg-[#0d2f6e] disabled:opacity-50"
+                    className="bg-[#133255] text-white text-[12px] px-3 py-1.5 rounded hover:bg-[#133255] disabled:opacity-50"
                   >
                     {isLoading[cand.id] ? "Fetching Experience..." : "Fetch LinkedIn Exp"}
                   </button>

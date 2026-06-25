@@ -87,9 +87,9 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
     router.push("/dashboard/mandates/" + insertId);
   };
 
-  const inp = "w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-blue-900";
+  const inp = "w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]";
   const section = "bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mb-6";
-  const sectionHead = "bg-gray-50 border-b border-gray-200 px-5 py-3 font-bold text-xs uppercase tracking-wider text-[#123D8D]";
+  const sectionHead = "bg-gray-50 border-b border-gray-200 px-5 py-3 font-bold text-xs uppercase tracking-wider text-[#133255]";
 
   const renderTags = (tags: string[], setter: React.Dispatch<React.SetStateAction<string[]>>) => (
     <div className="flex flex-wrap gap-2 mt-2">
@@ -105,7 +105,7 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
   return (
     <div className="max-w-4xl mx-auto pb-10">
       <div className="flex items-center gap-2 text-sm text-gray-400 font-semibold mb-6">
-        <Link href="/dashboard/mandates" className="hover:text-[#123D8D]">Mandates</Link>
+        <Link href="/dashboard/mandates" className="hover:text-[#133255]">Mandates</Link>
         <span>/</span>
         <span className="text-gray-800">Create New Mandate</span>
       </div>
@@ -153,21 +153,21 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-600 mb-1.5">Target Sectors</label>
-              <div className="border border-gray-200 rounded p-1 focus-within:border-[#123D8D] bg-white">
+              <div className="border border-gray-200 rounded p-1 focus-within:border-[#133255] bg-white">
                 <input type="text" onKeyDown={(e) => handleTagInput(e, setSectors)} className="w-full outline-none text-sm p-1.5" placeholder="Type + Enter..." />
               </div>
               {renderTags(sectors, setSectors)}
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-600 mb-1.5">Target Companies</label>
-              <div className="border border-gray-200 rounded p-1 focus-within:border-[#123D8D] bg-white">
+              <div className="border border-gray-200 rounded p-1 focus-within:border-[#133255] bg-white">
                 <input type="text" onKeyDown={(e) => handleTagInput(e, setTargetCompanies)} className="w-full outline-none text-sm p-1.5" placeholder="Type + Enter..." />
               </div>
               {renderTags(targetCompanies, setTargetCompanies)}
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-600 mb-1.5">Geography</label>
-              <div className="border border-gray-200 rounded p-1 focus-within:border-[#123D8D] bg-white">
+              <div className="border border-gray-200 rounded p-1 focus-within:border-[#133255] bg-white">
                 <input type="text" onKeyDown={(e) => handleTagInput(e, setGeography)} className="w-full outline-none text-sm p-1.5" placeholder="Add locations..." />
               </div>
               {renderTags(geography, setGeography)}
@@ -198,7 +198,7 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-600 mb-1.5">Additional Emails (CC)</label>
-              <div className="border border-gray-200 rounded p-1 focus-within:border-[#123D8D] bg-white">
+              <div className="border border-gray-200 rounded p-1 focus-within:border-[#133255] bg-white">
                 <input type="email" onKeyDown={(e) => handleTagInput(e, setPocCc)} className="w-full outline-none text-sm p-1.5" placeholder="email + Enter..." />
               </div>
               {renderTags(pocCc, setPocCc)}
@@ -220,7 +220,7 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
               { id: 'docs', title: 'Additional Documents' }
             ].map((doc) => (
               <div key={doc.id} className="flex flex-col">
-                <div className="text-sm font-bold text-[#123D8D] mb-2">{doc.title}</div>
+                <div className="text-sm font-bold text-[#133255] mb-2">{doc.title}</div>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 bg-white mb-2"
                      onClick={() => document.getElementById(`upload-${doc.id}`)?.click()}>
                   <div className="text-xl mb-1">📎</div>
@@ -238,7 +238,7 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
                 </button>
                 {extractedStatus[doc.id] && (
                   <div className="mt-2 bg-[#f8fafc] border border-gray-200 p-2 rounded text-[11px] text-gray-600">
-                    <span className="font-bold text-[#123D8D] uppercase block mb-1">Summary</span>
+                    <span className="font-bold text-[#133255] uppercase block mb-1">Summary</span>
                     Extracted text stored in database context.
                   </div>
                 )}
@@ -278,7 +278,7 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
           <button type="button" onClick={() => router.push("/dashboard/mandates")} className="px-5 py-2.5 border border-gray-200 text-gray-700 rounded text-sm font-bold hover:bg-gray-50">
             Cancel
           </button>
-          <button type="button" className="px-5 py-2.5 border border-[#123D8D] text-[#123D8D] rounded text-sm font-bold hover:bg-blue-50">
+          <button type="button" className="px-5 py-2.5 border border-[#133255] text-[#133255] rounded text-sm font-bold hover:bg-blue-50">
             Save Draft
           </button>
           <button type="submit" className="px-6 py-2.5 bg-[#D8B15B] text-white rounded text-sm font-bold hover:bg-yellow-600 shadow-sm transition-colors">

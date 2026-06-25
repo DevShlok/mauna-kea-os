@@ -5,7 +5,7 @@ import { addSubmissionAction, updateSubmissionAction, deleteSubmissionAction } f
 
 const STATUS_COLORS: Record<string, string> = {
   Shortlisted: "bg-green-100 text-green-800",
-  Interviewing: "bg-blue-100 text-blue-800",
+  Interviewing: "bg-blue-100 text-[#133255]",
   Shared: "bg-yellow-100 text-yellow-800",
   "Under Review": "bg-purple-100 text-purple-800",
 };
@@ -24,10 +24,10 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Submissions Tracker</h1>
-        <button onClick={() => setIsAdding(true)} className="px-4 py-2 bg-yellow-500 text-blue-900 rounded text-xs font-bold hover:bg-yellow-400">+ Add Submission</button>
+        <button onClick={() => setIsAdding(true)} className="px-4 py-2 bg-yellow-500 text-[#133255] rounded text-xs font-bold hover:bg-yellow-400">+ Add Submission</button>
       </div>
       <div className="flex gap-3 mb-6">
-        <input type="text" placeholder="Search submissions..." className="w-56 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-blue-900"/>
+        <input type="text" placeholder="Search submissions..." className="w-56 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]"/>
         <select className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none">
           <option>All Statuses</option>
           <option>Shared</option>
@@ -64,7 +64,7 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
                 return (
                   <tr key={s.id} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => { setSelectedSubmission(s); setEditForm(s); }}>
                     <td className="px-4 py-3 text-gray-400 text-xs font-mono">{s.id}</td>
-                    <td className="px-4 py-3 font-semibold text-blue-900">{s.candName}</td>
+                    <td className="px-4 py-3 font-semibold text-[#133255]">{s.candName}</td>
                     <td className="px-4 py-3 text-gray-600">{s.role}<br/><span className="text-gray-400 text-xs">{s.client}</span></td>
                     <td className="px-4 py-3 text-gray-500">{s.consultant}</td>
                     <td className="px-4 py-3 text-gray-500 text-xs">{s.dateShared}</td>
@@ -172,7 +172,7 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
               </div>
               <div className="flex justify-end gap-2 mt-2">
                 <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800">Add Submission</button>
+                <button type="submit" className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Add Submission</button>
               </div>
             </form>
           </div>
@@ -187,7 +187,7 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
               <div className="flex gap-2">
                 <button 
                   onClick={() => router.push("/dashboard/candidates/" + selectedSubmission.candId)}
-                  className="text-xs text-blue-600 font-bold hover:underline"
+                  className="text-xs text-[#133255] font-bold hover:underline"
                 >
                   View Profile
                 </button>
@@ -264,7 +264,7 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
                     setIsSaving(false);
                     setSelectedSubmission(null);
                   }} 
-                  className="px-4 py-2 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800 disabled:opacity-50"
+                  className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255] disabled:opacity-50"
                 >
                   {isSaving ? "Saving..." : "Save Changes"}
                 </button>

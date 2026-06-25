@@ -26,7 +26,7 @@ export function Topbar() {
         <input 
           type="text" 
           placeholder="Search..." 
-          className="w-[200px] h-[34px] border-[1.5px] border-[#D4E0F0] rounded-full pl-9 pr-3 text-[13px] outline-none transition-all focus:border-[#123D8D] focus:w-[240px] bg-[#f9fafc]"
+          className="w-[200px] h-[34px] border-[1.5px] border-[#D4E0F0] rounded-full pl-9 pr-3 text-[13px] outline-none transition-all focus:border-[#133255] focus:w-[240px] bg-[#f9fafc]"
         />
       </div>
 

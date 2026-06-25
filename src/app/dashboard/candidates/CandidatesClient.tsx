@@ -578,7 +578,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
       <div className="flex justify-between items-center mb-6">
         <div>
           <div className="flex items-center gap-2 text-sm text-gray-400 font-semibold mb-1">
-            <Link href="/dashboard" className="hover:text-[#123D8D]">Home</Link>
+            <Link href="/dashboard" className="hover:text-[#133255]">Home</Link>
             <span>/</span>
             <span className="text-gray-800">Master Database</span>
           </div>
@@ -596,7 +596,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
             Export
           </button>
-          <Link href="/dashboard/candidates/new" className="px-5 py-2.5 bg-[#D8B15B] text-[#0d2f6e] rounded-lg text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors inline-block">
+          <Link href="/dashboard/candidates/new" className="px-5 py-2.5 bg-[#D8B15B] text-[#133255] rounded-lg text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors inline-block">
             + Add Candidate
           </Link>
         </div>
@@ -744,9 +744,9 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-[10px] bg-[#1e3a8a] text-white flex items-center justify-center text-[14px] font-bold flex-shrink-0">{c.initials}</div>
+                      <div className="w-10 h-10 rounded-[10px] bg-[#133255] text-white flex items-center justify-center text-[14px] font-bold flex-shrink-0">{c.initials}</div>
                       <div>
-                        <div className="font-bold text-[#1e3a8a] text-[14.5px] hover:underline">{c.name}</div>
+                        <div className="font-bold text-[#133255] text-[14.5px] hover:underline">{c.name}</div>
                         <div className="text-[11.5px] text-[#8a93a3] mt-0.5">📍 {c.location || "Unknown"}</div>
                       </div>
                     </div>
@@ -853,7 +853,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
             </div>
             <div className="px-6 py-4 border-t border-[#e4e8f0] flex justify-end gap-2.5">
               <button onClick={() => setIsMandateModalOpen(false)} className="px-4 py-2 bg-white border-[1.5px] border-[#e4e8f0] text-gray-900 rounded-[9px] text-[13px] font-semibold hover:border-[#cfd6e4]">Cancel</button>
-              <button disabled={isSubmitting} onClick={handleBulkMandateSubmit} className="px-4 py-2 bg-[#1e3a8a] text-white rounded-[9px] text-[13px] font-bold hover:bg-[#24449b] disabled:opacity-50">
+              <button disabled={isSubmitting} onClick={handleBulkMandateSubmit} className="px-4 py-2 bg-[#133255] text-white rounded-[9px] text-[13px] font-bold hover:bg-[#24449b] disabled:opacity-50">
                 {isSubmitting ? "Adding..." : "Add to pipeline"}
               </button>
             </div>
@@ -899,7 +899,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
             
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-[#f8fafc] rounded-b-xl">
               <button onClick={() => setImportMapping(null)} className="px-4 py-2 text-sm font-bold text-gray-600 hover:text-gray-900">Cancel</button>
-              <button onClick={confirmImport} disabled={isImporting} className="px-6 py-2 bg-[#123D8D] text-white rounded-lg text-sm font-bold shadow-md hover:bg-[#0d2f6e] transition-colors disabled:opacity-50">
+              <button onClick={confirmImport} disabled={isImporting} className="px-6 py-2 bg-[#133255] text-white rounded-lg text-sm font-bold shadow-md hover:bg-[#133255] transition-colors disabled:opacity-50">
                 {isImporting ? "Importing..." : `Import ${importFileData.length} Candidates`}
               </button>
             </div>
@@ -908,7 +908,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
       )}
       {/* Delete Confirmation Modal */}
       {isDeleteDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0d2f6e]/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#133255]/40 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[20px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="p-6">
               <h3 className="font-serif text-[20px] font-bold text-gray-900 mb-2">Delete Candidates</h3>

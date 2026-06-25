@@ -14,7 +14,7 @@ export default function ReportViewerClient({ mandate, candidates, format }: { ma
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10 print:hidden">
         <div className="max-w-screen-xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <Link href={`/dashboard/mandates/${mandate.id}`} className="text-sm font-bold text-gray-500 hover:text-blue-900">
+            <Link href={`/dashboard/mandates/${mandate.id}`} className="text-sm font-bold text-gray-500 hover:text-[#133255]">
               ← Back to Mandate
             </Link>
             <div className="h-4 w-px bg-gray-300"></div>
@@ -23,7 +23,7 @@ export default function ReportViewerClient({ mandate, candidates, format }: { ma
               Format {format}
             </span>
           </div>
-          <button onClick={handlePrint} className="px-4 py-2 bg-blue-900 text-white rounded text-sm font-bold hover:bg-blue-800">
+          <button onClick={handlePrint} className="px-4 py-2 bg-[#133255] text-white rounded text-sm font-bold hover:bg-[#133255]">
             Print / Save PDF
           </button>
         </div>

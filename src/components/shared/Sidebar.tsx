@@ -33,9 +33,9 @@ export function Sidebar() {
   ];
 
   return (
-    <div className="w-[230px] min-w-[230px] h-screen bg-[#123D8D] flex flex-col overflow-y-auto shrink-0 text-white">
+    <div className="w-[230px] min-w-[230px] h-screen bg-[#0b1f3a] flex flex-col overflow-y-auto shrink-0 text-white">
       <Link href="/dashboard" className="flex items-center gap-2 p-5 pb-4 border-b border-white/10 hover:bg-white/5 transition-colors">
-        <div className="bg-[#D8B15B] text-[#0d2f6e] font-serif text-lg font-bold w-9 h-9 flex items-center justify-center rounded">MK</div>
+        <div className="bg-[#D8B15B] text-[#133255] font-serif text-lg font-bold w-9 h-9 flex items-center justify-center rounded">MK</div>
         <div>
           <span className="font-serif text-[13px] font-bold block leading-tight">Mauna Kea</span>
           <span className="text-[9px] text-white/55 tracking-wider block">EXECUTIVE SEARCH OS</span>
@@ -66,7 +66,7 @@ export function Sidebar() {
               <Icon className="w-[18px] h-[18px] shrink-0" />
               <span>{item.label}</span>
               {item.badge && (
-                <span className={`ml-auto text-[10px] font-bold rounded-full px-1.5 min-w-[20px] text-center ${item.badgeColor || "bg-[#D8B15B] text-[#0d2f6e]"}`}>
+                <span className={`ml-auto text-[10px] font-bold rounded-full px-1.5 min-w-[20px] text-center ${item.badgeColor || "bg-[#D8B15B] text-[#133255]"}`}>
                   {item.badge}
                 </span>
               )}
@@ -76,7 +76,7 @@ export function Sidebar() {
       </div>
 
       <div className="mt-auto p-3.5 border-t border-white/10 flex items-center gap-2.5">
-        <div className="w-[34px] h-[34px] bg-[#D8B15B] text-[#0d2f6e] rounded-full flex items-center justify-center font-serif text-[13px] font-bold shrink-0">
+        <div className="w-[34px] h-[34px] bg-[#D8B15B] text-[#133255] rounded-full flex items-center justify-center font-serif text-[13px] font-bold shrink-0">
           {initials}
         </div>
         <div className="flex-1 min-w-0">

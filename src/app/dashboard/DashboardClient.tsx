@@ -10,7 +10,7 @@ import { getClosurePercent, getDaysOpen } from "@/lib/helpers";
 
 const FUNNEL_DATA = [
   { label: "Mapped", count: 42, color: "#4a7ab5" },
-  { label: "Assessed", count: 28, color: "#123D8D" },
+  { label: "Assessed", count: 28, color: "#133255" },
   { label: "Shortlisted", count: 18, color: "#D8B15B" },
   { label: "Interviewing", count: 9, color: "#1a4fa8" },
   { label: "Offered", count: 3, color: "#1A7340" },
@@ -61,14 +61,14 @@ export default function DashboardClient({ mandates }: { mandates: Mandate[] }) {
                 <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded bg-blue-900 text-white flex items-center justify-center text-xs font-bold">{c.initials}</div>
-                      <span className="font-semibold text-blue-900 text-sm">{c.name}</span>
+                      <div className="w-7 h-7 rounded bg-[#133255] text-white flex items-center justify-center text-xs font-bold">{c.initials}</div>
+                      <span className="font-semibold text-[#133255] text-sm">{c.name}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{c.mRole} at {c.mCompany}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{c.consultant}</td>
                   <td className="px-4 py-3">
-                    <Link href={"/dashboard/workbench?candId=" + c.externalId + "&mandateId=" + c.mId} className="px-3 py-1 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800">Review</Link>
+                    <Link href={"/dashboard/workbench?candId=" + c.externalId + "&mandateId=" + c.mId} className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Review</Link>
                   </td>
                 </tr>
               )) : (
@@ -85,7 +85,7 @@ export default function DashboardClient({ mandates }: { mandates: Mandate[] }) {
             <h2 className="font-bold text-gray-900 text-base">Active Mandates</h2>
             <p className="text-gray-400 text-xs mt-0.5">Current search engagements</p>
           </div>
-          <Link href="/dashboard/mandates/new" className="px-4 py-2 bg-yellow-500 text-blue-900 rounded text-xs font-bold hover:bg-yellow-400">+ New Mandate</Link>
+          <Link href="/dashboard/mandates/new" className="px-4 py-2 bg-yellow-500 text-[#133255] rounded text-xs font-bold hover:bg-yellow-400">+ New Mandate</Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -103,20 +103,20 @@ export default function DashboardClient({ mandates }: { mandates: Mandate[] }) {
                 const days = getDaysOpen(m.opened || "");
                 return (
                   <tr key={m.id} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => router.push("/dashboard/mandates/" + m.id)}>
-                    <td className="px-4 py-4 font-semibold text-blue-900">{m.company}</td>
+                    <td className="px-4 py-4 font-semibold text-[#133255]">{m.company}</td>
                     <td className="px-4 py-4 text-gray-600">{m.role}</td>
                     <td className="px-4 py-4"><StatusBadge status={m.status || "universe"} /></td>
                     <td className="px-4 py-4 text-gray-500">{days} days</td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
-                          <div className="bg-blue-900 h-full rounded-full" style={{ width: closure + "%" }} />
+                          <div className="bg-[#133255] h-full rounded-full" style={{ width: closure + "%" }} />
                         </div>
                         <span className="text-xs text-gray-400 w-8">{closure}%</span>
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <button className="px-3 py-1 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800" onClick={(e) => { e.stopPropagation(); router.push("/dashboard/mandates/" + m.id); }}>Open</button>
+                      <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={(e) => { e.stopPropagation(); router.push("/dashboard/mandates/" + m.id); }}>Open</button>
                     </td>
                   </tr>
                 );

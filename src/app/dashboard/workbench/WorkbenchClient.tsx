@@ -635,7 +635,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                               {dateStr}
                             </td>
                             <td className="px-4 py-2 border-r border-gray-200">
-                              <a href={file.fileUrl} target="_blank" rel="noreferrer" className="text-[#123D8D] hover:underline hover:text-blue-800 break-all">
+                              <a href={file.fileUrl} target="_blank" rel="noreferrer" className="text-[#133255] hover:underline hover:text-[#133255] break-all">
                                 {file.fileName}
                               </a>
                             </td>
@@ -662,7 +662,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex-1">
               <div className="flex justify-between items-center mb-3 border-b border-gray-100 pb-2">
                 <h3 className="font-bold text-gray-900">Interview Notes</h3>
-                <label className="cursor-pointer text-xs font-bold text-[#123D8D] bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                <label className="cursor-pointer text-xs font-bold text-[#133255] bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
                   {isUploadingNotes ? "Uploading..." : "📎 Upload File"}
                   <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Interview Notes')} disabled={isUploadingNotes} />
                 </label>
@@ -672,7 +672,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                 value={interviewNotes}
                 onChange={e => setInterviewNotes(e.target.value)}
                 placeholder="Paste interview notes here..."
-                className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-900 resize-y"
+                className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-[#133255] resize-y"
               ></textarea>
             </div>
 
@@ -682,22 +682,22 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <div className="text-xs font-bold text-gray-500">Superior Reference</div>
-                    <label className="cursor-pointer text-xs font-bold text-[#123D8D] hover:underline flex items-center gap-1">
+                    <label className="cursor-pointer text-xs font-bold text-[#133255] hover:underline flex items-center gap-1">
                       {isUploadingSupRef ? "Uploading..." : "📎 Upload File"}
                       <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Superior Reference')} disabled={isUploadingSupRef} />
                     </label>
                   </div>
-                  <textarea rows={5} value={superiorRef} onChange={e => setSuperiorRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-900 resize-y" placeholder="Enter superior reference..."></textarea>
+                  <textarea rows={5} value={superiorRef} onChange={e => setSuperiorRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-[#133255] resize-y" placeholder="Enter superior reference..."></textarea>
                 </div>
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <div className="text-xs font-bold text-gray-500">Peer Reference</div>
-                    <label className="cursor-pointer text-xs font-bold text-[#123D8D] hover:underline flex items-center gap-1">
+                    <label className="cursor-pointer text-xs font-bold text-[#133255] hover:underline flex items-center gap-1">
                       {isUploadingPeerRef ? "Uploading..." : "📎 Upload File"}
                       <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Peer Reference')} disabled={isUploadingPeerRef} />
                     </label>
                   </div>
-                  <textarea rows={5} value={peerRef} onChange={e => setPeerRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-900 resize-y" placeholder="Enter peer reference..."></textarea>
+                  <textarea rows={5} value={peerRef} onChange={e => setPeerRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-[#133255] resize-y" placeholder="Enter peer reference..."></textarea>
                 </div>
               </div>
             </div>
@@ -713,7 +713,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                 <div className="space-y-6">
                   {selectedFramework.categories.map((cat: any) => (
                     <div key={cat.id}>
-                      <div className="text-xs font-bold text-blue-900 uppercase tracking-wide border-b-2 border-blue-100 pb-2 mb-3">
+                      <div className="text-xs font-bold text-[#133255] uppercase tracking-wide border-b-2 border-blue-100 pb-2 mb-3">
                         {cat.name}
                       </div>
                       <div className="space-y-3">
@@ -745,7 +745,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                 </div>
 
                 <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg flex justify-between items-center">
-                  <span className="font-bold text-blue-900">Overall Score</span>
+                  <span className="font-bold text-[#133255]">Overall Score</span>
                   <span className={`text-xl font-bold px-3 py-1 rounded ${Number(overallScore) >= 8 ? 'bg-green-100 text-green-700' : Number(overallScore) >= 6.5 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
                     {overallScore} / 10
                   </span>
@@ -760,8 +760,8 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                 </div>
               )}
               {isLoadingReport && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded text-[12px] text-blue-700">
-                  <span className="w-3 h-3 border-2 border-blue-700 border-t-transparent rounded-full animate-spin"></span>
+                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded text-[12px] text-[#133255]">
+                  <span className="w-3 h-3 border-2 border-[#133255] border-t-transparent rounded-full animate-spin"></span>
                   Loading existing assessment...
                 </div>
               )}
@@ -784,8 +784,8 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           <div className="w-full">
             {isGeneratingFormat ? (
               <div className="bg-white border border-gray-200 rounded-xl p-10 shadow-sm flex flex-col items-center justify-center text-center h-[600px] sticky top-6">
-                <div className="w-12 h-12 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mb-6"></div>
-                <h3 className="text-lg font-bold text-blue-900 mb-2">AI is Generating Report</h3>
+                <div className="w-12 h-12 border-4 border-[#133255] border-t-transparent rounded-full animate-spin mb-6"></div>
+                <h3 className="text-lg font-bold text-[#133255] mb-2">AI is Generating Report</h3>
                 <p className="text-sm text-gray-500 max-w-sm">
                   Formatting the assessment into the selected layout...
                 </p>
@@ -814,7 +814,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                         <select 
                           value={selectedFormat}
                           onChange={e => setSelectedFormat(e.target.value as "format1" | "format2")}
-                          className="bg-transparent text-[#123D8D] font-bold outline-none cursor-pointer"
+                          className="bg-transparent text-[#133255] font-bold outline-none cursor-pointer"
                         >
                           <option value="format1">Format 1</option>
                           <option value="format2">Format 2</option>
@@ -824,10 +824,10 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
 
                     {/* Generate Buttons */}
                     <div className="flex justify-center gap-4 mt-6">
-                      <button onClick={() => handleGenerateFormat(selectedFormat, 'pdf')} className="px-6 py-3 bg-[#123D8D] text-white font-bold rounded shadow hover:bg-blue-800 transition-colors">
+                      <button onClick={() => handleGenerateFormat(selectedFormat, 'pdf')} className="px-6 py-3 bg-[#133255] text-white font-bold rounded shadow hover:bg-[#133255] transition-colors">
                         Generate PDF
                       </button>
-                      <button onClick={() => handleGenerateFormat(selectedFormat, 'pptx')} className="px-6 py-3 bg-[#123D8D] text-white font-bold rounded shadow hover:bg-blue-800 transition-colors">
+                      <button onClick={() => handleGenerateFormat(selectedFormat, 'pptx')} className="px-6 py-3 bg-[#133255] text-white font-bold rounded shadow hover:bg-[#133255] transition-colors">
                         Generate PPTX
                       </button>
                     </div>
@@ -835,8 +835,8 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
               </div>
             ) : isGenerating ? (
               <div className="bg-white border border-gray-200 rounded-xl p-10 shadow-sm flex flex-col items-center justify-center text-center h-[600px] sticky top-6">
-                <div className="w-12 h-12 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mb-6"></div>
-                <h3 className="text-lg font-bold text-blue-900 mb-2">Analyzing Candidate</h3>
+                <div className="w-12 h-12 border-4 border-[#133255] border-t-transparent rounded-full animate-spin mb-6"></div>
+                <h3 className="text-lg font-bold text-[#133255] mb-2">Analyzing Candidate</h3>
                 <p className="text-sm text-gray-500 max-w-sm">
                   Synthesizing interview notes and reference feedback against the {selectedFramework?.name} criteria.
                 </p>
@@ -858,9 +858,9 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           
           {/* Modal Header */}
           <div className="w-[794px] flex justify-between items-center bg-white mt-10 mb-6 p-4 rounded-xl shadow-xl border border-gray-200 print:hidden shrink-0 animate-in slide-in-from-top-4 duration-300">
-            <span className="text-sm font-bold text-blue-900 uppercase ml-2">Final Report Preview</span>
+            <span className="text-sm font-bold text-[#133255] uppercase ml-2">Final Report Preview</span>
             <div className="flex gap-4 items-center">
-              <button onClick={() => window.print()} className="px-5 py-2 bg-yellow-500 text-blue-900 rounded-lg text-sm font-bold hover:bg-yellow-400 shadow-sm transition-colors">
+              <button onClick={() => window.print()} className="px-5 py-2 bg-yellow-500 text-[#133255] rounded-lg text-sm font-bold hover:bg-yellow-400 shadow-sm transition-colors">
                 Print / Download PDF
               </button>
               <button 
@@ -910,7 +910,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                   placeholder="Search candidates by name, company, or designation..." 
                   value={candidateSearch}
                   onChange={e => setCandidateSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#133255] focus:ring-1 focus:ring-[#133255] transition-all"
                 />
               </div>
             </div>
@@ -951,10 +951,10 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                       }}>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded bg-blue-900 text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                            <div className="w-9 h-9 rounded bg-[#133255] text-white flex items-center justify-center text-xs font-bold shadow-sm">
                               {c.initials || c.name.substring(0, 2).toUpperCase()}
                             </div>
-                            <div className="font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">{c.name}</div>
+                            <div className="font-semibold text-gray-900 group-hover:text-[#133255] transition-colors">{c.name}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-gray-600 font-medium">{c.company || "-"}</td>
@@ -983,7 +983,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                           </select>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button className="px-4 py-2 bg-white border border-gray-200 text-blue-900 font-bold text-xs rounded-lg group-hover:bg-blue-900 group-hover:text-white group-hover:border-blue-900 transition-all shadow-sm">
+                          <button className="px-4 py-2 bg-white border border-gray-200 text-[#133255] font-bold text-xs rounded-lg group-hover:bg-[#133255] group-hover:text-white group-hover:border-[#133255] transition-all shadow-sm">
                             Select
                           </button>
                         </td>

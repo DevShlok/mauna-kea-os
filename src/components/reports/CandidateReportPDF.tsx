@@ -130,14 +130,14 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
       {/* HEADER */}
       <div className="flex justify-between items-start p-6 pb-4">
         <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-full bg-blue-900 text-white flex items-center justify-center text-3xl font-bold shrink-0 border-4 border-white shadow-md relative">
+          <div className="w-20 h-20 rounded-full bg-[#133255] text-white flex items-center justify-center text-3xl font-bold shrink-0 border-4 border-white shadow-md relative">
             {candidate.initials}
             <div className="absolute bottom-0 right-0 w-6 h-6 bg-[#0a66c2] text-white rounded flex items-center justify-center text-[10px] font-bold border-2 border-white">
               in
             </div>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-blue-900 font-serif">{candidate.name}</h1>
+            <h1 className="text-xl font-bold text-[#133255] font-serif">{candidate.name}</h1>
             <p className="text-[14px] font-bold text-gray-500 mt-0.5 uppercase tracking-wide">
               {candidate.designation || candidate.role || "Candidate"} at {candidate.company || "Unknown Company"}
             </p>
@@ -200,7 +200,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
                     onClick={() => handleEdit(title)}
                     className={`px-3 py-1.5 border rounded-md text-[13px] font-semibold transition-colors shadow-sm ${
                       isEditing
-                        ? "bg-blue-50 border-blue-200 text-blue-700"
+                        ? "bg-blue-50 border-blue-200 text-[#133255]"
                         : "bg-white border-[#e2e8f0] text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -249,7 +249,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
               />
               <button 
                 onClick={handleAddCustomSection}
-                className="bg-blue-900 text-white px-4 py-2 rounded text-[14px] font-semibold hover:bg-blue-800 transition-colors"
+                className="bg-[#133255] text-white px-4 py-2 rounded text-[14px] font-semibold hover:bg-[#133255] transition-colors"
               >
                 Add
               </button>
@@ -263,7 +263,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
           ) : (
             <button 
               onClick={() => setIsAddingSection(true)}
-              className="flex items-center gap-2 text-blue-700 font-bold hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors border border-dashed border-blue-300"
+              className="flex items-center gap-2 text-[#133255] font-bold hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors border border-dashed border-blue-300"
             >
               <span>+</span> Add Custom Section
             </button>

@@ -323,7 +323,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
             <button 
               onClick={fetchLinkedIn}
               disabled={isScraping}
-              className="mt-3 print:hidden bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold py-1 px-3 rounded-full flex items-center justify-center shadow-sm"
+              className="mt-3 print:hidden bg-[#133255] hover:bg-[#133255] text-white text-[10px] font-bold py-1 px-3 rounded-full flex items-center justify-center shadow-sm"
             >
               {isScraping ? "Scraping..." : "Fetch LinkedIn"}
             </button>
@@ -385,7 +385,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
                   <button 
                     onClick={() => moveBlock(1, index, 'up')}
                     disabled={index === 0}
-                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Move Up"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7"></path></svg>
@@ -393,7 +393,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
                   <button 
                     onClick={() => moveBlock(1, index, 'down')}
                     disabled={index === page1Blocks.length - 1}
-                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Move Down"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>
@@ -475,7 +475,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
                   <button 
                     onClick={() => moveBlock(2, index, 'up')}
                     disabled={index === 0}
-                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Move Up"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7"></path></svg>
@@ -483,7 +483,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
                   <button 
                     onClick={() => moveBlock(2, index, 'down')}
                     disabled={index === page2Blocks.length - 1}
-                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Move Down"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>

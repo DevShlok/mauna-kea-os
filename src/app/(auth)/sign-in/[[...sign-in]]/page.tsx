@@ -10,10 +10,10 @@ export default function Page() {
             <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#c8e6f7"/>
               <stop offset="55%" stopColor="#4a7ab5"/>
-              <stop offset="100%" stopColor="#0d2f6e"/>
+              <stop offset="100%" stopColor="#133255"/>
             </linearGradient>
             <linearGradient id="seaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0d2f6e"/>
+              <stop offset="0%" stopColor="#133255"/>
               <stop offset="100%" stopColor="#06162e"/>
             </linearGradient>
             <linearGradient id="snowGrad" x1="0" y1="0" x2="0" y2="1">
@@ -22,7 +22,7 @@ export default function Page() {
             </linearGradient>
             <linearGradient id="rayGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#2a6db5" stopOpacity="0.6"/>
-              <stop offset="100%" stopColor="#0d2f6e" stopOpacity="0"/>
+              <stop offset="100%" stopColor="#133255" stopOpacity="0"/>
             </linearGradient>
             <clipPath id="skyClip"><rect x="0" y="0" width="760" height="350"/></clipPath>
             <clipPath id="seaClip"><rect x="0" y="350" width="760" height="350"/></clipPath>
@@ -81,8 +81,8 @@ export default function Page() {
                 headerSubtitle: "hidden",
                 socialButtonsBlockButton: "h-[44px] border-[1.5px] border-[#D1D5DB] rounded-md hover:bg-[#f5f5f5]",
                 formFieldLabel: "text-[12px] font-semibold text-[#444] uppercase tracking-[0.5px]",
-                formFieldInput: "h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md focus:border-[#123D8D]",
-                formButtonPrimary: "h-[44px] bg-[#123D8D] hover:bg-[#0e3178] rounded-md text-[15px] font-semibold tracking-[0.3px]"
+                formFieldInput: "h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md focus:border-[#133255]",
+                formButtonPrimary: "h-[44px] bg-[#133255] hover:bg-[#0e3178] rounded-md text-[15px] font-semibold tracking-[0.3px]"
               }
             }}
           />

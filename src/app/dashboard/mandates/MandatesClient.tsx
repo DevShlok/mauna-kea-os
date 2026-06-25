@@ -42,10 +42,10 @@ export default function MandatesClient({ initialMandates }: { initialMandates: M
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">All Mandates</h1>
-        <Link href="/dashboard/mandates/new" className="px-4 py-2 bg-yellow-500 text-blue-900 rounded text-xs font-bold hover:bg-yellow-400">+ Add New Mandate</Link>
+        <Link href="/dashboard/mandates/new" className="px-4 py-2 bg-yellow-500 text-[#133255] rounded text-xs font-bold hover:bg-yellow-400">+ Add New Mandate</Link>
       </div>
       <div className="flex flex-wrap gap-3 mb-6 bg-white p-3 border border-gray-200 rounded-xl shadow-sm">
-        <input type="text" placeholder="Search mandates..." value={search} onChange={e => setSearch(e.target.value)} className="min-w-[200px] flex-1 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-blue-900"/>
+        <input type="text" placeholder="Search mandates..." value={search} onChange={e => setSearch(e.target.value)} className="min-w-[200px] flex-1 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]"/>
         
         <select value={companyFilter} onChange={e => setCompanyFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
           <option value="">All Companies</option>
@@ -88,7 +88,7 @@ export default function MandatesClient({ initialMandates }: { initialMandates: M
             <tbody>
               {filtered.map(m => (
                 <tr key={m.id} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => router.push("/dashboard/mandates/" + m.id)}>
-                  <td className="px-4 py-3 font-semibold text-blue-900">{m.company}</td>
+                  <td className="px-4 py-3 font-semibold text-[#133255]">{m.company}</td>
                   <td className="px-4 py-3 text-gray-700">{m.role}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{formatMandateCtc(m.ctc)}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{m.exp}</td>
@@ -106,7 +106,7 @@ export default function MandatesClient({ initialMandates }: { initialMandates: M
                     </select>
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                    <button className="px-3 py-1 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800" onClick={() => router.push("/dashboard/mandates/" + m.id)}>Open</button>
+                    <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={() => router.push("/dashboard/mandates/" + m.id)}>Open</button>
                   </td>
                 </tr>
               ))}

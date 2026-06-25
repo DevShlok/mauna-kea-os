@@ -65,7 +65,7 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
       <div className="flex justify-between items-center mb-6">
         <div>
           <div className="flex items-center gap-2 text-sm text-gray-400 font-semibold mb-1">
-            <Link href="/dashboard" className="hover:text-blue-900">Home</Link>
+            <Link href="/dashboard" className="hover:text-[#133255]">Home</Link>
             <span>/</span>
             <span className="text-gray-800">Candidates</span>
           </div>
@@ -75,7 +75,7 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
       
       {/* Filters Bar */}
       <div className="flex flex-wrap gap-3 mb-6 bg-white p-3 border border-gray-200 rounded-xl shadow-sm">
-        <input type="text" placeholder="Search by Name/Company..." value={search} onChange={(e) => setSearch(e.target.value)} className="min-w-[200px] flex-1 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-blue-900"/>
+        <input type="text" placeholder="Search by Name/Company..." value={search} onChange={(e) => setSearch(e.target.value)} className="min-w-[200px] flex-1 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]"/>
         
         <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none">
           <option value="">All Stages</option>
@@ -122,8 +122,8 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
                 <tr key={i} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => c.isFloatOnly ? router.push("/dashboard/candidates/" + c.externalId) : router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId)}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded bg-blue-900 text-white flex items-center justify-center text-xs font-bold">{c.initials}</div>
-                      <span className="font-semibold text-blue-900">{c.name}</span>
+                      <div className="w-8 h-8 rounded bg-[#133255] text-white flex items-center justify-center text-xs font-bold">{c.initials}</div>
+                      <span className="font-semibold text-[#133255]">{c.name}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-gray-600">{c.company}</td>
@@ -136,7 +136,7 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
                     ) : <span className="text-gray-300">-</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <button className="px-3 py-1 bg-blue-900 text-white rounded text-xs font-bold hover:bg-blue-800" onClick={(e) => { e.stopPropagation(); c.isFloatOnly ? router.push("/dashboard/candidates/" + c.externalId) : router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId); }}>View</button>
+                    <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={(e) => { e.stopPropagation(); c.isFloatOnly ? router.push("/dashboard/candidates/" + c.externalId) : router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId); }}>View</button>
                   </td>
                 </tr>
               ))}
