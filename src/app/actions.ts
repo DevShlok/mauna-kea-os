@@ -284,36 +284,6 @@ export async function deletePlatformUserAction(id: string) {
   revalidatePath("/dashboard/admin/users");
 }
 
-export async function autoRegisterCandidateAction(data: { name: string; email: string }) {
-  // 1. Create a candidate record
-  const candId = "C-" + Date.now().toString();
-  await db.insert(candidates).values({
-    id: candId,
-    name: data.name,
-    email: data.email,
-    initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
-  });
-
-  // 2. Create a platform_user record linked to the candidate
-  const userId = "U-" + Math.floor(Math.random() * 10000);
-  await db.insert(platformUsers).values({
-    id: userId,
-    name: data.name,
-    email: data.email,
-    role: "candidate",
-    status: "Active",
-    initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
-    linkedCandidateId: candId,
-    lastActive: new Date(),
-  });
-
-  revalidatePath("/dashboard", "layout");
-  return { userId, candId };
-}
-
-export async function updateLastActiveAction(userId: string) {
-  await db.update(platformUsers).set({ lastActive: new Date() }).where(eq(platformUsers.id, userId));
-}
 
 export async function addReferenceAction(data: any) {
   revalidatePath("/dashboard", "layout");
