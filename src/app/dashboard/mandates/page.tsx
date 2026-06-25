@@ -1,5 +1,5 @@
 import { getMandates, getUserByEmail } from "@/db/queries";
-import MandatesClient from "./MandatesClient";
+import MandatesClient from "@/features/mandates/components/MandatesClient";
 import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { clients } from "@/db/schema";

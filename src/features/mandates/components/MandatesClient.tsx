@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { updateMandateFieldAction } from "@/app/actions";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { STAGE_OPTIONS, INTERNAL_OPTIONS, formatMandateCtc } from "@/lib/helpers";
 
@@ -34,7 +35,7 @@ export default function MandatesClient({ initialMandates }: { initialMandates: M
 
   async function handleStatusChange(id: number, field: "status" | "internalStatus", value: string) {
     setMandates(prev => prev.map(m => m.id === id ? { ...m, [field]: value } : m));
-    await fetch("/api/mandates/" + id, { method: "PATCH", body: JSON.stringify({ field, value }), headers: { "Content-Type": "application/json" } });
+    await updateMandateFieldAction(id, field, value);
     router.refresh();
   }
 

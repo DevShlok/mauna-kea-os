@@ -1,5 +1,5 @@
 import { getMandates, getAnalyticsData } from "@/db/queries";
-import AnalyticsClient from "./AnalyticsClient";
+import AnalyticsClient from "@/features/analytics/components/AnalyticsClient";
 
 export default async function AnalyticsPage() {
   const mandates = await getMandates();

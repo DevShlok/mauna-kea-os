@@ -2,17 +2,17 @@
 
 import React, { useState, useEffect } from "react";
 
-export default function FormatTwo({ mandate, candidates, framework, scores }: { mandate: any, candidates: any[], framework?: any, scores?: Record<number, number> }) {
+export default function FormatTwo({ mandate, candidates, framework, scores, isPrinting }: { mandate: any, candidates: any[], framework?: any, scores?: Record<number, number>, isPrinting?: boolean }) {
   return (
     <div className="flex flex-col gap-10 bg-gray-200 py-10 items-center min-h-screen print:block print:bg-white print:py-0 print:gap-0">
       {candidates.map((cand, idx) => {
-        return <CandidateFormatTwo key={cand.id} cand={cand} framework={framework} scores={scores} />;
+        return <CandidateFormatTwo key={cand.id} cand={cand} framework={framework} scores={scores} isPrinting={isPrinting} />;
       })}
     </div>
   );
 }
 
-function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?: any, scores?: Record<number, number> }) {
+function CandidateFormatTwo({ cand, framework, scores, isPrinting }: { cand: any, framework?: any, scores?: Record<number, number>, isPrinting?: boolean }) {
   const rp = cand.reportData || {};
   
   // State for timeline data (up to 6 items)
@@ -230,7 +230,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
       setExperienceList([
         {
           companyName: rp["Current Company"] || cand.company || "Current Company",
-          position: rp["Designation"] || cand.role || "Current Role",
+          position: cand.designation || rp["Designation"] || cand.role || "Current Role",
           duration: "",
           startDate: "",
           endDate: "Present",
@@ -287,11 +287,11 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
   const headerColor = "text-[#003366]";
 
   return (
-    <div className="flex flex-col gap-10 print:gap-0">
+    <div className="flex flex-col gap-0 items-center bg-white">
       <style type="text/css" media="print" dangerouslySetInnerHTML={{ __html: PageStyle }} />
 
       {/* PAGE 1 */}
-      <div className={`bg-white w-[794px] h-[1122px] mx-auto shadow-2xl print:shadow-none relative box-border print:scale-100 max-w-none px-[40px] py-[35px] overflow-hidden print:break-after-page ${fontStyle}`}>
+      <div className={`format-page bg-white w-[794px] h-[1122px] mx-auto print:shadow-none relative box-border print:scale-100 max-w-none px-[40px] py-[35px] overflow-hidden print:break-after-page ${fontStyle}`}>
         {/* Header */}
         <div className="flex justify-end w-full mb-4 pb-2 border-b border-gray-200">
           <h1 className="text-3xl font-serif font-medium text-black tracking-[0.4em] uppercase" contentEditable suppressContentEditableWarning>
@@ -302,7 +302,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
         {/* Top Profile + Timeline Section */}
         <div className="flex flex-row justify-between w-full min-h-[160px]">
           {/* Left: Profile */}
-          <div className="w-[30%] flex flex-col items-center">
+          <div className="w-[20%] flex flex-col items-center">
             <div className="relative w-[120px] h-[120px]">
               <div className={`w-[120px] h-[120px] rounded-full border-4 border-black object-cover flex items-center justify-center text-4xl font-bold text-black bg-gray-50 shadow-md overflow-hidden`}>
                 {cand.profilePic ? (
@@ -313,18 +313,20 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
               </div>
               {cand.linkedin && (
                 <a href={cand.linkedin} target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 bg-white rounded-md p-1 shadow-md cursor-pointer">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn" className="w-[28px]" />
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn" className="w-[28px]" crossOrigin="anonymous" />
                 </a>
               )}
             </div>
             
-            <button 
-              onClick={fetchLinkedIn}
-              disabled={isScraping}
-              className="mt-3 print:hidden bg-[#133255] hover:bg-[#133255] text-white text-[12px] font-bold py-1 px-3 rounded-full flex items-center justify-center shadow-sm"
-            >
-              {isScraping ? "Scraping..." : "Fetch LinkedIn"}
-            </button>
+            {!isPrinting && (
+              <button 
+                onClick={fetchLinkedIn}
+                disabled={isScraping}
+                className="mt-3 bg-[#133255] hover:bg-[#133255] text-white text-[12px] font-bold py-1 px-3 rounded-full flex items-center justify-center shadow-sm"
+              >
+                {isScraping ? "Scraping..." : "Fetch LinkedIn"}
+              </button>
+            )}
             
             <h2 className={`text-[21px] font-bold mt-4 text-center ${headerColor}`} contentEditable suppressContentEditableWarning>
               {cand.name}
@@ -332,34 +334,38 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
           </div>
 
           {/* Right: Timeline Grid */}
-          <div className="w-[65%] border border-gray-100 bg-gray-50/30 rounded-xl p-4 overflow-hidden relative">
+          <div className="w-[78%] border border-gray-100 bg-gray-50/30 rounded-xl p-4 overflow-hidden relative">
             <div className="absolute left-[39%] top-6 bottom-6 w-[2px] bg-blue-100 z-0"></div>
             <div className="flex flex-col gap-4 z-10 relative">
               {experienceList.map((exp, i) => (
                 <div key={i} className="flex flex-row items-center justify-between text-[13px]">
-                  <div className="w-[35%] flex items-center gap-3">
+                  <div className="w-[38%] flex items-center gap-3">
                     <img 
                       src={`https://logo.clearbit.com/${exp.domain}`} 
                       alt={exp.companyName}
-                      className="w-[30px] h-[30px] object-contain bg-white border border-gray-200 rounded p-0.5"
+                      crossOrigin="anonymous"
+                      className="w-[30px] h-[30px] shrink-0 object-contain bg-white border border-gray-200 rounded p-0.5"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = "https://ui-avatars.com/api/?name=" + exp.companyName + "&background=ffffff&color=000000";
+                        const name = exp.companyName || "C";
+                        const initials = name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+                        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><rect width="100" height="100" fill="#ffffff"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-weight="bold" font-size="45" fill="#000000" text-anchor="middle" dominant-baseline="central">${initials}</text></svg>`;
+                        (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(svg)}`;
                       }}
                     />
-                    <div className="font-bold truncate" contentEditable suppressContentEditableWarning>
+                    <div className="font-bold leading-tight" contentEditable suppressContentEditableWarning>
                       {exp.companyName}
                     </div>
                   </div>
                   
-                  <div className="w-[5%] flex justify-center relative">
+                  <div className="w-[4%] flex justify-center relative">
                     <div className="w-[10px] h-[10px] rounded-full bg-gray-400 z-10 border-2 border-white shadow-sm"></div>
                   </div>
 
-                  <div className="w-[25%] text-gray-600 text-center" contentEditable suppressContentEditableWarning>
+                  <div className="w-[18%] text-gray-600 text-center" contentEditable suppressContentEditableWarning>
                     {exp.startDate ? `${exp.startDate.split(' ')[1] || exp.startDate} - ${exp.endDate?.split(' ')[1] || exp.endDate}` : exp.endDate}
                   </div>
 
-                  <div className="w-[35%] font-medium text-gray-800" contentEditable suppressContentEditableWarning>
+                  <div className="w-[40%] font-medium text-gray-800 leading-tight" contentEditable suppressContentEditableWarning>
                     {exp.position}
                   </div>
                 </div>
@@ -405,7 +411,7 @@ function CandidateFormatTwo({ cand, framework, scores }: { cand: any, framework?
       </div>
 
       {/* PAGE 2 */}
-      <div className={`bg-white w-[794px] h-[1122px] mx-auto shadow-2xl print:shadow-none relative box-border print:scale-100 max-w-none px-[40px] py-[35px] overflow-hidden ${fontStyle}`}>
+      <div className={`format-page bg-white w-[794px] h-[1122px] mx-auto print:shadow-none relative box-border print:scale-100 max-w-none px-[40px] py-[35px] overflow-hidden ${fontStyle}`}>
         {/* Header */}
         <div className="flex justify-end w-full mb-3 pb-2 border-b border-gray-200">
           <h1 className="text-3xl font-serif font-medium text-black tracking-[0.4em] uppercase" contentEditable suppressContentEditableWarning>

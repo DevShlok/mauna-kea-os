@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { clients, mandates } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import ClientDetailClient from "@/app/dashboard/clients/[id]/ClientDetailClient";
+import ClientDetailClient from "@/features/clients/components/ClientDetailClient";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";

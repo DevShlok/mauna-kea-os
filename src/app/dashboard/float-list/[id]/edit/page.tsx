@@ -1,5 +1,5 @@
 import { getCandidateById } from "@/db/queries";
-import NewCandidateClient from "../../../candidates/new/NewCandidateClient";
+import NewCandidateClient from "@/features/candidates/components/NewCandidateClient";
 
 export default async function EditFlCandidatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

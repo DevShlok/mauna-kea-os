@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 
-export default function FormatOne({ mandate, candidates }: { mandate: any, candidates: any[] }) {
+export default function FormatOne({ mandate, candidates, isPrinting }: { mandate: any, candidates: any[], isPrinting?: boolean }) {
   const [apifyData, setApifyData] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
 
@@ -27,7 +27,7 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
     }
   };
   return (
-    <div className="flex flex-col gap-10 print:gap-0 bg-gray-100 print:bg-white py-10 print:py-0 items-center min-h-screen">
+    <div className="flex flex-col gap-0 items-center bg-white min-h-screen">
       {candidates.map((cand, idx) => {
         const rp = cand.reportData || {};
         const f1 = rp._format1 || {};
@@ -35,7 +35,7 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
         const assessmentNotes = f1["Assessment Notes"] || rp["Key Strengths"] || rp["MK Recommendation"] || ["Strong capability demonstrated."];
         
         return (
-          <div key={cand.id} className="bg-white w-[794px] h-[1122px] mx-auto shadow-xl print:shadow-none break-after-page mb-10 print:mb-0 box-border print:scale-100 max-w-none p-[20px] overflow-hidden">
+          <div key={cand.id} className="format-page bg-white w-[794px] h-[1122px] mx-auto print:shadow-none break-after-page box-border print:scale-100 max-w-none p-[20px] overflow-hidden">
             <style type="text/css" media="print">
               {`
                 @page { size: A4; margin: 0mm; }
@@ -46,8 +46,8 @@ export default function FormatOne({ mandate, candidates }: { mandate: any, candi
             <div className="w-full h-full border-[10px] border-[#00174f] p-[20px] flex flex-col font-sans relative">
               
               {/* Fetch LinkedIn Button (Hidden on Print) */}
-              {cand.linkedin && !apifyData[cand.id] && (
-                <div className="absolute top-2 right-2 print:hidden z-10">
+              {cand.linkedin && !apifyData[cand.id] && !isPrinting && (
+                <div className="absolute top-2 right-2 z-10">
                   <button 
                     onClick={() => fetchLinkedInExp(cand.id, cand.linkedin)}
                     disabled={isLoading[cand.id]}

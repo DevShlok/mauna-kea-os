@@ -1,4 +1,4 @@
-import NewCandidateClient from "./NewCandidateClient";
+import NewCandidateClient from "@/features/candidates/components/NewCandidateClient";
 import { currentUser } from "@clerk/nextjs/server";
 import { getUserByEmail, getMandates } from "@/db/queries";
 

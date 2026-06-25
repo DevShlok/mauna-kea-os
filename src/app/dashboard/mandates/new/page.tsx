@@ -1,5 +1,5 @@
 import { getFrameworks } from "@/db/queries";
-import CreateMandateClient from "./CreateMandateClient";
+import CreateMandateClient from "@/features/mandates/components/CreateMandateClient";
 
 import { Suspense } from "react";
 

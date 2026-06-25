@@ -1,7 +1,7 @@
 import { getPlatformUsers } from "@/db/queries";
 import { db } from "@/db";
 import { clients } from "@/db/schema";
-import UsersClient from "./UsersClient";
+import UsersClient from "@/features/admin/components/UsersClient";
 
 
 

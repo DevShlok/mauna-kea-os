@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { mandates, mandateCandidates, candidateReports } from "@/db/schema";
 import { eq, inArray, and } from "drizzle-orm";
-import ReportViewerClient from "./ReportViewerClient";
+import ReportViewerClient from "@/features/mandates/components/ReportViewerClient";
 
 export default async function ReportPage({ params, searchParams }: { params: { id: string }, searchParams: { format?: string, cands?: string } }) {
   const format = searchParams.format || "1";

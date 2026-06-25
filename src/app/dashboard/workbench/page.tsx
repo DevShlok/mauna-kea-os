@@ -3,7 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { clients } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import WorkbenchClient from "@/app/dashboard/workbench/WorkbenchClient";
+import WorkbenchClient from "@/features/workbench/components/WorkbenchClient";
 
 export default async function WorkbenchPage({ searchParams }: { searchParams: Promise<{ candId?: string, mandateId?: string, flCandId?: string }> }) {
   const resolvedParams = await searchParams;

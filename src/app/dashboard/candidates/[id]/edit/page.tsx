@@ -1,5 +1,5 @@
 import { getCandidateById } from "@/db/queries";
-import NewCandidateClient from "../../new/NewCandidateClient";
+import NewCandidateClient from "@/features/candidates/components/NewCandidateClient";
 import { notFound } from "next/navigation";
 
 export default async function EditCandidatePage({ params }: { params: Promise<{ id: string }> }) {

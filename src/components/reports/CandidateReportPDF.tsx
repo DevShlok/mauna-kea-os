@@ -7,11 +7,11 @@ interface CandidateReportPDFProps {
   frameworkName: string;
   reportData: Record<string, any>;
   onReportDataChange?: (newData: Record<string, any>) => void;
-  onGeneratePdf?: (format: "format1" | "format2") => void;
-  onGeneratePptx?: (format: "format1" | "format2") => void;
+  onPrint?: () => void;
+  isPrinting?: boolean;
 }
 
-export default function CandidateReportPDF({ candidate, frameworkName, reportData, onReportDataChange, onGeneratePdf, onGeneratePptx }: CandidateReportPDFProps) {
+export default function CandidateReportPDF({ candidate, frameworkName, reportData, onReportDataChange, onPrint, isPrinting = false }: CandidateReportPDFProps) {
   const { scores, ...allSections } = reportData;
   // Fields entirely hidden from UI (fetched from DB directly or internal)
   const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "_rawInputs", "error", "_format1", "_format2"];
@@ -126,9 +126,9 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
   };
 
   return (
-    <div className="bg-white max-w-[750px] mx-auto border border-gray-200 shadow-sm font-sans rounded-lg overflow-hidden">
+    <div className={`bg-white max-w-[750px] mx-auto font-sans overflow-hidden ${isPrinting ? '' : 'border border-gray-200 shadow-sm rounded-lg'}`}>
       {/* HEADER */}
-      <div className="flex justify-between items-start p-6 pb-4">
+      <div className="pdf-section flex justify-between items-start p-6 pb-4">
         <div className="flex items-center gap-4">
           <div className="w-20 h-20 rounded-full bg-[#133255] text-white flex items-center justify-center text-3xl font-bold shrink-0 border-4 border-white shadow-md relative">
             {candidate.initials}
@@ -150,9 +150,16 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
       </div>
 
       {/* AI Draft badge */}
-      <div className="px-6 pb-3 flex items-center justify-between border-b border-gray-100 mb-5">
-        <h2 className="text-[17px] font-bold text-gray-900 font-serif tracking-tight">AI-Generated Assessment Draft</h2>
-        <span className="text-[12px] bg-[#d1fae5] text-[#065f46] px-2 py-0.5 rounded-full font-bold shadow-sm">AI Draft</span>
+      <div className={`px-6 pb-3 flex items-center justify-between border-b border-gray-100 mb-5 ${isPrinting ? 'hidden' : ''}`}>
+        <div className="flex items-center gap-3">
+          <h2 className="text-[17px] font-bold text-gray-900 font-serif tracking-tight">AI-Generated Assessment Draft</h2>
+          <span className="text-[12px] bg-[#d1fae5] text-[#065f46] px-2 py-0.5 rounded-full font-bold shadow-sm">AI Draft</span>
+        </div>
+        {onPrint && (
+          <button onClick={onPrint} className="px-4 py-1.5 bg-yellow-500 text-[#133255] rounded text-[13px] font-bold hover:bg-yellow-400 shadow-sm transition-colors">
+            Download Accepted Draft
+          </button>
+        )}
       </div>
 
       <div className="px-6 pb-6 space-y-4">
@@ -171,7 +178,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
           return (
             <div
               key={i}
-              className={`border rounded-xl shadow-[0_2px_8px_rgb(0,0,0,0.04)] transition-all mb-4 ${
+              className={`pdf-section border rounded-xl shadow-[0_2px_8px_rgb(0,0,0,0.04)] transition-all mb-4 ${(!isAccepted && isPrinting) ? 'hidden' : ''} ${
                 isAccepted
                   ? "border-green-200 bg-green-50/10"
                   : isEditing
@@ -185,7 +192,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
                   <span className="text-base">{icon}</span>
                   {displayTitle}
                 </span>
-                <div className="flex items-center gap-2">
+                <div className={`flex items-center gap-2 ${isPrinting ? 'hidden' : ''}`}>
                   <button
                     onClick={() => handleAccept(title)}
                     className={`px-3 py-1.5 border rounded-md text-[15px] font-semibold transition-colors shadow-sm ${
@@ -232,7 +239,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
         })}
 
         {/* Add Section Functionality */}
-        <div className="mt-8 flex justify-center">
+        <div className={`mt-8 flex justify-center ${isPrinting ? 'hidden' : ''}`}>
           {isAddingSection ? (
             <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 w-full max-w-md shadow-sm">
               <input 

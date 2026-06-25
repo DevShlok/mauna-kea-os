@@ -1,4 +1,4 @@
-import NewClientClient from "./NewClientClient";
+import NewClientClient from "@/features/clients/components/NewClientClient";
 
 export const metadata = {
   title: "Add Client | Mauna Kea OS",

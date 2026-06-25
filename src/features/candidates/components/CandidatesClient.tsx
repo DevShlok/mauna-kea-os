@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { Candidate } from "@/db/schema";
-import { bulkAddSubmissionAction, bulkAssignToMandateAction, updateCandidateStatusAction, deleteMultipleCandidatesAction } from "@/app/actions";
+import { bulkAddSubmissionAction, bulkAssignToMandateAction, updateCandidateStatusAction, deleteMultipleCandidatesAction, addCandidateToMandateAction } from "@/app/actions";
+import { mapCandidatesAction, processCandidatesAction } from "@/actions/candidates";
 
 const MultiSelect = ({ options, selected, onChange, placeholder }: any) => {
   const [open, setOpen] = useState(false);
@@ -105,6 +106,8 @@ const DualRangeSlider = ({ min, max, step, value, onChange }: any) => {
 
 export default function CandidatesClient({ candidates, mandates }: { candidates: Candidate[], mandates: any[] }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isBulkMode = searchParams.get("mode") === "float";
   
   const [search, setSearch] = useState("");
 
@@ -228,23 +231,14 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
       setImportFileData(allData);
       setImportHeaders(headers.filter((h: string) => h));
 
-      // Call mapping API
-      const res = await fetch("/api/import-candidates/map", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ headers: headers.filter((h: string) => h), sampleData })
-      });
-
-      if (!res.ok) throw new Error("Failed to map columns");
-      
-      const data = await res.json();
+      const data = await mapCandidatesAction(headers.filter((h: string) => h), sampleData);
       
       // AI sometimes returns slightly different casing. Match it exactly to the real headers.
       const sanitizedMapping: any = {};
       const validHeaders = headers.filter((h: string) => h);
       
-      Object.keys(data.data).forEach(key => {
-        const aiValue = data.data[key];
+      Object.keys(data.mapping).forEach(key => {
+        const aiValue = (data.mapping as any)[key];
         if (!aiValue) {
           sanitizedMapping[key] = null;
           return;
@@ -287,13 +281,9 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
         return cand;
       });
 
-      const res = await fetch("/api/import-candidates/process", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ candidates: mappedCandidates })
-      });
+      const res = await processCandidatesAction(mappedCandidates);
 
-      if (!res.ok) throw new Error("Failed to process import");
+      if (!res.success) throw new Error("Failed to process import");
 
       alert("Successfully imported candidates!");
       setImportMapping(null);
@@ -577,8 +567,8 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <div className="text-[14px] text-gray-500 mb-1">Home / Candidate Database</div>
-          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">Candidate Database</h1>
+          <div className="text-[14px] text-gray-500 mb-1">Home / {isBulkMode ? "Select Candidates" : "Candidate Database"}</div>
+          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">{isBulkMode ? "Select Candidates for Action" : "Candidate Database"}</h1>
         </div>
         <div className="flex gap-3 items-center">
           {isImporting && <span className="text-sm text-gray-500 font-bold animate-pulse">Processing...</span>}
@@ -690,7 +680,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
         </div>
       
       {/* Bulk Action Bar */}
-      {selectedIds.size > 0 && (
+      {isBulkMode && selectedIds.size > 0 && (
         <div className="flex items-center gap-4 bg-[#0E2150] text-white rounded-[13px] px-5 py-3 mb-4 shadow-md transition-all">
           <div className="font-semibold text-sm">
             <b className="text-[#d7a33c]">{selectedIds.size}</b> selected
@@ -718,9 +708,9 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
           <table className="w-full text-sm min-w-[1200px]">
             <thead>
               <tr className="bg-white border-b border-[#e4e8f0]">
-                <th className="px-4 py-4 text-center w-10">
+                {isBulkMode && <th className="px-4 py-4 text-center w-10">
                   <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#1d4ed8] cursor-pointer" />
-                </th>
+                </th>}
                 <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Name</th>
                 <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Current company</th>
                 <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Current designation</th>
@@ -735,9 +725,9 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
             <tbody>
               {filtered.map((c: any, i: number) => (
                 <tr key={i} className="border-b border-[#eef1f7] hover:bg-[#f7f9fd] cursor-pointer transition-colors" onClick={() => router.push("/dashboard/candidates/" + c.id)}>
-                  <td className="px-4 py-4 text-center" onClick={e => e.stopPropagation()}>
+                  {isBulkMode && <td className="px-4 py-4 text-center" onClick={e => e.stopPropagation()}>
                     <input type="checkbox" checked={selectedIds.has(c.id)} onChange={() => toggleRow(c.id)} className="w-[18px] h-[18px] accent-[#1d4ed8] cursor-pointer" />
-                  </td>
+                  </td>}
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-[10px] bg-[#133255] text-white flex items-center justify-center text-[16px] font-bold flex-shrink-0">{c.initials}</div>

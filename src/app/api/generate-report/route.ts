@@ -1,8 +1,7 @@
 import { db } from "@/db";
 import { frameworks, frameworkCategories, frameworkCriteria, candidateReports, candidates, mandateCandidates, candidateFiles } from "@/db/schema";
 import { eq, and, ne, inArray } from "drizzle-orm";
-import { generateObject } from "ai";
-import { google } from "@ai-sdk/google";
+import { generateObjectWithFallback } from "@/lib/gemini-fallback";
 import { z } from "zod";
 import { NextResponse } from "next/server";
 
@@ -128,6 +127,9 @@ export async function POST(req: Request) {
       }
     });
 
+    // Enterprise-grade Chain of Thought scratchpad
+    schemaObject["Scratchpad"] = z.string().describe("Before scoring, write a 2-sentence justification analyzing the candidate's fit against the mandate based strictly on the transcript.");
+
     // Process scoring sections (1-10) based on categories and criteria
     const scoresObject: Record<string, z.ZodTypeAny> = {};
     categoriesWithCriteria.forEach((cat) => {
@@ -198,8 +200,7 @@ export async function POST(req: Request) {
       finalTranscript += `\n\nPEER REFERENCE:\n${feedback.peer}`;
     }
 
-    generateObject({
-      model: google("gemini-3.5-flash"),
+    generateObjectWithFallback({
       schema: DynamicSchema,
       prompt: `You are an expert executive assessor and organizational psychologist. Your objective is to evaluate the following candidate interview transcript and notes against the provided competency framework, taking into account the specific role requirements (Mandate Data).
       
@@ -213,7 +214,8 @@ EVALUATION PIPELINE INSTRUCTIONS:
 2. APPLY NORMALIZED WEIGHTS: Look closely at the "Normalized Global Weight" for each criterion in the Competency Framework.
    - High Global Weight (>10%): These are make-or-break criteria. Be highly critical and look for explicit, undeniable evidence in the transcript.
    - Lower Global Weight (<5%): These are secondary criteria. You may infer reasonably based on the candidate's seniority and overall pedigree.
-3. SCORING (1-10): Evaluate the candidate objectively. 
+3. SCORING (1-10) & ANTI-HALLUCINATION GUARDRAILS: Evaluate the candidate objectively. 
+   - CRITICAL: If the transcript lacks sufficient evidence to evaluate a specific criterion, do NOT hallucinate or guess. You must score it a 0 and explicitly state 'Insufficient Data'.
    - 1-4: Significant gaps or red flags.
    - 5-6: Meets basic expectations but lacks distinction.
    - 7-8: Strong, proven capability with clear examples.
@@ -225,13 +227,14 @@ EVALUATION PIPELINE INSTRUCTIONS:
 5. TONE: Use a professional, senior-executive tone — telegraphic, highly analytical, and strictly to the point. Less is more.`,
     })
       .then(async ({ object }) => {
+        const obj: any = object;
         // Calculate average score based on weights
         let totalWeightedScore = 0;
         let totalWeight = 0;
         
         categoriesWithCriteria.forEach((cat) => {
           cat.criteria.forEach((cr) => {
-            const val = (object.scores as any)?.[cat.name]?.[cr.name] || 0;
+            const val = obj?.scores?.[cat.name]?.[cr.name] || 0;
             const w = Number(cr.weight) || 10;
             totalWeightedScore += (val * w);
             totalWeight += w;
@@ -241,7 +244,7 @@ EVALUATION PIPELINE INSTRUCTIONS:
         const overallScore = totalWeight > 0 ? Number((totalWeightedScore / totalWeight).toFixed(1)) : 0;
 
         const finalReportData = {
-          ...object,
+          ...obj,
           _rawInputs: {
             interviewNotes,
             superiorRef: feedback?.superior,

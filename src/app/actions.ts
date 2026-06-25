@@ -44,6 +44,19 @@ export async function editMandateAction(id: number, data: any) {
   revalidatePath(`/dashboard/mandates/${id}`);
 }
 
+export async function updateMandateFieldAction(id: number, field: string, value: string) {
+  if (field === "status") {
+    await db.update(mandates).set({ status: value }).where(eq(mandates.id, id));
+    // Also bulk-update all candidates in this mandate
+    await db.update(mandateCandidates).set({ stage: value }).where(eq(mandateCandidates.mandateId, id));
+    revalidatePath("/dashboard/candidates");
+    revalidatePath("/dashboard/float-list");
+    revalidatePath(`/dashboard/mandates/${id}`);
+  } else if (field === "internalStatus") {
+    await db.update(mandates).set({ internalStatus: value }).where(eq(mandates.id, id));
+  }
+}
+
 export async function createFrameworkAction(data: any, mandateIds?: string[]) {
   revalidatePath("/dashboard", "layout");
   const id = "FW-" + Date.now();
@@ -584,4 +597,14 @@ export async function logCandidateActivityAction(data: {
   });
 
   revalidatePath(`/dashboard/candidates/${data.candId}`);
+}
+
+export async function saveReportFormatAction(reportId: string, formatName: string, formatData: any) {
+  revalidatePath("/dashboard", "layout");
+  const existing = await db.select().from(candidateReports).where(eq(candidateReports.id, reportId));
+  if (existing.length > 0) {
+    const currentData = (existing[0].reportData || {}) as Record<string, any>;
+    const updatedData = { ...currentData, [`_${formatName}`]: formatData };
+    await db.update(candidateReports).set({ reportData: updatedData }).where(eq(candidateReports.id, reportId));
+  }
 }

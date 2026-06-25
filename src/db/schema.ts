@@ -187,7 +187,7 @@ export const platformUsers = mysqlTable('platform_users', {
   status: varchar('status', { length: 20 }).default('Active'),
   lastLogin: varchar('last_login', { length: 100 }),
   initials: varchar('initials', { length: 5 }),
-  linkedClientId: varchar('linked_client_id', { length: 20 }), // set when role=client
+  linkedClientId: varchar('linked_client_id', { length: 50 }), // set when role=client
   linkedCandidateId: varchar('linked_candidate_id', { length: 20 }), // set when role=candidate
   lastActive: datetime('last_active'),
   createdAt: datetime('created_at').default(sql`now()`),
@@ -205,7 +205,7 @@ export const candidateReports = mysqlTable('candidate_reports', {
 
 // ─── CLIENTS ─────────────────────────────────────────────
 export const clients = mysqlTable('clients', {
-  id: varchar('id', { length: 20 }).primaryKey(),
+  id: varchar('id', { length: 50 }).primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   accountId: varchar('account_id', { length: 50 }),
   vertical: varchar('vertical', { length: 100 }),

@@ -1,5 +1,5 @@
 import { getMandates, getFloats, getCandidates } from "@/db/queries";
-import FloatListClient from "./FloatListClient";
+import FloatListClient from "@/features/float-list/components/FloatListClient";
 
 export default async function FloatListPage() {
   const mandates = await getMandates();

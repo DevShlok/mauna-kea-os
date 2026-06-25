@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { clients } from "@/db/schema";
-import NewUserClient from "./NewUserClient";
+import NewUserClient from "@/features/admin/components/NewUserClient";
 
 export const metadata = {
   title: "Add User | Admin | Mauna Kea OS",

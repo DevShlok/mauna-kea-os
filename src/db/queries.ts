@@ -1,5 +1,5 @@
 import { db } from './index';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, getTableColumns } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
 import {
   mandates, mandateCandidates, candidates, floats, floatReferences,
@@ -41,7 +41,6 @@ export const getAllMandateCandidates = async () => {
     score: mandateCandidates.score,
     hasReport: mandateCandidates.hasReport,
     initials: mandateCandidates.initials,
-    cvText: mandateCandidates.cvText,
     mandateId: mandateCandidates.mandateId,
     mandateRole: mandates.role,
     mandateCompany: mandates.company,
@@ -62,7 +61,6 @@ export const getMandateCandidateByExtId = async (extId: string) => {
     score: mandateCandidates.score,
     hasReport: mandateCandidates.hasReport,
     initials: mandateCandidates.initials,
-    cvText: mandateCandidates.cvText,
     mandateId: mandateCandidates.mandateId,
     mandateRole: mandates.role,
     mandateCompany: mandates.company,
@@ -75,7 +73,8 @@ export const getMandateCandidateByExtId = async (extId: string) => {
 
 // ─── CANDIDATES (MASTER) ─────────────────────────────────
 export const getCandidates = async () => {
-  const rows = await db.select().from(candidates).orderBy(candidates.id);
+  const { cvText, profilePic, ...safeCols } = getTableColumns(candidates);
+  const rows = await db.select(safeCols).from(candidates).orderBy(candidates.id);
   return rows.map(c => ({
     ...c,
     qual: (c.qual ?? []) as any[],

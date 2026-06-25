@@ -90,13 +90,13 @@ export default async function DashboardLayout({
   const linkedClientId = platformUser?.linkedClientId || undefined;
   const linkedCandidateId = platformUser?.linkedCandidateId || undefined;
 
-  // Update lastActive silently
+  // Update lastActive in the background so it doesn't block page rendering
   if (platformUser?.id) {
     db.update(platformUsers)
       .set({ lastActive: new Date() })
       .where(eq(platformUsers.id, platformUser.id))
       .then(() => {})
-      .catch(() => {});
+      .catch((e) => console.error("Failed to update lastActive", e));
   }
 
   return (

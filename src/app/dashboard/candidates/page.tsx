@@ -1,5 +1,5 @@
 import { getCandidates, getMandates, getUserByEmail } from "@/db/queries";
-import CandidatesClient from "./CandidatesClient";
+import CandidatesClient from "@/features/candidates/components/CandidatesClient";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
@@ -12,8 +12,10 @@ export default async function CandidatesPage() {
     }
   }
 
-  const candidates = await getCandidates();
-  const mandates = await getMandates();
+  const [candidates, mandates] = await Promise.all([
+    getCandidates(),
+    getMandates()
+  ]);
   
   return <CandidatesClient candidates={candidates} mandates={mandates} />;
 }

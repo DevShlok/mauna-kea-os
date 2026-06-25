@@ -1,5 +1,5 @@
 import { getFrameworks } from "@/db/queries";
-import FrameworksClient from "./FrameworksClient";
+import FrameworksClient from "@/features/frameworks/components/FrameworksClient";
 
 export default async function FrameworksPage() {
   const frameworks = await getFrameworks();

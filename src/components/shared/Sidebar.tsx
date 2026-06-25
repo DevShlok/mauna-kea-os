@@ -26,18 +26,9 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
   const initials = fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "MK";
 
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
-  const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleMouseEnter = (title: string) => {
-    if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current);
-    setHoveredCategory(title);
-  };
-
-  const handleMouseLeave = () => {
-    leaveTimeoutRef.current = setTimeout(() => {
-      setHoveredCategory(null);
-    }, 150);
-  };
+  const handleMouseEnter = (title: string) => setHoveredCategory(title);
+  const handleMouseLeave = () => setHoveredCategory(null);
 
   const categories = [
     {
@@ -59,7 +50,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
         { label: "Candidate Database", href: "/dashboard/candidates", visibleTo: ["admin", "consultant", "candidate"] },
         { label: "Float List", href: "/dashboard/float-list", visibleTo: ["admin", "consultant"] },
         { label: "Add Candidate", href: "/dashboard/candidates/new", icon: Plus, visibleTo: ["admin", "consultant", "candidate"] },
-        { label: "Add to Float List", href: "/dashboard/candidates", icon: Plus, visibleTo: ["admin", "consultant"] },
+        { label: "Add to Float List", href: "/dashboard/candidates?mode=float", icon: Plus, visibleTo: ["admin", "consultant"] },
         { label: "Submissions", href: "/dashboard/float-list/submissions", visibleTo: ["admin", "consultant"] },
       ]
     },
@@ -123,9 +114,9 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
               </div>
               
               <div 
-                className={`grid transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+                className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
               >
-                <div className="overflow-hidden flex flex-col bg-[#06152a]/50">
+                <div className="overflow-hidden min-h-0 flex flex-col bg-[#06152a]/50">
                   <div className="flex flex-col py-1">
                   {visibleChildren.map((child, childIdx) => {
                     const isChildActive = pathname === child.href;

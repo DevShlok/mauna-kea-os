@@ -1,5 +1,5 @@
 import { getFrameworkById, getMandates } from "@/db/queries";
-import CreateFrameworkClient from "../new/CreateFrameworkClient";
+import CreateFrameworkClient from "@/features/frameworks/components/CreateFrameworkClient";
 import { notFound } from "next/navigation";
 
 export default async function EditFrameworkPage({ params }: { params: Promise<{ id: string }> }) {

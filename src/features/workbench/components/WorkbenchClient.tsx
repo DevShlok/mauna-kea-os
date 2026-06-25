@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import CandidateReportPDF from "@/components/reports/CandidateReportPDF";
-import { updateCandidateStatusAction } from "@/app/actions";
+import { generateFormatAction } from "@/actions/cv";
+import { updateCandidateStatusAction, saveReportFormatAction } from "@/app/actions";
 import FormatOne from "@/components/reports/FormatOne";
 import FormatTwo from "@/components/reports/FormatTwo";
 
@@ -63,6 +64,8 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     setSortConfig({ key, direction });
   };
 
+  const [fullCandidateDetails, setFullCandidateDetails] = useState<{ cvText?: string, profilePic?: string } | null>(null);
+
   const [interviewNotes, setInterviewNotes] = useState("");
   const [superiorRef, setSuperiorRef] = useState("");
   const [peerRef, setPeerRef] = useState("");
@@ -79,6 +82,23 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     setInterviewNotes("");
     setSuperiorRef("");
     setPeerRef("");
+
+    // Fetch the full details (profilePic, cvText) from the backend
+    // This allows us to exclude those huge columns from the initial list fetch
+    fetch(`/api/candidate-details?id=${selectedCandidateId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setFullCandidateDetails(data);
+        } else {
+          setFullCandidateDetails(null);
+        }
+      })
+      .catch(e => {
+        console.error("Failed to fetch full candidate details", e);
+        setFullCandidateDetails(null);
+      });
+
   }, [selectedCandidateId]);
   
   // Scoring state: { [criterionId]: number }
@@ -95,6 +115,98 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
   // Toggle between Assessment Draft and Final Reports
   const [activeView, setActiveView] = useState<"draft" | "format1" | "format2">("draft");
   const [selectedFormat, setSelectedFormat] = useState<"format1" | "format2">("format1");
+  const [printTarget, setPrintTarget] = useState<"draft" | "report" | null>(null);
+
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [pdfFilename, setPdfFilename] = useState<string>("download.pdf");
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  const triggerPrint = async (target: "draft" | "report") => {
+    setPrintTarget(target);
+    setIsGeneratingPdf(true);
+    
+    // Give React a tick to hide elements based on printTarget if needed
+    setTimeout(async () => {
+      try {
+        const elementId = target === 'draft' ? 'candidate-draft-pdf' : 'candidate-final-report-pdf';
+        const element = document.getElementById(elementId);
+        if (!element) {
+          setPrintTarget(null);
+          setIsGeneratingPdf(false);
+          return;
+        }
+        
+        const candidateRef = allCandidates.find(c => c.searchId === selectedCandidateId);
+        const filename = target === 'draft' ? `${candidateRef?.name || 'Candidate'}_Draft.pdf` : `${candidateRef?.name || 'Candidate'}_Report.pdf`;
+
+        if (target === 'draft') {
+          const { jsPDF } = await import('jspdf');
+          const html2canvasPro = (await import('html2canvas-pro')).default;
+          const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+          
+          const sections = element.querySelectorAll('.pdf-section');
+          let currentY = 10;
+          const pdfWidth = 190; // A4 width (210) - 20mm margins
+          const pageHeight = 287; // A4 height (297) - 10mm bottom margin
+          
+          for (let i = 0; i < sections.length; i++) {
+            const sec = sections[i] as HTMLElement;
+            // Ignore hidden sections
+            if (sec.classList.contains('hidden') || sec.style.display === 'none') continue;
+            
+            const canvas = await html2canvasPro(sec, { scale: 2, useCORS: true, windowWidth: 750 });
+            const imgData = canvas.toDataURL('image/jpeg', 0.98);
+            
+            const imgProps = pdf.getImageProperties(imgData);
+            const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            
+            if (currentY + imgHeight > pageHeight && i > 0) {
+              pdf.addPage();
+              currentY = 10;
+            }
+            
+            pdf.addImage(imgData, 'JPEG', 10, currentY, pdfWidth, imgHeight);
+            currentY += imgHeight + 5; // 5mm gap between sections
+          }
+          
+          const blob = pdf.output('blob');
+          const url = URL.createObjectURL(blob);
+          setPdfPreviewUrl(url);
+          setPdfFilename(filename);
+        } else {
+          const { jsPDF } = await import('jspdf');
+          const html2canvasPro = (await import('html2canvas-pro')).default;
+          const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+          
+          const pages = element.querySelectorAll('.format-page');
+          
+          for (let i = 0; i < pages.length; i++) {
+            const pageEl = pages[i] as HTMLElement;
+            
+            // Render the page exactly as it is (794x1122) without fake window padding
+            const canvas = await html2canvasPro(pageEl, { scale: 2, useCORS: true });
+            const imgData = canvas.toDataURL('image/jpeg', 1.0);
+            
+            if (i > 0) pdf.addPage();
+            
+            // Map the perfectly-proportioned canvas directly onto the 210x297mm A4 page
+            pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+          }
+          
+          const blob = pdf.output('blob');
+          const url = URL.createObjectURL(blob);
+          setPdfPreviewUrl(url);
+          setPdfFilename(filename);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error generating PDF: " + String(err));
+      } finally {
+        setPrintTarget(null);
+        setIsGeneratingPdf(false);
+      }
+    }, 200);
+  };
 
   const [candidateFilesHistory, setCandidateFilesHistory] = useState<any[]>([]);
   const [isUploadingCv, setIsUploadingCv] = useState(false);
@@ -232,7 +344,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     e.target.value = '';
   };
 
-  const handleGenerateFormat = async (format: "format1" | "format2", type: 'pdf' | 'pptx') => {
+  const handleGenerateFormat = async (format: "format1" | "format2") => {
     if (reportData) {
       const emptyFields = [];
       
@@ -267,24 +379,17 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       const candId = selectedCandidate?.externalId || selectedCandidate?.id;
       
       // We will ALWAYS regenerate the format to pick up any recent manual edits
-      const res = await fetch("/api/generate-format", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          candidateId: candId,
-          format: format,
-          reportData: reportData
-        })
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.data) {
-          // Update the local state with the newly generated format data
-          setReportData((prev: any) => ({
-            ...prev,
-            [`_${format}`]: data.data
-          }));
+      const data = await generateFormatAction(candId, format, reportData);
+      
+      if (data) {
+        setReportData((prev: any) => ({
+          ...prev,
+          [`_${format}`]: data
+        }));
+        
+        // Persist to database!
+        if (reportId) {
+          await saveReportFormatAction(reportId, format, data);
         }
       } else {
         alert("Failed to synthesize the final report format using AI.");
@@ -295,9 +400,6 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     } finally {
       setIsGeneratingFormat(false);
       setActiveView(format);
-      if (type === 'pptx') {
-         alert("PPTX downloaded!");
-      }
     }
   };
 
@@ -466,9 +568,10 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     // Combine notes to send to AI
     const combinedTranscript = `
       CANDIDATE CV TEXT:
-      ${selectedCandidate.cvText || "No CV uploaded for this candidate."}
-
-      ${manualScoresText}
+      ${fullCandidateDetails?.cvText || selectedCandidate.cvText || "No CV uploaded for this candidate."}
+      
+      Client Interview Notes:
+      ${interviewNotes}
 
       INTERVIEW NOTES:
       ${interviewNotes}
@@ -788,33 +891,22 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
 
           {/* Output Preview */}
           <div className="w-full">
-            {isGeneratingFormat ? (
-              <div className="bg-white border border-gray-200 rounded-xl p-10 shadow-sm flex flex-col items-center justify-center text-center h-[600px] sticky top-6">
-                <div className="w-12 h-12 border-4 border-[#133255] border-t-transparent rounded-full animate-spin mb-6"></div>
-                <h3 className="text-lg font-bold text-[#133255] mb-2">AI is Generating Report</h3>
-                <p className="text-sm text-gray-500 max-w-sm">
-                  Formatting the assessment into the selected layout...
-                </p>
-              </div>
-            ) : reportData ? (
+            {reportData ? (
               <div className="flex flex-col gap-4">
-                {activeView === "draft" && (
-                  <>
 
-
-                    <CandidateReportPDF 
-                      candidate={selectedCandidate} 
-                      frameworkName={selectedFramework?.name || "Assessment"} 
-                      reportData={reportData}
-                      onReportDataChange={(newData) => setReportData(newData)}
-                      onGeneratePdf={(format) => handleGenerateFormat(format, 'pdf')}
-                      onGeneratePptx={(format) => handleGenerateFormat(format, 'pptx')}
-                    />
-                  </>
-                )}
+                    <div id="candidate-draft-pdf" className="w-max mx-auto">
+                      <CandidateReportPDF 
+                        candidate={selectedCandidate} 
+                        frameworkName={selectedFramework?.name || "Assessment"} 
+                        reportData={reportData}
+                        onReportDataChange={(newData) => setReportData(newData)}
+                        onPrint={() => triggerPrint('draft')}
+                        isPrinting={printTarget === 'draft'}
+                      />
+                    </div>
 
                     {/* Format Selection Dropdown */}
-                    <div className="flex flex-col items-center justify-center gap-3 mt-8 pt-6 border-t border-gray-200">
+                    <div className="flex flex-col items-center justify-center gap-3 mt-8 pt-6 border-t border-gray-200 print:hidden">
                       <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full shadow-sm border border-gray-200">
                         <span className="font-bold text-gray-700 text-sm">Select final format:</span>
                         <select 
@@ -828,16 +920,42 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                       </div>
                     </div>
 
-                    {/* Generate Buttons */}
-                    <div className="flex justify-center gap-4 mt-6">
-                      <button onClick={() => handleGenerateFormat(selectedFormat, 'pdf')} className="px-6 py-3 bg-[#133255] text-white font-bold rounded shadow hover:bg-[#133255] transition-colors">
-                        Generate PDF
-                      </button>
-                      <button onClick={() => handleGenerateFormat(selectedFormat, 'pptx')} className="px-6 py-3 bg-[#133255] text-white font-bold rounded shadow hover:bg-[#133255] transition-colors">
-                        Generate PPTX
+                    {/* Generate Button */}
+                    <div className="flex justify-center gap-4 mt-6 print:hidden">
+                      <button onClick={() => handleGenerateFormat(selectedFormat)} className="px-6 py-3 bg-[#133255] text-white font-bold rounded shadow hover:bg-[#133255] transition-colors">
+                        Generate Selected Report
                       </button>
                     </div>
 
+                    {isGeneratingFormat && (
+                      <div className="bg-white border border-gray-200 rounded-xl p-10 shadow-sm flex flex-col items-center justify-center text-center sticky top-6 mt-6">
+                        <div className="w-12 h-12 border-4 border-[#133255] border-t-transparent rounded-full animate-spin mb-6"></div>
+                        <h3 className="text-lg font-bold text-[#133255] mb-2">AI is Generating Report</h3>
+                        <p className="text-sm text-gray-500 max-w-sm">
+                          Formatting the assessment into the selected layout...
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Render Formatted Report Inline Below Draft */}
+                    {(!isGeneratingFormat && (reportData._format1 || reportData._format2)) && (
+                      <div className={`mt-10 pt-10 border-t-2 border-gray-200`}>
+                        <div className="flex justify-between items-center mb-6">
+                          <h3 className="text-xl font-bold text-[#133255] font-serif">Final Generated Report</h3>
+                          <button onClick={() => triggerPrint('report')} className="px-5 py-2 bg-yellow-500 text-[#133255] rounded-lg text-sm font-bold hover:bg-yellow-400 shadow-sm transition-colors">
+                            Download Report as PDF
+                          </button>
+                        </div>
+                        <div id="candidate-final-report-pdf" className={`w-max mx-auto bg-white overflow-hidden ${printTarget === 'report' ? '' : 'border border-gray-200 shadow-sm rounded-lg'}`}>
+                          {selectedFormat === "format1" && reportData._format1 && (
+                            <FormatTwo mandate={selectedMandate} candidates={[{ ...selectedCandidate, reportData, profilePic: fullCandidateDetails?.profilePic || selectedCandidate.profilePic }]} framework={selectedFramework} scores={scores} isPrinting={printTarget === 'report'} />
+                          )}
+                          {selectedFormat === "format2" && reportData._format2 && (
+                            <FormatOne mandate={selectedMandate} candidates={[{...selectedCandidate, reportData, profilePic: fullCandidateDetails?.profilePic || selectedCandidate.profilePic}]} isPrinting={printTarget === 'report'} />
+                          )}
+                        </div>
+                      </div>
+                    )}
               </div>
             ) : isGenerating ? (
               <div className="bg-white border border-gray-200 rounded-xl p-10 shadow-sm flex flex-col items-center justify-center text-center h-[600px] sticky top-6">
@@ -857,46 +975,6 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
         </div>
       )}
       </div>
-
-      {/* Full Screen Report Preview Modal */}
-      {(activeView === "format1" || activeView === "format2") && reportData && selectedMandate && (
-        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex flex-col items-center overflow-y-auto print:static print:bg-white print:overflow-visible print:block">
-          
-          {/* Modal Header */}
-          <div className="w-[794px] flex justify-between items-center bg-white mt-10 mb-6 p-4 rounded-xl shadow-xl border border-gray-200 print:hidden shrink-0 animate-in slide-in-from-top-4 duration-300">
-            <span className="text-sm font-bold text-[#133255] uppercase ml-2">Final Report Preview</span>
-            <div className="flex gap-4 items-center">
-              <button onClick={() => window.print()} className="px-5 py-2 bg-yellow-500 text-[#133255] rounded-lg text-sm font-bold hover:bg-yellow-400 shadow-sm transition-colors">
-                Print / Download PDF
-              </button>
-              <button 
-                onClick={() => setActiveView("draft")} 
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors font-bold text-lg"
-                title="Close Preview"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-
-          {/* Modal Body / Report */}
-          <div className="print:absolute print:left-0 print:top-0 print:w-full print:bg-white print:z-[9999] print:overflow-visible print:block pb-20 print:pb-0 animate-in fade-in zoom-in-95 duration-300 shrink-0">
-            {activeView === "format1" && (
-              <FormatTwo 
-                mandate={selectedMandate} 
-                candidates={[{ ...selectedCandidate, reportData }]} 
-                framework={selectedFramework}
-                scores={scores}
-              />
-            )}
-            {activeView === "format2" && (
-              <FormatOne mandate={selectedMandate} candidates={[{...selectedCandidate, reportData}]} />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Candidate Selection Modal */}
       {isCandidateModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-[1000px] h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -1027,6 +1105,51 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                 Delete
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {isGeneratingPdf && (
+      <div className="fixed inset-0 bg-[#111]/70 flex flex-col items-center justify-center z-[200] backdrop-blur-sm">
+        <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mb-6"></div>
+        <h2 className="text-2xl font-bold text-white font-serif">Generating PDF Preview...</h2>
+        <p className="text-white/80 mt-2">Capturing high-resolution layout, please wait.</p>
+      </div>
+    )}
+
+    {pdfPreviewUrl && (
+      <div className="fixed inset-0 bg-[#111]/80 flex flex-col items-center justify-center z-[200] backdrop-blur-sm p-4 md:p-8">
+        <div className="bg-white rounded-[10px] shadow-2xl w-full max-w-6xl h-full flex flex-col overflow-hidden">
+          <div className="px-6 py-4 bg-[#133255] text-white flex justify-between items-center shrink-0">
+            <h2 className="font-serif text-[20px] font-bold">PDF Preview</h2>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => {
+                  URL.revokeObjectURL(pdfPreviewUrl);
+                  setPdfPreviewUrl(null);
+                }} 
+                className="px-4 py-2 bg-transparent border border-white/30 hover:bg-white/10 rounded-[6px] text-[15px] font-bold transition-colors"
+              >
+                Cancel
+              </button>
+              <a 
+                href={pdfPreviewUrl} 
+                download={pdfFilename}
+                onClick={() => {
+                  setTimeout(() => {
+                    URL.revokeObjectURL(pdfPreviewUrl);
+                    setPdfPreviewUrl(null);
+                  }, 500);
+                }}
+                className="px-6 py-2 bg-yellow-500 text-[#133255] rounded-[6px] text-[15px] font-bold hover:bg-yellow-400 transition-colors shadow-sm flex items-center gap-2"
+              >
+                Save to Computer
+              </a>
+            </div>
+          </div>
+          <div className="flex-1 w-full bg-gray-100 overflow-hidden relative">
+            <iframe src={pdfPreviewUrl} className="w-full h-full border-none absolute inset-0" title="PDF Preview" />
           </div>
         </div>
       </div>

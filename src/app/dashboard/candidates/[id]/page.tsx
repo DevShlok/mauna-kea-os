@@ -1,5 +1,5 @@
 import { getCandidateById, getMandates, getUserByEmail } from "@/db/queries";
-import FlCandidateClient from "./FlCandidateClient";
+import FlCandidateClient from "@/features/candidates/components/FlCandidateClient";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
