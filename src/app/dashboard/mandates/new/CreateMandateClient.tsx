@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { createMandateAction } from "@/app/actions";
 
 export default function CreateMandateClient({ frameworks }: { frameworks: any[] }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialCompany = searchParams.get("company") || "";
+
   const [form, setForm] = useState({
-    company: "",
+    company: initialCompany,
     role: "",
     ctc: "",
     exp: "",

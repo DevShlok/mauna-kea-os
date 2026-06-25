@@ -40,9 +40,14 @@ export default function MandatesClient({ initialMandates }: { initialMandates: M
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">All Mandates</h1>
-        <Link href="/dashboard/mandates/new" className="px-4 py-2 bg-yellow-500 text-[#133255] rounded text-xs font-bold hover:bg-yellow-400">+ Add New Mandate</Link>
+      <div className="flex justify-between items-end mb-8">
+        <div>
+          <div className="text-[12px] text-gray-500 mb-1">Home / Mandates</div>
+          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">All Mandates</h1>
+        </div>
+        <Link href="/dashboard/mandates/new" className="px-5 py-2.5 bg-[#D8B15B] text-[#133255] rounded-lg text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors inline-block mb-1">
+          + Add New Mandate
+        </Link>
       </div>
       <div className="flex flex-wrap gap-3 mb-6 bg-white p-3 border border-gray-200 rounded-xl shadow-sm">
         <input type="text" placeholder="Search mandates..." value={search} onChange={e => setSearch(e.target.value)} className="min-w-[200px] flex-1 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]"/>

@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles } from "@/db/schema";
+import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles, clients } from "@/db/schema";
 import { eq, sql, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -357,6 +357,39 @@ export async function deleteMandateAction(id: number) {
   await db.delete(mandateCandidates).where(eq(mandateCandidates.mandateId, id));
   await db.delete(mandates).where(eq(mandates.id, id));
   revalidatePath('/dashboard/mandates');
+}
+
+export async function deletePlatformUserAction(id: string) {
+  revalidatePath("/dashboard/settings");
+  await db.delete(platformUsers).where(eq(platformUsers.id, id));
+  return true;
+}
+
+// ─── CLIENTS ACTIONS ────────────────────────────────────────
+
+export async function createClientAction(data: any) {
+  revalidatePath("/dashboard/clients");
+  const result = await db.insert(clients).values({
+    id: data.id || Date.now().toString(),
+    name: data.name,
+    accountId: data.accountId,
+    vertical: data.vertical,
+    owner: data.owner,
+    status: data.status || "Active",
+  });
+  return true;
+}
+
+export async function updateClientAction(id: string, data: any) {
+  revalidatePath("/dashboard/clients");
+  await db.update(clients).set(data).where(eq(clients.id, id));
+  return true;
+}
+
+export async function deleteClientAction(id: string) {
+  revalidatePath("/dashboard/clients");
+  await db.delete(clients).where(eq(clients.id, id));
+  return true;
 }
 
 export async function deleteSubmissionAction(id: string) {

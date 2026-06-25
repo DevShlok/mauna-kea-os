@@ -8,9 +8,14 @@ export default function FrameworksClient({ initialFrameworks }: { initialFramewo
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Framework Templates</h1>
-        <Link href="/dashboard/frameworks/new" className="px-4 py-2 bg-yellow-500 text-[#133255] rounded text-xs font-bold hover:bg-yellow-400">+ New Framework</Link>
+      <div className="flex justify-between items-end mb-8">
+        <div>
+          <div className="text-[12px] text-gray-500 mb-1">Home / Frameworks</div>
+          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">Framework Templates</h1>
+        </div>
+        <Link href="/dashboard/frameworks/new" className="px-5 py-2.5 bg-[#D8B15B] text-[#133255] rounded-lg text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors inline-block mb-1">
+          + New Framework
+        </Link>
       </div>
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
         <table className="w-full text-sm">

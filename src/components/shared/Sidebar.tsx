@@ -9,7 +9,8 @@ import {
   Scale,
   Database,
   Send,
-  LogOut
+  LogOut,
+  Building2
 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/nextjs";
 
@@ -23,6 +24,7 @@ export function Sidebar() {
 
   const navItems: any[] = [
     { section: "Search Delivery" },
+    { label: "Clients", icon: Building2, href: "/dashboard/clients" },
     { label: "Mandates", icon: ClipboardList, href: "/dashboard/mandates", badge: 4 },
     { label: "Float List", icon: Send, href: "/dashboard/float-list" },
     { label: "AI Workbench", icon: BrainCircuit, href: "/dashboard/workbench" },

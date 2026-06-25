@@ -577,12 +577,8 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <div className="flex items-center gap-2 text-sm text-gray-400 font-semibold mb-1">
-            <Link href="/dashboard" className="hover:text-[#133255]">Home</Link>
-            <span>/</span>
-            <span className="text-gray-800">Master Database</span>
-          </div>
-          <h1 className="text-3xl font-serif font-bold text-gray-900">Candidate DB</h1>
+          <div className="text-[12px] text-gray-500 mb-1">Home / Master Database</div>
+          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">Candidate DB</h1>
         </div>
         <div className="flex gap-3 items-center">
           {isImporting && <span className="text-sm text-gray-500 font-bold animate-pulse">Processing...</span>}

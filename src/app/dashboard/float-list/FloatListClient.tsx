@@ -62,14 +62,10 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <div className="flex items-center gap-2 text-sm text-gray-400 font-semibold mb-1">
-            <Link href="/dashboard" className="hover:text-[#133255]">Home</Link>
-            <span>/</span>
-            <span className="text-gray-800">Candidates</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Candidate Database</h1>
+          <div className="text-[12px] text-gray-500 mb-1">Home / Candidates</div>
+          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">Candidate Database</h1>
         </div>
       </div>
       

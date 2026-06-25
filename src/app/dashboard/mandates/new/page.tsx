@@ -1,7 +1,13 @@
 import { getFrameworks } from "@/db/queries";
 import CreateMandateClient from "./CreateMandateClient";
 
+import { Suspense } from "react";
+
 export default async function CreateMandatePage() {
   const frameworks = await getFrameworks();
-  return <CreateMandateClient frameworks={frameworks} />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CreateMandateClient frameworks={frameworks} />
+    </Suspense>
+  );
 }

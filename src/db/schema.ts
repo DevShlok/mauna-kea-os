@@ -200,6 +200,17 @@ export const candidateReports = mysqlTable('candidate_reports', {
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
+// ─── CLIENTS ─────────────────────────────────────────────
+export const clients = mysqlTable('clients', {
+  id: varchar('id', { length: 20 }).primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  accountId: varchar('account_id', { length: 50 }),
+  vertical: varchar('vertical', { length: 100 }),
+  owner: varchar('owner', { length: 255 }),
+  status: varchar('status', { length: 50 }).default('Active'),
+  createdAt: datetime('created_at').default(sql`now()`),
+});
+
 // ─── TYPES ───────────────────────────────────────────────
 export type Mandate = typeof mandates.$inferSelect;
 export type MandateCandidate = typeof mandateCandidates.$inferSelect;
@@ -213,3 +224,4 @@ export type FrameworkCategory = typeof frameworkCategories.$inferSelect;
 export type FrameworkCriterion = typeof frameworkCriteria.$inferSelect;
 export type PlatformUser = typeof platformUsers.$inferSelect;
 export type CandidateReport = typeof candidateReports.$inferSelect;
+export type Client = typeof clients.$inferSelect;

@@ -504,12 +504,13 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
   return (
     <div className="max-w-screen-xl mx-auto pb-10 print:pb-0">
       <div className="print:hidden">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-8">
           <div>
-          <h1 className="text-2xl font-bold text-gray-900 font-serif">AI Workbench</h1>
-          {selectedFramework && <div className="text-[13px] text-gray-500">{selectedFramework.name} — {mandates.find(m => m.id.toString() === mandateId)?.company || "General Assessment"}</div>}
+            <div className="text-[12px] text-gray-500 mb-1">Home / AI Workbench</div>
+            <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">AI Workbench</h1>
+            {selectedFramework && <div className="text-[13px] text-gray-500 mt-2">{selectedFramework.name} — {mandates.find(m => m.id.toString() === mandateId)?.company || "General Assessment"}</div>}
+          </div>
         </div>
-      </div>
 
       {/* TOP CONFIG BAR */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-6 flex gap-6 items-end">
