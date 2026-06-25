@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { clients, mandates } from "@/db/schema";
 import ClientsClient from "./ClientsClient";
+
 import { currentUser } from "@clerk/nextjs/server";
 import { getUserByEmail } from "@/db/queries";
 
