@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { Candidate } from "@/db/schema";
-import { bulkAddSubmissionAction, bulkAssignToMandateAction, updateCandidateStatusAction, deleteMultipleCandidatesAction, addCandidateToMandateAction } from "@/app/actions";
+import { bulkAddSubmissionAction, bulkAssignToMandateAction, updateCandidateStatusAction, deleteMultipleCandidatesAction } from "@/app/actions";
 import { mapCandidatesAction, processCandidatesAction } from "@/actions/candidates";
 
 const MultiSelect = ({ options, selected, onChange, placeholder }: any) => {

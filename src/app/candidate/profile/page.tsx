@@ -1,7 +1,6 @@
 import { requireRole } from "@/lib/auth";
 import { getCandidateById, getMandates } from "@/db/queries";
 import FlCandidateClient from "@/features/candidates/components/FlCandidateClient";
-import { redirect } from "next/navigation";
 
 export default async function CandidateProfilePage() {
   const { platformUser, userRole } = await requireRole(["candidate"]);

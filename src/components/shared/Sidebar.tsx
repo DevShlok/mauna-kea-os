@@ -3,21 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  ClipboardList,
   Users,
   BrainCircuit,
-  Scale,
   Database,
-  Send,
   LogOut,
   Building2,
   ChevronRight,
   Plus
 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/nextjs";
-import { useState, useRef } from "react";
+import { useState } from "react";
 
-export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidateId }: { userRole?: string; linkedClientId?: string; linkedCandidateId?: string; }) {
+export function Sidebar({ userRole = "candidate" }: { userRole?: string; linkedClientId?: string; linkedCandidateId?: string; }) {
   const pathname = usePathname();
   const { user } = useUser();
   const { signOut } = useClerk();

@@ -31,8 +31,7 @@ export default async function ClientMandateDetailPage({ params }: { params: Prom
 
   // Enrich candidates with profile pics from the master candidates table
   const externalIds = mandate.candidates.map(c => c.externalId).filter(Boolean);
-  let profilePicMap: Record<string, string | null> = {};
-  let masterDataMap: Record<string, { profilePic: string | null; location: string | null; exp: number | null; designation: string | null; company: string | null }> = {};
+  const masterDataMap: Record<string, { profilePic: string | null; location: string | null; exp: number | null; designation: string | null; company: string | null }> = {};
 
   if (externalIds.length > 0) {
     const masterCandidates = await db

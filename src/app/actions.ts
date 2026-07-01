@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles, clients } from "@/db/schema";
-import { eq, sql, and, inArray } from "drizzle-orm";
+import { eq, sql, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function createMandateAction(data: any) {
@@ -402,7 +402,7 @@ export async function deleteMandateAction(id: number) {
 
 export async function createClientAction(data: any) {
   revalidatePath("/dashboard/clients");
-  const result = await db.insert(clients).values({
+  await db.insert(clients).values({
     id: data.id || Date.now().toString(),
     name: data.name,
     accountId: data.accountId,
