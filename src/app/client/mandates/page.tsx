@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getMandates } from "@/db/queries";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/db";
@@ -7,8 +8,13 @@ import ClientDashboard from "@/features/client/components/ClientDashboard";
 
 export const dynamic = "force-dynamic";
 
-export default async function ClientMandatesPage() {
+type PageProps = {
+  searchParams: { tab?: string };
+};
+
+export default async function ClientMandatesPage({ searchParams }: PageProps) {
   const { platformUser } = await requireRole(["client"]);
+  const tab = searchParams.tab || "dashboard";
 
   let filteredMandates = await getMandates();
   let clientName = "Client";
@@ -25,5 +31,9 @@ export default async function ClientMandatesPage() {
     filteredMandates = [];
   }
 
-  return <ClientDashboard clientName={clientName} mandates={filteredMandates} />;
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-[#f4f6fb]">Loading...</div>}>
+      <ClientDashboard clientName={clientName} mandates={filteredMandates} initialTab={tab as any} />
+    </Suspense>
+  );
 }
