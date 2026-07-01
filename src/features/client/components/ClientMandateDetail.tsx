@@ -50,7 +50,8 @@ type Props = {
 function ScoreRing({ score, size = 44 }: { score: number; size?: number }) {
   const radius = (size - 6) / 2;
   const circumference = 2 * Math.PI * radius;
-  const pct = Math.min(Math.max(score, 0), 100);
+  // Convert 10-point score to percentage (e.g. 8.7 -> 87)
+  const pct = Math.min(Math.max(score * 10, 0), 100);
   const offset = circumference - (pct / 100) * circumference;
 
   // Color based on score
@@ -246,7 +247,7 @@ export default function ClientMandateDetail({ mandate, clientName }: Props) {
           </div>
 
           {/* Candidate List */}
-          <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {rankedCandidates.map((candidate, idx) => {
               const rank = idx + 1;
               const isSelected = selectedIds.has(candidate.id);
@@ -257,77 +258,68 @@ export default function ClientMandateDetail({ mandate, clientName }: Props) {
               return (
                 <div
                   key={candidate.id}
-                  className={`bg-white rounded-xl p-4 border shadow-sm hover:shadow-md transition-all duration-200 group cursor-pointer ${
-                    isSelected ? "border-indigo-300 ring-1 ring-indigo-200" : "border-gray-100"
+                  className={`bg-white rounded-2xl p-4 border shadow-sm hover:shadow-md transition-all duration-200 group cursor-pointer flex flex-col ${
+                    isSelected ? "border-indigo-400 ring-1 ring-indigo-400" : "border-gray-100"
                   }`}
-                  onClick={() => toggleSelect(candidate.id)}
+                  onClick={() => router.push(`/client/candidates/${candidate.externalId}?mandateId=${mandate.id}`)}
                 >
-                  <div className="flex items-center gap-4">
-                    {/* Rank */}
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold ${getRankStyle(rank)}`}>
+                  {/* Top Bar with Badges */}
+                  <div className="flex justify-between items-start mb-2">
+                    <div className={`w-6 h-6 rounded flex items-center justify-center text-[12px] font-bold ${getRankStyle(rank)}`}>
                       {rank}
                     </div>
+                    {candidate.score != null && (
+                      <ScoreRing score={candidate.score} />
+                    )}
+                  </div>
 
-                    {/* Avatar */}
+                  {/* Avatar Center */}
+                  <div className="mx-auto mb-4 mt-1">
                     {candidate.profilePic ? (
                       <img
                         src={candidate.profilePic}
                         alt={candidate.name}
-                        className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-sm shrink-0"
+                        className="w-24 h-24 rounded-full object-cover shadow-sm border border-gray-100"
                       />
                     ) : (
-                      <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-[13px] font-bold shadow-sm shrink-0`}>
+                      <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-[28px] font-bold shadow-sm border border-gray-100`}>
                         {initials}
                       </div>
                     )}
+                  </div>
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-[14px] font-bold text-[#0b1f3a] truncate">{candidate.name}</h3>
-                      <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-400">
-                        {candidate.company && (
-                          <span className="flex items-center gap-1 truncate">
-                            <Building2 className="w-3 h-3 shrink-0" />
-                            {candidate.company}
-                          </span>
-                        )}
-                        {candidate.role && (
-                          <span className="flex items-center gap-1 truncate">
-                            <Briefcase className="w-3 h-3 shrink-0" />
-                            {candidate.role}
-                          </span>
-                        )}
+                  {/* Left-aligned Info */}
+                  <div className="flex-1 text-left">
+                    <h3 className="text-[15px] font-bold text-[#0b1f3a] truncate">{candidate.name}</h3>
+                    {candidate.role && (
+                      <p className="text-[12px] text-gray-500 mt-0.5 truncate">{candidate.role}</p>
+                    )}
+                    
+                    {candidate.company && (
+                      <div className="flex items-center gap-1.5 mt-2.5 text-[#0b1f3a] font-bold text-[13px]">
+                        <Building2 className="w-3.5 h-3.5 text-indigo-500" />
+                        <span className="truncate">{candidate.company}</span>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Score */}
-                    {candidate.score != null && <ScoreRing score={candidate.score} />}
+                    <p className="text-[11px] font-medium text-gray-500 mt-1">
+                       {/* Mock experience or Stage */}
+                       {stageLabel} Phase
+                    </p>
+                  </div>
 
-                    {/* Stage */}
-                    <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 rounded-full px-2.5 py-0.5">
-                      {stageLabel}
-                    </span>
-
-                    {/* Select */}
+                  {/* Bottom Left Checkbox */}
+                  <div className="mt-4 flex items-center justify-between">
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleSelect(candidate.id); }}
-                      className="shrink-0"
+                      className="shrink-0 flex items-center justify-center"
                     >
                       {isSelected ? (
-                        <CheckSquare className="w-5 h-5 text-indigo-600" />
+                        <CheckSquare className="w-[18px] h-[18px] text-indigo-600" />
                       ) : (
-                        <Square className="w-5 h-5 text-gray-300 group-hover:text-gray-400 transition-colors" />
+                        <Square className="w-[18px] h-[18px] text-gray-300 group-hover:text-gray-400 transition-colors" />
                       )}
                     </button>
-
-                    {/* Navigate */}
-                    <Link
-                      href={`/client/candidates/${candidate.externalId}?mandateId=${mandate.id}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="shrink-0"
-                    >
-                      <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-indigo-500 transition-colors" />
-                    </Link>
                   </div>
                 </div>
               );

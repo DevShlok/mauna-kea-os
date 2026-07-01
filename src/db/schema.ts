@@ -200,6 +200,7 @@ export const candidateReports = mysqlTable('candidate_reports', {
   frameworkId: varchar('framework_id', { length: 20 }).notNull().references(() => frameworks.id),
   status: varchar('status', { length: 50 }).default('Generating'), // Generating, Completed, Failed
   reportData: json('report_data'), // The dynamic JSON output from the AI
+  sharedWithClient: boolean('shared_with_client').default(false), // Indicates if the report is visible to the client
   createdAt: datetime('created_at').default(sql`now()`),
 });
 

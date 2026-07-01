@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import CandidateReportPDF from "@/components/reports/CandidateReportPDF";
 import { generateFormatAction } from "@/actions/cv";
-import { updateCandidateStatusAction, saveReportFormatAction } from "@/app/actions";
+import { updateCandidateStatusAction, saveReportFormatAction, saveReportDraftAction } from "@/app/actions";
 import FormatOne from "@/components/reports/FormatOne";
 import FormatTwo from "@/components/reports/FormatTwo";
 
@@ -36,6 +36,9 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
   const [isCandidateModalOpen, setIsCandidateModalOpen] = useState(false);
   const [candidateSearch, setCandidateSearch] = useState("");
   const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
+  
+  const [isSharedWithClient, setIsSharedWithClient] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const sortedAndFilteredCandidates = useMemo(() => {
     let result = allCandidates.filter(c => 
@@ -116,6 +119,8 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
   const [activeView, setActiveView] = useState<"draft" | "format1" | "format2">("draft");
   const [selectedFormat, setSelectedFormat] = useState<"format1" | "format2">("format1");
   const [printTarget, setPrintTarget] = useState<"draft" | "report" | null>(null);
+
+  const [acceptFinalReportStatus, setAcceptFinalReportStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [pdfFilename, setPdfFilename] = useState<string>("download.pdf");
@@ -349,7 +354,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       const emptyFields = [];
       
       // Check top-level generated fields
-      const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Career Aspiration"];
+      const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "Career Aspiration", "final_accepted_html", "final_accepted_format"];
       for (const [key, value] of Object.entries(reportData)) {
         if (key === '_rawInputs' || key === 'error' || key === 'scores' || key.startsWith('_format') || hiddenFields.includes(key)) continue;
         if (!value || (typeof value === 'string' && value.trim() === '') || (Array.isArray(value) && value.length === 0)) {
@@ -378,18 +383,42 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     try {
       const candId = selectedCandidate?.externalId || selectedCandidate?.id;
       
+      const combinedTranscript = `
+        CANDIDATE CV TEXT:
+        ${selectedCandidate?.cvText || "No CV uploaded for this candidate."}
+        
+        INTERVIEW NOTES:
+        ${interviewNotes || "No interview notes provided."}
+      `;
+
+      const accepted = reportData._acceptedSections || [];
+      const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "_rawInputs", "error", "_format1", "_format2", "scores", "_acceptedSections", "matchScore", "readinessScore", "hireabilityScore", "Industry", "Geography", "final_accepted_html", "final_accepted_format"];
+      
+      const filteredReportData: Record<string, any> = {};
+      for (const key of Object.keys(reportData)) {
+        if (hiddenFields.includes(key) || accepted.includes(key)) {
+          filteredReportData[key] = reportData[key];
+        }
+      }
+      
       // We will ALWAYS regenerate the format to pick up any recent manual edits
-      const data = await generateFormatAction(candId, format, reportData);
+      const data = await generateFormatAction(candId, format, filteredReportData, combinedTranscript);
       
       if (data) {
-        setReportData((prev: any) => ({
-          ...prev,
-          [`_${format}`]: data
-        }));
+        const newReport = { ...reportData, [`_${format}`]: data };
+        delete newReport.final_accepted_html;
+        delete newReport.final_accepted_format;
+
+        setReportData(newReport);
         
         // Persist to database!
         if (reportId) {
           await saveReportFormatAction(reportId, format, data);
+          await fetch("/api/reports/draft", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reportId, reportData: newReport }),
+          });
         }
       } else {
         alert("Failed to synthesize the final report format using AI.");
@@ -400,6 +429,45 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     } finally {
       setIsGeneratingFormat(false);
       setActiveView(format);
+    }
+  };
+
+  const handleUpdateFormatData = (formatKey: string, newFormatData: any) => {
+    const newReportData = { ...reportData, [formatKey]: newFormatData };
+    setReportData(newReportData);
+    if (reportId) {
+      saveReportFormatAction(reportId, formatKey.replace('_', ''), newFormatData).catch(console.error);
+    }
+  };
+
+  const handleAcceptFinalReport = async () => {
+    setAcceptFinalReportStatus("saving");
+    const el = document.getElementById('candidate-final-report-pdf');
+    if (!el) {
+       setAcceptFinalReportStatus("idle");
+       return;
+    }
+    
+    const clone = el.cloneNode(true) as HTMLElement;
+    
+    // Remove all print:hidden elements (fetch buttons, move buttons, etc)
+    const hiddenElements = clone.querySelectorAll('.print\\:hidden');
+    hiddenElements.forEach(h => h.remove());
+
+    const html = clone.innerHTML;
+    
+    const newReportData = { ...reportData, final_accepted_html: html, final_accepted_format: selectedFormat };
+    setReportData(newReportData);
+    if (reportId) {
+      try {
+        await saveReportDraftAction(reportId, newReportData);
+        setAcceptFinalReportStatus("saved");
+      } catch (err) {
+        console.error(err);
+        setAcceptFinalReportStatus("idle");
+      }
+    } else {
+      setAcceptFinalReportStatus("saved");
     }
   };
 
@@ -497,6 +565,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           setSuperiorRef(data.report.reportData._rawInputs?.superiorRef || data.report.reportData["Superior Reference"] || "");
           setPeerRef(data.report.reportData._rawInputs?.peerRef || data.report.reportData["Peer Reference"] || "");
           setReportId(data.report.id);
+          setIsSharedWithClient(data.report.sharedWithClient || false);
           setReportExistsInDb(true);
           
           if (data.report.frameworkId) {
@@ -588,6 +657,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           transcript: combinedTranscript,
           interviewNotes,
           selectedFileIds,
+          manualScores: scores,
           feedback: {
             superior: superiorRef,
             peer: peerRef
@@ -605,6 +675,28 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     }
   };
 
+  const handleTogglePublish = async () => {
+    if (!reportId) return;
+    setIsPublishing(true);
+    try {
+      const res = await fetch("/api/reports/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reportId, sharedWithClient: !isSharedWithClient }),
+      });
+      if (!res.ok) throw new Error("Failed to update status");
+      const data = await res.json();
+      if (data.success) {
+        setIsSharedWithClient(data.sharedWithClient);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error toggling publish status");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   return (
     <div className="max-w-screen-xl mx-auto pb-10 print:pb-0">
       <div className="print:hidden">
@@ -614,6 +706,21 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
             <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">AI Workbench</h1>
             {selectedFramework && <div className="text-[15px] text-gray-500 mt-2">{selectedFramework.name} — {mandates.find(m => m.id.toString() === mandateId)?.company || "General Assessment"}</div>}
           </div>
+          
+          {/* Publish to Client Toggle in Header */}
+          {reportExistsInDb && (
+            <button 
+              onClick={handleTogglePublish} 
+              disabled={isPublishing}
+              className={`px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm transition-colors ${
+                isSharedWithClient 
+                  ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200' 
+                  : 'bg-yellow-500 text-[#133255] hover:bg-yellow-400'
+              }`}
+            >
+              {isPublishing ? "Updating..." : isSharedWithClient ? "✅ Published to Client" : "Publish to Client"}
+            </button>
+          )}
         </div>
 
       {/* TOP CONFIG BAR */}
@@ -894,12 +1001,17 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
             {reportData ? (
               <div className="flex flex-col gap-4">
 
-                    <div id="candidate-draft-pdf" className="w-max mx-auto">
+                    <div id="candidate-draft-pdf" className="w-full">
                       <CandidateReportPDF 
                         candidate={selectedCandidate} 
                         frameworkName={selectedFramework?.name || "Assessment"} 
                         reportData={reportData}
-                        onReportDataChange={(newData) => setReportData(newData)}
+                        onReportDataChange={(newData) => {
+                          setReportData(newData);
+                          if (reportId) {
+                            saveReportDraftAction(reportId, newData).catch(console.error);
+                          }
+                        }}
                         onPrint={() => triggerPrint('draft')}
                         isPrinting={printTarget === 'draft'}
                       />
@@ -942,17 +1054,56 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                       <div className={`mt-10 pt-10 border-t-2 border-gray-200`}>
                         <div className="flex justify-between items-center mb-6">
                           <h3 className="text-xl font-bold text-[#133255] font-serif">Final Generated Report</h3>
-                          <button onClick={() => triggerPrint('report')} className="px-5 py-2 bg-yellow-500 text-[#133255] rounded-lg text-sm font-bold hover:bg-yellow-400 shadow-sm transition-colors">
-                            Download Report as PDF
-                          </button>
+                          <div className="flex items-center gap-3">
+                            <button onClick={() => triggerPrint('report')} className="px-5 py-2 bg-yellow-500 text-[#133255] rounded-lg text-sm font-bold hover:bg-yellow-400 shadow-sm transition-colors">
+                              Download Report as PDF
+                            </button>
+                          </div>
                         </div>
-                        <div id="candidate-final-report-pdf" className={`w-max mx-auto bg-white overflow-hidden ${printTarget === 'report' ? '' : 'border border-gray-200 shadow-sm rounded-lg'}`}>
-                          {selectedFormat === "format1" && reportData._format1 && (
-                            <FormatTwo mandate={selectedMandate} candidates={[{ ...selectedCandidate, reportData, profilePic: fullCandidateDetails?.profilePic || selectedCandidate.profilePic }]} framework={selectedFramework} scores={scores} isPrinting={printTarget === 'report'} />
+                        <div 
+                          id="candidate-final-report-pdf" 
+                          className="w-full bg-white overflow-hidden"
+                          onInput={() => {
+                            if (acceptFinalReportStatus === 'saved') {
+                              setAcceptFinalReportStatus('idle');
+                            }
+                          }}
+                        >
+                          {reportData.final_accepted_html && reportData.final_accepted_format === selectedFormat ? (
+                            <div dangerouslySetInnerHTML={{ __html: reportData.final_accepted_html }} />
+                          ) : (
+                            <>
+                              {selectedFormat === "format1" && reportData._format1 && (
+                                <FormatOne mandate={selectedMandate} candidates={[{ ...selectedCandidate, reportData, profilePic: fullCandidateDetails?.profilePic || selectedCandidate.profilePic }]} framework={selectedFramework} scores={scores} isPrinting={printTarget === 'report'} onUpdateFormatData={handleUpdateFormatData} />
+                              )}
+                              {selectedFormat === "format2" && reportData._format2 && (
+                                <FormatTwo mandate={selectedMandate} candidates={[{...selectedCandidate, reportData, profilePic: fullCandidateDetails?.profilePic || selectedCandidate.profilePic}]} isPrinting={printTarget === 'report'} onUpdateFormatData={handleUpdateFormatData} />
+                              )}
+                            </>
                           )}
-                          {selectedFormat === "format2" && reportData._format2 && (
-                            <FormatOne mandate={selectedMandate} candidates={[{...selectedCandidate, reportData, profilePic: fullCandidateDetails?.profilePic || selectedCandidate.profilePic}]} isPrinting={printTarget === 'report'} />
-                          )}
+                        </div>
+                        
+                        <div className="flex justify-center mt-8 print:hidden">
+                          <button 
+                            onClick={handleAcceptFinalReport} 
+                            disabled={acceptFinalReportStatus === 'saving'}
+                            className={`px-8 py-3 font-bold rounded shadow transition-all duration-300 flex items-center justify-center gap-2 min-w-[220px] ${
+                              acceptFinalReportStatus === 'saved' 
+                                ? 'bg-green-500 text-white shadow-green-500/30' 
+                                : 'bg-[#e28723] text-white hover:bg-[#d47814]'
+                            }`}
+                          >
+                            {acceptFinalReportStatus === 'saving' && (
+                              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            )}
+                            {acceptFinalReportStatus === 'saved' && (
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                            )}
+                            {acceptFinalReportStatus === 'saving' ? "Saving Snapshot..." : acceptFinalReportStatus === 'saved' ? "Report Saved!" : "Accept Final Report"}
+                          </button>
                         </div>
                       </div>
                     )}

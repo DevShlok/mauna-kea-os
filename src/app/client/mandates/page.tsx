@@ -9,10 +9,11 @@ import ClientDashboard from "@/features/client/components/ClientDashboard";
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: { tab?: string };
+  searchParams: Promise<{ tab?: string }>;
 };
 
-export default async function ClientMandatesPage({ searchParams }: PageProps) {
+export default async function ClientMandatesPage(props: PageProps) {
+  const searchParams = await props.searchParams;
   const { platformUser } = await requireRole(["client"]);
   const tab = searchParams.tab || "dashboard";
 

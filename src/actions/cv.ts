@@ -3,7 +3,7 @@
 import { generateObjectWithFallback } from "@/lib/gemini-fallback";
 import { z } from "zod";
 
-export async function generateFormatAction(candidateId: string, format: string, reportData: any) {
+export async function generateFormatAction(candidateId: string, format: string, reportData: any, context?: string) {
   if (!candidateId || !format || !reportData) {
     throw new Error("Missing required fields");
   }
@@ -23,8 +23,11 @@ Format 1 requires two main bulleted lists:
 1. Notes Summary: A summary of the candidate's general notes, background, and fit.
 2. Assessment Notes: A summary of the candidate's strengths, areas to probe, and your recommendation.
 
-Assessment Draft Data:
-${JSON.stringify(reportData, null, 2)}`;
+Assessment Draft Data (Accepted Sections Only):
+${JSON.stringify(reportData, null, 2)}
+
+Additional Context (Resume, LinkedIn, Interview Notes):
+${context || 'No additional context provided.'}`;
 
   } else if (format === "format2") {
     schema = z.object({
@@ -52,10 +55,13 @@ ${JSON.stringify(reportData, null, 2)}`;
     
 Format 2 requires detailed paragraphs for summaries and specific bulleted lists for strengths/experiences. 
 Please thoroughly analyze the provided Assessment Draft and synthesize the content into the required JSON schema.
-If information is missing for a field (e.g. Motivation), infer it professionally from the general notes, or state 'Not provided in draft.' if completely unavailable.
+If information is missing for a field (e.g. Motivation), infer it professionally from the Additional Context or general notes, or state 'Not provided in draft.' if completely unavailable.
 
-Assessment Draft Data:
-${JSON.stringify(reportData, null, 2)}`;
+Assessment Draft Data (Accepted Sections Only):
+${JSON.stringify(reportData, null, 2)}
+
+Additional Context (Resume, LinkedIn, Interview Notes):
+${context || 'No additional context provided.'}`;
 
   } else {
     throw new Error("Invalid format");

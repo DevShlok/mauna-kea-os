@@ -14,15 +14,16 @@ interface CandidateReportPDFProps {
 export default function CandidateReportPDF({ candidate, frameworkName, reportData, onReportDataChange, onPrint, isPrinting = false }: CandidateReportPDFProps) {
   const { scores, ...allSections } = reportData;
   // Fields entirely hidden from UI (fetched from DB directly or internal)
-  const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "_rawInputs", "error", "_format1", "_format2"];
+  const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "_rawInputs", "error", "_format1", "_format2", "_acceptedSections", "matchScore", "readinessScore", "hireabilityScore", "Industry", "Geography", "final_accepted_html", "final_accepted_format"];
   
   // All visible sections
   const sections = Object.fromEntries(Object.entries(allSections).filter(([k]) => !hiddenFields.includes(k)));
 
   // Track editing state per section
   const [editingSections, setEditingSections] = useState<Record<string, boolean>>({});
-  const [acceptedSections, setAcceptedSections] = useState<Record<string, boolean>>({});
   const [editedContent, setEditedContent] = useState<Record<string, any>>({});
+  
+  const acceptedSectionsList: string[] = reportData._acceptedSections || [];
   
   // Custom Section State
   const [isAddingSection, setIsAddingSection] = useState(false);
@@ -30,7 +31,6 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
 
   const handleEdit = (key: string) => {
     setEditingSections(prev => ({ ...prev, [key]: true }));
-    setAcceptedSections(prev => ({ ...prev, [key]: false }));
     
     // Initialize editedContent with the current value
     const val = reportData[key];
@@ -42,29 +42,53 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
 
   const handleAccept = (key: string) => {
     setEditingSections(prev => ({ ...prev, [key]: false }));
-    setAcceptedSections(prev => ({ ...prev, [key]: true }));
 
-    // Persist changes back only if the user actually edited it
-    if (onReportDataChange && editedContent[key] !== undefined) {
+    if (onReportDataChange) {
       const newSections = { ...reportData };
-      const currentVal = editedContent[key] || "";
+      const currentVal = editedContent[key] !== undefined ? editedContent[key] : (reportData[key] || "");
+      
       // Keep arrays as arrays if the original was an array (for legacy sections) 
       // or if we detect multiple newlines in a new section that we want to be bullet points
-      const wasArray = Array.isArray(reportData[key]);
-      const isBulletList = ["Notes Summary", "Key Strengths", "Areas to Probe"].includes(key);
-      
-      if (wasArray || isBulletList) {
-        newSections[key] = currentVal.split('\n').filter((s: string) => s.trim() !== '');
-      } else {
-        newSections[key] = currentVal;
+      if (editedContent[key] !== undefined) {
+        const wasArray = Array.isArray(reportData[key]);
+        const isBulletList = ["Notes Summary", "Key Strengths", "Areas to Probe"].includes(key);
+        
+        if (wasArray || isBulletList) {
+          newSections[key] = currentVal.split('\n').filter((s: string) => s.trim() !== '');
+        } else {
+          newSections[key] = currentVal;
+        }
       }
+      
+      const newAccepted = [...(newSections._acceptedSections || [])];
+      if (!newAccepted.includes(key)) {
+        newAccepted.push(key);
+      }
+      newSections._acceptedSections = newAccepted;
+
+      onReportDataChange(newSections);
+    }
+  };
+
+  const handleAcceptAll = () => {
+    if (onReportDataChange) {
+      const newSections = { ...reportData };
+      const allKeys = Object.keys(sections);
+      
+      const newAccepted = [...(newSections._acceptedSections || [])];
+      allKeys.forEach(key => {
+        if (!newAccepted.includes(key)) {
+          newAccepted.push(key);
+        }
+      });
+      newSections._acceptedSections = newAccepted;
+      
       onReportDataChange(newSections);
     }
   };
 
   const handleRemove = (key: string) => {
     setEditingSections(prev => ({ ...prev, [key]: false }));
-    setAcceptedSections(prev => ({ ...prev, [key]: false }));
     setEditedContent(prev => {
       const next = { ...prev };
       delete next[key];
@@ -74,6 +98,9 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
     if (onReportDataChange) {
       const newSections = { ...reportData };
       delete newSections[key];
+      if (newSections._acceptedSections) {
+        newSections._acceptedSections = newSections._acceptedSections.filter((s: string) => s !== key);
+      }
       onReportDataChange(newSections);
     }
   };
@@ -126,7 +153,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
   };
 
   return (
-    <div className={`bg-white max-w-[750px] mx-auto font-sans overflow-hidden ${isPrinting ? '' : 'border border-gray-200 shadow-sm rounded-lg'}`}>
+    <div className={`bg-white w-full font-sans overflow-hidden ${isPrinting ? '' : 'border border-gray-200 shadow-sm rounded-lg'}`}>
       {/* HEADER */}
       <div className="pdf-section flex justify-between items-start p-6 pb-4">
         <div className="flex items-center gap-4">
@@ -156,9 +183,14 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
           <span className="text-[12px] bg-[#d1fae5] text-[#065f46] px-2 py-0.5 rounded-full font-bold shadow-sm">AI Draft</span>
         </div>
         {onPrint && (
-          <button onClick={onPrint} className="px-4 py-1.5 bg-yellow-500 text-[#133255] rounded text-[13px] font-bold hover:bg-yellow-400 shadow-sm transition-colors">
-            Download Accepted Draft
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={handleAcceptAll} className="px-4 py-1.5 bg-green-600 text-white rounded text-[13px] font-bold hover:bg-green-700 shadow-sm transition-colors">
+              Accept All
+            </button>
+            <button onClick={onPrint} className="px-4 py-1.5 bg-yellow-500 text-[#133255] rounded text-[13px] font-bold hover:bg-yellow-400 shadow-sm transition-colors">
+              Download Accepted Draft
+            </button>
+          </div>
         )}
       </div>
 
@@ -166,7 +198,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
         {/* DYNAMIC TEXT SECTIONS — each with Accept / Edit / Remove */}
         {Object.entries(sections).map(([title, content], i) => {
           const isEditing = editingSections[title];
-          const isAccepted = acceptedSections[title];
+          const isAccepted = acceptedSectionsList.includes(title);
           const displayTitle = title.replace(/([A-Z])/g, " $1").trim();
           
           let icon = "📝";

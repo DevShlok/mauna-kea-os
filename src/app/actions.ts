@@ -7,8 +7,15 @@ import { revalidatePath } from "next/cache";
 
 export async function createMandateAction(data: any) {
   revalidatePath("/dashboard", "layout");
+  
+  // Try to find the client by exact name match (case-insensitive)
+  const existingClient = await db.select().from(clients).where(eq(sql`LOWER(${clients.name})`, (data.company || "").toLowerCase()));
+  const clientId = existingClient.length > 0 ? existingClient[0].id : null;
+  // Normalize company name if client exists
+  const companyName = existingClient.length > 0 ? existingClient[0].name : data.company;
+
   const result = await db.insert(mandates).values({
-    company: data.company,
+    company: companyName,
     role: data.role,
     ctc: data.ctc,
     exp: data.exp,
@@ -608,4 +615,9 @@ export async function saveReportFormatAction(reportId: string, formatName: strin
     const updatedData = { ...currentData, [`_${formatName}`]: formatData };
     await db.update(candidateReports).set({ reportData: updatedData }).where(eq(candidateReports.id, reportId));
   }
+}
+
+export async function saveReportDraftAction(reportId: string, updatedData: any) {
+  revalidatePath("/dashboard", "layout");
+  await db.update(candidateReports).set({ reportData: updatedData }).where(eq(candidateReports.id, reportId));
 }

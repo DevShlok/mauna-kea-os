@@ -110,7 +110,18 @@ export default async function ClientCandidateDetailPage({
     .where(eq(candidateReports.candidateId, candidateId))
     .limit(1);
 
-  const reportData = reports[0]?.reportData || {};
+  // Only expose the AI report if it has been explicitly published to the client
+  const isShared = reports[0]?.sharedWithClient || false;
+  const rawReportData = isShared ? (reports[0]?.reportData || {}) : {};
+  const accepted = rawReportData._acceptedSections || [];
+  const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "_rawInputs", "error", "_format1", "_format2", "scores", "_acceptedSections", "matchScore", "readinessScore", "hireabilityScore", "Industry", "Geography"];
+  
+  const reportData: Record<string, any> = {};
+  for (const key of Object.keys(rawReportData)) {
+    if (hiddenFields.includes(key) || accepted.includes(key)) {
+      reportData[key] = rawReportData[key];
+    }
+  }
 
   const { getFrameworkById } = await import("@/db/queries");
   const framework = mandate.frameworkId ? await getFrameworkById(mandate.frameworkId) : null;

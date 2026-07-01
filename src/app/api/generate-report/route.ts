@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { candidateId, frameworkId, mandateId, transcript, interviewNotes, feedback, selectedFileIds } = await req.json();
+    const { candidateId, frameworkId, mandateId, transcript, interviewNotes, feedback, selectedFileIds, manualScores } = await req.json();
 
     if (!candidateId || !frameworkId || !transcript) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -234,7 +234,15 @@ EVALUATION PIPELINE INSTRUCTIONS:
         
         categoriesWithCriteria.forEach((cat) => {
           cat.criteria.forEach((cr) => {
-            const val = obj?.scores?.[cat.name]?.[cr.name] || 0;
+            let val = obj?.scores?.[cat.name]?.[cr.name] || 0;
+            
+            if (manualScores && manualScores[cr.id] !== undefined) {
+              val = manualScores[cr.id];
+              if (!obj.scores) obj.scores = {};
+              if (!obj.scores[cat.name]) obj.scores[cat.name] = {};
+              obj.scores[cat.name][cr.name] = val;
+            }
+
             const w = Number(cr.weight) || 10;
             totalWeightedScore += (val * w);
             totalWeight += w;

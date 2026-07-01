@@ -1,187 +1,598 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-export default function FormatOne({ mandate, candidates, isPrinting }: { mandate: any, candidates: any[], isPrinting?: boolean }) {
-  const [apifyData, setApifyData] = useState<Record<string, any>>({});
-  const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
-
-  const fetchLinkedInExp = async (candId: string, url: string) => {
-    try {
-      setIsLoading(prev => ({ ...prev, [candId]: true }));
-      const res = await fetch("/api/apify-linkedin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url })
-      });
-      const data = await res.json();
-      if (data.data) {
-        setApifyData(prev => ({ ...prev, [candId]: data.data }));
-      } else {
-        alert(data.error || "Failed to fetch LinkedIn data");
-      }
-    } catch (err: any) {
-      alert("Error: " + err.message);
-    } finally {
-      setIsLoading(prev => ({ ...prev, [candId]: false }));
-    }
-  };
+export default function FormatOne({ mandate, candidates, framework, scores, isPrinting, onUpdateFormatData }: { mandate: any, candidates: any[], framework?: any, scores?: Record<number, number>, isPrinting?: boolean, onUpdateFormatData?: (formatKey: string, data: any) => void }) {
   return (
-    <div className="flex flex-col gap-0 items-center bg-white min-h-screen">
+    <div className="flex flex-col gap-10 bg-white items-center print:block print:bg-white print:gap-0">
       {candidates.map((cand, idx) => {
-        const rp = cand.reportData || {};
-        const f1 = rp._format1 || {};
-        const notes = f1["Notes Summary"] || rp["Notes Summary"] || rp["Relevant Experience"] || ["Detailed notes regarding the candidate's experience and fit."];
-        const assessmentNotes = f1["Assessment Notes"] || rp["Key Strengths"] || rp["MK Recommendation"] || ["Strong capability demonstrated."];
-        
-        return (
-          <div key={cand.id} className="format-page bg-white w-[794px] h-[1122px] mx-auto print:shadow-none break-after-page box-border print:scale-100 max-w-none p-[20px] overflow-hidden">
-            <style type="text/css" media="print">
-              {`
-                @page { size: A4; margin: 0mm; }
-                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-              `}
-            </style>
-            
-            <div className="w-full h-full border-[10px] border-[#00174f] p-[20px] flex flex-col font-sans relative">
-              
-              {/* Fetch LinkedIn Button (Hidden on Print) */}
-              {cand.linkedin && !apifyData[cand.id] && !isPrinting && (
-                <div className="absolute top-2 right-2 z-10">
-                  <button 
-                    onClick={() => fetchLinkedInExp(cand.id, cand.linkedin)}
-                    disabled={isLoading[cand.id]}
-                    className="bg-[#133255] text-white text-[14px] px-3 py-1.5 rounded hover:bg-[#133255] disabled:opacity-50"
-                  >
-                    {isLoading[cand.id] ? "Fetching Experience..." : "Fetch LinkedIn Exp"}
-                  </button>
-                </div>
-              )}
-
-              {/* Header / Name Bar */}
-            <div className="flex h-[38px] rounded-lg overflow-hidden shadow-sm mb-4 shrink-0">
-              <div className="bg-[#e28723] w-[50px] flex items-center justify-center font-bold text-[23px] text-white shrink-0 pr-1" style={{ borderBottomRightRadius: '16px', borderTopRightRadius: '16px' }}>
-                {String(idx + 1).padStart(2, '0')}
-              </div>
-              <div className="bg-[#00174f] flex-1 flex items-center pl-4 text-white text-[19px] font-bold uppercase tracking-wide" contentEditable suppressContentEditableWarning>
-                {cand.name}
-              </div>
-            </div>
-
-            {/* Profile Info Section */}
-            <div className="flex gap-6 items-center mb-4 shrink-0">
-              {/* Photo */}
-              <div className="flex flex-col items-center shrink-0 ml-1">
-                <div className="w-[140px] h-[140px] rounded-full bg-blue-50 flex items-center justify-center text-5xl font-bold text-[#00174f] border-[1px] border-gray-200 overflow-hidden shadow-inner shrink-0" style={{ boxShadow: "inset 0 4px 6px rgba(0,0,0,0.1)" }}>
-                  {cand.initials || cand.name.substring(0, 2).toUpperCase()}
-                </div>
-              </div>
-
-              {/* Info Fields */}
-              <div className="flex-1 flex flex-col gap-2">
-                <DetailRow icon={
-                  <svg className="w-6 h-6 text-[#e28723]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                } label="Current Company" value={rp["Current Company"] || cand.company || "N/A"} />
-                <DetailRow icon={
-                  <svg className="w-6 h-6 text-[#e28723]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                } label="Designation" value={rp["Designation"] || cand.role || "N/A"} />
-                <DetailRow icon={
-                  <svg className="w-6 h-6 text-[#e28723]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                } label="Former Company" value={rp["Former Company"] || "N/A"} />
-                <DetailRow icon={
-                  <svg className="w-6 h-6 text-[#e28723]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                } label="Experience" value={cand.exp ? cand.exp + " Years" : "N/A"} />
-                <DetailRow icon={
-                  <svg className="w-6 h-6 text-[#e28723]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                } label="Revenue Ownership" value={rp["Revenue Ownership"] || "N/A"} />
-                <DetailRow icon={
-                  <svg className="w-6 h-6 text-[#e28723]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                } label="Team Size Led" value={rp["Team Size Led"] || "N/A"} />
-              </div>
-            </div>
-
-            {/* Notes Sections */}
-            <div className="flex flex-col gap-2">
-              <div className="w-full border-t border-dashed border-gray-300"></div>
-              <SectionBlock title="NOTES" items={notes} />
-              
-              <div className="w-full border-t border-dashed border-gray-300"></div>
-              <SectionBlock title="ASSESSMENT NOTES" items={assessmentNotes} />
-
-              {/* Injected Work Experience from Apify */}
-              {apifyData[cand.id] && apifyData[cand.id].experiences && (
-                <>
-                  <div className="w-full border-t border-dashed border-gray-300"></div>
-                  <SectionBlock 
-                    title="WORK EXPERIENCE (LinkedIn)" 
-                    items={apifyData[cand.id].experiences.map((e: any) => `${e.title || 'Role'} at ${e.company || 'Company'} (${e.starts_at ? e.starts_at + ' - ' + (e.ends_at || 'Present') : 'Dates'})`)} 
-                  />
-                </>
-              )}
-            </div>
-
-            </div>
-          </div>
-        );
+        return <CandidateFormatOne key={cand.id} cand={cand} framework={framework} scores={scores} isPrinting={isPrinting} onUpdateFormatData={onUpdateFormatData} />;
       })}
     </div>
   );
 }
 
-function DetailRow({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
-  return (
-    <div className="flex items-center gap-4">
-      <div className="w-10 h-10 flex items-center justify-center shrink-0 border border-[#e28723] rounded-full text-[#e28723] bg-orange-50/50">
-        <div className="scale-[0.8]">{icon}</div>
-      </div>
-      <div className="flex flex-col border-b border-dashed border-gray-300 pb-[4px] w-full">
-        <div className="text-[14px] font-bold text-[#00174f] tracking-wide leading-none mb-0.5">{label}</div>
-        <div className="text-[15px] text-[#333] font-medium leading-tight" contentEditable suppressContentEditableWarning>{value}</div>
-      </div>
-    </div>
-  );
-}
+function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateFormatData }: { cand: any, framework?: any, scores?: Record<number, number>, isPrinting?: boolean, onUpdateFormatData?: (formatKey: string, data: any) => void }) {
+  const rp = cand.reportData || {};
+  
+  // State for timeline data (up to 6 items)
+  const [experienceList, setExperienceList] = useState<{
+    companyName: string;
+    position: string;
+    duration: string;
+    startDate: string;
+    endDate: string;
+    domain: string;
+  }[]>(rp._format1?.linkedin_timeline || []);
 
-function SectionBlock({ title, items }: { title: string, items: any }) {
-  // Gracefully handle if items is somehow an object that isn't an array
-  let list: any[] = [];
-  if (Array.isArray(items)) {
-    list = items;
-  } else if (items && typeof items === 'object') {
-    // If it's an object with keys (like the f1 object itself), stringify or extract values
-    list = Object.values(items).flat();
-  } else {
-    list = [items];
-  }
+  const [isScraping, setIsScraping] = useState(false);
 
-  return (
-    <div className="mb-2 w-full break-inside-avoid">
-      <h3 className="text-[#e28723] font-bold text-[16px] uppercase tracking-wider mb-2" contentEditable suppressContentEditableWarning>
-        {title}
-      </h3>
-      <ul className="list-disc pl-4 space-y-1">
-        {list.map((item: any, i: number) => {
-          const textItem = typeof item === 'object' ? JSON.stringify(item) : String(item);
+  type ReportBlock = {
+    id: string;
+    type: 'ai' | 'custom';
+    aiKey?: string;
+    style?: 'heading' | 'body';
+  };
+
+  const [page1Blocks, setPage1Blocks] = useState<ReportBlock[]>([
+    { id: '1', type: 'ai', aiKey: 'notes_summary' },
+    { id: '2', type: 'ai', aiKey: 'famous_for' },
+    { id: '3', type: 'ai', aiKey: 'career_aspiration' },
+    { id: '4', type: 'ai', aiKey: 'relevant_experience' },
+    { id: '5', type: 'ai', aiKey: 'motivation' }
+  ]);
+  const [page2Blocks, setPage2Blocks] = useState<ReportBlock[]>([
+    { id: '6', type: 'ai', aiKey: 'key_strengths' },
+    { id: '7', type: 'ai', aiKey: 'areas_to_probe' },
+    { id: '8', type: 'ai', aiKey: 'compensation' },
+    { id: '9', type: 'ai', aiKey: 'recommendation' }
+  ]);
+
+  const moveBlock = (page: number, index: number, direction: 'up' | 'down') => {
+    const isPage1 = page === 1;
+    const blocks = isPage1 ? [...page1Blocks] : [...page2Blocks];
+    
+    if (direction === 'up' && index > 0) {
+      const temp = blocks[index - 1];
+      blocks[index - 1] = blocks[index];
+      blocks[index] = temp;
+    } else if (direction === 'down' && index < blocks.length - 1) {
+      const temp = blocks[index + 1];
+      blocks[index + 1] = blocks[index];
+      blocks[index] = temp;
+    } else {
+      return;
+    }
+    
+    if (isPage1) setPage1Blocks(blocks);
+    else setPage2Blocks(blocks);
+  };
+
+  const addCustomBlock = (page: number, index: number) => {
+    const isPage1 = page === 1;
+    const blocks = isPage1 ? [...page1Blocks] : [...page2Blocks];
+    const newBlock: ReportBlock = { id: `custom_${Date.now()}`, type: 'custom', style: 'body' };
+    blocks.splice(index + 1, 0, newBlock);
+    if (isPage1) setPage1Blocks(blocks);
+    else setPage2Blocks(blocks);
+  };
+
+  const removeCustomBlock = (page: number, id: string) => {
+    const isPage1 = page === 1;
+    const blocks = isPage1 ? page1Blocks.filter(b => b.id !== id) : page2Blocks.filter(b => b.id !== id);
+    if (isPage1) setPage1Blocks(blocks);
+    else setPage2Blocks(blocks);
+  };
+
+  const toggleCustomBlockStyle = (page: number, id: string) => {
+    const isPage1 = page === 1;
+    const blocks = isPage1 ? [...page1Blocks] : [...page2Blocks];
+    const b = blocks.find(x => x.id === id);
+    if (b) {
+      b.style = b.style === 'heading' ? 'body' : 'heading';
+      if (isPage1) setPage1Blocks(blocks);
+      else setPage2Blocks(blocks);
+    }
+  };
+
+  const hasInterviewer = rp["Interviewer Feedback"] && rp["Interviewer Feedback"].trim() !== "" && !rp["Interviewer Feedback"].toLowerCase().includes("not provided");
+  const hasSuperior = rp["Superior Feedback"] && rp["Superior Feedback"].trim() !== "" && !rp["Superior Feedback"].toLowerCase().includes("not provided");
+  const hasPeer = rp["Peer Feedback"] && rp["Peer Feedback"].trim() !== "" && !rp["Peer Feedback"].toLowerCase().includes("not provided");
+  const hasTeam = rp["Team/Subordinate Feedback"] && rp["Team/Subordinate Feedback"].trim() !== "" && !rp["Team/Subordinate Feedback"].toLowerCase().includes("not provided");
+
+  const renderBlock = (block: ReportBlock, page: number) => {
+    const f2 = rp._format1 || {};
+    
+    if (block.type === 'custom') {
+      return (
+        <div 
+          className={`${block.style === 'heading' ? `text-[18px] font-bold ${headerColor} mb-2` : 'text-[16px] leading-relaxed'} w-full min-h-[24px] outline-none border border-transparent hover:border-gray-200 focus:border-blue-300 rounded transition-colors px-1 -mx-1`}
+          contentEditable 
+          suppressContentEditableWarning
+          onKeyDown={(e) => {
+            if (e.key === 'Backspace' && e.currentTarget.textContent === '') {
+              e.preventDefault();
+              removeCustomBlock(page, block.id);
+            }
+          }}
+          data-placeholder={block.style === 'heading' ? "Type a heading..." : "Type text..."}
+        >
+          {""}
+        </div>
+      );
+    }
+
+    switch(block.aiKey) {
+      case 'notes_summary':
+        return (
+          <p contentEditable suppressContentEditableWarning>
+            {f2.notes_summary || rp["Notes Summary"]?.join(" ") || `${cand.name} is a finance and strategy leader with extensive experience...`}
+          </p>
+        );
+      case 'famous_for':
+        if (f2.famous_for && f2.famous_for.length > 0) {
           return (
-          <li key={i} className="flex items-start text-[15px] text-[#333] font-medium leading-snug">
-            <span className="text-[#e28723] mr-2 text-[19px] leading-[14px] mt-0.5">•</span>
-            <span contentEditable suppressContentEditableWarning className="flex-1 outline-none focus:bg-yellow-50">{textItem}</span>
-          </li>
+            <div>
+              <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+                What is {cand.name.split(' ')[0]} famous for
+              </h3>
+              <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+                {f2.famous_for.map((item: string, i: number) => (
+                  <li key={i} className="pl-1 leading-snug">{item}</li>
+                ))}
+              </div>
+            </div>
           );
-        })}
-      </ul>
+        }
+        if (!hasInterviewer && !hasSuperior && !hasPeer && !hasTeam) return null;
+        return (
+          <div>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+              What is {cand.name.split(' ')[0]} famous for
+            </h3>
+            <div className="space-y-2 ml-2">
+              {hasInterviewer && (
+                <p contentEditable suppressContentEditableWarning>
+                  <strong>Interviewer Feedback:</strong> {rp["Interviewer Feedback"]}
+                </p>
+              )}
+              {hasTeam && (
+                <p contentEditable suppressContentEditableWarning>
+                  <strong>Team/Subordinate Feedback:</strong> {rp["Team/Subordinate Feedback"]}
+                </p>
+              )}
+              {hasSuperior && (
+                <p contentEditable suppressContentEditableWarning>
+                  <strong>Superior Feedback:</strong> {rp["Superior Feedback"]}
+                </p>
+              )}
+              {hasPeer && (
+                <p contentEditable suppressContentEditableWarning>
+                  <strong>Peer Feedback:</strong> {rp["Peer Feedback"]}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      case 'career_aspiration':
+        const aspirationText = f2.career_aspiration || rp["Career Aspiration"] || [
+          cand.dreamRoles && cand.dreamRoles.length > 0 ? `Target Roles: ${cand.dreamRoles.join(', ')}` : '',
+          cand.dreamCos && cand.dreamCos.length > 0 ? `Target Companies: ${cand.dreamCos.join(', ')}` : ''
+        ].filter(Boolean).join('. ');
+        
+        return (
+          <div>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+              Career aspiration
+            </h3>
+            <p contentEditable suppressContentEditableWarning>
+              {aspirationText}
+            </p>
+          </div>
+        );
+      case 'relevant_experience':
+        const exps = f2.relevant_experience || [];
+        return (
+          <div>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+              Relevant Experience
+            </h3>
+            <div className="space-y-2 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+              {exps && exps.length > 0 ? exps.map((e: any, i: number) => (
+                <li key={i} className="pl-1">
+                  <strong>{e.companyName} {e.duration ? `(${e.duration})` : ''}</strong>
+                  {e.position ? ` - ${e.position}` : ''}
+                  {e.highlights && e.highlights.map((hl: string, j: number) => (
+                    <div key={j} className="text-[15px] text-gray-700 mt-1 ml-2">• {hl}</div>
+                  ))}
+                </li>
+              )) : (
+                <li className="pl-1">
+                  <strong>{cand.company || "Current Company"} (Current)</strong> 
+                </li>
+              )}
+            </div>
+          </div>
+        );
+      case 'motivation':
+        return (
+          <div>
+            <h3 className={`text-[18px] font-bold ${headerColor} mb-2`} contentEditable suppressContentEditableWarning>
+              Motivation for the role
+            </h3>
+            <p contentEditable suppressContentEditableWarning>
+              {f2.motivation || rp["Motivation"] || ""}
+            </p>
+          </div>
+        );
+      case 'key_strengths':
+        const strengths = f2.key_strengths || rp["Key Strengths"] || [];
+        return (
+          <div>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
+              Key Strengths
+            </h3>
+            <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+              {strengths.map((item: string, i: number) => (
+                <li key={i} className="pl-1 leading-snug">{item}</li>
+              ))}
+            </div>
+          </div>
+        );
+      case 'areas_to_probe':
+        const areas = f2.areas_to_probe || rp["Areas to Probe"] || [];
+        return (
+          <div>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
+              Areas to Probe
+            </h3>
+            <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+              {areas.map((item: string, i: number) => (
+                <li key={i} className="pl-1 leading-snug">{item}</li>
+              ))}
+            </div>
+          </div>
+        );
+      case 'compensation':
+        const comp = f2.compensation || { current: rp["CTC"] || cand.ctc || "Not Disclosed", expected: rp["Expected CTC"] || cand.expectedCtc || "Not Disclosed" };
+        return (
+          <div>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
+              Compensation
+            </h3>
+            <div className="space-y-1 ml-4 list-disc list-outside" contentEditable suppressContentEditableWarning>
+              <li className="pl-1"><strong>Current:</strong> {comp.current}</li>
+              <li className="pl-1"><strong>Expected:</strong> {comp.expected}</li>
+            </div>
+          </div>
+        );
+      case 'recommendation':
+        return (
+          <div>
+            <h3 className={`text-[17px] font-bold ${headerColor} mb-1`} contentEditable suppressContentEditableWarning>
+              Recommendation
+            </h3>
+            <p contentEditable suppressContentEditableWarning className="text-[15px] leading-relaxed">
+              {f2.recommendation || rp["Recommendation"] || rp["MK Recommendation"] || ""}
+            </p>
+          </div>
+        );
+      default: return null;
+    }
+  };
+
+  // Initialize with some default if empty
+  useEffect(() => {
+    if (experienceList.length === 0) {
+      setExperienceList([
+        {
+          companyName: rp["Current Company"] || cand.company || "Current Company",
+          position: cand.designation || rp["Designation"] || cand.role || "Current Role",
+          duration: "",
+          startDate: "",
+          endDate: "Present",
+          domain: (rp["Current Company"] || cand.company || "Current Company").toLowerCase().replace(/[^a-z0-9]/g, '') + '.com'
+        }
+      ]);
+    }
+  }, []);
+
+  const fetchLinkedIn = async () => {
+    if (!cand.linkedin) {
+      alert("No LinkedIn URL found for this candidate.");
+      return;
+    }
+    setIsScraping(true);
+    try {
+      const startRes = await fetch('/api/apify-linkedin', {
+        method: 'POST',
+        body: JSON.stringify({ url: cand.linkedin }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await startRes.json();
+      setIsScraping(false);
+      
+      if (data.error) throw new Error(data.error);
+      
+      const exp = data.data?.experiences || data.data?.experience || [];
+      if (exp.length > 0) {
+        const parsedExp = exp.slice(0, 6).map((e: any) => ({
+          companyName: e.company || e.company_name || e.companyName || "Unknown",
+          position: e.title || e.position || "Unknown Role",
+          duration: e.starts_at ? `${e.starts_at} - ${e.ends_at || 'Present'}` : (e.dateRange || e.duration || ""),
+          startDate: "",
+          endDate: "",
+          domain: (e.company || "Unknown").toLowerCase().replace(/[^a-z0-9]/g, '') + '.com'
+        }));
+        setExperienceList(parsedExp);
+        setExperienceList(parsedExp);
+        if (onUpdateFormatData) {
+          onUpdateFormatData('_format1', { ...rp._format1, linkedin_timeline: parsedExp });
+        }
+      } else {
+        alert("No experience records found on this profile.");
+      }
+    } catch (e: any) {
+      setIsScraping(false);
+      alert(e.message);
+    }
+  };
+
+  const PageStyle = `
+    @page { size: A4; margin: 0mm; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  `;
+
+  // Standard Serif Font styling
+  const fontStyle = "font-serif text-[#1e293b]";
+  const headerColor = "text-[#003366]";
+
+  return (
+    <div className="flex flex-col gap-0 items-center bg-white">
+      <style type="text/css" media="print" dangerouslySetInnerHTML={{ __html: PageStyle }} />
+
+      {/* PAGE 1 */}
+      <div className={`format-page bg-white w-full print:w-[794px] h-[1122px] mx-auto print:shadow-none relative box-border print:scale-100 max-w-none px-[40px] py-[35px] overflow-hidden print:break-after-page ${fontStyle}`}>
+        {/* Header */}
+        <div className="flex justify-end w-full mb-4 pb-2 border-b border-gray-200">
+          <h1 className="text-3xl font-serif font-medium text-black tracking-[0.4em] uppercase" contentEditable suppressContentEditableWarning>
+            MAUNA KEA
+          </h1>
+        </div>
+
+        {/* Top Profile + Timeline Section */}
+        <div className="flex flex-row justify-between w-full min-h-[160px]">
+          {/* Left: Profile */}
+          <div className="w-[20%] flex flex-col items-center">
+            <div className="relative w-[120px] h-[120px]">
+              <div className={`w-[120px] h-[120px] rounded-full border-4 border-black object-cover flex items-center justify-center text-4xl font-bold text-black bg-gray-50 shadow-md overflow-hidden`}>
+                {cand.profilePic ? (
+                  <img src={cand.profilePic} alt={cand.name} className="w-full h-full object-cover" />
+                ) : (
+                  cand.initials || cand.name.substring(0, 2).toUpperCase()
+                )}
+              </div>
+              {cand.linkedin && (
+                <a href={cand.linkedin} target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 bg-white rounded-md p-1 shadow-md cursor-pointer">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn" className="w-[28px]" crossOrigin="anonymous" />
+                </a>
+              )}
+            </div>
+            
+            {!isPrinting && (
+              <button 
+                onClick={fetchLinkedIn}
+                disabled={isScraping}
+                className="mt-3 bg-[#133255] hover:bg-[#133255] text-white text-[12px] font-bold py-1 px-3 rounded-full flex items-center justify-center shadow-sm"
+              >
+                {isScraping ? "Scraping..." : "Fetch LinkedIn"}
+              </button>
+            )}
+            
+            <h2 className={`text-[21px] font-bold mt-4 text-center ${headerColor}`} contentEditable suppressContentEditableWarning>
+              {cand.name}
+            </h2>
+          </div>
+
+          {/* Right: Timeline Grid */}
+          <div className="w-[78%] border border-gray-100 bg-gray-50/30 rounded-xl p-4 overflow-hidden relative">
+            <div className="absolute left-[39%] top-6 bottom-6 w-[2px] bg-blue-100 z-0"></div>
+            <div className="flex flex-col gap-4 z-10 relative">
+              {experienceList.map((exp, i) => (
+                <div key={i} className="flex flex-row items-center justify-between text-[13px]">
+                  <div className="w-[38%] flex items-center gap-3">
+                    <img 
+                      src={`https://logo.clearbit.com/${exp.domain}`} 
+                      alt={exp.companyName}
+                      crossOrigin="anonymous"
+                      className="w-[30px] h-[30px] shrink-0 object-contain bg-white border border-gray-200 rounded p-0.5"
+                      onError={(e) => {
+                        const name = exp.companyName || "C";
+                        const initials = name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+                        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><rect width="100" height="100" fill="#ffffff"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-weight="bold" font-size="45" fill="#000000" text-anchor="middle" dominant-baseline="central">${initials}</text></svg>`;
+                        (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(svg)}`;
+                      }}
+                    />
+                    <div className="font-bold leading-tight" contentEditable suppressContentEditableWarning>
+                      {exp.companyName}
+                    </div>
+                  </div>
+                  
+                  <div className="w-[4%] flex justify-center relative">
+                    <div className="w-[10px] h-[10px] rounded-full bg-gray-400 z-10 border-2 border-white shadow-sm"></div>
+                  </div>
+
+                  <div className="w-[18%] text-gray-600 text-center" contentEditable suppressContentEditableWarning>
+                    {exp.startDate ? `${exp.startDate.split(' ')[1] || exp.startDate} - ${exp.endDate?.split(' ')[1] || exp.endDate}` : exp.endDate}
+                  </div>
+
+                  <div className="w-[40%] font-medium text-gray-800 leading-tight" contentEditable suppressContentEditableWarning>
+                    {exp.position}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Content Blocks */}
+        <div className="mt-6 text-[16px] leading-relaxed text-justify space-y-5">
+          {page1Blocks.map((block, index) => {
+            const content = renderBlock(block, 1);
+            if (!content) return null;
+            return (
+              <div 
+                key={block.id}
+                className="group relative"
+              >
+                {/* Move Controls (visible on hover) */}
+                <div className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 flex flex-col gap-1 print:hidden z-50">
+                  <button 
+                    onClick={() => moveBlock(1, index, 'up')}
+                    disabled={index === 0}
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Move Up"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7"></path></svg>
+                  </button>
+                  <button 
+                    onClick={() => moveBlock(1, index, 'down')}
+                    disabled={index === page1Blocks.length - 1}
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Move Down"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>
+                  </button>
+                  <button 
+                    onClick={() => addCustomBlock(1, index)}
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-green-50 text-green-600 transition-colors"
+                    title="Add Text Block Below"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"></path></svg>
+                  </button>
+                  {block.type === 'custom' && (
+                    <button 
+                      onClick={() => toggleCustomBlockStyle(1, block.id)}
+                      className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-blue-50 text-blue-600 font-bold text-[10px] leading-none transition-colors h-[24px]"
+                      title="Toggle Heading/Body Font"
+                    >
+                      {block.style === 'heading' ? 'H' : 'P'}
+                    </button>
+                  )}
+                </div>
+                {content}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* PAGE 2 */}
+      <div className={`format-page bg-white w-full print:w-[794px] h-[1122px] mx-auto print:shadow-none relative box-border print:scale-100 max-w-none px-[40px] py-[35px] overflow-hidden ${fontStyle}`}>
+        {/* Header */}
+        <div className="flex justify-end w-full mb-3 pb-2 border-b border-gray-200">
+          <h1 className="text-3xl font-serif font-medium text-black tracking-[0.4em] uppercase" contentEditable suppressContentEditableWarning>
+            MAUNA KEA
+          </h1>
+        </div>
+        <div className="mb-3">
+          <h2 className={`text-[21px] font-bold ${headerColor}`}>Evaluation against key criterion</h2>
+        </div>
+
+        {/* Framework Evaluation Table */}
+        <div className="bg-[#f5f8fc] rounded-md p-4 mb-4 border border-[#e2e8f0]">
+          {framework ? (
+            framework.categories.map((cat: any, i: number) => (
+              <div key={cat.id} className={i !== 0 ? "mt-4" : ""}>
+                <h3 className="font-bold text-[17px] text-gray-900 mb-2">
+                  {i + 1}. {cat.name}
+                </h3>
+                <div className="ml-6 space-y-2 text-[16px]">
+                  {cat.criteria.map((c: any, j: number) => {
+                    // Calculate left percentage based on 0-10 score (default 5 if not set)
+                    const score = scores?.[c.id] !== undefined ? scores[c.id] : 5;
+                    const leftPercent = `${(score / 10) * 100}%`;
+                    const letter = String.fromCharCode(65 + j); // A, B, C...
+                    
+                    return (
+                      <div key={c.id} className="flex justify-between items-center text-gray-800">
+                        <div className="w-[55%]">
+                          {letter}. {c.name}
+                        </div>
+                        <div className="w-[45%] flex items-center justify-between text-[13px] text-gray-500 font-sans tracking-wide">
+                          <span className="mr-3">Low</span>
+                          <div className="flex-grow relative h-[1px] bg-gray-400">
+                            <div 
+                              className="absolute w-[12px] h-[12px] bg-[#003366] rounded-full top-1/2 -translate-y-1/2 shadow-sm cursor-pointer hover:scale-125 transition-transform" 
+                              style={{ left: leftPercent }}
+                              title={`Score: ${score}/10`}
+                            ></div>
+                          </div>
+                          <span className="ml-3">High</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-gray-500 italic text-center py-4">No framework data available to display evaluation criteria.</div>
+          )}
+        </div>
+
+        {/* Remaining Content Blocks */}
+        <div className="text-[15px] leading-snug text-justify space-y-3">
+          {page2Blocks.map((block, index) => {
+            const content = renderBlock(block, 2);
+            if (!content) return null;
+            return (
+              <div 
+                key={block.id}
+                className="group relative"
+              >
+                {/* Move Controls (visible on hover) */}
+                <div className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 flex flex-col gap-1 print:hidden z-50">
+                  <button 
+                    onClick={() => moveBlock(2, index, 'up')}
+                    disabled={index === 0}
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Move Up"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7"></path></svg>
+                  </button>
+                  <button 
+                    onClick={() => moveBlock(2, index, 'down')}
+                    disabled={index === page2Blocks.length - 1}
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Move Down"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>
+                  </button>
+                  <button 
+                    onClick={() => addCustomBlock(2, index)}
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-green-50 text-green-600 transition-colors"
+                    title="Add Text Block Below"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"></path></svg>
+                  </button>
+                  {block.type === 'custom' && (
+                    <button 
+                      onClick={() => toggleCustomBlockStyle(2, block.id)}
+                      className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-blue-50 text-blue-600 font-bold text-[10px] leading-none transition-colors h-[24px]"
+                      title="Toggle Heading/Body Font"
+                    >
+                      {block.style === 'heading' ? 'H' : 'P'}
+                    </button>
+                  )}
+                </div>
+                {content}
+              </div>
+            );
+          })}
+        </div>
+
+      </div>
     </div>
   );
 }
