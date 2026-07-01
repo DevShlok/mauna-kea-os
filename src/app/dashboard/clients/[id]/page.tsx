@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/auth";
 import { db } from "@/db";
 import { clients, mandates } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -6,7 +7,8 @@ import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ClientDetailPage({ params  }: { params: Promise<{ id: string }> }) {
+  await requireRole(["admin", "consultant"]);;
   const resolvedParams = await params;
   const [client] = await db.select().from(clients).where(eq(clients.id, resolvedParams.id));
   

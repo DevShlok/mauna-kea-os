@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/auth";
 import { getMandateCandidateByExtId, getFrameworks, getCandidates, getAllMandateCandidates, getMandates, getCandidateById, getUserByEmail } from "@/db/queries";
 import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/db";
@@ -5,7 +6,8 @@ import { clients } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import WorkbenchClient from "@/features/workbench/components/WorkbenchClient";
 
-export default async function WorkbenchPage({ searchParams }: { searchParams: Promise<{ candId?: string, mandateId?: string, flCandId?: string }> }) {
+export default async function WorkbenchPage({ searchParams  }: { searchParams: Promise<{ candId?: string, mandateId?: string, flCandId?: string }> }) {
+  await requireRole(["admin", "consultant"]);;
   const resolvedParams = await searchParams;
   const { candId, flCandId } = resolvedParams;
   

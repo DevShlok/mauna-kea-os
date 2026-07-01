@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/auth";
 import { db } from "@/db";
 import { clients, mandates } from "@/db/schema";
 import ClientsClient from "@/features/clients/components/ClientsClient";
@@ -8,6 +9,8 @@ import { getUserByEmail } from "@/db/queries";
 export const dynamic = "force-dynamic";
 
 export default async function ClientsPage() {
+  await requireRole(["admin", "consultant"]);
+
   let allClients = await db.select().from(clients);
   let allMandates = await db.select().from(mandates);
   

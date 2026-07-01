@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/auth";
 import { getMandates, getUserByEmail } from "@/db/queries";
 import MandatesClient from "@/features/mandates/components/MandatesClient";
 import { currentUser } from "@clerk/nextjs/server";
@@ -6,6 +7,8 @@ import { clients } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export default async function MandatesPage() {
+  await requireRole(["admin", "consultant"]);
+
   const user = await currentUser();
   let filteredMandates = await getMandates();
 

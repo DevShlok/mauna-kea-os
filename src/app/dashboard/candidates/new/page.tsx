@@ -1,8 +1,11 @@
+import { requireRole } from "@/lib/auth";
 import NewCandidateClient from "@/features/candidates/components/NewCandidateClient";
 import { currentUser } from "@clerk/nextjs/server";
 import { getUserByEmail, getMandates } from "@/db/queries";
 
 export default async function NewFloatListCandidatePage() {
+  await requireRole(["admin", "consultant"]);
+
   const user = await currentUser();
   let userRole = "consultant";
   let readOnly = false;

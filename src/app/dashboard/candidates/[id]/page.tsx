@@ -1,9 +1,11 @@
+import { requireRole } from "@/lib/auth";
 import { getCandidateById, getMandates, getUserByEmail } from "@/db/queries";
 import FlCandidateClient from "@/features/candidates/components/FlCandidateClient";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 export default async function FlCandidateProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  await requireRole(["admin", "consultant"]);
   const { id } = await params;
   
   const user = await currentUser();
