@@ -77,7 +77,7 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
     else setPage2Blocks(blocks);
   };
 
-  const removeCustomBlock = (page: number, id: string) => {
+  const removeBlock = (page: number, id: string) => {
     const isPage1 = page === 1;
     const blocks = isPage1 ? page1Blocks.filter(b => b.id !== id) : page2Blocks.filter(b => b.id !== id);
     if (isPage1) setPage1Blocks(blocks);
@@ -110,10 +110,7 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
           contentEditable 
           suppressContentEditableWarning
           onKeyDown={(e) => {
-            if (e.key === 'Backspace' && e.currentTarget.textContent === '') {
-              e.preventDefault();
-              removeCustomBlock(page, block.id);
-            }
+            // Let the global handler take care of deletion if empty
           }}
           data-placeholder={block.style === 'heading' ? "Type a heading..." : "Type text..."}
         >
@@ -352,7 +349,7 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
       <style type="text/css" media="print" dangerouslySetInnerHTML={{ __html: PageStyle }} />
 
       {/* PAGE 1 */}
-      <div className={`format-page bg-white w-full print:w-[794px] h-[1122px] mx-auto print:shadow-none relative box-border print:scale-100 max-w-none px-[40px] py-[35px] overflow-hidden print:break-after-page ${fontStyle}`}>
+      <div className={`format-page bg-white w-full print:w-[794px] h-[1122px] mx-auto print:shadow-none relative box-border print:scale-100 max-w-none px-[40px] py-[35px] print:overflow-hidden print:break-after-page ${fontStyle}`}>
         {/* Header */}
         <div className="flex justify-end w-full mb-4 pb-2 border-b border-gray-200">
           <h1 className="text-3xl font-serif font-medium text-black tracking-[0.4em] uppercase" contentEditable suppressContentEditableWarning>
@@ -436,17 +433,44 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
         </div>
 
         {/* Content Blocks */}
-        <div className="mt-6 text-[16px] leading-relaxed text-justify space-y-5">
+        <div 
+          className="mt-6 text-[16px] leading-relaxed text-justify space-y-5 outline-none"
+          onKeyDown={(e) => {
+            if (e.key === 'Backspace') {
+              const target = e.target as HTMLElement;
+              if (!target.isContentEditable) return;
+              
+              // We check if the ENTIRE block is empty before deleting
+              const blockContainer = target.closest('[data-block-id]') as HTMLElement;
+              if (blockContainer) {
+                // Clone the block and remove our UI controls to get the pure text content
+                const clone = blockContainer.cloneNode(true) as HTMLElement;
+                clone.querySelectorAll('.absolute').forEach(el => el.remove());
+                
+                const text = clone.textContent || "";
+                const isEmpty = text.replace(/[\u200B-\u200D\uFEFF]/g, '').trim() === '';
+                
+                // If it's already empty when they hit backspace, delete the block!
+                if (isEmpty) {
+                  e.preventDefault();
+                  const blockId = blockContainer.getAttribute('data-block-id');
+                  if (blockId) removeBlock(1, blockId);
+                }
+              }
+            }
+          }}
+        >
           {page1Blocks.map((block, index) => {
             const content = renderBlock(block, 1);
             if (!content) return null;
             return (
               <div 
                 key={block.id}
-                className="group relative"
+                data-block-id={block.id}
+                className="group relative border border-transparent hover:border-gray-100 rounded transition-colors"
               >
-                {/* Move Controls (visible on hover) */}
-                <div className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 flex flex-col gap-1 print:hidden z-50">
+                {/* Left Controls (Move) */}
+                <div className="absolute -left-10 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity flex flex-col gap-2 print:hidden z-50">
                   <button 
                     onClick={() => moveBlock(1, index, 'up')}
                     disabled={index === 0}
@@ -463,17 +487,21 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>
                   </button>
+                </div>
+
+                {/* Right Controls (Delete, Add, Font) */}
+                <div className="absolute -right-10 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity flex flex-col gap-2 print:hidden z-50">
                   <button 
                     onClick={() => addCustomBlock(1, index)}
-                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-green-50 text-green-600 transition-colors"
+                    className="p-1.5 bg-white rounded shadow-sm border border-gray-200 hover:bg-green-50 text-green-600 transition-colors flex items-center justify-center"
                     title="Add Text Block Below"
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"></path></svg>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"></path></svg>
                   </button>
                   {block.type === 'custom' && (
                     <button 
                       onClick={() => toggleCustomBlockStyle(1, block.id)}
-                      className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-blue-50 text-blue-600 font-bold text-[10px] leading-none transition-colors h-[24px]"
+                      className="bg-white rounded shadow-sm border border-gray-200 hover:bg-blue-50 text-blue-600 font-bold text-[12px] leading-none transition-colors h-[28px] w-[28px] flex items-center justify-center"
                       title="Toggle Heading/Body Font"
                     >
                       {block.style === 'heading' ? 'H' : 'P'}
@@ -484,11 +512,22 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
               </div>
             );
           })}
+          
+          <button 
+            onClick={() => {
+              const blocks = [...page1Blocks];
+              blocks.push({ id: `custom_${Date.now()}`, type: 'custom', style: 'body' });
+              setPage1Blocks(blocks);
+            }}
+            className="w-full py-3 mt-4 border-2 border-dashed border-gray-200 rounded-lg text-gray-400 font-bold hover:bg-gray-50 hover:text-[#133255] hover:border-[#133255] transition-all print:hidden flex items-center justify-center gap-2"
+          >
+            ➕ Add Text Box
+          </button>
         </div>
       </div>
 
       {/* PAGE 2 */}
-      <div className={`format-page bg-white w-full print:w-[794px] h-[1122px] mx-auto print:shadow-none relative box-border print:scale-100 max-w-none px-[40px] py-[35px] overflow-hidden ${fontStyle}`}>
+      <div className={`format-page bg-white w-full print:w-[794px] h-[1122px] mx-auto print:shadow-none relative box-border print:scale-100 max-w-none px-[40px] py-[35px] print:overflow-hidden ${fontStyle}`}>
         {/* Header */}
         <div className="flex justify-end w-full mb-3 pb-2 border-b border-gray-200">
           <h1 className="text-3xl font-serif font-medium text-black tracking-[0.4em] uppercase" contentEditable suppressContentEditableWarning>
@@ -542,17 +581,41 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
         </div>
 
         {/* Remaining Content Blocks */}
-        <div className="text-[15px] leading-snug text-justify space-y-3">
+        <div 
+          className="text-[15px] leading-snug text-justify space-y-3 outline-none"
+          onKeyDown={(e) => {
+            if (e.key === 'Backspace') {
+              const target = e.target as HTMLElement;
+              if (!target.isContentEditable) return;
+              
+              const blockContainer = target.closest('[data-block-id]') as HTMLElement;
+              if (blockContainer) {
+                const clone = blockContainer.cloneNode(true) as HTMLElement;
+                clone.querySelectorAll('.absolute').forEach(el => el.remove());
+                
+                const text = clone.textContent || "";
+                const isEmpty = text.replace(/[\u200B-\u200D\uFEFF]/g, '').trim() === '';
+                
+                if (isEmpty) {
+                  e.preventDefault();
+                  const blockId = blockContainer.getAttribute('data-block-id');
+                  if (blockId) removeBlock(2, blockId);
+                }
+              }
+            }
+          }}
+        >
           {page2Blocks.map((block, index) => {
             const content = renderBlock(block, 2);
             if (!content) return null;
             return (
               <div 
                 key={block.id}
-                className="group relative"
+                data-block-id={block.id}
+                className="group relative border border-transparent hover:border-gray-100 rounded transition-colors"
               >
-                {/* Move Controls (visible on hover) */}
-                <div className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 flex flex-col gap-1 print:hidden z-50">
+                {/* Left Controls (Move) */}
+                <div className="absolute -left-9 top-0 opacity-40 hover:opacity-100 transition-opacity flex flex-col gap-1 print:hidden z-50">
                   <button 
                     onClick={() => moveBlock(2, index, 'up')}
                     disabled={index === 0}
@@ -569,17 +632,21 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>
                   </button>
+                </div>
+
+                {/* Right Controls (Delete, Add, Font) */}
+                <div className="absolute -right-10 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity flex flex-col gap-2 print:hidden z-50">
                   <button 
                     onClick={() => addCustomBlock(2, index)}
-                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-green-50 text-green-600 transition-colors"
+                    className="p-1.5 bg-white rounded shadow-sm border border-gray-200 hover:bg-green-50 text-green-600 transition-colors flex items-center justify-center"
                     title="Add Text Block Below"
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"></path></svg>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"></path></svg>
                   </button>
                   {block.type === 'custom' && (
                     <button 
                       onClick={() => toggleCustomBlockStyle(2, block.id)}
-                      className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-blue-50 text-blue-600 font-bold text-[10px] leading-none transition-colors h-[24px]"
+                      className="bg-white rounded shadow-sm border border-gray-200 hover:bg-blue-50 text-blue-600 font-bold text-[12px] leading-none transition-colors h-[28px] w-[28px] flex items-center justify-center"
                       title="Toggle Heading/Body Font"
                     >
                       {block.style === 'heading' ? 'H' : 'P'}
@@ -590,6 +657,17 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
               </div>
             );
           })}
+          
+          <button 
+            onClick={() => {
+              const blocks = [...page2Blocks];
+              blocks.push({ id: `custom_${Date.now()}`, type: 'custom', style: 'body' });
+              setPage2Blocks(blocks);
+            }}
+            className="w-full py-3 mt-4 border-2 border-dashed border-gray-200 rounded-lg text-gray-400 font-bold hover:bg-gray-50 hover:text-[#133255] hover:border-[#133255] transition-all print:hidden flex items-center justify-center gap-2"
+          >
+            ➕ Add Text Box
+          </button>
         </div>
 
       </div>
