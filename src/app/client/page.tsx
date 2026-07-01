@@ -1,7 +1,5 @@
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/auth";
 
-export default async function ClientHomePage() {
-  await requireRole(["client"]);
+export default function ClientHomePage() {
   redirect("/client/mandates");
 }

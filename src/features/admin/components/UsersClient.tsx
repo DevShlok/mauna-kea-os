@@ -75,7 +75,7 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
                 <td className="px-4 py-3">
                   <span className="px-2.5 py-1 bg-green-100 text-green-800 rounded-full text-[13px] font-bold uppercase tracking-wider">{u.status || 'Active'}</span>
                 </td>
-                <td className="px-4 py-3 text-[#6b7a99] text-xs">
+                <td className="px-4 py-3 text-[#6b7a99] text-xs" suppressHydrationWarning>
                   {u.lastActive ? new Date(u.lastActive).toLocaleString() : "Never"}
                 </td>
                 <td className="px-4 py-3">

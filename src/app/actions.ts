@@ -285,6 +285,7 @@ export async function updatePlatformUserAction(id: string, data: { name: string;
     name: data.name,
     email: data.email,
     role: data.role,
+    initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
     linkedClientId: data.linkedClientId || null,
     linkedCandidateId: data.linkedCandidateId || null,
   }).where(eq(platformUsers.id, id));

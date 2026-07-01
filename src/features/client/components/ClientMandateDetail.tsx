@@ -1,0 +1,388 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import {
+  ArrowLeft,
+  Users,
+  Bell,
+  MoreVertical,
+  Home,
+  Search,
+  Star,
+  BarChart3,
+  User,
+  Filter,
+  CheckSquare,
+  Square,
+  ChevronRight,
+  Building2,
+  Briefcase,
+  Clock,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+// ─── Types ───────────────────────────────────────────────
+type MandateCandidate = {
+  id: number;
+  externalId: string;
+  name: string;
+  company: string | null;
+  role: string | null;
+  stage: string | null;
+  score: number | null;
+  initials: string | null;
+  profilePic?: string | null;
+};
+
+type MandateDetail = {
+  id: number;
+  company: string;
+  role: string;
+  status: string | null;
+  internalStatus: string | null;
+  opened: string | null;
+  consultant: string | null;
+  candidates: MandateCandidate[];
+  createdAt: Date | null;
+};
+
+type Props = {
+  mandate: MandateDetail;
+  clientName: string;
+};
+
+// ─── Circular Score Ring ─────────────────────────────────
+function ScoreRing({ score, size = 44 }: { score: number; size?: number }) {
+  const radius = (size - 6) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const pct = Math.min(Math.max(score, 0), 100);
+  const offset = circumference - (pct / 100) * circumference;
+
+  // Color based on score
+  let strokeColor = "#10b981"; // green
+  if (pct < 70) strokeColor = "#f59e0b"; // amber
+  if (pct < 50) strokeColor = "#ef4444"; // red
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e5e7eb" strokeWidth={3} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth={3}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="transition-all duration-700"
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-[#0b1f3a]">
+        {Math.round(pct)}%
+      </span>
+    </div>
+  );
+}
+
+// ─── Avatar Colors ───────────────────────────────────────
+const AVATAR_GRADIENTS = [
+  "from-indigo-600 to-blue-500",
+  "from-violet-600 to-purple-500",
+  "from-blue-600 to-cyan-500",
+  "from-emerald-600 to-teal-500",
+  "from-amber-600 to-orange-500",
+  "from-rose-600 to-pink-500",
+  "from-sky-600 to-indigo-500",
+  "from-fuchsia-600 to-violet-500",
+  "from-teal-600 to-emerald-500",
+];
+
+// ─── Rank Badge Colors ───────────────────────────────────
+function getRankStyle(rank: number) {
+  if (rank <= 3) return "bg-[#0b1f3a] text-white";
+  if (rank <= 6) return "bg-indigo-100 text-indigo-700";
+  return "bg-emerald-100 text-emerald-700";
+}
+
+// ─── PIPELINE STAGES for filter ──────────────────────────
+const FILTER_STAGES = [
+  { key: "all", label: "All Candidates" },
+  { key: "identified", label: "Identified" },
+  { key: "screening", label: "Screening" },
+  { key: "interviewed", label: "Interviewed" },
+  { key: "offered", label: "Offered" },
+  { key: "hired", label: "Hired" },
+] as const;
+
+// ─── Component ───────────────────────────────────────────
+export default function ClientMandateDetail({ mandate, clientName }: Props) {
+  const router = useRouter();
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [stageFilter, setStageFilter] = useState("all");
+
+  // Sort candidates by score (highest first = AI-ranked)
+  const rankedCandidates = useMemo(() => {
+    let list = [...mandate.candidates];
+
+    // Filter by stage
+    if (stageFilter !== "all") {
+      list = list.filter(c => (c.stage || "universe").toLowerCase() === stageFilter);
+    }
+
+    // Sort by score descending (AI-ranked)
+    list.sort((a, b) => (b.score || 0) - (a.score || 0));
+    return list;
+  }, [mandate.candidates, stageFilter]);
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === rankedCandidates.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(rankedCandidates.map(c => c.id)));
+    }
+  };
+
+  const allSelected = rankedCandidates.length > 0 && selectedIds.size === rankedCandidates.length;
+
+  return (
+    <div className="min-h-screen bg-[#f4f6fb] flex flex-col">
+      {/* ─── Top Nav ─── */}
+      <header className="bg-[#0b1f3a] text-white sticky top-0 z-50">
+        <div className="max-w-3xl mx-auto flex items-center justify-between px-5 py-3.5">
+          <div className="flex items-center gap-2.5">
+            <Link href="/client/mandates" className="bg-white/15 rounded-lg w-9 h-9 flex items-center justify-center hover:bg-white/25 transition-colors">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <div>
+              <span className="font-serif text-[15px] font-bold block leading-tight tracking-wide">MAUNA KEA</span>
+              <span className="text-[9px] text-white/50 tracking-[0.2em] block uppercase">International</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <button className="relative text-white/70 hover:text-white transition-colors">
+              <Bell className="w-5 h-5" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0b1f3a]" />
+            </button>
+            <button className="text-white/70 hover:text-white transition-colors">
+              <MoreVertical className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* ─── Content ─── */}
+      <div className="max-w-3xl mx-auto w-full flex-1 px-5 pb-32">
+        {/* Position Label */}
+        <div className="mt-5 mb-1">
+          <span className="text-[11px] font-semibold text-gray-400 tracking-wider uppercase">Position</span>
+          <h1 className="text-[22px] font-bold text-[#0b1f3a] leading-tight mt-0.5">{mandate.role}</h1>
+        </div>
+
+        {/* Section Title + Filter */}
+        <div className="flex items-start justify-between mt-5 mb-1">
+          <div>
+            <h2 className="text-[20px] font-bold text-[#0b1f3a] leading-tight">
+              Top {rankedCandidates.length} Selected Candidates
+            </h2>
+            <p className="text-[12px] text-gray-400 mt-0.5">AI-ranked for best fit</p>
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setFilterOpen(!filterOpen)}
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${
+                stageFilter !== "all"
+                  ? "bg-indigo-50 border-indigo-200 text-indigo-600"
+                  : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
+              }`}
+            >
+              <Filter className="w-[18px] h-[18px]" />
+            </button>
+            {filterOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setFilterOpen(false)} />
+                <div className="absolute right-0 top-12 bg-white rounded-xl shadow-xl border border-gray-100 py-2 w-48 z-50">
+                  {FILTER_STAGES.map(stage => (
+                    <button
+                      key={stage.key}
+                      onClick={() => { setStageFilter(stage.key); setFilterOpen(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-[13px] transition-colors ${
+                        stageFilter === stage.key
+                          ? "bg-indigo-50 text-indigo-700 font-semibold"
+                          : "text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      {stage.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Selection Bar */}
+        <div className="flex items-center justify-between mt-4 mb-4">
+          <button
+            onClick={toggleSelectAll}
+            className="flex items-center gap-2 text-[13px] text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            {allSelected ? (
+              <CheckSquare className="w-[18px] h-[18px] text-indigo-600" />
+            ) : (
+              <Square className="w-[18px] h-[18px]" />
+            )}
+            <span>{selectedIds.size}/{rankedCandidates.length} Selected</span>
+          </button>
+          <button
+            onClick={toggleSelectAll}
+            className="text-[13px] text-indigo-600 font-medium hover:underline"
+          >
+            {allSelected ? "Deselect All" : "Select All"}
+          </button>
+        </div>
+
+        {/* ─── Candidate Grid ─── */}
+        <div className="grid grid-cols-3 gap-3">
+          {rankedCandidates.map((candidate, index) => {
+            const rank = index + 1;
+            const initials = candidate.initials || candidate.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+            const score = candidate.score ? Math.round(candidate.score * 10) : null; // Convert 0-10 score to percentage
+            const isSelected = selectedIds.has(candidate.id);
+            const gradientIdx = index % AVATAR_GRADIENTS.length;
+
+            return (
+              <div
+                key={candidate.id}
+                onClick={() => router.push(`/client/candidates/${candidate.externalId}?mandateId=${mandate.id}`)}
+                className={`bg-white rounded-2xl p-4 border-2 transition-all duration-200 cursor-pointer hover:shadow-lg ${
+                  isSelected
+                    ? "border-indigo-400 shadow-md ring-2 ring-indigo-100"
+                    : "border-gray-100 shadow-sm hover:border-gray-200"
+                }`}
+              >
+                {/* Top Row: Rank + Avatar + Score */}
+                <div className="flex items-start justify-between mb-3">
+                  {/* Rank Badge */}
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${getRankStyle(rank)}`}>
+                    {rank}
+                  </span>
+
+                  {/* Score Ring */}
+                  {score != null && score > 0 && <ScoreRing score={score} size={40} />}
+                </div>
+
+                {/* Avatar */}
+                <div className="flex justify-center mb-3">
+                  <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${AVATAR_GRADIENTS[gradientIdx]} flex items-center justify-center text-white text-lg font-bold shadow-md overflow-hidden`}>
+                    {candidate.profilePic ? (
+                      <img src={candidate.profilePic} alt={candidate.name} className="w-full h-full object-cover" />
+                    ) : (
+                      initials
+                    )}
+                  </div>
+                </div>
+
+                {/* Name */}
+                <h3 className="text-[14px] font-bold text-[#0b1f3a] truncate text-center">{candidate.name}</h3>
+
+                {/* Role */}
+                {candidate.role && (
+                  <p className="text-[11px] text-gray-400 mt-0.5 truncate text-center">{candidate.role}</p>
+                )}
+
+                {/* Company */}
+                {candidate.company && (
+                  <p className="text-[13px] font-bold text-[#0b1f3a] mt-2 truncate text-center">{candidate.company}</p>
+                )}
+
+                {/* Experience placeholder (from stage info) */}
+                <div className="flex items-center justify-center gap-1 mt-1.5 text-[11px] text-gray-400">
+                  <Clock className="w-3 h-3" />
+                  <span className="capitalize">{candidate.stage || "Universe"}</span>
+                </div>
+
+                {/* Checkbox */}
+                <div
+                  className="flex justify-center mt-3"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSelect(candidate.id);
+                  }}
+                >
+                  {isSelected ? (
+                    <CheckSquare className="w-[18px] h-[18px] text-indigo-600" />
+                  ) : (
+                    <Square className="w-[18px] h-[18px] text-gray-300" />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {rankedCandidates.length === 0 && (
+          <div className="text-center py-16 text-gray-400">
+            <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
+            <p className="text-[14px]">No candidates found for this position.</p>
+          </div>
+        )}
+      </div>
+
+      {/* ─── Review Selected CTA ─── */}
+      <div className="fixed bottom-14 left-0 right-0 z-50 px-5">
+        <div className="max-w-3xl mx-auto">
+          <button
+            disabled={selectedIds.size === 0}
+            className={`w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl text-[14px] font-semibold transition-all duration-200 ${
+              selectedIds.size > 0
+                ? "bg-[#0b1f3a] text-white hover:bg-[#162d4f] shadow-lg shadow-[#0b1f3a]/25"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            <Users className="w-5 h-5" />
+            Review Selected Candidates ({selectedIds.size})
+            {selectedIds.size > 0 && <ChevronRight className="w-4 h-4 ml-1" />}
+          </button>
+        </div>
+      </div>
+
+      {/* ─── Bottom Navigation ─── */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#0b1f3a] border-t border-white/10 z-50">
+        <div className="max-w-3xl mx-auto flex items-center justify-around py-2">
+          {[
+            { icon: Home, label: "Dashboard", href: "/client/mandates", active: false },
+            { icon: Search, label: "Search", href: "/client/mandates", active: false },
+            { icon: Star, label: "Shortlist", href: "/client/mandates", active: true },
+            { icon: BarChart3, label: "Insights", href: "/client/mandates", active: false },
+            { icon: User, label: "Profile", href: "/client/mandates", active: false },
+          ].map((item, i) => (
+            <Link
+              key={i}
+              href={item.href}
+              className={`flex flex-col items-center gap-1 px-4 py-1 transition-colors ${
+                item.active ? "text-white" : "text-white/40 hover:text-white/70"
+              }`}
+            >
+              <item.icon className={`w-5 h-5 ${item.active ? "fill-white" : ""}`} />
+              <span className="text-[10px] font-medium">{item.label}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
+    </div>
+  );
+}
