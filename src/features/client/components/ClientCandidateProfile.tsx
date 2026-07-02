@@ -247,11 +247,11 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
       <div className="print:hidden h-full shrink-0 z-50">
         <ClientSidebar activeTab="dashboard" clientName={clientName || "Client"} />
       </div>
-      <div className="flex-1 flex flex-col h-full overflow-y-auto relative bg-[#f4f6fb]">
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-[#f4f6fb]">
       {/* ─── Non-Report Content (Hidden on Print) ─── */}
-      <div className="print:hidden">
+      <div className="print:hidden shrink-0">
         {/* ─── Top Header ─── */}
-      <header className="h-[77px] bg-[#0b1f3a] text-white sticky top-0 z-50 flex items-center border-b border-[#133255]">
+      <header className="h-[77px] bg-[#0b1f3a] text-white flex items-center border-b border-[#133255]">
         <div className="max-w-4xl mx-auto w-full flex items-center justify-between px-5">
           <div className="flex items-center gap-2.5">
             <button onClick={() => router.back()} className="bg-white/15 rounded-lg w-9 h-9 flex items-center justify-center hover:bg-white/25 transition-colors">
@@ -269,6 +269,9 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
           </div>
         </div>
       </header>
+      </div>
+      <div className="flex-1 overflow-y-auto w-full">
+      <div className="print:hidden">
 
       {/* ─── Candidate Overview Card ─── */}
       <div className="max-w-4xl mx-auto w-full px-5 mt-6">
@@ -653,6 +656,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
           </button>
         </div>
       </div>
+        </div>
       </div>
     </div>
   );

@@ -29,7 +29,7 @@ export default async function DashboardLayout({
   return (
     <div className="flex flex-row h-screen overflow-hidden bg-[#f0f4fb] print:h-auto print:overflow-visible print:bg-white">
       <div className="print:hidden">
-        <Sidebar userRole={userRole} linkedClientId={linkedClientId} linkedCandidateId={linkedCandidateId} />
+        <Sidebar userRole={userRole} linkedClientId={linkedClientId} linkedCandidateId={linkedCandidateId} userName={platformUser?.name || "User"} />
       </div>
       <div className="flex-1 flex flex-col overflow-hidden print:overflow-visible">
         <div className="print:hidden">

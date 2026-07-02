@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useClerk } from "@clerk/nextjs";
+import { SignOutButton } from "@clerk/nextjs";
 import {
   Home,
   Star,
@@ -17,7 +17,6 @@ type Props = {
 };
 
 export function ClientSidebar({ activeTab, clientName, onTabChange }: Props) {
-  const { signOut } = useClerk();
 
   const initials = clientName
     .split(" ")
@@ -111,13 +110,14 @@ export function ClientSidebar({ activeTab, clientName, onTabChange }: Props) {
           </span>
           <span className="text-white/50 text-[11px] block">Client</span>
         </div>
-        <button
-          onClick={() => signOut({ redirectUrl: "/sign-in" })}
-          className="text-white/45 hover:text-white transition-colors p-1"
-          title="Sign Out"
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
+        <SignOutButton redirectUrl="/sign-in">
+          <button
+            className="text-white/45 hover:text-white transition-colors p-1"
+            title="Sign Out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </SignOutButton>
       </div>
     </div>
   );

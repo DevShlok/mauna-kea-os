@@ -154,11 +154,13 @@ export default function ClientMandateDetail({ mandate, clientName }: Props) {
   const allSelected = rankedCandidates.length > 0 && selectedIds.size === rankedCandidates.length;
 
   return (
-    <div className="min-h-screen bg-[#f4f6fb] flex">
-      <ClientSidebar activeTab="dashboard" clientName={clientName} />
-      <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
+    <div className="h-screen overflow-hidden bg-[#f4f6fb] flex">
+      <div className="shrink-0 h-full">
+        <ClientSidebar activeTab="dashboard" clientName={clientName} />
+      </div>
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* ─── Top Bar ─── */}
-        <header className="h-[77px] bg-[#0b1f3a] border-b border-[#133255] sticky top-0 z-40 text-white flex items-center">
+        <header className="shrink-0 h-[77px] bg-[#0b1f3a] border-b border-[#133255] text-white flex items-center">
           <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
             <div className="flex items-center gap-3">
               <Link href="/client/mandates" className="bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center hover:bg-white/20 transition-colors">
@@ -179,7 +181,8 @@ export default function ClientMandateDetail({ mandate, clientName }: Props) {
         </header>
 
         {/* ─── Content ─── */}
-        <div className="max-w-5xl mx-auto w-full flex-1 px-8 pb-8">
+        <div className="flex-1 overflow-y-auto w-full">
+          <div className="max-w-5xl mx-auto w-full px-8 pb-8">
           {/* Section Title + Filter */}
           <div className="flex items-start justify-between mt-6 mb-1">
             <div>
@@ -347,6 +350,7 @@ export default function ClientMandateDetail({ mandate, clientName }: Props) {
               Review Selected Candidates ({selectedIds.size})
               {selectedIds.size > 0 && <ChevronRight className="w-4 h-4 ml-1" />}
             </button>
+          </div>
           </div>
         </div>
       </div>

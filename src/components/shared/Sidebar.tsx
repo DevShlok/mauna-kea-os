@@ -11,15 +11,13 @@ import {
   ChevronRight,
   Plus
 } from "lucide-react";
-import { useUser, useClerk } from "@clerk/nextjs";
+import { SignOutButton } from "@clerk/nextjs";
 import { useState } from "react";
 
-export function Sidebar({ userRole = "candidate" }: { userRole?: string; linkedClientId?: string; linkedCandidateId?: string; }) {
+export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidateId, userName = "User" }: { userRole?: string; linkedClientId?: string; linkedCandidateId?: string; userName?: string; }) {
   const pathname = usePathname();
-  const { user } = useUser();
-  const { signOut } = useClerk();
 
-  const fullName = user?.fullName || "User";
+  const fullName = userName;
   const initials = fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "MK";
 
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
@@ -153,9 +151,11 @@ export function Sidebar({ userRole = "candidate" }: { userRole?: string; linkedC
           <span className="text-white text-[15px] font-semibold block truncate">{fullName}</span>
           <span className="text-white/50 text-[12px] block capitalize">{userRole}</span>
         </div>
-        <button onClick={() => signOut({ redirectUrl: '/sign-in' })} className="text-white/45 hover:text-white transition-colors p-1" title="Sign Out">
-          <LogOut className="w-4 h-4" />
-        </button>
+        <SignOutButton redirectUrl="/sign-in">
+          <button className="text-white/45 hover:text-white transition-colors p-1" title="Sign Out">
+            <LogOut className="w-4 h-4" />
+          </button>
+        </SignOutButton>
       </div>
     </div>
   );

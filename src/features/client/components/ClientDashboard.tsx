@@ -214,10 +214,12 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
   if (activeTab === "insights") {
     const totalHired = mandates.reduce((sum, m) => sum + getStageCounts(m.candidates).hired, 0);
     return (
-      <div className="min-h-screen bg-[#f4f6fb] flex">
-        <ClientSidebar activeTab="insights" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
-        <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
-          <header className="h-[77px] bg-[#0b1f3a] border-b border-[#133255] sticky top-0 z-40 text-white flex items-center">
+      <div className="h-screen overflow-hidden bg-[#f4f6fb] flex">
+        <div className="shrink-0 h-full">
+          <ClientSidebar activeTab="insights" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
+        </div>
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+          <header className="shrink-0 h-[77px] bg-[#0b1f3a] border-b border-[#133255] text-white flex items-center">
             <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
               <h1 className="font-serif text-[20px] font-bold text-white">Insights</h1>
               <button className="relative text-white/50 hover:text-white/80 transition-colors">
@@ -225,8 +227,9 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
               </button>
             </div>
           </header>
-          <div className="max-w-5xl mx-auto w-full flex-1 px-8 mt-6">
-            <h2 className="text-[20px] font-bold text-[#0b1f3a] mb-5">Hiring Summary</h2>
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-5xl mx-auto w-full px-8 mt-6 pb-12">
+              <h2 className="text-[20px] font-bold text-[#0b1f3a] mb-5">Hiring Summary</h2>
             <div className="grid grid-cols-3 gap-3 mb-6">
               {[
                 { label: "Total Positions", value: mandates.length, color: "bg-indigo-50 text-indigo-600" },
@@ -263,24 +266,28 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
           </div>
         </div>
       </div>
-    );
+    </div>
+  );
   }
 
   // ─── Profile View ──────────────────────────────────────
   if (activeTab === "profile") {
     return (
-      <div className="min-h-screen bg-[#f4f6fb] flex">
-        <ClientSidebar activeTab="profile" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
-        <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
-          <header className="h-[77px] bg-[#0b1f3a] border-b border-[#133255] sticky top-0 z-40 text-white flex items-center">
+      <div className="h-screen overflow-hidden bg-[#f4f6fb] flex">
+        <div className="shrink-0 h-full">
+          <ClientSidebar activeTab="profile" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
+        </div>
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+          <header className="shrink-0 h-[77px] bg-[#0b1f3a] border-b border-[#133255] text-white flex items-center">
             <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
               <h1 className="font-serif text-[20px] font-bold text-white">Profile</h1>
               <div />
             </div>
           </header>
-          <div className="max-w-5xl mx-auto w-full flex-1 px-8 mt-6">
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center max-w-lg mx-auto">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-5xl mx-auto w-full px-8 mt-6 pb-12">
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center max-w-lg mx-auto">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
                 {clientName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
               </div>
               <h2 className="text-[20px] font-bold text-[#0b1f3a]">{clientName}</h2>
@@ -310,8 +317,9 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   // ─── Shortlist View ────────────────────────────────────
   if (activeTab === "shortlist") {
@@ -319,10 +327,12 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
       return m.candidates.some(c => c.stage && ["interviewed", "offered", "hired"].includes(c.stage));
     });
     return (
-      <div className="min-h-screen bg-[#f4f6fb] flex">
-        <ClientSidebar activeTab="shortlist" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
-        <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
-          <header className="h-[77px] bg-[#0b1f3a] border-b border-[#133255] sticky top-0 z-40 text-white flex items-center">
+      <div className="h-screen overflow-hidden bg-[#f4f6fb] flex">
+        <div className="shrink-0 h-full">
+          <ClientSidebar activeTab="shortlist" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
+        </div>
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+          <header className="shrink-0 h-[77px] bg-[#0b1f3a] border-b border-[#133255] text-white flex items-center">
             <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
               <h1 className="font-serif text-[20px] font-bold text-white">Shortlisted Candidates</h1>
               <button className="relative text-white/50 hover:text-white/80 transition-colors">
@@ -330,7 +340,8 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
               </button>
             </div>
           </header>
-          <div className="max-w-5xl mx-auto w-full flex-1 px-8 mt-6">
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-5xl mx-auto w-full px-8 mt-6 pb-12">
             {shortlisted.length > 0 ? shortlisted.map(mandate => {
               const shortCands = mandate.candidates.filter(c => c.stage && ["interviewed", "offered", "hired"].includes(c.stage));
               return (
@@ -367,16 +378,19 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
           </div>
         </div>
       </div>
-    );
+    </div>
+  );
   }
 
   // ─── Dashboard View (Default) ──────────────────────────
   return (
-    <div className="min-h-screen bg-[#f4f6fb] flex">
-      <ClientSidebar activeTab="dashboard" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
-      <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
+    <div className="h-screen overflow-hidden bg-[#f4f6fb] flex">
+      <div className="shrink-0 h-full">
+        <ClientSidebar activeTab="dashboard" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
+      </div>
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* ─── Top Bar ─── */}
-        <header className="h-[77px] bg-[#0b1f3a] border-b border-[#133255] sticky top-0 z-40 text-white flex items-center">
+        <header className="shrink-0 h-[77px] bg-[#0b1f3a] border-b border-[#133255] text-white flex items-center">
           <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
             <div>
               <span className="text-[11px] font-semibold text-white/50 tracking-wider uppercase">Welcome back</span>
@@ -411,7 +425,8 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
         </header>
 
         {/* ─── Content ─── */}
-        <div className="max-w-5xl mx-auto w-full flex-1 px-8 py-6">
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-5xl mx-auto w-full px-8 py-6 pb-12">
           {searchQuery.trim() ? (
             <div className="flex flex-col gap-2.5">
               <h2 className="text-[16px] font-bold text-[#0b1f3a] mb-2">Search Results</h2>
@@ -616,6 +631,7 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
               )}
             </>
           )}
+          </div>
         </div>
       </div>
     </div>
