@@ -10,13 +10,23 @@ import {
   LogOut,
 } from "lucide-react";
 
+import { usePathname, useSearchParams } from "next/navigation";
+
 type Props = {
-  activeTab: string;
   clientName: string;
-  onTabChange?: (tab: string) => void;
 };
 
-export function ClientSidebar({ activeTab, clientName, onTabChange }: Props) {
+export function ClientSidebar({ clientName }: Props) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tab = searchParams.get("tab");
+
+  let activeTab = "dashboard";
+  if (pathname === "/client/mandates" && tab) {
+    activeTab = tab;
+  } else if (pathname.startsWith("/client/mandates/") || pathname.startsWith("/client/candidates/")) {
+    activeTab = "dashboard";
+  }
 
   const initials = clientName
     .split(" ")
@@ -57,7 +67,7 @@ export function ClientSidebar({ activeTab, clientName, onTabChange }: Props) {
         {navItems.map((item) => {
           const isActive = activeTab === item.key;
 
-          if (item.href && !onTabChange) {
+          if (item.href) {
             return (
               <Link
                 key={item.key}
@@ -77,25 +87,6 @@ export function ClientSidebar({ activeTab, clientName, onTabChange }: Props) {
               </Link>
             );
           }
-
-          return (
-            <button
-              key={item.key}
-              onClick={() => onTabChange?.(item.key)}
-              className={`flex items-center gap-3 px-5 py-3.5 transition-all duration-200 text-left w-full ${
-                isActive
-                  ? "bg-white/12 text-white font-semibold border-l-[3px] border-[#D8B15B]"
-                  : "text-white/55 hover:bg-white/5 hover:text-white border-l-[3px] border-transparent"
-              }`}
-            >
-              <item.icon
-                className={`w-[19px] h-[19px] shrink-0 ${
-                  isActive ? "text-[#D8B15B]" : ""
-                }`}
-              />
-              <span className="text-[14px] tracking-wide">{item.label}</span>
-            </button>
-          );
         })}
       </div>
 

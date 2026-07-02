@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   ArrowLeft,
   Users,
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ClientSidebar } from "./ClientSidebar";
+import { useClientPortal } from "../context/ClientPortalContext";
 
 // ─── Types ───────────────────────────────────────────────
 type MandateCandidate = {
@@ -119,6 +119,17 @@ export default function ClientMandateDetail({ mandate, clientName }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [filterOpen, setFilterOpen] = useState(false);
   const [stageFilter, setStageFilter] = useState("all");
+  const { setTopbarConfig } = useClientPortal();
+
+  useEffect(() => {
+    setTopbarConfig({
+      title: mandate.role,
+      subtitle: "Position",
+      showBack: true,
+      backUrl: "/client/mandates",
+    });
+    return () => setTopbarConfig({});
+  }, [mandate.role, setTopbarConfig]);
 
   // Sort candidates by score (highest first = AI-ranked)
   const rankedCandidates = useMemo(() => {
@@ -154,33 +165,6 @@ export default function ClientMandateDetail({ mandate, clientName }: Props) {
   const allSelected = rankedCandidates.length > 0 && selectedIds.size === rankedCandidates.length;
 
   return (
-    <div className="h-screen overflow-hidden bg-[#f4f6fb] flex">
-      <div className="shrink-0 h-full">
-        <ClientSidebar activeTab="dashboard" clientName={clientName} />
-      </div>
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* ─── Top Bar ─── */}
-        <header className="shrink-0 h-[77px] bg-[#0b1f3a] border-b border-[#133255] text-white flex items-center">
-          <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
-            <div className="flex items-center gap-3">
-              <Link href="/client/mandates" className="bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center hover:bg-white/20 transition-colors">
-                <ArrowLeft className="w-5 h-5 text-white/70" />
-              </Link>
-              <div>
-                <span className="text-[11px] font-semibold text-white/50 tracking-wider uppercase">Position</span>
-                <h1 className="text-[18px] font-bold text-white leading-tight">{mandate.role}</h1>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <button className="relative text-white/50 hover:text-white/80 transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0b1f3a]" />
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* ─── Content ─── */}
         <div className="flex-1 overflow-y-auto w-full">
           <div className="max-w-5xl mx-auto w-full px-8 pb-8">
           {/* Section Title + Filter */}
@@ -353,7 +337,5 @@ export default function ClientMandateDetail({ mandate, clientName }: Props) {
           </div>
           </div>
         </div>
-      </div>
-    </div>
   );
 }

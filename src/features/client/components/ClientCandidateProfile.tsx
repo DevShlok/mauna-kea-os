@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -28,7 +28,8 @@ import {
   Download,
 } from "lucide-react";
 import { updateMandateCandidateStageAction } from "@/app/actions";
-import { ClientSidebar } from "./ClientSidebar";
+import ReactMarkdown from "react-markdown";
+import { useClientPortal } from "../context/ClientPortalContext";
 
 // ─── Score Ring Component ────────────────────────────────
 function CircularScore({ score, label }: { score: number; label: string }) {
@@ -106,6 +107,19 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
   const router = useRouter();
   const [currentStage, setCurrentStage] = useState(mandateCandidate?.stage || "universe");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
+  const { setTopbarConfig } = useClientPortal();
+
+  useEffect(() => {
+    setTopbarConfig({
+      title: "Candidate Profile",
+      showBack: true,
+      showShare: true,
+      showMore: true,
+    });
+    return () => setTopbarConfig({});
+  }, [setTopbarConfig]);
+
   const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({
     "Leadership Summary": true,
     "References": true,
@@ -243,33 +257,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-[#f4f6fb] flex">
-      <div className="print:hidden h-full shrink-0 z-50">
-        <ClientSidebar activeTab="dashboard" clientName={clientName || "Client"} />
-      </div>
       <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-[#f4f6fb]">
-      {/* ─── Non-Report Content (Hidden on Print) ─── */}
-      <div className="print:hidden shrink-0">
-        {/* ─── Top Header ─── */}
-      <header className="h-[77px] bg-[#0b1f3a] text-white flex items-center border-b border-[#133255]">
-        <div className="max-w-4xl mx-auto w-full flex items-center justify-between px-5">
-          <div className="flex items-center gap-2.5">
-            <button onClick={() => router.back()} className="bg-white/15 rounded-lg w-9 h-9 flex items-center justify-center hover:bg-white/25 transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <span className="font-serif text-[15px] font-bold tracking-wide">Candidate Profile</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="text-white/70 hover:text-white transition-colors" title="Share">
-              <Share2 className="w-5 h-5" />
-            </button>
-            <button className="text-white/70 hover:text-white transition-colors">
-              <MoreVertical className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </header>
-      </div>
       <div className="flex-1 overflow-y-auto w-full">
       <div className="print:hidden">
 
@@ -656,8 +644,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
           </button>
         </div>
       </div>
-        </div>
-      </div>
     </div>
+  </div>
   );
 }

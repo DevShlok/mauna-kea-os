@@ -12,14 +12,13 @@ import {
   Calendar,
   Clock,
   ChevronRight,
-  Bell,
   Search,
   Star,
   User,
   LogOut,
   X,
 } from "lucide-react";
-import { ClientSidebar } from "./ClientSidebar";
+import { useClientPortal } from "../context/ClientPortalContext";
 
 // ─── Types ───────────────────────────────────────────────
 type MandateCandidate = {
@@ -171,6 +170,7 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"dashboard" | "search" | "shortlist" | "insights" | "profile">(tabParam || initialTab);
+  const { setTopbarConfig } = useClientPortal();
 
   useEffect(() => {
     if (tabParam) {
@@ -179,6 +179,34 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
       setActiveTab(initialTab);
     }
   }, [tabParam, initialTab]);
+
+  useEffect(() => {
+    switch (activeTab) {
+      case "dashboard":
+        setTopbarConfig({
+          title: clientName,
+          subtitle: "Welcome back",
+          showSearch: true,
+          searchQuery,
+          onSearchChange: setSearchQuery,
+          showFilter: true,
+          filterValue: filter,
+          onFilterChange: (val: string) => setFilter(val as any),
+        });
+        break;
+      case "insights":
+        setTopbarConfig({ title: "Insights" });
+        break;
+      case "profile":
+        setTopbarConfig({ title: "Profile" });
+        break;
+      case "shortlist":
+        setTopbarConfig({ title: "Shortlisted Candidates" });
+        break;
+      default:
+        setTopbarConfig({});
+    }
+  }, [activeTab, clientName, searchQuery, filter, setTopbarConfig]);
 
   const openMandates = mandates.filter(m => {
     const s = (m.status || "").toLowerCase();
@@ -214,20 +242,7 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
   if (activeTab === "insights") {
     const totalHired = mandates.reduce((sum, m) => sum + getStageCounts(m.candidates).hired, 0);
     return (
-      <div className="h-screen overflow-hidden bg-[#f4f6fb] flex">
-        <div className="shrink-0 h-full">
-          <ClientSidebar activeTab="insights" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
-        </div>
-        <div className="flex-1 flex flex-col h-full overflow-hidden">
-          <header className="shrink-0 h-[77px] bg-[#0b1f3a] border-b border-[#133255] text-white flex items-center">
-            <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
-              <h1 className="font-serif text-[20px] font-bold text-white">Insights</h1>
-              <button className="relative text-white/50 hover:text-white/80 transition-colors">
-                <Bell className="w-5 h-5" />
-              </button>
-            </div>
-          </header>
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto w-full">
             <div className="max-w-5xl mx-auto w-full px-8 mt-6 pb-12">
               <h2 className="text-[20px] font-bold text-[#0b1f3a] mb-5">Hiring Summary</h2>
             <div className="grid grid-cols-3 gap-3 mb-6">
@@ -263,28 +278,15 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
                 );
               })}
             </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
   }
 
   // ─── Profile View ──────────────────────────────────────
   if (activeTab === "profile") {
     return (
-      <div className="h-screen overflow-hidden bg-[#f4f6fb] flex">
-        <div className="shrink-0 h-full">
-          <ClientSidebar activeTab="profile" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
-        </div>
-        <div className="flex-1 flex flex-col h-full overflow-hidden">
-          <header className="shrink-0 h-[77px] bg-[#0b1f3a] border-b border-[#133255] text-white flex items-center">
-            <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
-              <h1 className="font-serif text-[20px] font-bold text-white">Profile</h1>
-              <div />
-            </div>
-          </header>
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto w-full">
             <div className="max-w-5xl mx-auto w-full px-8 mt-6 pb-12">
               <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center max-w-lg mx-auto">
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
@@ -316,10 +318,8 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
             </button>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
+    );
+  }
 
   // ─── Shortlist View ────────────────────────────────────
   if (activeTab === "shortlist") {
@@ -327,20 +327,7 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
       return m.candidates.some(c => c.stage && ["interviewed", "offered", "hired"].includes(c.stage));
     });
     return (
-      <div className="h-screen overflow-hidden bg-[#f4f6fb] flex">
-        <div className="shrink-0 h-full">
-          <ClientSidebar activeTab="shortlist" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
-        </div>
-        <div className="flex-1 flex flex-col h-full overflow-hidden">
-          <header className="shrink-0 h-[77px] bg-[#0b1f3a] border-b border-[#133255] text-white flex items-center">
-            <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
-              <h1 className="font-serif text-[20px] font-bold text-white">Shortlisted Candidates</h1>
-              <button className="relative text-white/50 hover:text-white/80 transition-colors">
-                <Bell className="w-5 h-5" />
-              </button>
-            </div>
-          </header>
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto w-full">
             <div className="max-w-5xl mx-auto w-full px-8 mt-6 pb-12">
             {shortlisted.length > 0 ? shortlisted.map(mandate => {
               const shortCands = mandate.candidates.filter(c => c.stage && ["interviewed", "offered", "hired"].includes(c.stage));
@@ -377,55 +364,12 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
             )}
           </div>
         </div>
-      </div>
-    </div>
-  );
+    );
   }
 
   // ─── Dashboard View (Default) ──────────────────────────
   return (
-    <div className="h-screen overflow-hidden bg-[#f4f6fb] flex">
-      <div className="shrink-0 h-full">
-        <ClientSidebar activeTab="dashboard" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
-      </div>
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* ─── Top Bar ─── */}
-        <header className="shrink-0 h-[77px] bg-[#0b1f3a] border-b border-[#133255] text-white flex items-center">
-          <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
-            <div>
-              <span className="text-[11px] font-semibold text-white/50 tracking-wider uppercase">Welcome back</span>
-              <h1 className="text-[18px] font-bold text-white leading-tight">{clientName}</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="relative group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
-                <input
-                  type="text"
-                  placeholder="Search positions..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-4 py-2 text-[13px] rounded-lg bg-white/10 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 w-48 focus:w-64 transition-all duration-300"
-                />
-              </div>
-              <select
-                value={filter}
-                onChange={e => setFilter(e.target.value as any)}
-                className="text-[13px] border border-white/10 rounded-lg px-3 py-2 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-              >
-                <option value="all" className="text-gray-900">All Positions</option>
-                <option value="open" className="text-gray-900">Open Positions</option>
-                <option value="closed" className="text-gray-900">Closed Positions</option>
-              </select>
-              <button className="relative text-white/50 hover:text-white/80 transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0b1f3a]" />
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* ─── Content ─── */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto w-full">
           <div className="max-w-5xl mx-auto w-full px-8 py-6 pb-12">
           {searchQuery.trim() ? (
             <div className="flex flex-col gap-2.5">
@@ -633,7 +577,5 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
           )}
           </div>
         </div>
-      </div>
-    </div>
   );
 }
