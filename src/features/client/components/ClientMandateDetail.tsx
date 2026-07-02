@@ -158,21 +158,21 @@ export default function ClientMandateDetail({ mandate, clientName }: Props) {
       <ClientSidebar activeTab="dashboard" clientName={clientName} />
       <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
         {/* ─── Top Bar ─── */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-          <div className="max-w-5xl mx-auto flex items-center justify-between px-8 py-3.5">
+        <header className="h-[77px] bg-[#0b1f3a] border-b border-[#133255] sticky top-0 z-40 text-white flex items-center">
+          <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
             <div className="flex items-center gap-3">
-              <Link href="/client/mandates" className="bg-gray-100 rounded-lg w-9 h-9 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              <Link href="/client/mandates" className="bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center hover:bg-white/20 transition-colors">
+                <ArrowLeft className="w-5 h-5 text-white/70" />
               </Link>
               <div>
-                <span className="text-[11px] font-semibold text-gray-400 tracking-wider uppercase">Position</span>
-                <h1 className="text-[18px] font-bold text-[#0b1f3a] leading-tight">{mandate.role}</h1>
+                <span className="text-[11px] font-semibold text-white/50 tracking-wider uppercase">Position</span>
+                <h1 className="text-[18px] font-bold text-white leading-tight">{mandate.role}</h1>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <button className="relative text-gray-400 hover:text-gray-600 transition-colors">
+              <button className="relative text-white/50 hover:text-white/80 transition-colors">
                 <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-white" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0b1f3a]" />
               </button>
             </div>
           </div>

@@ -34,11 +34,11 @@ export function ClientSidebar({ activeTab, clientName, onTabChange }: Props) {
   ];
 
   return (
-    <div className="w-[260px] min-w-[260px] h-screen bg-[#0b1f3a] flex flex-col overflow-y-auto overflow-x-hidden shrink-0 text-white">
+    <div className="w-[260px] min-w-[260px] h-screen bg-[#0b1f3a] flex flex-col overflow-y-auto overflow-x-hidden shrink-0 text-white border-r border-[#D8B15B]">
       {/* ─── Logo ─── */}
       <Link
         href="/client/mandates"
-        className="flex items-center gap-3 p-5 pb-4 border-b border-white/10 hover:bg-white/5 transition-colors"
+        className="flex items-center gap-3 p-5 pb-4 border-b border-[#D8B15B] hover:bg-white/5 transition-colors"
       >
         <div className="bg-[#D8B15B] text-[#133255] font-serif text-lg font-bold w-10 h-10 flex items-center justify-center rounded">
           MK

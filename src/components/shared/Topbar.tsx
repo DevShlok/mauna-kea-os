@@ -24,24 +24,24 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
   else if (pathname?.startsWith("/dashboard/admin/users")) { title = "Admin"; subtitle = "Users"; }
 
   return (
-    <div className="h-[56px] bg-white border-b border-[#D4E0F0] flex items-center px-6 gap-4 shrink-0 shadow-sm">
+    <div className="h-[77px] bg-[#0b1f3a] border-b border-[#133255] flex items-center px-6 gap-4 shrink-0 shadow-sm text-white">
       <div className="flex-1">
-        <span className="font-serif text-base font-bold text-[#111] block">{title}</span>
-        <span className="text-[12px] text-[#6b7a99] block">{subtitle}</span>
+        <span className="font-serif text-base font-bold text-white block">{title}</span>
+        <span className="text-[12px] text-white/60 block">{subtitle}</span>
       </div>
       
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b7a99]" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
         <input 
           type="text" 
           placeholder="Search..." 
-          className="w-[200px] h-[34px] border-[1.5px] border-[#D4E0F0] rounded-full pl-9 pr-3 text-[14px] outline-none transition-all focus:border-[#133255] focus:w-[240px] bg-[#f9fafc]"
+          className="w-[200px] h-[34px] border border-white/20 rounded-full pl-9 pr-3 text-[14px] text-white outline-none transition-all focus:border-white focus:w-[240px] bg-white/10 placeholder-white/50"
         />
       </div>
 
-      <button className="relative w-[34px] h-[34px] flex items-center justify-center rounded-full hover:bg-[#EBF2FB] text-[#6b7a99] transition-colors">
+      <button className="relative w-[34px] h-[34px] flex items-center justify-center rounded-full hover:bg-white/10 text-white/70 transition-colors">
         <Bell className="w-[18px] h-[18px]" />
-        <div className="absolute top-[5px] right-[5px] w-2 h-2 bg-[#C0392B] rounded-full border-2 border-white"></div>
+        <div className="absolute top-[5px] right-[5px] w-2 h-2 bg-[#C0392B] rounded-full border-2 border-[#0b1f3a]"></div>
       </button>
 
       {userRole === "admin" && (

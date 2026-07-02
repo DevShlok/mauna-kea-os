@@ -73,8 +73,8 @@ export function Sidebar({ userRole = "candidate" }: { userRole?: string; linkedC
   ];
 
   return (
-    <div className="w-[270px] min-w-[270px] h-screen bg-[#0b1f3a] flex flex-col overflow-y-auto overflow-x-hidden shrink-0 text-white">
-      <Link href="/dashboard" className="flex items-center gap-3 p-5 pb-4 border-b border-white/10 hover:bg-white/5 transition-colors">
+    <div className="w-[270px] min-w-[270px] h-screen bg-[#0b1f3a] flex flex-col overflow-y-auto overflow-x-hidden shrink-0 text-white border-r border-[#D8B15B]">
+      <Link href="/dashboard" className="flex items-center gap-3 p-5 pb-4 border-b border-[#D8B15B] hover:bg-white/5 transition-colors">
         <div className="bg-[#D8B15B] text-[#133255] font-serif text-lg font-bold w-10 h-10 flex items-center justify-center rounded">MK</div>
         <div>
           <span className="font-serif text-[16px] font-bold block leading-tight">Mauna Kea</span>
@@ -102,10 +102,12 @@ export function Sidebar({ userRole = "candidate" }: { userRole?: string; linkedC
             >
               <div 
                 className={`flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-all duration-200 ${
-                  isHighlighted ? "bg-white/10 text-white font-bold scale-[1.02]" : "text-white/70 hover:bg-white/5 hover:text-white"
+                  isHighlighted 
+                    ? "bg-white/12 text-white font-semibold border-l-[3px] border-[#D8B15B] scale-[1.02]" 
+                    : "text-white/70 hover:bg-white/5 hover:text-white border-l-[3px] border-transparent"
                 }`}
               >
-                <category.icon className="w-[19px] h-[19px] shrink-0" />
+                <category.icon className={`w-[19px] h-[19px] shrink-0 ${isHighlighted ? "text-[#D8B15B]" : ""}`} />
                 <span className="text-[15px] flex-1 tracking-wide">{category.title}</span>
                 <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? "rotate-90 text-white" : "text-white/30"}`} />
               </div>
@@ -121,8 +123,8 @@ export function Sidebar({ userRole = "candidate" }: { userRole?: string; linkedC
                       <Link
                         key={childIdx}
                         href={child.href}
-                        className={`flex items-center gap-2.5 pl-[48px] pr-5 py-2.5 text-[14px] transition-all duration-200
-                          ${isChildActive ? "text-white font-semibold" : "text-white/60 hover:text-white hover:bg-white/5"}
+                        className={`flex items-center gap-2.5 pr-5 py-2.5 text-[14px] transition-all duration-200
+                          ${isChildActive ? "text-[#D8B15B] font-semibold border-l-[3px] border-[#D8B15B] pl-[45px] bg-white/5" : "text-white/60 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent pl-[45px]"}
                         `}
                         style={{
                           transform: isExpanded ? "translateX(0)" : "translateX(-8px)",

@@ -25,7 +25,11 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
     domain: string;
   }[]>(rp._format1?.linkedin_timeline || []);
 
-  const [isScraping, setIsScraping] = useState(false);
+  useEffect(() => {
+    if (rp._format1?.linkedin_timeline) {
+      setExperienceList(rp._format1.linkedin_timeline);
+    }
+  }, [rp._format1?.linkedin_timeline]);
 
   type ReportBlock = {
     id: string;
@@ -294,47 +298,6 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
     }
   }, []);
 
-  const fetchLinkedIn = async () => {
-    if (!cand.linkedin) {
-      alert("No LinkedIn URL found for this candidate.");
-      return;
-    }
-    setIsScraping(true);
-    try {
-      const startRes = await fetch('/api/apify-linkedin', {
-        method: 'POST',
-        body: JSON.stringify({ url: cand.linkedin }),
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const data = await startRes.json();
-      setIsScraping(false);
-      
-      if (data.error) throw new Error(data.error);
-      
-      const exp = data.data?.experiences || data.data?.experience || [];
-      if (exp.length > 0) {
-        const parsedExp = exp.slice(0, 6).map((e: any) => ({
-          companyName: e.company || e.company_name || e.companyName || "Unknown",
-          position: e.title || e.position || "Unknown Role",
-          duration: e.starts_at ? `${e.starts_at} - ${e.ends_at || 'Present'}` : (e.dateRange || e.duration || ""),
-          startDate: "",
-          endDate: "",
-          domain: (e.company || "Unknown").toLowerCase().replace(/[^a-z0-9]/g, '') + '.com'
-        }));
-        setExperienceList(parsedExp);
-        setExperienceList(parsedExp);
-        if (onUpdateFormatData) {
-          onUpdateFormatData('_format1', { ...rp._format1, linkedin_timeline: parsedExp });
-        }
-      } else {
-        alert("No experience records found on this profile.");
-      }
-    } catch (e: any) {
-      setIsScraping(false);
-      alert(e.message);
-    }
-  };
-
   const PageStyle = `
     @page { size: A4; margin: 0mm; }
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -375,16 +338,6 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
                 </a>
               )}
             </div>
-            
-            {!isPrinting && (
-              <button 
-                onClick={fetchLinkedIn}
-                disabled={isScraping}
-                className="mt-3 bg-[#133255] hover:bg-[#133255] text-white text-[12px] font-bold py-1 px-3 rounded-full flex items-center justify-center shadow-sm"
-              >
-                {isScraping ? "Scraping..." : "Fetch LinkedIn"}
-              </button>
-            )}
             
             <h2 className={`text-[21px] font-bold mt-4 text-center ${headerColor}`} contentEditable suppressContentEditableWarning>
               {cand.name}

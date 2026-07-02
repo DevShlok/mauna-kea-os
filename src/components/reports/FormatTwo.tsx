@@ -3,36 +3,6 @@
 import React, { useState } from "react";
 
 export default function FormatTwo({ mandate, candidates, isPrinting, onUpdateFormatData }: { mandate: any, candidates: any[], isPrinting?: boolean, onUpdateFormatData?: (formatKey: string, data: any) => void }) {
-  const [apifyData, setApifyData] = useState<Record<string, any>>({});
-  const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
-
-  const fetchLinkedInExp = async (candId: string, url: string) => {
-    try {
-      setIsLoading(prev => ({ ...prev, [candId]: true }));
-      const res = await fetch("/api/apify-linkedin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url })
-      });
-      const data = await res.json();
-      if (data.data) {
-        setApifyData(prev => ({ ...prev, [candId]: data.data }));
-        
-        // Save to DB
-        if (onUpdateFormatData) {
-          const cand = candidates.find(c => c.id === candId);
-          const currentF1 = cand?.reportData?._format2 || {};
-          onUpdateFormatData('_format2', { ...currentF1, linkedinData: data.data });
-        }
-      } else {
-        alert(data.error || "Failed to fetch LinkedIn data");
-      }
-    } catch (err: any) {
-      alert("Error: " + err.message);
-    } finally {
-      setIsLoading(prev => ({ ...prev, [candId]: false }));
-    }
-  };
   return (
     <div className="flex flex-col gap-0 items-center bg-white min-h-screen">
       {candidates.map((cand, idx) => {
@@ -52,18 +22,7 @@ export default function FormatTwo({ mandate, candidates, isPrinting, onUpdateFor
             
             <div className="w-full h-full border-[10px] border-[#00174f] p-[20px] flex flex-col font-sans relative">
               
-              {/* Fetch LinkedIn Button (Hidden on Print) */}
-              {cand.linkedin && !apifyData[cand.id] && !isPrinting && (
-                <div className="absolute top-2 right-2 z-10">
-                  <button 
-                    onClick={() => fetchLinkedInExp(cand.id, cand.linkedin)}
-                    disabled={isLoading[cand.id]}
-                    className="bg-[#133255] text-white text-[14px] px-3 py-1.5 rounded hover:bg-[#133255] disabled:opacity-50"
-                  >
-                    {isLoading[cand.id] ? "Fetching Experience..." : "Fetch LinkedIn Exp"}
-                  </button>
-                </div>
-              )}
+              {/* Fetch LinkedIn Button logic has been moved to the Workbench Top Bar */}
 
               {/* Header / Name Bar */}
             <div className="flex h-[38px] rounded-lg overflow-hidden shadow-sm mb-4 shrink-0">
@@ -128,14 +87,13 @@ export default function FormatTwo({ mandate, candidates, isPrinting, onUpdateFor
               <SectionBlock title="ASSESSMENT NOTES" items={assessmentNotes} />
 
               {/* Injected Work Experience from Apify */}
-              {(f1.linkedinData?.experiences || (apifyData[cand.id] && apifyData[cand.id].experiences)) && (
-                <>
-                  <div className="w-full border-t border-dashed border-gray-300"></div>
+              {f1.linkedinData?.experiences && (
+                <div className="mb-4">
                   <SectionBlock 
                     title="WORK EXPERIENCE (LinkedIn)" 
-                    items={(f1.linkedinData?.experiences || apifyData[cand.id]?.experiences || []).map((e: any) => `${e.title || 'Role'} at ${e.company || 'Company'} (${e.starts_at ? e.starts_at + ' - ' + (e.ends_at || 'Present') : 'Dates'})`)} 
+                    items={(f1.linkedinData?.experiences || []).map((e: any) => `${e.title || 'Role'} at ${e.company || 'Company'} (${e.starts_at ? e.starts_at + ' - ' + (e.ends_at || 'Present') : 'Dates'})`)} 
                   />
-                </>
+                </div>
               )}
             </div>
 

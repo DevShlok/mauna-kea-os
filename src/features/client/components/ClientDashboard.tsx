@@ -217,10 +217,10 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
       <div className="min-h-screen bg-[#f4f6fb] flex">
         <ClientSidebar activeTab="insights" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
         <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
-          <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-            <div className="max-w-5xl mx-auto flex items-center justify-between px-8 py-3.5">
-              <h1 className="font-serif text-[20px] font-bold text-[#0b1f3a]">Insights</h1>
-              <button className="relative text-gray-400 hover:text-gray-600 transition-colors">
+          <header className="h-[77px] bg-[#0b1f3a] border-b border-[#133255] sticky top-0 z-40 text-white flex items-center">
+            <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
+              <h1 className="font-serif text-[20px] font-bold text-white">Insights</h1>
+              <button className="relative text-white/50 hover:text-white/80 transition-colors">
                 <Bell className="w-5 h-5" />
               </button>
             </div>
@@ -272,9 +272,9 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
       <div className="min-h-screen bg-[#f4f6fb] flex">
         <ClientSidebar activeTab="profile" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
         <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
-          <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-            <div className="max-w-5xl mx-auto flex items-center justify-between px-8 py-3.5">
-              <h1 className="font-serif text-[20px] font-bold text-[#0b1f3a]">Profile</h1>
+          <header className="h-[77px] bg-[#0b1f3a] border-b border-[#133255] sticky top-0 z-40 text-white flex items-center">
+            <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
+              <h1 className="font-serif text-[20px] font-bold text-white">Profile</h1>
               <div />
             </div>
           </header>
@@ -322,10 +322,10 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
       <div className="min-h-screen bg-[#f4f6fb] flex">
         <ClientSidebar activeTab="shortlist" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
         <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
-          <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-            <div className="max-w-5xl mx-auto flex items-center justify-between px-8 py-3.5">
-              <h1 className="font-serif text-[20px] font-bold text-[#0b1f3a]">Shortlisted Candidates</h1>
-              <button className="relative text-gray-400 hover:text-gray-600 transition-colors">
+          <header className="h-[77px] bg-[#0b1f3a] border-b border-[#133255] sticky top-0 z-40 text-white flex items-center">
+            <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
+              <h1 className="font-serif text-[20px] font-bold text-white">Shortlisted Candidates</h1>
+              <button className="relative text-white/50 hover:text-white/80 transition-colors">
                 <Bell className="w-5 h-5" />
               </button>
             </div>
@@ -376,13 +376,11 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
       <ClientSidebar activeTab="dashboard" clientName={clientName} onTabChange={(tab) => setActiveTab(tab as any)} />
       <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
         {/* ─── Top Bar ─── */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-          <div className="max-w-5xl mx-auto flex items-center justify-between px-8 py-3.5">
+        <header className="h-[77px] bg-[#0b1f3a] border-b border-[#133255] sticky top-0 z-40 text-white flex items-center">
+          <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
             <div>
-              <h1 className="text-[20px] font-bold text-[#0b1f3a] leading-tight">
-                Welcome back, <span className="text-[#0b1f3a]">{clientName}.</span>
-              </h1>
-              <p className="text-[13px] text-gray-500 mt-0.5">Leadership Hiring Dashboard</p>
+              <span className="text-[11px] font-semibold text-white/50 tracking-wider uppercase">Welcome back</span>
+              <h1 className="text-[18px] font-bold text-white leading-tight">{clientName}</h1>
             </div>
             <div className="flex items-center gap-4">
               <div className="relative group">
@@ -392,23 +390,21 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
                   placeholder="Search positions..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-4 py-2 text-[13px] rounded-lg bg-gray-50 border border-gray-200 text-[#0b1f3a] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 w-48 focus:w-64 transition-all duration-300"
+                  className="pl-9 pr-4 py-2 text-[13px] rounded-lg bg-white/10 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 w-48 focus:w-64 transition-all duration-300"
                 />
               </div>
               <select
                 value={filter}
                 onChange={e => setFilter(e.target.value as any)}
-                className="text-[13px] border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                className="text-[13px] border border-white/10 rounded-lg px-3 py-2 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
               >
-                <option value="all">All Positions</option>
-                <option value="open">Open Positions</option>
-                <option value="closed">Closed Positions</option>
+                <option value="all" className="text-gray-900">All Positions</option>
+                <option value="open" className="text-gray-900">Open Positions</option>
+                <option value="closed" className="text-gray-900">Closed Positions</option>
               </select>
-              <button
-                className="relative text-gray-400 hover:text-gray-600 transition-colors"
-              >
+              <button className="relative text-white/50 hover:text-white/80 transition-colors">
                 <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-white" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0b1f3a]" />
               </button>
             </div>
           </div>

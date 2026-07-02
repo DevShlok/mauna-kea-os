@@ -251,8 +251,8 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
       {/* ─── Non-Report Content (Hidden on Print) ─── */}
       <div className="print:hidden">
         {/* ─── Top Header ─── */}
-      <header className="bg-[#0b1f3a] text-white sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto flex items-center justify-between px-5 py-3.5">
+      <header className="h-[77px] bg-[#0b1f3a] text-white sticky top-0 z-50 flex items-center border-b border-[#133255]">
+        <div className="max-w-4xl mx-auto w-full flex items-center justify-between px-5">
           <div className="flex items-center gap-2.5">
             <button onClick={() => router.back()} className="bg-white/15 rounded-lg w-9 h-9 flex items-center justify-center hover:bg-white/25 transition-colors">
               <ArrowLeft className="w-5 h-5" />
@@ -603,7 +603,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
           </div>
           
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto print:border-none print:shadow-none print:m-0 print:p-0">
-            <div className="min-w-[794px] print:min-w-0 flex flex-col items-center py-10 print:py-0">
+            <div className="min-w-[794px] print:min-w-0 flex flex-col items-center py-10 print:py-0 [&_.print\:hidden]:!hidden">
               <div dangerouslySetInnerHTML={{ __html: reportData.final_accepted_html }} />
             </div>
           </div>

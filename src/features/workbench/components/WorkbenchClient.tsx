@@ -281,6 +281,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
   const [isUploadingNotes, setIsUploadingNotes] = useState(false);
   const [isUploadingSupRef, setIsUploadingSupRef] = useState(false);
   const [isUploadingPeerRef, setIsUploadingPeerRef] = useState(false);
+  const [isScrapingLinkedin, setIsScrapingLinkedin] = useState(false);
 
   const [deleteConfirmation, setDeleteConfirmation] = useState<{fileId: number, fileName: string} | null>(null);
 
@@ -1055,6 +1056,53 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                         <div className="flex justify-between items-center mb-6">
                           <h3 className="text-xl font-bold text-[#133255] font-serif">Final Generated Report</h3>
                           <div className="flex items-center gap-3">
+                            {selectedCandidate?.linkedin && (
+                              <button 
+                                onClick={async () => {
+                                  setIsScrapingLinkedin(true);
+                                  try {
+                                    const res = await fetch("/api/apify-linkedin", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ url: selectedCandidate.linkedin })
+                                    });
+                                    const data = await res.json();
+                                    if (data.error) throw new Error(data.error);
+                                    
+                                    let newFormatData = {};
+                                    if (selectedFormat === 'format1') {
+                                      const exp = data.data?.experiences || data.data?.experience || [];
+                                      if (exp.length > 0) {
+                                        const parsedExp = exp.slice(0, 6).map((e: any) => ({
+                                          companyName: e.company || e.company_name || e.companyName || "Unknown",
+                                          position: e.title || e.position || "Unknown Role",
+                                          duration: e.starts_at ? `${e.starts_at} - ${e.ends_at || 'Present'}` : (e.dateRange || e.duration || ""),
+                                          startDate: "",
+                                          endDate: "",
+                                          domain: (e.company || "Unknown").toLowerCase().replace(/[^a-z0-9]/g, '') + '.com'
+                                        }));
+                                        newFormatData = { ...reportData._format1, linkedin_timeline: parsedExp };
+                                      }
+                                    } else {
+                                      newFormatData = { ...reportData._format2, linkedinData: data.data };
+                                    }
+                                    
+                                    const formatKey = selectedFormat === 'format1' ? '_format1' : '_format2';
+                                    const updatedReport = { ...reportData, [formatKey]: newFormatData };
+                                    setReportData(updatedReport);
+                                    if (reportId) await saveReportDraftAction(reportId, updatedReport);
+                                  } catch (err: any) {
+                                    alert("Error fetching LinkedIn: " + err.message);
+                                  } finally {
+                                    setIsScrapingLinkedin(false);
+                                  }
+                                }} 
+                                disabled={isScrapingLinkedin}
+                                className="px-5 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-100 shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50"
+                              >
+                                {isScrapingLinkedin ? "Scraping..." : "Fetch LinkedIn"}
+                              </button>
+                            )}
                             <button onClick={() => triggerPrint('report')} className="px-5 py-2 bg-yellow-500 text-[#133255] rounded-lg text-sm font-bold hover:bg-yellow-400 shadow-sm transition-colors">
                               Download Report as PDF
                             </button>
