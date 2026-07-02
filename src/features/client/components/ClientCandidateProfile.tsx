@@ -28,6 +28,7 @@ import {
   Download,
 } from "lucide-react";
 import { updateMandateCandidateStageAction } from "@/app/actions";
+import { ClientSidebar } from "./ClientSidebar";
 
 // ─── Score Ring Component ────────────────────────────────
 function CircularScore({ score, label }: { score: number; label: string }) {
@@ -98,9 +99,10 @@ type Props = {
   reportData: any;
   framework: any;
   mandate?: any;
+  clientName?: string;
 };
 
-export default function ClientCandidateProfile({ candidate, mandateCandidate, mandateId, reportData = {}, framework, mandate }: Props) {
+export default function ClientCandidateProfile({ candidate, mandateCandidate, mandateId, reportData = {}, framework, mandate, clientName }: Props) {
   const router = useRouter();
   const [currentStage, setCurrentStage] = useState(mandateCandidate?.stage || "universe");
   const [isUpdating, setIsUpdating] = useState(false);
@@ -241,12 +243,16 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f6fb] flex flex-col pb-36">
+    <div className="h-screen overflow-hidden bg-[#f4f6fb] flex">
+      <div className="print:hidden h-full shrink-0 z-50">
+        <ClientSidebar activeTab="dashboard" clientName={clientName || "Client"} />
+      </div>
+      <div className="flex-1 flex flex-col h-full overflow-y-auto relative bg-[#f4f6fb]">
       {/* ─── Non-Report Content (Hidden on Print) ─── */}
       <div className="print:hidden">
         {/* ─── Top Header ─── */}
       <header className="bg-[#0b1f3a] text-white sticky top-0 z-50">
-        <div className="max-w-3xl mx-auto flex items-center justify-between px-5 py-3.5">
+        <div className="max-w-4xl mx-auto flex items-center justify-between px-5 py-3.5">
           <div className="flex items-center gap-2.5">
             <button onClick={() => router.back()} className="bg-white/15 rounded-lg w-9 h-9 flex items-center justify-center hover:bg-white/25 transition-colors">
               <ArrowLeft className="w-5 h-5" />
@@ -265,7 +271,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
       </header>
 
       {/* ─── Candidate Overview Card ─── */}
-      <div className="max-w-3xl mx-auto w-full px-5 mt-6">
+      <div className="max-w-4xl mx-auto w-full px-5 mt-6">
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-5">
           {/* Avatar */}
           <div className="w-24 h-24 rounded-2xl bg-indigo-50 border border-gray-100 flex items-center justify-center text-3xl font-bold text-[#0b1f3a] overflow-hidden shrink-0 shadow-inner">
@@ -605,8 +611,8 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
       )}
 
       {/* ─── Sticky Bottom Action Bar ─── */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#f4f6fb] border-t border-gray-100 py-3.5 px-5 print:hidden">
-        <div className="max-w-3xl mx-auto flex gap-3">
+      <div className="sticky bottom-0 w-full z-40 bg-[#f4f6fb]/90 backdrop-blur-sm border-t border-gray-200 py-4 px-5 print:hidden mt-10">
+        <div className="max-w-4xl mx-auto flex gap-3">
           <button
             onClick={() => handleStageChange("interviewed")}
             disabled={isUpdating}
@@ -646,6 +652,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
             Not Selected
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

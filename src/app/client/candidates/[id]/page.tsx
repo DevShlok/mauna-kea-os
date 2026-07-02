@@ -123,6 +123,12 @@ export default async function ClientCandidateDetailPage({
     }
   }
 
+  // Explicitly pass the final accepted HTML report if it exists
+  if (rawReportData.final_accepted_html) {
+    reportData.final_accepted_html = rawReportData.final_accepted_html;
+    reportData.final_accepted_format = rawReportData.final_accepted_format;
+  }
+
   const { getFrameworkById } = await import("@/db/queries");
   const framework = mandate.frameworkId ? await getFrameworkById(mandate.frameworkId) : null;
 
@@ -134,6 +140,7 @@ export default async function ClientCandidateDetailPage({
       reportData={reportData}
       framework={framework}
       mandate={mandate}
+      clientName={client.name}
     />
   );
 }
