@@ -25,6 +25,7 @@ import {
   AlertTriangle,
   Star,
   X,
+  Download,
 } from "lucide-react";
 import { updateMandateCandidateStageAction } from "@/app/actions";
 
@@ -241,7 +242,9 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
 
   return (
     <div className="min-h-screen bg-[#f4f6fb] flex flex-col pb-36">
-      {/* ─── Top Header ─── */}
+      {/* ─── Non-Report Content (Hidden on Print) ─── */}
+      <div className="print:hidden">
+        {/* ─── Top Header ─── */}
       <header className="bg-[#0b1f3a] text-white sticky top-0 z-50">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-5 py-3.5">
           <div className="flex items-center gap-2.5">
@@ -577,9 +580,32 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
           />
         </div>
       </div>
+      </div> {/* Closes print:hidden container */}
+
+      {/* ─── Executive Presentation Report ─── */}
+      {reportData?.final_accepted_html && (
+        <div className="max-w-4xl mx-auto w-full px-5 mt-10">
+          <div className="flex items-center justify-between mb-4 print:hidden">
+            <h2 className="text-[18px] font-bold text-[#0b1f3a]">Executive Presentation</h2>
+            <button 
+              onClick={() => window.print()}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Download PDF
+            </button>
+          </div>
+          
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto print:border-none print:shadow-none print:m-0 print:p-0">
+            <div className="min-w-[794px] print:min-w-0 flex flex-col items-center py-10 print:py-0">
+              <div dangerouslySetInnerHTML={{ __html: reportData.final_accepted_html }} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── Sticky Bottom Action Bar ─── */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#f4f6fb] border-t border-gray-100 py-3.5 px-5">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#f4f6fb] border-t border-gray-100 py-3.5 px-5 print:hidden">
         <div className="max-w-3xl mx-auto flex gap-3">
           <button
             onClick={() => handleStageChange("interviewed")}
