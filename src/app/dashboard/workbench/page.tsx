@@ -12,16 +12,16 @@ export default async function WorkbenchPage({ searchParams  }: { searchParams: P
   const { candId, flCandId } = resolvedParams;
   
   let initialCandidate = null;
+
   if (candId) {
     initialCandidate = await getMandateCandidateByExtId(candId);
   } else if (flCandId) {
     initialCandidate = await getCandidateById(flCandId);
   }
 
-  let [frameworksList, candidates, mandateCandidates, mandatesList] = await Promise.all([
+  let [frameworksList, candidates, mandatesList] = await Promise.all([
     getFrameworks(),
     getCandidates(),
-    getAllMandateCandidates(),
     getMandates()
   ]);
   
@@ -34,20 +34,16 @@ export default async function WorkbenchPage({ searchParams  }: { searchParams: P
       const [client] = await db.select().from(clients).where(eq(clients.id, pUser.linkedClientId));
       if (client) {
         mandatesList = mandatesList.filter(m => m.company === client.name);
-        const allowedMandateIds = mandatesList.map(m => m.id);
-        mandateCandidates = mandateCandidates.filter(mc => allowedMandateIds.includes(mc.mandateId));
         // Client shouldn't see candidates from the general float list (unless submitted to their mandates)
         // so we filter out all `candidates` (master DB) to force them to select from `mandateCandidates`
         candidates = [];
       } else {
         mandatesList = [];
-        mandateCandidates = [];
         candidates = [];
       }
     } else if (pUser?.role === "candidate" && pUser.linkedCandidateId) {
       readOnly = true;
       mandatesList = [];
-      mandateCandidates = [];
       candidates = candidates.filter(c => c.id.toString() === pUser.linkedCandidateId);
     }
   }
@@ -57,7 +53,6 @@ export default async function WorkbenchPage({ searchParams  }: { searchParams: P
       initialCandidate={initialCandidate} 
       frameworks={frameworksList}
       candidates={candidates}
-      mandateCandidates={mandateCandidates}
       mandates={mandatesList}
       readOnly={readOnly}
     />

@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Bell, Search, ArrowLeft, Share2, MoreVertical, Filter } from "lucide-react";
-import Link from "next/link";
+
 import { useClientPortal } from "../context/ClientPortalContext";
 
 const FILTER_STAGES = [
@@ -15,7 +15,7 @@ const FILTER_STAGES = [
   { key: "hired", label: "Hired" },
 ];
 
-export function ClientTopbar({ clientName }: { clientName: string }) {
+export function ClientTopbar() {
   const router = useRouter();
   const { topbarConfig } = useClientPortal();
   const [filterOpen, setFilterOpen] = useState(false);

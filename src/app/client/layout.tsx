@@ -23,7 +23,7 @@ export default async function ClientLayout({
         </div>
         <div className="flex-1 flex flex-col h-full overflow-hidden relative">
           <div className="print:hidden">
-            <ClientTopbar clientName={clientName} />
+            <ClientTopbar />
           </div>
           {children}
         </div>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Share2,
-  MoreVertical,
+
   MapPin,
   Briefcase,
   Building2,
@@ -15,20 +15,15 @@ import {
   ChevronDown,
   ChevronUp,
   Award,
-  Users,
-  Percent,
+
   Sliders,
   CheckCircle,
-  HelpCircle,
-  FileText,
   DollarSign,
-  AlertTriangle,
-  Star,
   X,
   Download,
 } from "lucide-react";
 import { updateMandateCandidateStageAction } from "@/app/actions";
-import ReactMarkdown from "react-markdown";
+
 import { useClientPortal } from "../context/ClientPortalContext";
 
 // ─── Score Ring Component ────────────────────────────────
@@ -100,14 +95,11 @@ type Props = {
   reportData: any;
   framework: any;
   mandate?: any;
-  clientName?: string;
 };
 
-export default function ClientCandidateProfile({ candidate, mandateCandidate, mandateId, reportData = {}, framework, mandate, clientName }: Props) {
-  const router = useRouter();
+export default function ClientCandidateProfile({ candidate, mandateCandidate, mandateId, reportData = {}, framework, mandate }: Props) {
   const [currentStage, setCurrentStage] = useState(mandateCandidate?.stage || "universe");
   const [isUpdating, setIsUpdating] = useState(false);
-  const [summaryExpanded, setSummaryExpanded] = useState(false);
   const { setTopbarConfig } = useClientPortal();
 
   useEffect(() => {

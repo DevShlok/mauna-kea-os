@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
-export type TopbarConfig = {
+type TopbarConfig = {
   title?: string;
   subtitle?: string;
   showSearch?: boolean;

@@ -140,7 +140,6 @@ export default async function ClientCandidateDetailPage({
       reportData={reportData}
       framework={framework}
       mandate={mandate}
-      clientName={client.name}
     />
   );
 }

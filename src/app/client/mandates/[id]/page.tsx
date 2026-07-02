@@ -69,5 +69,5 @@ export default async function ClientMandateDetailPage({ params }: { params: Prom
 
   const enrichedMandate = { ...mandate, candidates: enrichedCandidates };
 
-  return <ClientMandateDetail mandate={enrichedMandate} clientName={clientName} />;
+  return <ClientMandateDetail mandate={enrichedMandate} />;
 }

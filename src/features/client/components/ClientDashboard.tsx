@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
-import Link from "next/link";
+
 import {
   Briefcase,
   Users,
@@ -14,9 +14,7 @@ import {
   ChevronRight,
   Search,
   Star,
-  User,
   LogOut,
-  X,
 } from "lucide-react";
 import { useClientPortal } from "../context/ClientPortalContext";
 
@@ -167,7 +165,7 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
   const [filter, setFilter] = useState<"all" | "open" | "closed">("all");
   const [showAllOpen, setShowAllOpen] = useState(false);
   const [showAllClosed, setShowAllClosed] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"dashboard" | "search" | "shortlist" | "insights" | "profile">(tabParam || initialTab);
   const { setTopbarConfig } = useClientPortal();

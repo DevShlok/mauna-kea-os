@@ -2,17 +2,14 @@
 
 import { useState, useMemo, useEffect } from "react";
 import {
-  ArrowLeft,
   Users,
-  Bell,
   Filter,
   CheckSquare,
   Square,
   ChevronRight,
   Building2,
-  Briefcase,
 } from "lucide-react";
-import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import { useClientPortal } from "../context/ClientPortalContext";
 
@@ -41,9 +38,10 @@ type MandateDetail = {
   createdAt: Date | null;
 };
 
+
+
 type Props = {
   mandate: MandateDetail;
-  clientName: string;
 };
 
 // ─── Circular Score Ring ─────────────────────────────────
@@ -114,7 +112,7 @@ const FILTER_STAGES = [
 ] as const;
 
 // ─── Component ───────────────────────────────────────────
-export default function ClientMandateDetail({ mandate, clientName }: Props) {
+export default function ClientMandateDetail({ mandate }: Props) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [filterOpen, setFilterOpen] = useState(false);

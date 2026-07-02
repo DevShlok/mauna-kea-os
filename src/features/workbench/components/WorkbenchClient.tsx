@@ -12,12 +12,11 @@ interface WorkbenchClientProps {
   initialCandidate: any;
   frameworks: any[];
   candidates: any[];
-  mandateCandidates: any[];
   mandates: any[];
   readOnly?: boolean;
 }
 
-export default function WorkbenchClient({ initialCandidate, frameworks, candidates, mandateCandidates, mandates, readOnly = false }: WorkbenchClientProps) {
+export default function WorkbenchClient({ initialCandidate, frameworks, candidates, mandates, readOnly = false }: WorkbenchClientProps) {
   const router = useRouter();
   
   const allCandidates = useMemo(() => {
@@ -116,7 +115,6 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
   const [isLoadingReport, setIsLoadingReport] = useState(false);
 
   // Toggle between Assessment Draft and Final Reports
-  const [activeView, setActiveView] = useState<"draft" | "format1" | "format2">("draft");
   const [selectedFormat, setSelectedFormat] = useState<"format1" | "format2">("format1");
   const [printTarget, setPrintTarget] = useState<"draft" | "report" | null>(null);
 
@@ -365,8 +363,8 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       
       // Check scores
       if (reportData.scores) {
-        for (const [category, criteria] of Object.entries(reportData.scores as Record<string, any>)) {
-          for (const [criterion, score] of Object.entries(criteria)) {
+        for (const criteria of Object.values(reportData.scores as Record<string, any>)) {
+          for (const [criterion, score] of Object.entries(criteria as any)) {
              if (score === undefined || score === null) {
                emptyFields.push(`${criterion} (Score)`);
              }
@@ -429,7 +427,6 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       alert("Error generating final report format.");
     } finally {
       setIsGeneratingFormat(false);
-      setActiveView(format);
     }
   };
 
@@ -498,7 +495,6 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
   useEffect(() => {
     if (!selectedFramework) return;
     let totalCatScores = 0;
-    let numCats = 0;
     let actualWeightSum = 0;
 
     selectedFramework.categories.forEach((cat: any) => {
@@ -518,7 +514,6 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
         const cw = Number(cat.weight) || (100 / selectedFramework.categories.length);
         totalCatScores += (categoryScore * cw);
         actualWeightSum += cw;
-        numCats++;
       }
     });
     
@@ -626,14 +621,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     setIsGenerating(true);
     setReportData(null);
 
-    let manualScoresText = "MANUAL SCORES ASSIGNED:\\n";
-    if (selectedFramework) {
-      selectedFramework.categories.forEach((cat: any) => {
-        cat.criteria.forEach((cr: any) => {
-          manualScoresText += `- ${cr.name}: ${scores[cr.id] !== undefined ? scores[cr.id] : 7}/10\n`;
-        });
-      });
-    }
+
 
     // Combine notes to send to AI
     const combinedTranscript = `

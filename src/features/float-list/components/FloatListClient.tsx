@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -132,7 +132,14 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
                     ) : <span className="text-gray-300">-</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={(e) => { e.stopPropagation(); c.isFloatOnly ? router.push("/dashboard/candidates/" + c.externalId) : router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId); }}>View</button>
+                    <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={(e) => { 
+                      e.stopPropagation(); 
+                      if (c.isFloatOnly) {
+                        router.push("/dashboard/candidates/" + c.externalId);
+                      } else {
+                        router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId);
+                      }
+                    }}>View</button>
                   </td>
                 </tr>
               ))}
