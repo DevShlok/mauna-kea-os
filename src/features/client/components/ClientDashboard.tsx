@@ -307,7 +307,7 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
               </div>
             </div>
             <button
-              onClick={() => signOut({ redirectUrl: "/sign-in" })}
+              onClick={() => router.push("/")}
               className="mt-6 max-w-lg mx-auto w-full flex items-center justify-center gap-2 bg-white rounded-xl p-4 border border-red-100 text-red-600 font-medium text-[14px] hover:bg-red-50 transition-colors"
             >
               <LogOut className="w-4 h-4" />
