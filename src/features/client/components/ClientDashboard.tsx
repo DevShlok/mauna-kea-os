@@ -161,7 +161,6 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab") as any;
-  const { signOut } = useClerk();
   const [filter, setFilter] = useState<"all" | "open" | "closed">("all");
   const [showAllOpen, setShowAllOpen] = useState(false);
   const [showAllClosed, setShowAllClosed] = useState(false);

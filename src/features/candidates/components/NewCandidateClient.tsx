@@ -18,6 +18,7 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
     ctc: initialData?.ctc || "", 
     fixedCtc: initialData?.fixedCtc || "",
     variableCtc: initialData?.variableCtc || "",
+    esops: initialData?.esops || "",
     expected: initialData?.expected || "", 
     tenure: initialData?.tenure || "", 
     notice: initialData?.notice !== null && initialData?.notice !== undefined ? String(initialData?.notice) : "90", 
@@ -35,6 +36,11 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
       return q;
     });
   });
+  
+  const [esopVesting, setEsopVesting] = useState<{ years: number; distribution: number[] }>(
+    initialData?.esopVesting || { years: 0, distribution: [] }
+  );
+
   const [newQual, setNewQual] = useState({ degree: "", institute: "", year: "" });
   const [expTags, setExpTags] = useState<string[]>(initialData?.expTags || []);
   const [dreamRoles, setDreamRoles] = useState<string[]>(initialData?.dreamRoles || []);
@@ -174,6 +180,14 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
       alert("Please fill out at least one of the Primary Details (Name, LinkedIn URL, Target Company, or LinkedIn PDF)");
       return;
     }
+
+    if (esopVesting.years > 0 && esopVesting.distribution.length > 0) {
+      const sum = esopVesting.distribution.reduce((acc, val) => acc + (val || 0), 0);
+      if (sum !== 100) {
+        alert("The ESOP vesting distribution must add up to exactly 100%. Currently it is " + sum + "%");
+        return;
+      }
+    }
     
     setIsSaving(true);
     try {
@@ -189,6 +203,8 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
         ctc: form.ctc ? Number(form.ctc) : null,
         fixedCtc: form.fixedCtc ? Number(form.fixedCtc) : null,
         variableCtc: form.variableCtc ? Number(form.variableCtc) : null,
+        esops: form.esops ? Number(form.esops) : null,
+        esopVesting: esopVesting.years > 0 ? esopVesting : null,
         expected: form.expected ? Number(form.expected) : null,
         notice: form.notice ? Number(form.notice) : null,
         status: form.status,
@@ -397,6 +413,10 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
                 <input type="number" value={form.expected} onChange={e=>setForm({...form, expected:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
               </div>
               <div>
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">ESOPs (in Lacs)</label>
+                <input type="number" value={form.esops} onChange={e=>setForm({...form, esops:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
+              </div>
+              <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Notice Period (days)</label>
                 <input type="number" value={form.notice} onChange={e=>setForm({...form, notice:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" min="0" max="365" />
               </div>
@@ -411,6 +431,56 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
                 </div>
               )}
             </div>
+
+            {/* ESOP Vesting Schedule */}
+            {Number(form.esops) > 0 && (
+              <div className="mb-6 bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-3">
+                  <label className="text-[14px] font-bold tracking-wide uppercase text-[#111]">ESOP Vesting Schedule</label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] text-[#6b7a99] font-semibold">Vesting Years:</span>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      max="10" 
+                      className="w-16 h-8 border border-[#D4E0F0] rounded text-center outline-none focus:border-[#133255]" 
+                      value={esopVesting.years || ""} 
+                      onChange={e => {
+                        const years = Number(e.target.value);
+                        setEsopVesting({ years, distribution: new Array(years).fill(0) });
+                      }}
+                    />
+                  </div>
+                </div>
+                {esopVesting.years > 0 && (
+                  <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(esopVesting.years, 6)}, 1fr)` }}>
+                    {Array.from({ length: esopVesting.years }).map((_, idx) => (
+                      <div key={idx}>
+                        <div className="text-[12px] font-semibold text-[#6b7a99] mb-1">Year {idx + 1} (%)</div>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          max="100" 
+                          className="w-full h-[36px] border border-[#D4E0F0] rounded px-2 outline-none focus:border-[#133255]" 
+                          value={esopVesting.distribution[idx] === 0 ? "" : esopVesting.distribution[idx]}
+                          onChange={e => {
+                            const val = Number(e.target.value);
+                            const newDist = [...esopVesting.distribution];
+                            newDist[idx] = val;
+                            setEsopVesting({ ...esopVesting, distribution: newDist });
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {esopVesting.years > 0 && (
+                  <div className={`mt-2 text-[12px] font-bold text-right ${esopVesting.distribution.reduce((a,b) => a+(b||0), 0) === 100 ? 'text-green-600' : 'text-red-500'}`}>
+                    Total: {esopVesting.distribution.reduce((a,b) => a+(b||0), 0)}% (Must equal 100%)
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Qualifications */}
             <div className="border-t border-[#f0f0f0] pt-5 mb-3">

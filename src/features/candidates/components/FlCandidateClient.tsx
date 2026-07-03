@@ -341,6 +341,40 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
             <div className="text-[14px]"><span className="font-bold text-[#6b7a99]">LinkedIn:</span> {candidate.linkedin ? <a href={candidate.linkedin} target="_blank" className="text-[#133255] underline">View Profile</a> : 'Not provided'}</div>
           </div>
 
+          {(() => {
+            let firstYearEsops = 0;
+            if (candidate?.esops > 0 && candidate?.esopVesting && candidate?.esopVesting.years > 0 && candidate?.esopVesting.distribution?.[0]) {
+              firstYearEsops = (candidate.esops * candidate.esopVesting.distribution[0]) / 100;
+            }
+            const totalCtcWithEsops = (candidate?.ctc || 0) + firstYearEsops;
+
+            return (
+              <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-lg mb-4">
+                <div className="text-[13px] font-bold tracking-wide uppercase text-[#111] mb-3">Compensation Details</div>
+                <div className="grid grid-cols-3 gap-y-3 text-[14px]">
+                  <div><span className="font-bold text-[#6b7a99]">Current CTC:</span> {candidate.ctc ? `${candidate.currency} ${totalCtcWithEsops}L` : '-'}</div>
+                  <div><span className="font-bold text-[#6b7a99]">Fixed:</span> {candidate.fixedCtc ? `${candidate.currency} ${candidate.fixedCtc}L` : '-'}</div>
+                  <div><span className="font-bold text-[#6b7a99]">Variable:</span> {candidate.variableCtc ? `${candidate.currency} ${candidate.variableCtc}L` : '-'}</div>
+                  <div><span className="font-bold text-[#6b7a99]">Expected CTC:</span> {candidate.expected ? `${candidate.currency} ${candidate.expected}L` : '-'}</div>
+                  <div><span className="font-bold text-[#6b7a99]">ESOPs:</span> {candidate.esops ? `${candidate.esops} Lacs` : '-'}</div>
+                </div>
+                {candidate.esops > 0 && candidate.esopVesting && candidate.esopVesting.years > 0 && (
+                  <div className="mt-3 pt-3 border-t border-[#e2e8f0]">
+                    <div className="text-[12px] font-bold uppercase text-[#6b7a99] mb-2">ESOP Vesting Schedule ({candidate.esopVesting.years} Years)</div>
+                    <div className="flex flex-wrap gap-4">
+                      {candidate.esopVesting.distribution.map((pct: number, idx: number) => (
+                        <div key={idx} className="bg-white border border-[#D4E0F0] px-3 py-1.5 rounded flex flex-col items-center min-w-[70px]">
+                          <span className="text-[11px] font-semibold text-[#6b7a99]">Year {idx + 1}</span>
+                          <span className="text-[14px] font-bold text-[#111]">{pct}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {candidate.notes && (
             <div className="mb-4 p-3 bg-[#fff9ed] border border-[#f5e1b5] rounded-md text-[14px] text-[#444]">
               <span className="font-bold text-[#b38a36] block mb-1">Additional Notes</span>

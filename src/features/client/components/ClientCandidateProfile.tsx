@@ -63,8 +63,11 @@ function CircularScore({ score, label }: { score: number; label: string }) {
 // ─── Rupee Formatting Helper ─────────────────────────────
 function formatLakhsToRupees(lakhs: number | null): string {
   if (lakhs == null || lakhs === 0) return "—";
-  const val = lakhs * 100000;
-  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
+  if (lakhs >= 100) {
+    const cr = lakhs / 100;
+    return `₹${Number.isInteger(cr) ? cr : cr.toFixed(2)} Cr`;
+  }
+  return `₹${lakhs} Lacs`;
 }
 
 // ─── Mandate CTC Budget Parser ───────────────────────────
@@ -145,6 +148,13 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
   const yearsExp = candidate?.exp ? `${candidate.exp}+ Years Experience` : null;
   const profilePic = candidate?.profilePic || null;
 
+  // Calculate 1st Year ESOPs and Total CTC (including 1st year ESOPs)
+  let firstYearEsops = 0;
+  if (candidate?.esops > 0 && candidate?.esopVesting && candidate?.esopVesting.years > 0 && candidate?.esopVesting.distribution?.[0]) {
+    firstYearEsops = (candidate.esops * candidate.esopVesting.distribution[0]) / 100;
+  }
+  const totalCtcWithEsops = (candidate?.ctc || 0) + firstYearEsops;
+
   // Stats / Match Scores
   const matchScore = mandateCandidate?.score ? Math.round(mandateCandidate.score * 10) : (reportData?.matchScore || null);
   const readinessScore = reportData?.readinessScore || null;
@@ -161,7 +171,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
     } : null,
     candidate?.ctc ? {
       label: "Compensation Band",
-      value: `${formatLakhsToRupees(candidate.ctc)} / Annum`,
+      value: `${formatLakhsToRupees(totalCtcWithEsops)} / Annum`,
       icon: DollarSign,
     } : null,
     location !== "N/A" ? { label: "Geography", value: location, icon: MapPin } : null,
@@ -492,93 +502,129 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
           </div>
         </div>
 
-        {/* ─── Compensation Details ─── */}
+        {/* ─── Compensation Details (merged) ─── */}
         {hasComp && (
-          <div className="grid grid-cols-2 gap-5 mt-6">
-            {/* Candidate CTC Framework */}
-            <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-              <h3 className="text-[15px] font-bold text-[#0b1f3a] mb-4">Candidate CTC Framework</h3>
-              <div className="grid grid-cols-2 gap-5">
-                <div>
-                  <span className="text-[13px] font-bold text-[#0b1f3a] block border-b border-gray-100 pb-2">Year 1</span>
-                  <div className="space-y-2 mt-3 text-[12px]">
-                    <div className="flex justify-between text-gray-500"><span>Fixed (Base)</span> <span className="font-semibold text-[#0b1f3a]">{formatLakhsToRupees(candidate.fixedCtc)}</span></div>
-                    <div className="flex justify-between text-gray-500"><span>Variable (Target)</span> <span className="font-semibold text-[#0b1f3a]">{formatLakhsToRupees(candidate.variableCtc)}</span></div>
-                    <div className="flex justify-between pt-2 border-t border-dashed border-gray-100 font-bold text-indigo-600"><span>Total Year 1 CTC</span> <span>{formatLakhsToRupees(candidate.ctc)}</span></div>
-                  </div>
+          <div className="mt-6">
+            <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+              <h3 className="text-[15px] font-bold text-[#0b1f3a] mb-5">Compensation Overview</h3>
+
+              {/* Top row: CTC stat tiles */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pb-5 border-b border-gray-100">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Fixed (Base)</div>
+                  <div className="text-[15px] font-bold text-[#0b1f3a]">{formatLakhsToRupees(candidate.fixedCtc)}</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Variable</div>
+                  <div className="text-[15px] font-bold text-[#0b1f3a]">{formatLakhsToRupees(candidate.variableCtc)}</div>
+                </div>
+                <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1.5">Total CTC</div>
+                  <div className="text-[15px] font-bold text-indigo-600">{formatLakhsToRupees(totalCtcWithEsops)}</div>
                 </div>
                 {candidate.expected && (
-                  <div>
-                    <span className="text-[13px] font-bold text-[#0b1f3a] block border-b border-gray-100 pb-2">Expected Compensation</span>
-                    <div className="space-y-2 mt-3 text-[12px]">
-                      <div className="flex justify-between text-gray-500"><span>Target Fixed/Total</span> <span className="font-semibold text-[#0b1f3a]">{formatLakhsToRupees(candidate.expected)}</span></div>
-                    </div>
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Expected</div>
+                    <div className="text-[15px] font-bold text-[#0b1f3a]">{formatLakhsToRupees(candidate.expected)}</div>
+                  </div>
+                )}
+                {candidate.esops > 0 && (
+                  <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-amber-500 mb-1.5">ESOPs Total</div>
+                    <div className="text-[15px] font-bold text-amber-700">{formatLakhsToRupees(candidate.esops)}</div>
                   </div>
                 )}
               </div>
+
+              {/* ESOP Vesting Schedule */}
+              {candidate.esops > 0 && candidate.esopVesting && candidate.esopVesting.years > 0 && (
+                <div className="py-4 border-b border-gray-100">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-3">
+                    ESOP Vesting Schedule ({candidate.esopVesting.years} Years)
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {candidate.esopVesting.distribution.map((pct: number, idx: number) => {
+                      const amountInLakhs = (candidate.esops * pct) / 100;
+                      return (
+                        <div key={idx} className="bg-amber-50 border border-amber-100 px-3 py-2 rounded-lg flex flex-col items-center min-w-[72px]">
+                          <span className="text-[9px] font-semibold text-amber-400 uppercase">Year {idx + 1}</span>
+                          <span className="text-[13px] font-bold text-amber-700 mt-0.5">{formatLakhsToRupees(amountInLakhs)}</span>
+                          <span className="text-[9px] text-amber-400">{pct}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Benchmarking bars */}
+              {candidate.ctc && (
+                <div className="pt-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[12px] font-bold text-[#0b1f3a]">Market Benchmarking</span>
+                    <div className="flex items-center gap-4 text-[10px] text-gray-400">
+                      <span className="flex items-center gap-1.5"><span className="w-8 h-1 bg-gradient-to-r from-gray-200 via-[#0b1f3a] to-emerald-500 rounded-full inline-block" /> Market Range</span>
+                      <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-violet-600 inline-block" /> Candidate</span>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    {candidate.fixedCtc && (
+                      <div className="flex items-center gap-4">
+                        <span className="text-[11px] font-semibold text-gray-500 w-24 shrink-0">Base (Fixed)</span>
+                        <div className="flex-1">
+                          <div className="relative pt-1">
+                            <div className="h-1.5 bg-gradient-to-r from-gray-200 via-[#0b1f3a] to-emerald-500 rounded-full w-full" />
+                            <div className="absolute top-0 w-3 h-3 bg-violet-600 border-2 border-white rounded-full -translate-y-1/4 shadow-sm" style={{ left: `${getMarkerPct(candidate.fixedCtc, minBase, maxBase)}%` }} />
+                          </div>
+                          <div className="flex justify-between text-[9px] text-gray-400 mt-1">
+                            <span>{formatLakhsToRupees(minBase)} (Min)</span>
+                            <span>{formatLakhsToRupees(medianBase)} (Mid)</span>
+                            <span>{formatLakhsToRupees(maxBase)} (Max)</span>
+                          </div>
+                        </div>
+                        <span className="text-[11px] font-bold text-violet-600 w-14 text-right shrink-0">{formatLakhsToRupees(candidate.fixedCtc)}</span>
+                      </div>
+                    )}
+                    {candidate.fixedCtc && (
+                      <div className="flex items-center gap-4">
+                        <span className="text-[11px] font-semibold text-gray-500 w-24 shrink-0">Total Cash</span>
+                        <div className="flex-1">
+                          <div className="relative pt-1">
+                            <div className="h-1.5 bg-gradient-to-r from-gray-200 via-[#0b1f3a] to-emerald-500 rounded-full w-full" />
+                            <div className="absolute top-0 w-3 h-3 bg-violet-600 border-2 border-white rounded-full -translate-y-1/4 shadow-sm" style={{ left: `${getMarkerPct(candidate.fixedCtc + (candidate.variableCtc || 0), minCash, maxCash)}%` }} />
+                          </div>
+                          <div className="flex justify-between text-[9px] text-gray-400 mt-1">
+                            <span>{formatLakhsToRupees(minCash)}</span>
+                            <span>{formatLakhsToRupees(medianCash)}</span>
+                            <span>{formatLakhsToRupees(maxCash)}</span>
+                          </div>
+                        </div>
+                        <span className="text-[11px] font-bold text-violet-600 w-14 text-right shrink-0">{formatLakhsToRupees(candidate.fixedCtc + (candidate.variableCtc || 0))}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-4">
+                      <span className="text-[11px] font-semibold text-gray-500 w-24 shrink-0">Total CTC</span>
+                      <div className="flex-1">
+                        <div className="relative pt-1">
+                          <div className="h-1.5 bg-gradient-to-r from-gray-200 via-[#0b1f3a] to-emerald-500 rounded-full w-full" />
+                          <div className="absolute top-0 w-3 h-3 bg-violet-600 border-2 border-white rounded-full -translate-y-1/4 shadow-sm" style={{ left: `${getMarkerPct(totalCtcWithEsops, minCtc, maxCtc)}%` }} />
+                        </div>
+                        <div className="flex justify-between text-[9px] text-gray-400 mt-1">
+                          <span>{formatLakhsToRupees(minCtc)}</span>
+                          <span>{formatLakhsToRupees(medianCtc)}</span>
+                          <span>{formatLakhsToRupees(maxCtc)}</span>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-bold text-violet-600 w-14 text-right shrink-0">{formatLakhsToRupees(totalCtcWithEsops)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-
-            {/* Compensation Benchmarking */}
-            {candidate.ctc && (
-              <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-                <h3 className="text-[15px] font-bold text-[#0b1f3a] mb-4">Compensation Benchmarking</h3>
-                <div className="flex justify-center gap-4 text-[10px] text-gray-400 mb-6">
-                  <span className="flex items-center gap-1.5"><span className="w-2 h-0.5 bg-gray-300" /> Min</span>
-                  <span className="flex items-center gap-1.5"><span className="w-2 h-0.5 bg-[#0b1f3a]" /> Market Median</span>
-                  <span className="flex items-center gap-1.5"><span className="w-2 h-0.5 bg-emerald-500" /> Max</span>
-                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-violet-600" /> Candidate</span>
-                </div>
-
-                <div className="space-y-5">
-                  {candidate.fixedCtc && (
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-[12px] font-semibold text-gray-500">Base Salary (Fixed)</span>
-                      <div className="relative pt-1">
-                        <div className="h-1.5 bg-gradient-to-r from-gray-200 via-[#0b1f3a] to-emerald-500 rounded-full w-full" />
-                        <div className="absolute top-0 w-3.5 h-3.5 bg-violet-600 border-2 border-white rounded-full -translate-y-1/4 shadow-sm" style={{ left: `${getMarkerPct(candidate.fixedCtc, minBase, maxBase)}%` }} />
-                      </div>
-                      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                        <span>{formatLakhsToRupees(minBase)} (Min)</span>
-                        <span>{formatLakhsToRupees(medianBase)} (Median)</span>
-                        <span>{formatLakhsToRupees(maxBase)} (Max)</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {candidate.fixedCtc && (
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-[12px] font-semibold text-gray-500">Total Cash (Fixed + Variable)</span>
-                      <div className="relative pt-1">
-                        <div className="h-1.5 bg-gradient-to-r from-gray-200 via-[#0b1f3a] to-emerald-500 rounded-full w-full" />
-                        <div className="absolute top-0 w-3.5 h-3.5 bg-violet-600 border-2 border-white rounded-full -translate-y-1/4 shadow-sm" style={{ left: `${getMarkerPct(candidate.fixedCtc + (candidate.variableCtc || 0), minCash, maxCash)}%` }} />
-                      </div>
-                      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                        <span>{formatLakhsToRupees(minCash)}</span>
-                        <span>{formatLakhsToRupees(medianCash)}</span>
-                        <span>{formatLakhsToRupees(maxCash)}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {candidate.ctc && (
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-[12px] font-semibold text-gray-500">Total CTC</span>
-                      <div className="relative pt-1">
-                        <div className="h-1.5 bg-gradient-to-r from-gray-200 via-[#0b1f3a] to-emerald-500 rounded-full w-full" />
-                        <div className="absolute top-0 w-3.5 h-3.5 bg-violet-600 border-2 border-white rounded-full -translate-y-1/4 shadow-sm" style={{ left: `${getMarkerPct(candidate.ctc, minCtc, maxCtc)}%` }} />
-                      </div>
-                      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                        <span>{formatLakhsToRupees(minCtc)}</span>
-                        <span>{formatLakhsToRupees(medianCtc)}</span>
-                        <span>{formatLakhsToRupees(maxCtc)}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         )}
+
+
 
         {/* Remarks Section */}
         <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm mt-6 flex flex-col">

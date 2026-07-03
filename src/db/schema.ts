@@ -84,6 +84,8 @@ export const candidates = mysqlTable('candidates', {
   hasCv: boolean('has_cv').default(false),
   cvText: text('cv_text'),
   profilePic: mediumtext('profile_pic'),
+  esops: int('esops'),
+  esopVesting: json('esop_vesting').$type<{ years: number; distribution: number[] }>(),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 

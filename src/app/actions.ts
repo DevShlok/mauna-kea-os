@@ -140,6 +140,8 @@ export async function addFloatListEntryAction(data: any) {
     initials: candidateName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
     cvText: data.cvText || null,
     profilePic: data.profilePic || null,
+    esops: data.esops ? Number(data.esops) : null,
+    esopVesting: data.esopVesting || null,
   });
   revalidatePath("/dashboard/float-list/database");
   return id;
@@ -488,6 +490,8 @@ export async function editFloatListEntryAction(id: string, data: any) {
     notes: data.notes || null,
     initials: candidateName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
     profilePic: data.profilePic || null,
+    esops: data.esops ? Number(data.esops) : null,
+    esopVesting: data.esopVesting || null,
   }).where(eq(candidates.id, id));
   revalidatePath("/dashboard/float-list/database");
   revalidatePath("/dashboard/float-list/" + id);
