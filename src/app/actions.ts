@@ -107,19 +107,6 @@ export async function createFrameworkAction(data: any, mandateIds?: string[]) {
   return id;
 }
 
-export async function addCandidateToMandateAction(data: any) {
-  revalidatePath("/dashboard", "layout");
-  await db.insert(mandateCandidates).values({
-    externalId: data.externalId,
-    mandateId: data.mandateId,
-    name: data.name,
-    company: data.company,
-    role: data.role,
-    stage: "universe",
-    initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
-  });
-  revalidatePath(`/dashboard/mandates/${data.mandateId}`);
-}
 
 export async function addFloatListEntryAction(data: any) {
   revalidatePath("/dashboard", "layout");
@@ -661,7 +648,7 @@ export async function getClientNotificationsAction() {
     LIMIT 10
   `);
   
-  return notifs as any[];
+  return notifs as unknown as any[];
 }
 
 export async function markClientNotificationsAsReadAction() {
@@ -671,9 +658,6 @@ export async function markClientNotificationsAsReadAction() {
   revalidatePath("/client", "layout");
 }
 
-export async function getClientRemarksAction(candId: string) {
-  return await db.select().from(clientRemarks).where(eq(clientRemarks.candId, candId)).orderBy(sql`${clientRemarks.createdAt} ASC`);
-}
 
 export async function submitClientRemarkAction(mandateId: number, candId: string, remarkText: string) {
   const { platformUser } = await import("@/lib/auth").then(m => m.requireRole(["client"]));
