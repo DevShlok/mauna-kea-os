@@ -197,12 +197,28 @@ export function ClientTopbar() {
                       {notifications.length === 0 ? (
                         <div className="px-4 py-6 text-center text-sm text-gray-500">No new notifications</div>
                       ) : (
-                        notifications.map(notif => (
-                          <div key={notif.id} className={`px-4 py-3 border-b border-gray-50 last:border-b-0 ${notif.isRead ? 'bg-white' : 'bg-indigo-50/30'}`}>
-                            <p className="text-[13px] text-gray-800 leading-relaxed">{notif.message}</p>
-                            <span className="text-[11px] text-gray-400 mt-1 block">{new Date(notif.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                          </div>
-                        ))
+                        notifications.map(notif => {
+                          const destUrl = notif.link || (notif.mandateId ? `/client/mandates/${notif.mandateId}` : "#");
+                          return (
+                            <div 
+                              key={notif.id}
+                              className={`border-b border-gray-50 last:border-b-0 ${notif.isRead ? 'bg-white' : 'bg-indigo-50/30'}`}
+                            >
+                              <a 
+                                href={destUrl}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setShowNotifications(false);
+                                  router.push(destUrl);
+                                }}
+                                className="block px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                              >
+                                <p className="text-[13px] text-gray-800 leading-relaxed">{notif.message}</p>
+                                <span className="text-[11px] text-gray-400 mt-1 block">{new Date(notif.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                              </a>
+                            </div>
+                          );
+                        })
                       )}
                     </div>
                   </div>

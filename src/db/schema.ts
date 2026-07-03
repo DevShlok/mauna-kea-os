@@ -223,6 +223,7 @@ export const clientNotifications = mysqlTable('client_notifications', {
   clientId: varchar('client_id', { length: 50 }).notNull().references(() => clients.id),
   mandateId: int('mandate_id').notNull().references(() => mandates.id),
   message: text('message').notNull(),
+  link: varchar('link', { length: 255 }),
   isRead: boolean('is_read').default(false),
   createdAt: datetime('created_at').default(sql`now()`),
 });

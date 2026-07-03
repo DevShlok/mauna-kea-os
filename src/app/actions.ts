@@ -652,8 +652,16 @@ export async function sendCandidatesToClientAction(mandateId: number, candidateI
 export async function getClientNotificationsAction() {
   const { platformUser } = await import("@/lib/auth").then(m => m.requireRole(["client"]));
   if (!platformUser?.linkedClientId) return [];
-  const notifs = await db.select().from(clientNotifications).where(eq(clientNotifications.clientId, platformUser.linkedClientId)).orderBy(sql`${clientNotifications.createdAt} DESC`).limit(10);
-  return notifs;
+  
+  const [notifs] = await db.execute(sql`
+    SELECT id, client_id as clientId, mandate_id as mandateId, message, link, is_read as isRead, created_at as createdAt 
+    FROM client_notifications 
+    WHERE client_id = ${platformUser.linkedClientId} 
+    ORDER BY created_at DESC 
+    LIMIT 10
+  `);
+  
+  return notifs as any[];
 }
 
 export async function markClientNotificationsAsReadAction() {
@@ -702,7 +710,8 @@ export async function resolveClientRemarkAction(remarkId: number, status: string
   await db.insert(clientNotifications).values({
     clientId: remark.clientId,
     mandateId: remark.mandateId,
-    message: message
+    message: message,
+    link: `/client/candidates/${remark.candId}?mandateId=${remark.mandateId}`
   });
 
   revalidatePath("/dashboard", "layout");
