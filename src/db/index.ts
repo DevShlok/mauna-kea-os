@@ -7,21 +7,23 @@ import dns from 'dns';
 dns.setDefaultResultOrder('ipv4first');
 
 // Singleton pool to avoid creating multiple connections in dev hot-reload
-const globalForDb = globalThis as unknown as { pool?: mysql.Pool };
+const globalForDb = globalThis as unknown as { mysqlPool?: mysql.Pool };
 
 const dbUrl = process.env.DATABASE_URL?.split('?')[0];
 
-const pool = globalForDb.pool ?? mysql.createPool({
+const pool = globalForDb.mysqlPool ?? mysql.createPool({
   uri: dbUrl,
   connectionLimit: 10,
   waitForConnections: true,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
   ssl: {
     rejectUnauthorized: false
   }
 });
 
 if (process.env.NODE_ENV !== 'production') {
-  globalForDb.pool = pool;
+  globalForDb.mysqlPool = pool;
 }
 
 export const db = drizzle(pool, { schema, mode: 'default' });
