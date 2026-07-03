@@ -45,6 +45,7 @@ export const mandateCandidates = mysqlTable('mandate_candidates', {
   stage: varchar('stage', { length: 50 }).default('universe'),
   score: float('score'),
   hasReport: boolean('has_report').default(false),
+  isSentToClient: boolean('is_sent_to_client').default(false),
   initials: varchar('initials', { length: 5 }),
   cvText: text('cv_text'),
   createdAt: datetime('created_at').default(sql`now()`),
@@ -216,6 +217,36 @@ export const clients = mysqlTable('clients', {
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
+// ─── CLIENT NOTIFICATIONS ────────────────────────────────
+export const clientNotifications = mysqlTable('client_notifications', {
+  id: int('id').autoincrement().primaryKey(),
+  clientId: varchar('client_id', { length: 50 }).notNull().references(() => clients.id),
+  mandateId: int('mandate_id').notNull().references(() => mandates.id),
+  message: text('message').notNull(),
+  isRead: boolean('is_read').default(false),
+  createdAt: datetime('created_at').default(sql`now()`),
+});
+
+// ─── CLIENT REMARKS ──────────────────────────────────────
+export const clientRemarks = mysqlTable('client_remarks', {
+  id: int('id').autoincrement().primaryKey(),
+  clientId: varchar('client_id', { length: 50 }).notNull().references(() => clients.id),
+  mandateId: int('mandate_id').notNull().references(() => mandates.id),
+  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
+  remarkText: text('remark_text').notNull(),
+  status: varchar('status', { length: 50 }).default('Pending'), // Pending, Completed, Closed
+  createdAt: datetime('created_at').default(sql`now()`),
+});
+
+// ─── CONSULTANT NOTIFICATIONS ────────────────────────────
+export const consultantNotifications = mysqlTable('consultant_notifications', {
+  id: int('id').autoincrement().primaryKey(),
+  message: text('message').notNull(),
+  link: varchar('link', { length: 255 }),
+  isRead: boolean('is_read').default(false),
+  createdAt: datetime('created_at').default(sql`now()`),
+});
+
 // ─── TYPES ───────────────────────────────────────────────
 export type Mandate = typeof mandates.$inferSelect;
 export type MandateCandidate = typeof mandateCandidates.$inferSelect;
@@ -230,3 +261,6 @@ export type FrameworkCriterion = typeof frameworkCriteria.$inferSelect;
 export type PlatformUser = typeof platformUsers.$inferSelect;
 export type CandidateReport = typeof candidateReports.$inferSelect;
 export type Client = typeof clients.$inferSelect;
+export type ClientNotification = typeof clientNotifications.$inferSelect;
+export type ClientRemark = typeof clientRemarks.$inferSelect;
+export type ConsultantNotification = typeof consultantNotifications.$inferSelect;

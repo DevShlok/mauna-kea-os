@@ -1,11 +1,31 @@
 "use client";
 
-import { Search, Bell } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { Search, Bell, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
+import { getConsultantNotificationsAction, markConsultantNotificationsAsReadAction } from "@/app/actions";
 
 export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    if (userRole === 'consultant' || userRole === 'admin') {
+      getConsultantNotificationsAction().then(setNotifications);
+    }
+  }, [userRole]);
+
+  const handleNotificationsClick = async () => {
+    setShowNotifications(!showNotifications);
+    if (!showNotifications && notifications.some(n => !n.isRead)) {
+      await markConsultantNotificationsAsReadAction();
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    }
+  };
 
   let title = "Dashboard";
   let subtitle = "Welcome back";
@@ -39,10 +59,48 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
         />
       </div>
 
-      <button className="relative w-[34px] h-[34px] flex items-center justify-center rounded-full hover:bg-white/10 text-white/70 transition-colors">
-        <Bell className="w-[18px] h-[18px]" />
-        <div className="absolute top-[5px] right-[5px] w-2 h-2 bg-[#C0392B] rounded-full border-2 border-[#0b1f3a]"></div>
-      </button>
+      <div className="relative">
+        <button 
+          onClick={handleNotificationsClick}
+          className="relative w-[34px] h-[34px] flex items-center justify-center rounded-full hover:bg-white/10 text-white/70 transition-colors"
+        >
+          <Bell className="w-[18px] h-[18px]" />
+          {notifications.some(n => !n.isRead) && (
+            <div className="absolute top-[5px] right-[5px] w-2 h-2 bg-[#C0392B] rounded-full border-2 border-[#0b1f3a]"></div>
+          )}
+        </button>
+
+        {showNotifications && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+            <div className="absolute right-0 top-11 bg-white rounded-xl shadow-xl border border-gray-100 w-80 z-50 overflow-hidden flex flex-col text-gray-900">
+              <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 className="font-bold text-[14px]">Notifications</h3>
+                <button onClick={() => setShowNotifications(false)} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+              </div>
+              <div className="max-h-[300px] overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-sm text-gray-500">No new notifications</div>
+                ) : (
+                  notifications.map(notif => (
+                    <div 
+                      key={notif.id} 
+                      onClick={() => {
+                        setShowNotifications(false);
+                        if (notif.link) router.push(notif.link);
+                      }}
+                      className={`px-4 py-3 border-b border-gray-50 last:border-b-0 cursor-pointer hover:bg-gray-50 ${notif.isRead ? 'bg-white' : 'bg-indigo-50/30'}`}
+                    >
+                      <p className="text-[13px] text-gray-800 leading-relaxed">{notif.message}</p>
+                      <span className="text-[11px] text-gray-400 mt-1 block">{new Date(notif.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
       {userRole === "admin" && (
         <span className="px-2.5 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider bg-[#fde8e8] text-[#C0392B]">

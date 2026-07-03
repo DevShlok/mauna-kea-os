@@ -165,3 +165,18 @@
   pointer-events: none;
   display: block;
 }
+
+@media print {
+  @page {
+    margin: 1cm;
+  }
+  body, html {
+    background-color: white !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

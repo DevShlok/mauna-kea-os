@@ -24,7 +24,10 @@ export default async function ClientMandatesPage(props: PageProps) {
     const [client] = await db.select().from(clients).where(eq(clients.id, platformUser.linkedClientId));
     if (client) {
       clientName = client.name;
-      filteredMandates = filteredMandates.filter(m => m.company === client.name);
+      filteredMandates = filteredMandates.filter(m => m.company === client.name).map(m => ({
+        ...m,
+        candidates: m.candidates.filter(c => c.isSentToClient)
+      }));
     } else {
       filteredMandates = [];
     }

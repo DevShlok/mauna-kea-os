@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Search, ArrowLeft, Share2, MoreVertical, Filter } from "lucide-react";
+import { Bell, Search, ArrowLeft, Share2, MoreVertical, Filter, X } from "lucide-react";
+import { getClientNotificationsAction, markClientNotificationsAsReadAction } from "@/app/actions";
 
 import { useClientPortal } from "../context/ClientPortalContext";
 
@@ -20,10 +21,21 @@ export function ClientTopbar() {
   const { topbarConfig } = useClientPortal();
   const [filterOpen, setFilterOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    getClientNotificationsAction().then(setNotifications);
   }, []);
+
+  const handleNotificationsClick = async () => {
+    setShowNotifications(!showNotifications);
+    if (!showNotifications && notifications.some(n => !n.isRead)) {
+      await markClientNotificationsAsReadAction();
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    }
+  };
 
   const {
     title,
@@ -162,10 +174,41 @@ export function ClientTopbar() {
 
           {/* Default bell icon if no custom right content is provided */}
           {!rightContent && !showShare && !showMore && (
-            <button className="relative text-white/50 hover:text-white/80 transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0b1f3a]" />
-            </button>
+            <div className="relative">
+              <button 
+                onClick={handleNotificationsClick}
+                className="relative text-white/50 hover:text-white/80 transition-colors"
+              >
+                <Bell className="w-5 h-5" />
+                {notifications.some(n => !n.isRead) && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0b1f3a]" />
+                )}
+              </button>
+
+              {showNotifications && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+                  <div className="absolute right-0 top-11 bg-white rounded-xl shadow-xl border border-gray-100 w-80 z-50 overflow-hidden flex flex-col">
+                    <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                      <h3 className="font-bold text-gray-900 text-[14px]">Notifications</h3>
+                      <button onClick={() => setShowNotifications(false)} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="px-4 py-6 text-center text-sm text-gray-500">No new notifications</div>
+                      ) : (
+                        notifications.map(notif => (
+                          <div key={notif.id} className={`px-4 py-3 border-b border-gray-50 last:border-b-0 ${notif.isRead ? 'bg-white' : 'bg-indigo-50/30'}`}>
+                            <p className="text-[13px] text-gray-800 leading-relaxed">{notif.message}</p>
+                            <span className="text-[11px] text-gray-400 mt-1 block">{new Date(notif.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           )}
 
           {rightContent}

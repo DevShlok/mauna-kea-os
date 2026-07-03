@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { STAGE_OPTIONS, stageLabel, formatMandateCtc } from "@/lib/helpers";
-import { editMandateAction, updateMandateSearchNotesAction, updateMandateCandidateStageAction, deleteMandateAction } from "@/app/actions";
+import { editMandateAction, updateMandateSearchNotesAction, updateMandateCandidateStageAction, deleteMandateAction, sendCandidatesToClientAction } from "@/app/actions";
 
 const PIPELINE_STAGES = [
   "universe","mapping","longlist","calllist","shortlist","interview","offer-sent","offer-accepted","closed",
@@ -23,6 +23,21 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
   const [editForm, setEditForm] = useState(initialMandate);
   const [isEditingSubmit, setIsEditingSubmit] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<number>>(new Set());
+  const [isSendingToClient, setIsSendingToClient] = useState(false);
+
+  async function handleSendToClient() {
+    if (selectedCandidateIds.size === 0) return;
+    setIsSendingToClient(true);
+    try {
+      await sendCandidatesToClientAction(mandate.id, Array.from(selectedCandidateIds));
+      setSelectedCandidateIds(new Set());
+      router.refresh();
+      // Optional: show a small toast or success indication here
+    } finally {
+      setIsSendingToClient(false);
+    }
+  }
   // Report Modal State
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportFormat, setReportFormat] = useState("1");
@@ -177,7 +192,6 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
         <div className="flex gap-2">
           <button onClick={handleDeleteMandate} disabled={isDeleting} className="px-4 py-2 border border-red-200 text-red-600 bg-red-50 rounded text-xs font-bold hover:bg-red-100">{isDeleting ? "Deleting..." : "Delete"}</button>
           <button onClick={() => { setEditForm(mandate); setIsEditingMandate(true); }} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Edit</button>
-          <button className="px-4 py-2 bg-yellow-500 text-[#133255] rounded text-xs font-bold hover:bg-yellow-400">Send to Client Portal</button>
           <button onClick={() => setIsReportModalOpen(true)} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Generate Report</button>
         </div>
       </div>
@@ -339,12 +353,37 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
         <div className="p-5 border-b border-gray-100 flex justify-between items-center">
           <h3 className="font-bold text-gray-900 text-base">Candidate Pipeline</h3>
-          <button onClick={handleAddCandidateClick} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">+ Add Candidate</button>
+          <div className="flex items-center gap-2">
+            {selectedCandidateIds.size > 0 && (
+              <button 
+                onClick={handleSendToClient}
+                disabled={isSendingToClient}
+                className="px-4 py-2 bg-yellow-500 text-[#133255] rounded text-xs font-bold hover:bg-yellow-400 disabled:opacity-50"
+              >
+                {isSendingToClient ? "Sending..." : `Send ${selectedCandidateIds.size} to Client`}
+              </button>
+            )}
+            <button onClick={handleAddCandidateClick} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">+ Add Candidate</button>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b-2 border-gray-200">
+                <th className="px-4 py-3 text-left w-10">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]"
+                    checked={mandate.candidates.length > 0 && selectedCandidateIds.size === mandate.candidates.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedCandidateIds(new Set(mandate.candidates.map((c: any) => c.id)));
+                      } else {
+                        setSelectedCandidateIds(new Set());
+                      }
+                    }}
+                  />
+                </th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Candidate</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Stage</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Score</th>
@@ -357,6 +396,19 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                 <tr><td colSpan={5} className="text-center text-gray-400 py-10">No candidates yet</td></tr>
               ) : mandate.candidates.map((c: any) => (
                 <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]"
+                      checked={selectedCandidateIds.has(c.id)}
+                      onChange={(e) => {
+                        const next = new Set(selectedCandidateIds);
+                        if (e.target.checked) next.add(c.id);
+                        else next.delete(c.id);
+                        setSelectedCandidateIds(next);
+                      }}
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded bg-[#133255] text-white flex items-center justify-center text-xs font-bold shrink-0">{c.initials}</div>

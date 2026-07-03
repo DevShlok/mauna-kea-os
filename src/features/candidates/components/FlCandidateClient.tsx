@@ -2,7 +2,7 @@
 import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { addSubmissionAction, addReferenceAction, deleteFloatListEntryAction, logCandidateActivityAction, toggleActivityPinAction } from "@/app/actions";
+import { addSubmissionAction, addReferenceAction, deleteFloatListEntryAction, logCandidateActivityAction, toggleActivityPinAction, resolveClientRemarkAction } from "@/app/actions";
 import { useUser } from "@clerk/nextjs";
 import { Pin } from "lucide-react";
 
@@ -26,7 +26,7 @@ function Tile({ id, icon, name, meta, content, isOpen, toggle }: any) {
   );
 }
 
-export default function FlCandidateClient({ candidate, mandates = [], userRole = "consultant", readOnly = false }: { candidate: any; mandates?: any[]; userRole?: string; readOnly?: boolean }) {
+export default function FlCandidateClient({ candidate, mandates = [], userRole = "consultant", readOnly = false, clientRemarks = [] }: { candidate: any; mandates?: any[]; userRole?: string; readOnly?: boolean; clientRemarks?: any[] }) {
   const router = useRouter();
   const { user } = useUser();
   const getInitialFiles = () => {
@@ -69,6 +69,20 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
   const [isRefModalOpen, setIsRefModalOpen] = useState(false);
   const [refForm, setRefForm] = useState({ type: "Superior", name: "", org: "", rel: "", text: "" });
   const [isSubmittingRef, setIsSubmittingRef] = useState(false);
+  const [submittingNotes, setSubmittingNotes] = useState<{ [key: number]: boolean }>({});
+  const [localRemarks, setLocalRemarks] = useState<any[]>(clientRemarks);
+
+  const handleResolveRemark = async (id: number, status: string) => {
+    setSubmittingNotes({ ...submittingNotes, [id]: true });
+    try {
+      const msg = `Your remark for ${candidate.name} has been marked as ${status}.`;
+      await resolveClientRemarkAction(id, status, msg);
+      setLocalRemarks(localRemarks.map(r => r.id === id ? { ...r, status } : r));
+      router.refresh();
+    } finally {
+      setSubmittingNotes({ ...submittingNotes, [id]: false });
+    }
+  };
   const [isDeleting, setIsDeleting] = useState(false);
   const [candidateFiles, setCandidateFiles] = useState<any[]>(getInitialFiles());
   const [deleteConfirmation, setDeleteConfirmation] = useState<{fileId: number, fileName: string} | null>(null);
@@ -616,6 +630,57 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
               </button>
             </div>
           </form>
+
+          {/* Client Remarks / Special Instructions */}
+          {localRemarks.length > 0 && (
+            <div className="mt-8 mb-4">
+              <h4 className="text-[16px] font-bold text-[#111] mb-4 flex items-center gap-2">
+                Client Remarks / Special Instructions
+                {localRemarks.some(r => r.status === 'Pending') && (
+                  <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Requires Attention</span>
+                )}
+              </h4>
+              <div className="flex flex-col gap-3">
+                {localRemarks.map((remark) => (
+                  <div key={remark.id} className={`border rounded-lg p-4 shadow-sm relative ${remark.status === 'Pending' ? 'bg-amber-50/50 border-amber-200' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="flex justify-between items-start mb-2 pr-10">
+                      <div>
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                          remark.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
+                          remark.status === 'Closed' ? 'bg-gray-200 text-gray-600' :
+                          'bg-amber-100 text-amber-700'
+                        }`}>
+                          {remark.status}
+                        </span>
+                        <div className="text-[12px] font-medium text-[#6b7a99] mt-2">
+                          Received on {new Date(remark.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                      {remark.status === 'Pending' && (
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleResolveRemark(remark.id, 'Completed')}
+                            disabled={submittingNotes[remark.id]}
+                            className="text-[12px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-md transition-colors disabled:opacity-50"
+                          >
+                            Mark Completed
+                          </button>
+                          <button 
+                            onClick={() => handleResolveRemark(remark.id, 'Closed')}
+                            disabled={submittingNotes[remark.id]}
+                            className="text-[12px] font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-md transition-colors disabled:opacity-50"
+                          >
+                            Close
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[14px] text-[#111] whitespace-pre-wrap leading-relaxed mt-2">{remark.remarkText}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Activity Timeline */}
           <div className="mt-4">

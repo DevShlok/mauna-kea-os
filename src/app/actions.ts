@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles, clients } from "@/db/schema";
+import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles, clients, clientNotifications, clientRemarks, consultantNotifications } from "@/db/schema";
 import { eq, sql, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -624,5 +624,96 @@ export async function saveReportDraftAction(reportId: string, updatedData: any) 
 
 export async function toggleActivityPinAction(id: number, isPinned: boolean) {
   await db.update(floatActivities).set({ isPinned }).where(eq(floatActivities.id, id));
+  revalidatePath("/dashboard", "layout");
+}
+
+export async function sendCandidatesToClientAction(mandateId: number, candidateIds: number[]) {
+  if (candidateIds.length === 0) return;
+  await db.update(mandateCandidates).set({ isSentToClient: true }).where(inArray(mandateCandidates.id, candidateIds));
+
+  // Find mandate and client to notify
+  const [mandate] = await db.select().from(mandates).where(eq(mandates.id, mandateId));
+  if (mandate) {
+    const existingClient = await db.select().from(clients).where(eq(sql`LOWER(${clients.name})`, mandate.company.toLowerCase()));
+    if (existingClient.length > 0) {
+      const clientId = existingClient[0].id;
+      const message = `You have received ${candidateIds.length} new profile(s) for the ${mandate.role} position.`;
+      await db.insert(clientNotifications).values({
+        clientId,
+        mandateId,
+        message
+      });
+    }
+  }
+
+  revalidatePath("/dashboard", "layout");
+}
+
+export async function getClientNotificationsAction() {
+  const { platformUser } = await import("@/lib/auth").then(m => m.requireRole(["client"]));
+  if (!platformUser?.linkedClientId) return [];
+  const notifs = await db.select().from(clientNotifications).where(eq(clientNotifications.clientId, platformUser.linkedClientId)).orderBy(sql`${clientNotifications.createdAt} DESC`).limit(10);
+  return notifs;
+}
+
+export async function markClientNotificationsAsReadAction() {
+  const { platformUser } = await import("@/lib/auth").then(m => m.requireRole(["client"]));
+  if (!platformUser?.linkedClientId) return;
+  await db.update(clientNotifications).set({ isRead: true }).where(eq(clientNotifications.clientId, platformUser.linkedClientId));
+  revalidatePath("/client", "layout");
+}
+
+export async function getClientRemarksAction(candId: string) {
+  return await db.select().from(clientRemarks).where(eq(clientRemarks.candId, candId)).orderBy(sql`${clientRemarks.createdAt} ASC`);
+}
+
+export async function submitClientRemarkAction(mandateId: number, candId: string, remarkText: string) {
+  const { platformUser } = await import("@/lib/auth").then(m => m.requireRole(["client"]));
+  if (!platformUser?.linkedClientId) return;
+
+  await db.insert(clientRemarks).values({
+    clientId: platformUser.linkedClientId,
+    mandateId,
+    candId,
+    remarkText,
+    status: 'Pending'
+  });
+
+  const [mandate] = await db.select().from(mandates).where(eq(mandates.id, mandateId));
+  const [client] = await db.select().from(clients).where(eq(clients.id, platformUser.linkedClientId));
+  
+  if (mandate && client) {
+    const message = `New remark from ${client.name} for ${mandate.role}`;
+    await db.insert(consultantNotifications).values({
+      message,
+      link: `/dashboard/candidates/${candId}?mandateId=${mandateId}`
+    });
+  }
+
+  revalidatePath("/client/candidates", "layout");
+}
+
+export async function resolveClientRemarkAction(remarkId: number, status: string, message: string) {
+  const [remark] = await db.select().from(clientRemarks).where(eq(clientRemarks.id, remarkId));
+  if (!remark) return;
+
+  await db.update(clientRemarks).set({ status }).where(eq(clientRemarks.id, remarkId));
+
+  await db.insert(clientNotifications).values({
+    clientId: remark.clientId,
+    mandateId: remark.mandateId,
+    message: message
+  });
+
+  revalidatePath("/dashboard", "layout");
+  revalidatePath("/client", "layout");
+}
+
+export async function getConsultantNotificationsAction() {
+  return await db.select().from(consultantNotifications).orderBy(sql`${consultantNotifications.createdAt} DESC`).limit(10);
+}
+
+export async function markConsultantNotificationsAsReadAction() {
+  await db.update(consultantNotifications).set({ isRead: true });
   revalidatePath("/dashboard", "layout");
 }

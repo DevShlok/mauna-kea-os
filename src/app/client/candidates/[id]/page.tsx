@@ -1,8 +1,8 @@
 import { getCandidateById } from "@/db/queries";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/db";
-import { clients, mandateCandidates, candidateReports, mandates, candidates } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { clients, mandateCandidates, candidateReports, mandates, candidates, clientRemarks } from "@/db/schema";
+import { eq, and, asc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import ClientCandidateProfile from "@/features/client/components/ClientCandidateProfile";
 
@@ -132,6 +132,8 @@ export default async function ClientCandidateDetailPage({
   const { getFrameworkById } = await import("@/db/queries");
   const framework = mandate.frameworkId ? await getFrameworkById(mandate.frameworkId) : null;
 
+  const remarks = await db.select().from(clientRemarks).where(eq(clientRemarks.candId, candidate.id)).orderBy(asc(clientRemarks.createdAt));
+
   return (
     <ClientCandidateProfile
       candidate={candidate}
@@ -140,6 +142,7 @@ export default async function ClientCandidateDetailPage({
       reportData={reportData}
       framework={framework}
       mandate={mandate}
+      clientRemarks={remarks}
     />
   );
 }

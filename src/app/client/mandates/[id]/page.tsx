@@ -17,6 +17,9 @@ export default async function ClientMandateDetailPage({ params }: { params: Prom
     return <div className="p-10 text-center text-gray-400">Position not found.</div>;
   }
 
+  // Filter candidates to only those explicitly sent to the client
+  mandate.candidates = mandate.candidates.filter((c: any) => c.isSentToClient);
+
   // Verify this mandate belongs to the client
   let clientName = "Client";
   if (platformUser?.linkedClientId) {

@@ -21,8 +21,9 @@ import {
   DollarSign,
   X,
   Download,
+  Send,
 } from "lucide-react";
-import { updateMandateCandidateStageAction } from "@/app/actions";
+import { updateMandateCandidateStageAction, submitClientRemarkAction } from "@/app/actions";
 
 import { useClientPortal } from "../context/ClientPortalContext";
 
@@ -95,9 +96,11 @@ type Props = {
   reportData: any;
   framework: any;
   mandate?: any;
+  clientRemarks?: any[];
 };
 
-export default function ClientCandidateProfile({ candidate, mandateCandidate, mandateId, reportData = {}, framework, mandate }: Props) {
+export default function ClientCandidateProfile({ candidate, mandateCandidate, mandateId, reportData = {}, framework, mandate, clientRemarks = [] }: Props) {
+  const router = useRouter();
   const [currentStage, setCurrentStage] = useState(mandateCandidate?.stage || "universe");
   const [isUpdating, setIsUpdating] = useState(false);
   const { setTopbarConfig } = useClientPortal();
@@ -116,6 +119,24 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
     "Leadership Summary": true,
     "References": true,
   });
+
+  const [remarkText, setRemarkText] = useState("");
+  const [isSendingRemark, setIsSendingRemark] = useState(false);
+  const [localRemarks, setLocalRemarks] = useState<any[]>(clientRemarks);
+
+  const handleSendRemark = async () => {
+    if (!remarkText.trim()) return;
+    setIsSendingRemark(true);
+    try {
+      await submitClientRemarkAction(mandateId, candidate.id, remarkText);
+      // Optimistic update
+      setLocalRemarks([...localRemarks, { id: Date.now(), remarkText, status: 'Pending', createdAt: new Date() }]);
+      setRemarkText("");
+      router.refresh();
+    } finally {
+      setIsSendingRemark(false);
+    }
+  };
 
   const name = candidate?.name || "Candidate Name";
   const title = candidate?.designation || reportData?.Designation || "Leadership Executive";
@@ -249,8 +270,8 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
   };
 
   return (
-      <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-[#f4f6fb]">
-      <div className="flex-1 overflow-y-auto w-full">
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-[#f4f6fb] print:overflow-visible print:h-auto print:bg-white">
+      <div className="flex-1 overflow-y-auto w-full print:overflow-visible">
       <div className="print:hidden">
 
       {/* ─── Candidate Overview Card ─── */}
@@ -560,13 +581,50 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
         )}
 
         {/* Remarks Section */}
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm mt-6">
+        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm mt-6 flex flex-col">
           <h3 className="text-[15px] font-bold text-[#0b1f3a] mb-1">Remarks / Special Instructions</h3>
-          <span className="text-[10px] text-gray-400 block mb-3">(Visible to Mauna Kea Team)</span>
-          <textarea
-            placeholder="Add your remarks, feedback or special instructions for the Mauna Kea team..."
-            className="w-full border border-gray-200 rounded-xl p-4 text-[13px] text-gray-700 placeholder:text-gray-400 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-indigo-200"
-          />
+          <span className="text-[10px] text-gray-400 block mb-4">(Visible to Mauna Kea Team)</span>
+          
+          <div className="flex-1 overflow-y-auto mb-4 space-y-3">
+            {localRemarks.length === 0 ? (
+              <div className="text-center text-xs text-gray-400 py-4 bg-gray-50 rounded-lg">No remarks yet.</div>
+            ) : (
+              localRemarks.map((remark) => (
+                <div key={remark.id} className="bg-gray-50 border border-gray-100 rounded-lg p-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-[10px] text-gray-400 font-medium">
+                      {new Date(remark.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      remark.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
+                      remark.status === 'Closed' ? 'bg-gray-200 text-gray-600' :
+                      'bg-amber-100 text-amber-700'
+                    }`}>
+                      {remark.status}
+                    </span>
+                  </div>
+                  <p className="text-[13px] text-gray-800 whitespace-pre-wrap leading-relaxed">{remark.remarkText}</p>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2 relative">
+            <textarea
+              value={remarkText}
+              onChange={(e) => setRemarkText(e.target.value)}
+              placeholder="Add a new remark, feedback or special instruction..."
+              className="w-full border border-gray-200 rounded-xl p-3 text-[13px] text-gray-700 placeholder:text-gray-400 min-h-[80px] focus:outline-none focus:border-indigo-300 resize-none"
+            />
+            <button 
+              onClick={handleSendRemark}
+              disabled={isSendingRemark || !remarkText.trim()}
+              className="self-end flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors"
+            >
+              <Send className="w-4 h-4" />
+              {isSendingRemark ? "Sending..." : "Send Remark"}
+            </button>
+          </div>
         </div>
       </div>
       </div> {/* Closes print:hidden container */}
