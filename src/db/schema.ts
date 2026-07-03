@@ -148,6 +148,7 @@ export const floatActivities = mysqlTable('float_activities', {
   consultant: varchar('consultant', { length: 255 }),
   note: text('note'),
   type: varchar('type', { length: 50 }),
+  isPinned: boolean('is_pinned').default(false),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 

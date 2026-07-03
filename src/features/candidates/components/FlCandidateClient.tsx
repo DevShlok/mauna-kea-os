@@ -1,9 +1,10 @@
 "use client";
-import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState } from "react";
+import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { addSubmissionAction, addReferenceAction, deleteFloatListEntryAction, logCandidateActivityAction } from "@/app/actions";
+import { addSubmissionAction, addReferenceAction, deleteFloatListEntryAction, logCandidateActivityAction, toggleActivityPinAction } from "@/app/actions";
 import { useUser } from "@clerk/nextjs";
+import { Pin } from "lucide-react";
 
 function Tile({ id, icon, name, meta, content, isOpen, toggle }: any) {
   return (
@@ -75,6 +76,17 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
   const [activeLogTab, setActiveLogTab] = useState("Meeting");
   const [logForm, setLogForm] = useState({ note: "", type: "In-person meeting", meetingFor: "Exploration", emailType: "Email received from Candidate with Resume/ showing interest", clientName: "", roleName: "", date: "", time: "" });
   const [isLogging, setIsLogging] = useState(false);
+
+  const [localActivities, setLocalActivities] = useState(candidate?.activities || []);
+  
+  useEffect(() => {
+    setLocalActivities(candidate?.activities || []);
+  }, [candidate?.activities]);
+
+  const handleTogglePin = async (id: number, currentPinned: boolean) => {
+    setLocalActivities((prev: any[]) => prev.map(a => a.id === id ? { ...a, isPinned: !currentPinned } : a));
+    await toggleActivityPinAction(id, !currentPinned);
+  };
 
   const handleLogActivity = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -609,14 +621,25 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
           <div className="mt-4">
             <h4 className="text-[16px] font-bold text-[#111] mb-4">Activity Timeline</h4>
             <div className="flex flex-col gap-0">
-              {candidate?.activities?.length > 0 ? [...candidate.activities].sort((a,b) => b.id - a.id).map((act: any, idx: number) => (
-                <div key={act.id} className="flex gap-4 relative pb-6 group">
-                  {idx !== candidate.activities.length - 1 && <div className="absolute top-8 bottom-0 left-[19px] w-[2px] bg-[#e2e8f0] group-hover:bg-[#cbd5e1] transition-colors"></div>}
-                  <div className="w-10 h-10 rounded-full bg-[#f1f5f9] border-2 border-[#e2e8f0] flex items-center justify-center shrink-0 z-10 text-[17px]">
+              {localActivities?.length > 0 ? [...localActivities].sort((a,b) => {
+                  if (a.isPinned && !b.isPinned) return -1;
+                  if (!a.isPinned && b.isPinned) return 1;
+                  return b.id - a.id;
+              }).map((act: any, idx: number) => (
+                <div key={act.id} className={`flex gap-4 relative pb-6 group ${act.isPinned ? "bg-[#f8fafc] -mx-4 px-4 pt-4 rounded-xl shadow-sm mb-4 border border-[#e2e8f0]" : ""}`}>
+                  {idx !== localActivities.length - 1 && !act.isPinned && <div className="absolute top-8 bottom-0 left-[19px] w-[2px] bg-[#e2e8f0] group-hover:bg-[#cbd5e1] transition-colors"></div>}
+                  <div className={`w-10 h-10 rounded-full bg-[#f1f5f9] border-2 flex items-center justify-center shrink-0 z-10 text-[17px] ${act.isPinned ? "border-amber-400 bg-amber-50" : "border-[#e2e8f0]"}`}>
                     {act.type.includes('Meeting') ? '🗣️' : act.type.includes('Email') ? '✉️' : act.type.includes('Task') ? '✅' : '📅'}
                   </div>
-                  <div className="flex-1 bg-white border border-[#e2e8f0] rounded-lg p-4 shadow-sm group-hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start mb-2">
+                  <div className="flex-1 bg-white border border-[#e2e8f0] rounded-lg p-4 shadow-sm group-hover:shadow-md transition-shadow relative">
+                    <button 
+                      onClick={() => handleTogglePin(act.id, act.isPinned)}
+                      className={`absolute top-4 right-4 p-1.5 rounded-full transition-colors ${act.isPinned ? "bg-amber-100 text-amber-600 hover:bg-amber-200" : "text-[#94a3b8] hover:bg-[#f1f5f9] hover:text-[#64748b]"}`}
+                      title={act.isPinned ? "Unpin activity" : "Pin activity"}
+                    >
+                      <Pin size={16} fill={act.isPinned ? "currentColor" : "none"} />
+                    </button>
+                    <div className="flex justify-between items-start mb-2 pr-10">
                       <div>
                         <div className="text-[15px] font-bold text-[#111]">{act.type}</div>
                         <div className="text-[13px] font-medium text-[#6b7a99] mt-0.5">Logged by {act.consultant}</div>

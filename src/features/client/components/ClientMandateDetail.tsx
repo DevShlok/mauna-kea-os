@@ -171,7 +171,6 @@ export default function ClientMandateDetail({ mandate }: Props) {
               <h2 className="text-[20px] font-bold text-[#0b1f3a] leading-tight">
                 Top {rankedCandidates.length} Selected Candidates
               </h2>
-              <p className="text-[12px] text-gray-400 mt-0.5">AI-ranked for best fit</p>
             </div>
             <div className="relative">
               <button

@@ -621,3 +621,8 @@ export async function saveReportDraftAction(reportId: string, updatedData: any) 
   revalidatePath("/dashboard", "layout");
   await db.update(candidateReports).set({ reportData: updatedData }).where(eq(candidateReports.id, reportId));
 }
+
+export async function toggleActivityPinAction(id: number, isPinned: boolean) {
+  await db.update(floatActivities).set({ isPinned }).where(eq(floatActivities.id, id));
+  revalidatePath("/dashboard", "layout");
+}
