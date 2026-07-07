@@ -100,8 +100,8 @@ export default function Page() {
               elements: {
                 rootBox: "w-full",
                 card: "shadow-none w-full bg-transparent p-0",
-                headerTitle: "font-serif text-[21px] font-bold text-[#111] text-left ml-2",
-                headerSubtitle: tab === "candidate" ? "hidden" : "text-[#6b7a99] text-[15px] ml-2",
+                headerTitle: "hidden",
+                headerSubtitle: "hidden",
                 socialButtonsBlockButton: "h-[44px] border-[1.5px] border-[#D1D5DB] rounded-md hover:bg-[#f5f5f5]",
                 formFieldLabel: "text-[14px] font-semibold text-[#444] uppercase tracking-[0.5px]",
                 formFieldInput: "h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md focus:border-[#133255]",
