@@ -1,9 +1,6 @@
 "use client";
 import { SignIn } from "@clerk/nextjs";
-import { useState } from "react";
-
 export default function Page() {
-  const [tab, setTab] = useState<"team" | "candidate">("team");
 
   return (
     <div className="flex w-screen h-screen">
@@ -53,8 +50,8 @@ export default function Page() {
           <circle cx="160" cy="140" r="1" fill="rgba(255,255,255,0.4)"/>
           <circle cx="640" cy="150" r="1" fill="rgba(255,255,255,0.4)"/>
         </svg>
-        <div className="absolute bottom-8 left-8 text-white">
-          <div className="font-serif text-[19px] font-bold tracking-[1px]">MK | MAUNA KEA INTERNATIONAL</div>
+        <div className="absolute bottom-8 left-8 text-white flex flex-col items-center">
+          <div className="font-serif text-[19px] font-bold tracking-[1px]">MAUNA KEA</div>
           <div className="text-[12px] tracking-[3px] text-white/65 mt-1">EXECUTIVE SEARCH & ADVISORY</div>
         </div>
       </div>
@@ -62,40 +59,15 @@ export default function Page() {
       {/* Right Column (38%) */}
       <div className="w-[38%] h-full bg-white flex flex-col items-center justify-center overflow-y-auto">
         <div className="w-full max-w-[400px] flex flex-col">
-          <div className="flex items-center gap-3 mb-1 justify-start ml-2">
-            <span className="font-serif text-[33px] font-bold text-[#111]">MK</span>
-            <span className="w-[1px] h-[36px] bg-[#ccc]"></span>
-            <span className="flex flex-col">
-              <span className="font-serif text-[19px] font-bold text-[#111]">MAUNA KEA</span>
-              <span className="text-[13px] text-[#6b7a99] tracking-[1px] -mt-1 uppercase">International</span>
-            </span>
-          </div>
-          <div className="text-[12px] uppercase tracking-[2px] text-[#6b7a99] text-left mb-8 ml-2">Executive Search & Advisory</div>
-          
-          <div className="flex gap-4 mb-6 border-b border-[#D4E0F0]">
-            <button
-              onClick={() => setTab("team")}
-              className={`pb-2 text-[15px] font-bold transition-colors ${tab === "team" ? "border-b-2 border-[#133255] text-[#133255]" : "border-transparent text-[#6b7a99] hover:text-[#111]"}`}
-            >
-              Team Login
-            </button>
-            <button
-              onClick={() => setTab("candidate")}
-              className={`pb-2 text-[15px] font-bold transition-colors ${tab === "candidate" ? "border-b-2 border-[#133255] text-[#133255]" : "border-transparent text-[#6b7a99] hover:text-[#111]"}`}
-            >
-              Candidate Login
-            </button>
+          <div className="mb-8 w-full flex justify-center">
+            <img src="/mk_header.jpeg" alt="Mauna Kea International" className="w-full max-w-[280px] h-auto object-contain" />
           </div>
           
-          {tab === "candidate" && (
-            <p className="text-[14px] text-[#6b7a99] mb-4">Sign in with your personal email to access your candidate profile.</p>
-          )}
-
           <SignIn 
             path="/sign-in" 
             routing="path" 
             signUpUrl="/sign-up" 
-            forceRedirectUrl={tab === "team" ? "/dashboard/mandates" : "/dashboard/candidates"} 
+            forceRedirectUrl="/dashboard" 
             appearance={{
               elements: {
                 rootBox: "w-full",
