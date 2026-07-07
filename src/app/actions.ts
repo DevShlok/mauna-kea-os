@@ -707,10 +707,48 @@ export async function resolveClientRemarkAction(remarkId: number, status: string
 }
 
 export async function getConsultantNotificationsAction() {
-  return await db.select().from(consultantNotifications).orderBy(sql`${consultantNotifications.createdAt} DESC`).limit(10);
+  const { currentUser } = await import("@clerk/nextjs/server");
+  const { getUserByEmail } = await import("@/db/queries");
+  const { or, and, isNull, eq } = await import("drizzle-orm");
+  
+  const user = await currentUser();
+  const email = user?.primaryEmailAddress?.emailAddress;
+  if (!email) return [];
+  const platformUser = await getUserByEmail(email);
+  if (!platformUser) return [];
+
+  return await db.select()
+    .from(consultantNotifications)
+    .where(
+      or(
+        eq(consultantNotifications.userId, platformUser.id),
+        eq(consultantNotifications.targetRole, platformUser.role || ''),
+        and(isNull(consultantNotifications.userId), isNull(consultantNotifications.targetRole))
+      )
+    )
+    .orderBy(sql`${consultantNotifications.createdAt} DESC`)
+    .limit(10);
 }
 
 export async function markConsultantNotificationsAsReadAction() {
-  await db.update(consultantNotifications).set({ isRead: true });
+  const { currentUser } = await import("@clerk/nextjs/server");
+  const { getUserByEmail } = await import("@/db/queries");
+  const { or, and, isNull, eq } = await import("drizzle-orm");
+  
+  const user = await currentUser();
+  const email = user?.primaryEmailAddress?.emailAddress;
+  if (!email) return;
+  const platformUser = await getUserByEmail(email);
+  if (!platformUser) return;
+
+  await db.update(consultantNotifications)
+    .set({ isRead: true })
+    .where(
+      or(
+        eq(consultantNotifications.userId, platformUser.id),
+        eq(consultantNotifications.targetRole, platformUser.role || ''),
+        and(isNull(consultantNotifications.userId), isNull(consultantNotifications.targetRole))
+      )
+    );
   revalidatePath("/dashboard", "layout");
 }

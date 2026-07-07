@@ -47,9 +47,7 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
               <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Name</th>
               <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Email</th>
               <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Role</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Status</th>
               <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Last Active</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -72,17 +70,8 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
                     {u.role}
                   </span>
                 </td>
-                <td className="px-4 py-3">
-                  <span className="px-2.5 py-1 bg-green-100 text-green-800 rounded-full text-[13px] font-bold uppercase tracking-wider">{u.status || 'Active'}</span>
-                </td>
                 <td className="px-4 py-3 text-[#6b7a99] text-xs" suppressHydrationWarning>
                   {u.lastActive ? new Date(u.lastActive).toLocaleString() : "Never"}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-2">
-                    <button onClick={() => handleEditClick(u)} className="px-2 py-1 border border-[#D4E0F0] text-[#6b7a99] rounded text-xs font-bold hover:bg-[#EBF2FB]">Edit</button>
-                    <button onClick={() => handleDeleteClick(u.id)} className="px-2 py-1 border border-red-200 text-red-500 rounded text-xs font-bold hover:bg-red-50">Delete</button>
-                  </div>
                 </td>
               </tr>
             ))}

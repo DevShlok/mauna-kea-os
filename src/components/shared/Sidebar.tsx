@@ -56,6 +56,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
       children: [
         { label: "AI Workbench", href: "/dashboard/workbench", visibleTo: ["admin", "consultant", "client"] },
         { label: "Frameworks", href: "/dashboard/frameworks", visibleTo: ["admin", "consultant"] },
+        { label: "Time & Leave", href: "/dashboard/time-leave", visibleTo: ["consultant"] },
         { label: "Add Frameworks", href: "/dashboard/frameworks/new", icon: Plus, visibleTo: ["admin", "consultant"] },
       ]
     },
@@ -66,6 +67,8 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
       children: [
         { label: "Users", href: "/dashboard/admin/users", visibleTo: ["admin"] },
         { label: "Add a User", href: "/dashboard/admin/users/new", icon: Plus, visibleTo: ["admin"] },
+        { label: "Leave Approvals", href: "/dashboard/admin/leave-approvals", visibleTo: ["admin"] },
+        { label: "Timesheets & Reports", href: "/dashboard/admin/timesheets", visibleTo: ["admin"] },
       ]
     }
   ];

@@ -12,12 +12,47 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
 
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [clockStatus, setClockStatus] = useState<string>("Loading");
 
   useEffect(() => {
     if (userRole === 'consultant' || userRole === 'admin') {
       getConsultantNotificationsAction().then(setNotifications);
     }
+    
+    if (userRole === 'consultant') {
+      // Fetch current clock status
+      fetch('/api/time-logs')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setClockStatus(data.status);
+          } else {
+            setClockStatus("Clocked Out");
+          }
+        })
+        .catch(() => setClockStatus("Clocked Out"));
+    }
   }, [userRole]);
+
+  const handleClockAction = async (action: string) => {
+    try {
+      setClockStatus("Loading");
+      const res = await fetch('/api/time-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action })
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (action === 'clock_in' || action === 'break_end') setClockStatus("Clocked In");
+        else if (action === 'clock_out') setClockStatus("Clocked Out");
+        else if (action === 'break_start') setClockStatus("On Break");
+      }
+    } catch (error) {
+      console.error(error);
+      setClockStatus("Clocked Out"); // Fallback
+    }
+  };
 
   const handleNotificationsClick = async () => {
     setShowNotifications(!showNotifications);
@@ -58,6 +93,53 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
           className="w-[200px] h-[34px] border border-white/20 rounded-full pl-9 pr-3 text-[14px] text-white outline-none transition-all focus:border-white focus:w-[240px] bg-white/10 placeholder-white/50"
         />
       </div>
+
+      {(userRole === 'consultant') && clockStatus !== 'Loading' && (
+        <div className="flex items-center gap-2 bg-[#133255] p-1 rounded-full border border-white/10 ml-2">
+          {clockStatus === 'Clocked Out' && (
+            <button 
+              onClick={() => handleClockAction('clock_in')}
+              className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[12px] font-bold rounded-full transition-colors flex items-center gap-1.5"
+            >
+              <span className="w-2 h-2 bg-white rounded-full animate-pulse" /> Clock In
+            </button>
+          )}
+
+          {clockStatus === 'Clocked In' && (
+            <>
+              <button 
+                onClick={() => handleClockAction('break_start')}
+                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[12px] font-bold rounded-full transition-colors"
+              >
+                Start Break
+              </button>
+              <button 
+                onClick={() => handleClockAction('clock_out')}
+                className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-[12px] font-bold rounded-full transition-colors"
+              >
+                Clock Out
+              </button>
+            </>
+          )}
+
+          {clockStatus === 'On Break' && (
+            <>
+              <button 
+                onClick={() => handleClockAction('break_end')}
+                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[12px] font-bold rounded-full transition-colors flex items-center gap-1.5"
+              >
+                <span className="w-2 h-2 bg-white rounded-full animate-pulse" /> End Break
+              </button>
+              <button 
+                onClick={() => handleClockAction('clock_out')}
+                className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-[12px] font-bold rounded-full transition-colors"
+              >
+                Clock Out
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="relative">
         <button 

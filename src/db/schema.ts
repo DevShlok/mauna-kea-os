@@ -1,4 +1,4 @@
-import { mysqlTable, int, varchar, text, float, boolean, datetime, json, mediumtext } from 'drizzle-orm/mysql-core';
+import { mysqlTable, int, varchar, text, float, boolean, datetime, json, mediumtext, date } from 'drizzle-orm/mysql-core';
 import { sql } from 'drizzle-orm';
 
 // ─── MANDATES ────────────────────────────────────────────
@@ -194,6 +194,7 @@ export const platformUsers = mysqlTable('platform_users', {
   linkedClientId: varchar('linked_client_id', { length: 50 }), // set when role=client
   linkedCandidateId: varchar('linked_candidate_id', { length: 20 }), // set when role=candidate
   lastActive: datetime('last_active'),
+  maxLeaves: int('max_leaves').default(20), // default to 20 days
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
@@ -244,6 +245,8 @@ export const clientRemarks = mysqlTable('client_remarks', {
 // ─── CONSULTANT NOTIFICATIONS ────────────────────────────
 export const consultantNotifications = mysqlTable('consultant_notifications', {
   id: int('id').autoincrement().primaryKey(),
+  userId: varchar('user_id', { length: 10 }),
+  targetRole: varchar('target_role', { length: 20 }),
   message: text('message').notNull(),
   link: varchar('link', { length: 255 }),
   isRead: boolean('is_read').default(false),
@@ -267,3 +270,27 @@ export type Client = typeof clients.$inferSelect;
 export type ClientNotification = typeof clientNotifications.$inferSelect;
 export type ClientRemark = typeof clientRemarks.$inferSelect;
 export type ConsultantNotification = typeof consultantNotifications.$inferSelect;
+
+// ─── TIME & LEAVE MANAGEMENT ─────────────────────────────
+export const timeLogs = mysqlTable('time_logs', {
+  id: int('id').autoincrement().primaryKey(),
+  userId: varchar('user_id', { length: 10 }).notNull().references(() => platformUsers.id),
+  action: varchar('action', { length: 20 }).notNull(), // 'clock_in', 'clock_out', 'break_start', 'break_end'
+  timestamp: datetime('timestamp').notNull(),
+  dateString: date('date_string').notNull(), // YYYY-MM-DD for easy daily grouping
+});
+
+export const leaveRequests = mysqlTable('leave_requests', {
+  id: int('id').autoincrement().primaryKey(),
+  userId: varchar('user_id', { length: 10 }).notNull().references(() => platformUsers.id),
+  leaveType: varchar('leave_type', { length: 50 }).notNull(), // Sick, Casual, Privilege, etc.
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date').notNull(),
+  reason: text('reason'),
+  status: varchar('status', { length: 20 }).default('Pending'), // Pending, Approved, Rejected
+  adminNotes: text('admin_notes'),
+  createdAt: datetime('created_at').default(sql`now()`),
+});
+
+export type TimeLog = typeof timeLogs.$inferSelect;
+export type LeaveRequest = typeof leaveRequests.$inferSelect;
