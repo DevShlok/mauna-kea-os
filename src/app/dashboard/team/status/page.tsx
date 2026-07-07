@@ -3,9 +3,8 @@ import { getPlatformUsers } from "@/db/queries";
 import TimesheetsClient from "./TimesheetsClient";
 
 export default async function TimesheetsPage() {
-  await requireRole(["admin"]);
+  await requireRole(["admin", "consultant"]);
   const users = await getPlatformUsers();
-  const consultants = users.filter((u: any) => u.role === 'consultant');
-
-  return <TimesheetsClient users={consultants} />;
+  const nonClientUsers = users.filter((u: any) => u.role !== 'client');
+  return <TimesheetsClient users={nonClientUsers} />;
 }

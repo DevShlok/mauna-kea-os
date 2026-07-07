@@ -12,45 +12,47 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
 
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [clockStatus, setClockStatus] = useState<string>("Loading");
-
+  const [clockStatus, setClockStatus] = useState("Loading");
   useEffect(() => {
     if (userRole === 'consultant' || userRole === 'admin') {
       getConsultantNotificationsAction().then(setNotifications);
-    }
-    
-    if (userRole === 'consultant') {
-      // Fetch current clock status
-      fetch('/api/time-logs')
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            setClockStatus(data.status);
-          } else {
-            setClockStatus("Clocked Out");
-          }
-        })
-        .catch(() => setClockStatus("Clocked Out"));
+      
+      const fetchStatus = () => {
+        fetch('/api/time-logs')
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.status) {
+              setClockStatus(data.status === 'On Break' ? 'On Break' : 'Active');
+            } else {
+              setClockStatus('Active');
+            }
+          })
+          .catch(() => setClockStatus('Active'));
+      };
+
+      fetchStatus();
+
+      window.addEventListener('break_status_changed', fetchStatus);
+      return () => window.removeEventListener('break_status_changed', fetchStatus);
     }
   }, [userRole]);
 
-  const handleClockAction = async (action: string) => {
+  const handleBreakToggle = async () => {
+    const action = clockStatus === 'On Break' ? 'break_end' : 'break_start';
+    setClockStatus("Loading");
     try {
-      setClockStatus("Loading");
       const res = await fetch('/api/time-logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action })
       });
-      const data = await res.json();
-      if (data.success) {
-        if (action === 'clock_in' || action === 'break_end') setClockStatus("Clocked In");
-        else if (action === 'clock_out') setClockStatus("Clocked Out");
-        else if (action === 'break_start') setClockStatus("On Break");
+      if (res.ok) {
+        setClockStatus(action === 'break_start' ? 'On Break' : 'Active');
+        window.dispatchEvent(new Event('break_status_changed'));
       }
     } catch (error) {
       console.error(error);
-      setClockStatus("Clocked Out"); // Fallback
+      setClockStatus("Active");
     }
   };
 
@@ -75,6 +77,9 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
   else if (pathname?.startsWith("/dashboard/float-list")) { title = "Candidates"; subtitle = "Float List"; }
   else if (pathname?.startsWith("/dashboard/workbench")) { title = "Productivity Tools"; subtitle = "AI Workbench"; }
   else if (pathname?.startsWith("/dashboard/frameworks")) { title = "Productivity Tools"; subtitle = "Frameworks"; }
+  else if (pathname?.startsWith("/dashboard/team/status")) { title = "Team"; subtitle = "Team Status"; }
+  else if (pathname?.startsWith("/dashboard/team/leave-approvals")) { title = "Team"; subtitle = "Leave Approvals"; }
+  else if (pathname?.startsWith("/dashboard/team/time-leave")) { title = "Team"; subtitle = "Time & Leave"; }
   else if (pathname?.startsWith("/dashboard/admin/users/new")) { title = "Admin"; subtitle = "Add a User"; }
   else if (pathname?.startsWith("/dashboard/admin/users")) { title = "Admin"; subtitle = "Users"; }
 
@@ -94,52 +99,7 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
         />
       </div>
 
-      {(userRole === 'consultant') && clockStatus !== 'Loading' && (
-        <div className="flex items-center gap-2 bg-[#133255] p-1 rounded-full border border-white/10 ml-2">
-          {clockStatus === 'Clocked Out' && (
-            <button 
-              onClick={() => handleClockAction('clock_in')}
-              className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[12px] font-bold rounded-full transition-colors flex items-center gap-1.5"
-            >
-              <span className="w-2 h-2 bg-white rounded-full animate-pulse" /> Clock In
-            </button>
-          )}
 
-          {clockStatus === 'Clocked In' && (
-            <>
-              <button 
-                onClick={() => handleClockAction('break_start')}
-                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[12px] font-bold rounded-full transition-colors"
-              >
-                Start Break
-              </button>
-              <button 
-                onClick={() => handleClockAction('clock_out')}
-                className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-[12px] font-bold rounded-full transition-colors"
-              >
-                Clock Out
-              </button>
-            </>
-          )}
-
-          {clockStatus === 'On Break' && (
-            <>
-              <button 
-                onClick={() => handleClockAction('break_end')}
-                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[12px] font-bold rounded-full transition-colors flex items-center gap-1.5"
-              >
-                <span className="w-2 h-2 bg-white rounded-full animate-pulse" /> End Break
-              </button>
-              <button 
-                onClick={() => handleClockAction('clock_out')}
-                className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-[12px] font-bold rounded-full transition-colors"
-              >
-                Clock Out
-              </button>
-            </>
-          )}
-        </div>
-      )}
 
       <div className="relative">
         <button 
@@ -183,6 +143,22 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
           </>
         )}
       </div>
+
+      {(userRole === 'admin' || userRole === 'consultant') && (
+        <div className="mr-2">
+          {clockStatus === 'Loading' ? (
+            <div className="w-[100px] h-[30px] bg-white/10 animate-pulse rounded-full" />
+          ) : clockStatus === 'On Break' ? (
+            <button onClick={handleBreakToggle} className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-full transition-colors flex items-center gap-1.5 shadow-sm">
+              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> Return to Work
+            </button>
+          ) : (
+            <button onClick={handleBreakToggle} className="px-4 py-1.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-bold rounded-full transition-colors">
+              Take a Break
+            </button>
+          )}
+        </div>
+      )}
 
       {userRole === "admin" && (
         <span className="px-2.5 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider bg-[#fde8e8] text-[#C0392B]">

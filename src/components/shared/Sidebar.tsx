@@ -9,7 +9,8 @@ import {
   LogOut,
   Building2,
   ChevronRight,
-  Plus
+  Plus,
+  Shield
 } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
 import { useState } from "react";
@@ -56,19 +57,26 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
       children: [
         { label: "AI Workbench", href: "/dashboard/workbench", visibleTo: ["admin", "consultant", "client"] },
         { label: "Frameworks", href: "/dashboard/frameworks", visibleTo: ["admin", "consultant"] },
-        { label: "Time & Leave", href: "/dashboard/time-leave", visibleTo: ["consultant"] },
         { label: "Add Frameworks", href: "/dashboard/frameworks/new", icon: Plus, visibleTo: ["admin", "consultant"] },
       ]
     },
     {
-      title: "Admin",
+      title: "Team",
       icon: Users,
+      visibleTo: ["admin", "consultant"],
+      children: [
+        { label: "Team Status", href: "/dashboard/team/status", visibleTo: ["admin", "consultant"] },
+        { label: "Time & Leave", href: "/dashboard/team/time-leave", visibleTo: ["admin", "consultant"] },
+        { label: "Leave Approvals", href: "/dashboard/team/leave-approvals", visibleTo: ["admin", "consultant"] },
+      ]
+    },
+    {
+      title: "Admin",
+      icon: Shield,
       visibleTo: ["admin"],
       children: [
         { label: "Users", href: "/dashboard/admin/users", visibleTo: ["admin"] },
         { label: "Add a User", href: "/dashboard/admin/users/new", icon: Plus, visibleTo: ["admin"] },
-        { label: "Leave Approvals", href: "/dashboard/admin/leave-approvals", visibleTo: ["admin"] },
-        { label: "Timesheets & Reports", href: "/dashboard/admin/timesheets", visibleTo: ["admin"] },
       ]
     }
   ];

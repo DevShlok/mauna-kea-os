@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { timeLogs } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { timeLogs, platformUsers, leaveRequests } from "@/db/schema";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { currentUser } from "@clerk/nextjs/server";
 import { getUserByEmail } from "@/db/queries";
 
@@ -29,6 +29,44 @@ export async function GET(request: Request) {
         .orderBy(desc(timeLogs.timestamp))
         .limit(100);
       return NextResponse.json({ success: true, logs });
+    }
+
+    const all = searchParams.get('all') === 'true';
+    if (all) {
+      const allUsers = await db.select().from(platformUsers);
+      
+      const now = new Date();
+      const dateString = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+      const activeLeaves = await db.select().from(leaveRequests)
+        .where(
+          and(
+            eq(leaveRequests.status, 'Approved'),
+            sql`${leaveRequests.startDate} <= ${dateString}`,
+            sql`${leaveRequests.endDate} >= ${dateString}`
+          )
+        );
+
+      const todayLogs = await db.select().from(timeLogs).where(eq(timeLogs.dateString, dateString as any));
+      const userStatusMap: Record<string, string> = {};
+      
+      for (const u of allUsers) {
+        const onLeave = activeLeaves.find(l => l.userId === u.id);
+        if (onLeave) {
+          userStatusMap[u.id] = "On Leave";
+          continue;
+        }
+
+        const uLogs = todayLogs.filter(l => l.userId === u.id).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+        const latestLog = uLogs.length > 0 ? uLogs[0] : null;
+        
+        if (latestLog && latestLog.action === 'break_start') {
+          userStatusMap[u.id] = "On Break";
+        } else {
+          userStatusMap[u.id] = "Active";
+        }
+      }
+
+      return NextResponse.json({ success: true, statuses: userStatusMap, users: allUsers });
     }
 
     // Get the most recent time log for the user to determine their current status
@@ -68,7 +106,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { action } = body;
 
-    if (!['clock_in', 'clock_out', 'break_start', 'break_end'].includes(action)) {
+    if (!['break_start', 'break_end'].includes(action)) {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 

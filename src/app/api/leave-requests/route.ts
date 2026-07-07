@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     const viewAll = searchParams.get('all') === 'true'; // for admins
 
     let requests;
-    if (viewAll && platformUser.role === 'admin') {
+    if (viewAll) {
       requests = await db.select({
         id: leaveRequests.id,
         userId: leaveRequests.userId,
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       startDate, // expected YYYY-MM-DD
       endDate,   // expected YYYY-MM-DD
       reason,
-      status: 'Pending',
+      status: 'Approved',
     });
 
     await db.insert(consultantNotifications).values({
@@ -89,12 +89,8 @@ export async function PATCH(request: Request) {
     const user = await currentUser();
     const email = user?.primaryEmailAddress?.emailAddress;
     if (!email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
     const platformUser = await getUserByEmail(email);
-    if (!platformUser || platformUser.role !== 'admin') {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
+    if (!platformUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
     const body = await request.json();
     const { id, status, adminNotes } = body;
 
@@ -102,15 +98,25 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
     }
 
+    const leaveReq = await db.select().from(leaveRequests).where(eq(leaveRequests.id, id));
+    if (leaveReq.length === 0) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // Allow admins to update anything, but regular users can only withdraw their own leaves
+    if (platformUser.role !== 'admin') {
+      if (status !== 'Withdrawn' || leaveReq[0].userId !== platformUser.id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      }
+    }
+
     await db.update(leaveRequests)
       .set({ status, adminNotes })
       .where(eq(leaveRequests.id, id));
 
-    const leaveReq = await db.select().from(leaveRequests).where(eq(leaveRequests.id, id));
-    if (leaveReq.length > 0) {
-      const applicantId = leaveReq[0].userId;
+    if (platformUser.role === 'admin' && leaveReq[0].userId !== platformUser.id) {
       await db.insert(consultantNotifications).values({
-        userId: applicantId,
+        userId: leaveReq[0].userId,
         message: `Your leave request has been ${status.toLowerCase()}.`,
         link: '/dashboard/time-leave'
       });

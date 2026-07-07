@@ -11,6 +11,7 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
   const [selectedUser, setSelectedUser] = useState<string>(initialUserId);
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [teamStatuses, setTeamStatuses] = useState<Record<string, string>>({});
 
   // Constants
   const EXPECTED_HOURS = 8; // 8 hours per day expected
@@ -25,10 +26,24 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
   };
 
   useEffect(() => {
-    // Fetch users (this would typically come from an admin users endpoint, we'll fetch from a generic endpoint or mock)
-    // For now, we assume the admin knows the user ID, or we fetch the list.
-    // Let's fetch the list of users from a server action if possible, or just let them enter the ID if the list isn't easily available here without an API.
-    // Wait, we don't have a GET /api/users route. I'll just use a simple state for now and rely on the query param to drill down.
+    const fetchStatuses = () => {
+      fetch('/api/time-logs?all=true')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setTeamStatuses(data.statuses);
+          }
+        });
+    };
+
+    fetchStatuses();
+    const interval = setInterval(fetchStatuses, 10000);
+    window.addEventListener('break_status_changed', fetchStatuses);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('break_status_changed', fetchStatuses);
+    };
   }, []);
 
   useEffect(() => {
@@ -135,11 +150,11 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
       <div className="mb-6 flex justify-between items-end">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400">
-            <span className="text-[#133255]">Admin</span>
+            <span className="text-[#133255]">Team</span>
             <span>/</span>
-            <span>Timesheets & Reports</span>
+            <span>Status</span>
           </div>
-          <h1 className="text-[29px] font-serif font-bold text-[#111]">Timesheets</h1>
+          <h1 className="text-[29px] font-serif font-bold text-[#111]">Team Status</h1>
         </div>
 
         {selectedUser && Object.keys(timesheetByDate).length > 0 && (
@@ -156,6 +171,7 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
               <tr className="bg-[#f9fafc] border-b-2 border-[#D4E0F0]">
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">User</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Role</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Action</th>
               </tr>
             </thead>
@@ -169,6 +185,16 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-[#6b7a99] capitalize">{u.role}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2.5 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider ${
+                      teamStatuses[u.id] === 'On Break' ? 'bg-amber-100 text-amber-800' :
+                      teamStatuses[u.id] === 'On Leave' ? 'bg-purple-100 text-purple-800' :
+                      teamStatuses[u.id] === 'Active' ? 'bg-emerald-100 text-emerald-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {teamStatuses[u.id] || 'Unknown'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">
                     <button className="text-[#133255] font-bold hover:underline">View Timesheet</button>
                   </td>
