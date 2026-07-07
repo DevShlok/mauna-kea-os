@@ -18,7 +18,7 @@ export default function CandidateProfileClient({ mandates }: { mandates: any[] }
   async function handleDelete() {
     if (!confirm("Are you sure you want to remove this candidate from the pipeline? This will also remove their submission record.")) return;
     setIsDeleting(true);
-    await import("@/app/actions").then(m => m.removeCandidateFromMandateAction({
+    await import("@/actions").then(m => m.removeCandidateFromMandateAction({
       id: candidate.id,
       externalId: candidate.externalId,
       company: mandate.company,

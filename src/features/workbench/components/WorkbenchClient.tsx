@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import CandidateReportPDF from "@/components/reports/CandidateReportPDF";
 import { generateFormatAction } from "@/actions/cv";
-import { updateCandidateStatusAction, saveReportFormatAction, saveReportDraftAction } from "@/app/actions";
+import { updateCandidateStatusAction, saveReportFormatAction, saveReportDraftAction } from "@/actions";
 import FormatOne from "@/components/reports/FormatOne";
 import FormatTwo from "@/components/reports/FormatTwo";
 

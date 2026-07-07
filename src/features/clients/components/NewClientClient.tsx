@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClientAction } from "@/app/actions";
+import { createClientAction } from "@/actions";
 
 export default function NewClientClient() {
   const router = useRouter();

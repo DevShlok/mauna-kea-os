@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { addSubmissionAction, updateSubmissionAction, deleteSubmissionAction } from "@/app/actions";
+import { addSubmissionAction, updateSubmissionAction, deleteSubmissionAction } from "@/actions";
 
 const STATUS_COLORS: Record<string, string> = {
   Shortlisted: "bg-green-100 text-green-800",

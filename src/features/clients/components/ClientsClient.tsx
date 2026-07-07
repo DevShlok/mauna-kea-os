@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Client, Mandate } from "@/db/schema";
 import { Search } from "lucide-react";
-import { updateClientAction } from "@/app/actions";
+import { updateClientAction } from "@/actions";
 
 export default function ClientsClient({ clients, mandates }: { clients: Client[], mandates: Mandate[] }) {
   const router = useRouter();

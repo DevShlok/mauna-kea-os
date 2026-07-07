@@ -23,7 +23,7 @@ import {
   Download,
   Send,
 } from "lucide-react";
-import { updateMandateCandidateStageAction, submitClientRemarkAction } from "@/app/actions";
+import { updateMandateCandidateStageAction, submitClientRemarkAction } from "@/actions";
 
 import { useClientPortal } from "../context/ClientPortalContext";
 

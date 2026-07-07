@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Client, Mandate } from "@/db/schema";
 import { ArrowLeft, Building2, User, Briefcase, Calendar, Trash2, Edit } from "lucide-react";
-import { updateClientAction, deleteClientAction } from "@/app/actions";
+import { updateClientAction, deleteClientAction } from "@/actions";
 
 export default function ClientDetailClient({ client, mandates }: { client: Client, mandates: Mandate[] }) {
   const router = useRouter();

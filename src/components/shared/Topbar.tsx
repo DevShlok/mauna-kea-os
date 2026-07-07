@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Search, Bell, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { getConsultantNotificationsAction, markConsultantNotificationsAsReadAction } from "@/app/actions";
+import { getConsultantNotificationsAction, markConsultantNotificationsAsReadAction } from "@/actions";
 
 export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
   const pathname = usePathname();

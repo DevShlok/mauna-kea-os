@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { addFloatListEntryAction, editFloatListEntryAction, bulkAddSubmissionAction } from "@/app/actions";
+import { addFloatListEntryAction, editFloatListEntryAction, bulkAddSubmissionAction } from "@/actions";
 
 export default function NewCandidateClient({ initialData, userRole = "consultant", readOnly = false, linkedCandidateId, mandates = [] }: { initialData?: any; userRole?: string; readOnly?: boolean; linkedCandidateId?: string; mandates?: any[] }) {
   const router = useRouter();

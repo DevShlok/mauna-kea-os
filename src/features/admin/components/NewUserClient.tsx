@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { addPlatformUserAction } from "@/app/actions";
+import { addPlatformUserAction } from "@/actions";
 
 export default function NewUserClient({ clients }: { clients: any[] }) {
   const router = useRouter();

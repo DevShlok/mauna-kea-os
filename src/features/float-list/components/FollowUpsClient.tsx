@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { addFollowUpAction } from "@/app/actions";
+import { addFollowUpAction } from "@/actions";
 
 const STATUS_STYLES: Record<string, string> = {
   today: "bg-orange-100 text-orange-800 border-orange-200",

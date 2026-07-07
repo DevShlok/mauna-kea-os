@@ -2,7 +2,7 @@
 import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { addSubmissionAction, addReferenceAction, deleteFloatListEntryAction, logCandidateActivityAction, toggleActivityPinAction, resolveClientRemarkAction } from "@/app/actions";
+import { addSubmissionAction, addReferenceAction, deleteFloatListEntryAction, logCandidateActivityAction, toggleActivityPinAction, resolveClientRemarkAction } from "@/actions";
 import { useUser } from "@clerk/nextjs";
 import { Pin } from "lucide-react";
 

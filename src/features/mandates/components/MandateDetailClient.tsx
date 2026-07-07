@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { STAGE_OPTIONS, stageLabel, formatMandateCtc } from "@/lib/helpers";
-import { editMandateAction, updateMandateSearchNotesAction, updateMandateCandidateStageAction, deleteMandateAction, sendCandidatesToClientAction } from "@/app/actions";
+import { editMandateAction, updateMandateSearchNotesAction, updateMandateCandidateStageAction, deleteMandateAction, sendCandidatesToClientAction } from "@/actions";
 
 const PIPELINE_STAGES = [
   "universe","mapping","longlist","calllist","shortlist","interview","offer-sent","offer-accepted","closed",

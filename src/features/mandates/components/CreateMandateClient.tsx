@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { createMandateAction } from "@/app/actions";
+import { createMandateAction } from "@/actions";
 
 export default function CreateMandateClient({ frameworks }: { frameworks: any[] }) {
   const router = useRouter();

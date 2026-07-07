@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { updatePlatformUserAction, deletePlatformUserAction } from "@/app/actions";
+import { updatePlatformUserAction, deletePlatformUserAction } from "@/actions";
 import { useRouter } from "next/navigation";
 
 export default function UsersClient({ initialUsers, clients }: { initialUsers: any[], clients: any[] }) {

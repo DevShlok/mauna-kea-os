@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, Search, ArrowLeft, Share2, MoreVertical, Filter, X } from "lucide-react";
-import { getClientNotificationsAction, markClientNotificationsAsReadAction } from "@/app/actions";
+import { getClientNotificationsAction, markClientNotificationsAsReadAction } from "@/actions";
 
 import { useClientPortal } from "../context/ClientPortalContext";
 
