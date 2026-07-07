@@ -356,7 +356,7 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
                   <div><span className="font-bold text-[#6b7a99]">Fixed:</span> {candidate.fixedCtc ? `${candidate.currency} ${candidate.fixedCtc}L` : '-'}</div>
                   <div><span className="font-bold text-[#6b7a99]">Variable:</span> {candidate.variableCtc ? `${candidate.currency} ${candidate.variableCtc}L` : '-'}</div>
                   <div><span className="font-bold text-[#6b7a99]">Expected CTC:</span> {candidate.expected ? `${candidate.currency} ${candidate.expected}L` : '-'}</div>
-                  <div><span className="font-bold text-[#6b7a99]">ESOPs:</span> {candidate.esops ? `${candidate.esops} Lacs` : '-'}</div>
+                  <div><span className="font-bold text-[#6b7a99]">ESOPs:</span> {candidate.esops ? `${candidate.esops}L` : '-'}</div>
                 </div>
                 {candidate.esops > 0 && candidate.esopVesting && candidate.esopVesting.years > 0 && (
                   <div className="mt-3 pt-3 border-t border-[#e2e8f0]">

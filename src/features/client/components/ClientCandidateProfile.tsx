@@ -256,28 +256,22 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
   // Compensation Benchmarking Range Calculations
   const budget = parseMandateCtc(mandate?.ctc);
   
-  // Base Salary Ranges
-  const minBase = budget.min * 0.7;
-  const maxBase = budget.max * 0.7;
-  const medianBase = budget.median * 0.7;
+  const benchMin = budget.min;
+  const benchMax = budget.max;
+  const expectedCTC = candidate?.expected || 0;
+  
+  const diff = Math.max(benchMax - benchMin, 10);
+  const scaleStart = Math.max(0, benchMin - diff * 0.3);
+  const scaleEnd = Math.max(benchMax + diff * 0.3, totalCtcWithEsops * 1.1, expectedCTC > 0 ? expectedCTC * 1.1 : 0);
 
-  // Total Cash Ranges
-  const minCash = budget.min * 0.85;
-  const maxCash = budget.max * 0.85;
-  const medianCash = budget.median * 0.85;
-
-  // Total CTC Ranges
-  const minCtc = budget.min;
-  const maxCtc = budget.max;
-  const medianCtc = budget.median;
-
-  const getMarkerPct = (val: number, minRange: number, maxRange: number) => {
-    const padding = (maxRange - minRange) * 0.15;
-    const start = minRange - padding;
-    const end = maxRange + padding;
-    const pct = ((val - start) / (end - start)) * 100;
-    return Math.min(Math.max(Math.round(pct), 5), 95);
+  const getPosPct = (val: number) => {
+    if (scaleEnd === scaleStart) return 50;
+    const pct = ((val - scaleStart) / (scaleEnd - scaleStart)) * 100;
+    return Math.min(Math.max(pct, 0), 100);
   };
+
+  const marketMinPct = getPosPct(benchMin);
+  const marketMaxPct = getPosPct(benchMax);
 
   return (
       <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-[#f4f6fb] print:overflow-visible print:h-auto print:bg-white">
@@ -510,6 +504,10 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
 
               {/* Top row: CTC stat tiles */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pb-5 border-b border-gray-100">
+                <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1.5">Current CTC</div>
+                  <div className="text-[15px] font-bold text-indigo-600">{formatLakhsToRupees(totalCtcWithEsops)}</div>
+                </div>
                 <div className="bg-gray-50 rounded-lg p-3">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Fixed (Base)</div>
                   <div className="text-[15px] font-bold text-[#0b1f3a]">{formatLakhsToRupees(candidate.fixedCtc)}</div>
@@ -518,38 +516,35 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
                   <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Variable</div>
                   <div className="text-[15px] font-bold text-[#0b1f3a]">{formatLakhsToRupees(candidate.variableCtc)}</div>
                 </div>
-                <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1.5">Total CTC</div>
-                  <div className="text-[15px] font-bold text-indigo-600">{formatLakhsToRupees(totalCtcWithEsops)}</div>
-                </div>
-                {candidate.expected && (
+                {candidate.expected ? (
                   <div className="bg-gray-50 rounded-lg p-3">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Expected</div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Expected CTC</div>
                     <div className="text-[15px] font-bold text-[#0b1f3a]">{formatLakhsToRupees(candidate.expected)}</div>
                   </div>
-                )}
-                {candidate.esops > 0 && (
-                  <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-amber-500 mb-1.5">ESOPs Total</div>
-                    <div className="text-[15px] font-bold text-amber-700">{formatLakhsToRupees(candidate.esops)}</div>
-                  </div>
-                )}
+                ) : <div />}
               </div>
 
-              {/* ESOP Vesting Schedule */}
-              {candidate.esops > 0 && candidate.esopVesting && candidate.esopVesting.years > 0 && (
-                <div className="py-4 border-b border-gray-100">
+              {/* Second row: ESOPs and Vesting */}
+              {candidate.esops > 0 && (
+                <div className="py-5 border-b border-gray-100">
                   <div className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-3">
-                    ESOP Vesting Schedule ({candidate.esopVesting.years} Years)
+                    ESOP Vesting Schedule ({candidate.esopVesting?.years || 0} Years)
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {candidate.esopVesting.distribution.map((pct: number, idx: number) => {
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-amber-500 mb-1.5">Total ESOPs</div>
+                      <div className="text-[15px] font-bold text-amber-700">{formatLakhsToRupees(candidate.esops)}</div>
+                    </div>
+                    
+                    {candidate.esopVesting && candidate.esopVesting.years > 0 && candidate.esopVesting.distribution.map((pct: number, idx: number) => {
                       const amountInLakhs = (candidate.esops * pct) / 100;
                       return (
-                        <div key={idx} className="bg-amber-50 border border-amber-100 px-3 py-2 rounded-lg flex flex-col items-center min-w-[72px]">
-                          <span className="text-[9px] font-semibold text-amber-400 uppercase">Year {idx + 1}</span>
-                          <span className="text-[13px] font-bold text-amber-700 mt-0.5">{formatLakhsToRupees(amountInLakhs)}</span>
-                          <span className="text-[9px] text-amber-400">{pct}%</span>
+                        <div key={idx} className="bg-amber-50/50 rounded-lg p-3 border border-amber-100/50">
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Year {idx + 1}</span>
+                            <span className="text-[9px] font-semibold text-amber-400 bg-amber-100/50 px-1.5 py-0.5 rounded">{pct}%</span>
+                          </div>
+                          <div className="text-[15px] font-bold text-amber-700">{formatLakhsToRupees(amountInLakhs)}</div>
                         </div>
                       );
                     })}
@@ -558,65 +553,40 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
               )}
 
               {/* Benchmarking bars */}
-              {candidate.ctc && (
+              {/* Benchmarking bars */}
+              {(totalCtcWithEsops > 0 || expectedCTC > 0) && (
                 <div className="pt-5">
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-[12px] font-bold text-[#0b1f3a]">Market Benchmarking</span>
-                    <div className="flex items-center gap-4 text-[10px] text-gray-400">
-                      <span className="flex items-center gap-1.5"><span className="w-8 h-1 bg-gradient-to-r from-gray-200 via-[#0b1f3a] to-emerald-500 rounded-full inline-block" /> Market Range</span>
-                      <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-violet-600 inline-block" /> Candidate</span>
+                    <div className="flex items-center gap-4 text-[10px] text-gray-400 flex-wrap justify-end">
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-emerald-400/40 rounded inline-block" /> Market Range ({formatLakhsToRupees(benchMin)} - {formatLakhsToRupees(benchMax)})</span>
+                      <span className="flex items-center gap-1.5"><span className="w-1.5 h-3.5 rounded-full bg-violet-600 inline-block" /> Current</span>
+                      {expectedCTC > 0 && <span className="flex items-center gap-1.5"><span className="w-1.5 h-3.5 rounded-full bg-amber-500 inline-block" /> Expected</span>}
                     </div>
                   </div>
-                  <div className="space-y-4">
-                    {candidate.fixedCtc && (
-                      <div className="flex items-center gap-4">
-                        <span className="text-[11px] font-semibold text-gray-500 w-24 shrink-0">Base (Fixed)</span>
-                        <div className="flex-1">
-                          <div className="relative pt-1">
-                            <div className="h-1.5 bg-gradient-to-r from-gray-200 via-[#0b1f3a] to-emerald-500 rounded-full w-full" />
-                            <div className="absolute top-0 w-3 h-3 bg-violet-600 border-2 border-white rounded-full -translate-y-1/4 shadow-sm" style={{ left: `${getMarkerPct(candidate.fixedCtc, minBase, maxBase)}%` }} />
-                          </div>
-                          <div className="flex justify-between text-[9px] text-gray-400 mt-1">
-                            <span>{formatLakhsToRupees(minBase)} (Min)</span>
-                            <span>{formatLakhsToRupees(medianBase)} (Mid)</span>
-                            <span>{formatLakhsToRupees(maxBase)} (Max)</span>
-                          </div>
+                  <div className="mt-8 mb-4 relative h-3 bg-gray-100 rounded-full w-full">
+                    {/* Market Range Band */}
+                    {marketMaxPct > marketMinPct && (
+                      <div className="absolute h-full bg-emerald-400/40 rounded-full" style={{ left: `${marketMinPct}%`, width: `${marketMaxPct - marketMinPct}%` }} />
+                    )}
+                    
+                    {/* Current CTC Marker */}
+                    {totalCtcWithEsops > 0 && (
+                      <div className="absolute top-1/2 w-1.5 h-7 bg-violet-600 border border-white rounded-full -translate-y-1/2 shadow-sm z-10" style={{ left: `calc(${getPosPct(totalCtcWithEsops)}% - 3px)` }} title="Current CTC">
+                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 text-[10px] font-bold text-violet-600 whitespace-nowrap bg-white px-1.5 py-0.5 rounded shadow-sm border border-violet-100">
+                          {formatLakhsToRupees(totalCtcWithEsops)}
                         </div>
-                        <span className="text-[11px] font-bold text-violet-600 w-14 text-right shrink-0">{formatLakhsToRupees(candidate.fixedCtc)}</span>
                       </div>
                     )}
-                    {candidate.fixedCtc && (
-                      <div className="flex items-center gap-4">
-                        <span className="text-[11px] font-semibold text-gray-500 w-24 shrink-0">Total Cash</span>
-                        <div className="flex-1">
-                          <div className="relative pt-1">
-                            <div className="h-1.5 bg-gradient-to-r from-gray-200 via-[#0b1f3a] to-emerald-500 rounded-full w-full" />
-                            <div className="absolute top-0 w-3 h-3 bg-violet-600 border-2 border-white rounded-full -translate-y-1/4 shadow-sm" style={{ left: `${getMarkerPct(candidate.fixedCtc + (candidate.variableCtc || 0), minCash, maxCash)}%` }} />
-                          </div>
-                          <div className="flex justify-between text-[9px] text-gray-400 mt-1">
-                            <span>{formatLakhsToRupees(minCash)}</span>
-                            <span>{formatLakhsToRupees(medianCash)}</span>
-                            <span>{formatLakhsToRupees(maxCash)}</span>
-                          </div>
+
+                    {/* Expected CTC Marker */}
+                    {expectedCTC > 0 && (
+                      <div className="absolute top-1/2 w-1.5 h-7 bg-amber-500 border border-white rounded-full -translate-y-1/2 shadow-sm z-10" style={{ left: `calc(${getPosPct(expectedCTC)}% - 3px)` }} title="Expected CTC">
+                        <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-[10px] font-bold text-amber-600 whitespace-nowrap bg-white px-1.5 py-0.5 rounded shadow-sm border border-amber-100">
+                          {formatLakhsToRupees(expectedCTC)}
                         </div>
-                        <span className="text-[11px] font-bold text-violet-600 w-14 text-right shrink-0">{formatLakhsToRupees(candidate.fixedCtc + (candidate.variableCtc || 0))}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-4">
-                      <span className="text-[11px] font-semibold text-gray-500 w-24 shrink-0">Total CTC</span>
-                      <div className="flex-1">
-                        <div className="relative pt-1">
-                          <div className="h-1.5 bg-gradient-to-r from-gray-200 via-[#0b1f3a] to-emerald-500 rounded-full w-full" />
-                          <div className="absolute top-0 w-3 h-3 bg-violet-600 border-2 border-white rounded-full -translate-y-1/4 shadow-sm" style={{ left: `${getMarkerPct(totalCtcWithEsops, minCtc, maxCtc)}%` }} />
-                        </div>
-                        <div className="flex justify-between text-[9px] text-gray-400 mt-1">
-                          <span>{formatLakhsToRupees(minCtc)}</span>
-                          <span>{formatLakhsToRupees(medianCtc)}</span>
-                          <span>{formatLakhsToRupees(maxCtc)}</span>
-                        </div>
-                      </div>
-                      <span className="text-[11px] font-bold text-violet-600 w-14 text-right shrink-0">{formatLakhsToRupees(totalCtcWithEsops)}</span>
-                    </div>
                   </div>
                 </div>
               )}
