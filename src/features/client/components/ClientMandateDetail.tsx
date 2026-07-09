@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 import { useRouter } from "next/navigation";
-import { useClientPortal } from "../context/ClientPortalContext";
+import { useClientPortal } from "@/features/client/context/ClientPortalContext";
 
 // ─── Types ───────────────────────────────────────────────
 type MandateCandidate = {

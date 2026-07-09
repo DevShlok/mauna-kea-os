@@ -9,6 +9,7 @@ export const requireRole = cache(async (allowedRoles: string[]) => {
   const email = user?.email;
 
   if (!email || !user) {
+    console.log(`[requireRole] No email or user found! Redirecting to /sign-in`);
     redirect("/sign-in");
   }
 

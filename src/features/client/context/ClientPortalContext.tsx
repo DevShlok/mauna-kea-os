@@ -41,7 +41,8 @@ export function ClientPortalProvider({ children }: { children: ReactNode }) {
 export function useClientPortal() {
   const context = useContext(ClientPortalContext);
   if (context === undefined) {
-    throw new Error("useClientPortal must be used within a ClientPortalProvider");
+    console.warn("useClientPortal was called outside of ClientPortalProvider. Returning fallback.");
+    return { topbarConfig: {}, setTopbarConfig: () => {} };
   }
   return context;
 }

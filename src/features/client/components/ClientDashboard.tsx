@@ -15,7 +15,7 @@ import {
   Star,
   LogOut,
 } from "lucide-react";
-import { useClientPortal } from "../context/ClientPortalContext";
+import { useClientPortal } from "@/features/client/context/ClientPortalContext";
 
 // ─── Types ───────────────────────────────────────────────
 type MandateCandidate = {

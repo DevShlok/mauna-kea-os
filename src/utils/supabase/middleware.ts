@@ -41,9 +41,14 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/candidate');
 
   if (!user && isProtectedRoute) {
+    console.log(`[Middleware] No user found for protected route: ${request.nextUrl.pathname}. Redirecting to /sign-in`);
     const url = request.nextUrl.clone()
     url.pathname = '/sign-in'
     return NextResponse.redirect(url)
+  }
+
+  if (user) {
+     console.log(`[Middleware] User found: ${user.email} for ${request.nextUrl.pathname}`);
   }
 
   return supabaseResponse
