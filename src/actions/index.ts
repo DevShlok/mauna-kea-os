@@ -27,7 +27,7 @@ export async function createMandateAction(data: any) {
     opened: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
     status: "universe",
     internalStatus: "contractsent",
-  });
+  }).returning({ insertId: mandates.id });
   revalidatePath("/dashboard/mandates");
   return result[0].insertId;
 }
@@ -88,7 +88,7 @@ export async function createFrameworkAction(data: any, mandateIds?: string[]) {
         name: cat.name,
         weight: cat.weight || 100,
         sortOrder: i,
-      });
+      }).returning({ insertId: frameworkCategories.id });
       const catId = res[0].insertId;
       
       if (cat.criteria && cat.criteria.length > 0) {
@@ -351,7 +351,7 @@ export async function editFrameworkAction(id: string, data: any, mandateIds?: st
         name: cat.name,
         weight: cat.weight || 100,
         sortOrder: i,
-      });
+      }).returning({ insertId: frameworkCategories.id });
       const catId = res[0].insertId;
       
       if (cat.criteria && cat.criteria.length > 0) {

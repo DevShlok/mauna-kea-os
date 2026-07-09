@@ -1,9 +1,9 @@
-import { mysqlTable, int, varchar, text, float, boolean, datetime, json, mediumtext, date } from 'drizzle-orm/mysql-core';
+import { pgTable, integer as int, varchar, text, doublePrecision as float, boolean, timestamp as datetime, json, text as mediumtext, date, serial } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 // ─── MANDATES ────────────────────────────────────────────
-export const mandates = mysqlTable('mandates', {
-  id: int('id').autoincrement().primaryKey(),
+export const mandates = pgTable('mandates', {
+  id: serial('id').primaryKey(),
   company: varchar('company', { length: 255 }).notNull(),
   role: varchar('role', { length: 255 }).notNull(),
   ctc: varchar('ctc', { length: 100 }),
@@ -35,8 +35,8 @@ export const mandates = mysqlTable('mandates', {
 });
 
 // ─── MANDATE CANDIDATES ──────────────────────────────────
-export const mandateCandidates = mysqlTable('mandate_candidates', {
-  id: int('id').autoincrement().primaryKey(),
+export const mandateCandidates = pgTable('mandate_candidates', {
+  id: serial('id').primaryKey(),
   externalId: varchar('external_id', { length: 20 }).notNull(),
   mandateId: int('mandate_id').notNull().references(() => mandates.id),
   name: varchar('name', { length: 255 }).notNull(),
@@ -52,7 +52,7 @@ export const mandateCandidates = mysqlTable('mandate_candidates', {
 });
 
 // ─── CANDIDATES (MASTER) ─────────────────────────────────
-export const candidates = mysqlTable('candidates', {
+export const candidates = pgTable('candidates', {
   id: varchar('id', { length: 20 }).primaryKey(),
   initials: varchar('initials', { length: 5 }),
   name: varchar('name', { length: 255 }).notNull(),
@@ -90,8 +90,8 @@ export const candidates = mysqlTable('candidates', {
 });
 
 // ─── CANDIDATE FILES (HISTORY) ───────────────────────────
-export const candidateFiles = mysqlTable('candidate_files', {
-  id: int('id').autoincrement().primaryKey(),
+export const candidateFiles = pgTable('candidate_files', {
+  id: serial('id').primaryKey(),
   candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
   fileType: varchar('file_type', { length: 50 }).notNull(), // 'CV / Resume' or 'Linkedin Profile'
   fileName: varchar('file_name', { length: 255 }).notNull(),
@@ -101,8 +101,8 @@ export const candidateFiles = mysqlTable('candidate_files', {
 });
 
 // ─── FLOAT REFERENCES ────────────────────────────────────
-export const floatReferences = mysqlTable('float_references', {
-  id: int('id').autoincrement().primaryKey(),
+export const floatReferences = pgTable('float_references', {
+  id: serial('id').primaryKey(),
   candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
   type: varchar('type', { length: 50 }),
   name: varchar('name', { length: 255 }),
@@ -113,7 +113,7 @@ export const floatReferences = mysqlTable('float_references', {
 });
 
 // ─── FLOATS (SUBMISSIONS) ────────────────────────────────
-export const floats = mysqlTable('floats', {
+export const floats = pgTable('floats', {
   id: varchar('id', { length: 20 }).primaryKey(),
   candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
   candName: varchar('cand_name', { length: 255 }),
@@ -129,7 +129,7 @@ export const floats = mysqlTable('floats', {
 });
 
 // ─── FLOAT FOLLOW-UPS ────────────────────────────────────
-export const floatFollowUps = mysqlTable('float_followups', {
+export const floatFollowUps = pgTable('float_followups', {
   id: varchar('id', { length: 20 }).primaryKey(),
   candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
   cand: varchar('cand', { length: 255 }),
@@ -143,8 +143,8 @@ export const floatFollowUps = mysqlTable('float_followups', {
 });
 
 // ─── FLOAT ACTIVITIES ────────────────────────────────────
-export const floatActivities = mysqlTable('float_activities', {
-  id: int('id').autoincrement().primaryKey(),
+export const floatActivities = pgTable('float_activities', {
+  id: serial('id').primaryKey(),
   candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
   date: varchar('date', { length: 20 }),
   time: varchar('time', { length: 20 }),
@@ -156,7 +156,7 @@ export const floatActivities = mysqlTable('float_activities', {
 });
 
 // ─── FRAMEWORKS ──────────────────────────────────────────
-export const frameworks = mysqlTable('frameworks', {
+export const frameworks = pgTable('frameworks', {
   id: varchar('id', { length: 20 }).primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   industry: varchar('industry', { length: 255 }),
@@ -166,16 +166,16 @@ export const frameworks = mysqlTable('frameworks', {
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
-export const frameworkCategories = mysqlTable('framework_categories', {
-  id: int('id').autoincrement().primaryKey(),
+export const frameworkCategories = pgTable('framework_categories', {
+  id: serial('id').primaryKey(),
   frameworkId: varchar('framework_id', { length: 20 }).notNull().references(() => frameworks.id),
   name: varchar('name', { length: 255 }).notNull(),
   weight: int('weight').default(100),
   sortOrder: int('sort_order').default(0),
 });
 
-export const frameworkCriteria = mysqlTable('framework_criteria', {
-  id: int('id').autoincrement().primaryKey(),
+export const frameworkCriteria = pgTable('framework_criteria', {
+  id: serial('id').primaryKey(),
   categoryId: int('category_id').notNull().references(() => frameworkCategories.id),
   name: varchar('name', { length: 255 }).notNull(),
   weight: int('weight').default(10),
@@ -183,7 +183,7 @@ export const frameworkCriteria = mysqlTable('framework_criteria', {
 });
 
 // ─── USERS ───────────────────────────────────────────────
-export const platformUsers = mysqlTable('platform_users', {
+export const platformUsers = pgTable('platform_users', {
   id: varchar('id', { length: 10 }).primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull(),
@@ -199,7 +199,7 @@ export const platformUsers = mysqlTable('platform_users', {
 });
 
 // ─── CANDIDATE REPORTS (AI WORKBENCH) ────────────────────
-export const candidateReports = mysqlTable('candidate_reports', {
+export const candidateReports = pgTable('candidate_reports', {
   id: varchar('id', { length: 20 }).primaryKey(),
   candidateId: varchar('candidate_id', { length: 20 }).notNull(), // Can be Candidate or MandateCandidate ID
   frameworkId: varchar('framework_id', { length: 20 }).notNull().references(() => frameworks.id),
@@ -210,7 +210,7 @@ export const candidateReports = mysqlTable('candidate_reports', {
 });
 
 // ─── CLIENTS ─────────────────────────────────────────────
-export const clients = mysqlTable('clients', {
+export const clients = pgTable('clients', {
   id: varchar('id', { length: 50 }).primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   accountId: varchar('account_id', { length: 50 }),
@@ -221,8 +221,8 @@ export const clients = mysqlTable('clients', {
 });
 
 // ─── CLIENT NOTIFICATIONS ────────────────────────────────
-export const clientNotifications = mysqlTable('client_notifications', {
-  id: int('id').autoincrement().primaryKey(),
+export const clientNotifications = pgTable('client_notifications', {
+  id: serial('id').primaryKey(),
   clientId: varchar('client_id', { length: 50 }).notNull().references(() => clients.id),
   mandateId: int('mandate_id').notNull().references(() => mandates.id),
   message: text('message').notNull(),
@@ -232,8 +232,8 @@ export const clientNotifications = mysqlTable('client_notifications', {
 });
 
 // ─── CLIENT REMARKS ──────────────────────────────────────
-export const clientRemarks = mysqlTable('client_remarks', {
-  id: int('id').autoincrement().primaryKey(),
+export const clientRemarks = pgTable('client_remarks', {
+  id: serial('id').primaryKey(),
   clientId: varchar('client_id', { length: 50 }).notNull().references(() => clients.id),
   mandateId: int('mandate_id').notNull().references(() => mandates.id),
   candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
@@ -243,8 +243,8 @@ export const clientRemarks = mysqlTable('client_remarks', {
 });
 
 // ─── CONSULTANT NOTIFICATIONS ────────────────────────────
-export const consultantNotifications = mysqlTable('consultant_notifications', {
-  id: int('id').autoincrement().primaryKey(),
+export const consultantNotifications = pgTable('consultant_notifications', {
+  id: serial('id').primaryKey(),
   userId: varchar('user_id', { length: 10 }),
   targetRole: varchar('target_role', { length: 20 }),
   message: text('message').notNull(),
@@ -272,16 +272,16 @@ export type ClientRemark = typeof clientRemarks.$inferSelect;
 export type ConsultantNotification = typeof consultantNotifications.$inferSelect;
 
 // ─── TIME & LEAVE MANAGEMENT ─────────────────────────────
-export const timeLogs = mysqlTable('time_logs', {
-  id: int('id').autoincrement().primaryKey(),
+export const timeLogs = pgTable('time_logs', {
+  id: serial('id').primaryKey(),
   userId: varchar('user_id', { length: 10 }).notNull().references(() => platformUsers.id),
   action: varchar('action', { length: 20 }).notNull(), // 'clock_in', 'clock_out', 'break_start', 'break_end'
   timestamp: datetime('timestamp').notNull(),
   dateString: date('date_string').notNull(), // YYYY-MM-DD for easy daily grouping
 });
 
-export const leaveRequests = mysqlTable('leave_requests', {
-  id: int('id').autoincrement().primaryKey(),
+export const leaveRequests = pgTable('leave_requests', {
+  id: serial('id').primaryKey(),
   userId: varchar('user_id', { length: 10 }).notNull().references(() => platformUsers.id),
   leaveType: varchar('leave_type', { length: 50 }).notNull(), // Sick, Casual, Privilege, etc.
   startDate: date('start_date').notNull(),

@@ -1,29 +1,15 @@
-import { drizzle } from 'drizzle-orm/mysql2';
-import mysql from 'mysql2/promise';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import * as schema from './schema';
-import dns from 'dns';
 
-// Force IPv4 resolution first to prevent 1.7s timeout delays per connection attempt
-dns.setDefaultResultOrder('ipv4first');
+const globalForDb = globalThis as unknown as { postgresConnection?: ReturnType<typeof postgres> };
 
-// Singleton pool to avoid creating multiple connections in dev hot-reload
-const globalForDb = globalThis as unknown as { mysqlPool?: mysql.Pool };
+const dbUrl = process.env.DATABASE_URL!;
 
-const dbUrl = process.env.DATABASE_URL?.split('?')[0];
-
-const pool = globalForDb.mysqlPool ?? mysql.createPool({
-  uri: dbUrl,
-  connectionLimit: 10,
-  waitForConnections: true,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+const connection = globalForDb.postgresConnection ?? postgres(dbUrl, { prepare: false });
 
 if (process.env.NODE_ENV !== 'production') {
-  globalForDb.mysqlPool = pool;
+  globalForDb.postgresConnection = connection;
 }
 
-export const db = drizzle(pool, { schema, mode: 'default' });
+export const db = drizzle(connection, { schema });
