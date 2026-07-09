@@ -3,7 +3,7 @@ import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useSt
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { addSubmissionAction, addReferenceAction, deleteFloatListEntryAction, logCandidateActivityAction, toggleActivityPinAction, resolveClientRemarkAction } from "@/actions";
-import { useUser } from "@clerk/nextjs";
+import { createClient } from "@/utils/supabase/client";
 import { Pin } from "lucide-react";
 
 function Tile({ id, icon, name, meta, content, isOpen, toggle }: any) {
@@ -28,7 +28,16 @@ function Tile({ id, icon, name, meta, content, isOpen, toggle }: any) {
 
 export default function FlCandidateClient({ candidate, mandates = [], userRole = "consultant", readOnly = false, clientRemarks = [] }: { candidate: any; mandates?: any[]; userRole?: string; readOnly?: boolean; clientRemarks?: any[] }) {
   const router = useRouter();
-  const { user } = useUser();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser({ fullName: user?.user_metadata?.full_name || user?.email });
+    };
+    fetchUser();
+  }, []);
   const getInitialFiles = () => {
     let files = candidate?.files ? [...candidate.files] : [];
     

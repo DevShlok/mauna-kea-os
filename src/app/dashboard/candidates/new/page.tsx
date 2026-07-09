@@ -1,18 +1,15 @@
 import { requireRole } from "@/lib/auth";
 import NewCandidateClient from "@/features/candidates/components/NewCandidateClient";
-import { currentUser } from "@clerk/nextjs/server";
-import { getUserByEmail, getMandates } from "@/db/queries";
+import { getMandates } from "@/db/queries";
 
 export default async function NewFloatListCandidatePage() {
-  await requireRole(["admin", "consultant"]);
+  const { platformUser: pUser, email } = await requireRole(["admin", "consultant"]);
 
-  const user = await currentUser();
   let userRole = "consultant";
   let readOnly = false;
   let linkedCandidateId = "";
   
-  if (user?.primaryEmailAddress?.emailAddress) {
-    const pUser = await getUserByEmail(user.primaryEmailAddress.emailAddress);
+  if (email) {
     if (pUser) {
       userRole = pUser.role || "consultant";
       if (userRole === "candidate") {

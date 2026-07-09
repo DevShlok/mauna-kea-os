@@ -1,20 +1,21 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { createClient } from "@/utils/supabase/server";
 import { getUserByEmail } from "@/db/queries";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
 export const requireRole = cache(async (allowedRoles: string[]) => {
-  const user = await currentUser();
-  const email = user?.primaryEmailAddress?.emailAddress;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const email = user?.email;
 
-  if (!email) {
+  if (!email || !user) {
     redirect("/sign-in");
   }
 
   let platformUser = await getUserByEmail(email);
 
   if (!platformUser) {
-    const fullName = user?.fullName || user?.firstName || "User";
+    const fullName = user.user_metadata?.full_name || "User";
     const isMaunaKea = email.endsWith("@maunakea.co.in");
     const role = isMaunaKea ? "consultant" : "candidate";
     const userId = "U-" + Math.floor(Math.random() * 10000);
@@ -50,5 +51,5 @@ export const requireRole = cache(async (allowedRoles: string[]) => {
     }
   }
 
-  return { platformUser, userRole, email, clerkUser: user };
+  return { platformUser, userRole, email, supabaseUser: user };
 });

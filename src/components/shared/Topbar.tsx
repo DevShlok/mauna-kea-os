@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Search, Bell, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
+import { createClient } from "@/utils/supabase/client";
 import { getConsultantNotificationsAction, markConsultantNotificationsAsReadAction } from "@/actions";
 
 export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
@@ -62,6 +62,13 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
       await markConsultantNotificationsAsReadAction();
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     }
+  };
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/sign-in');
+    router.refresh();
   };
 
   let title = "Dashboard";
@@ -181,8 +188,13 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
         </span>
       )}
 
-      <div className="flex items-center justify-center">
-        <UserButton />
+      <div className="flex items-center justify-center ml-2">
+        <button 
+          onClick={handleSignOut}
+          className="text-xs text-white/70 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-full transition-colors"
+        >
+          Sign Out
+        </button>
       </div>
     </div>
   );

@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { leaveRequests, platformUsers, consultantNotifications } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { currentUser } from "@clerk/nextjs/server";
+import { createClient } from "@/utils/supabase/server";
 import { getUserByEmail } from "@/db/queries";
 
 export async function GET(request: Request) {
   try {
-    const user = await currentUser();
-    const email = user?.primaryEmailAddress?.emailAddress;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const email = user?.email;
     if (!email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const platformUser = await getUserByEmail(email);
@@ -47,8 +48,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const user = await currentUser();
-    const email = user?.primaryEmailAddress?.emailAddress;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const email = user?.email;
     if (!email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const platformUser = await getUserByEmail(email);
@@ -86,8 +88,9 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const user = await currentUser();
-    const email = user?.primaryEmailAddress?.emailAddress;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const email = user?.email;
     if (!email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const platformUser = await getUserByEmail(email);
     if (!platformUser) return NextResponse.json({ error: "User not found" }, { status: 404 });

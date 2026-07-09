@@ -644,7 +644,7 @@ export async function getClientNotificationsAction() {
   const { platformUser } = await import("@/lib/auth").then(m => m.requireRole(["client"]));
   if (!platformUser?.linkedClientId) return [];
   
-  const [notifs] = await db.execute(sql`
+  const notifs = await db.execute(sql`
     SELECT id, client_id as clientId, mandate_id as mandateId, message, link, is_read as isRead, created_at as createdAt 
     FROM client_notifications 
     WHERE client_id = ${platformUser.linkedClientId} 
@@ -707,12 +707,13 @@ export async function resolveClientRemarkAction(remarkId: number, status: string
 }
 
 export async function getConsultantNotificationsAction() {
-  const { currentUser } = await import("@clerk/nextjs/server");
+  const { createClient } = await import("@/utils/supabase/server");
   const { getUserByEmail } = await import("@/db/queries");
   const { or, and, isNull, eq } = await import("drizzle-orm");
   
-  const user = await currentUser();
-  const email = user?.primaryEmailAddress?.emailAddress;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const email = user?.email;
   if (!email) return [];
   const platformUser = await getUserByEmail(email);
   if (!platformUser) return [];
@@ -731,12 +732,13 @@ export async function getConsultantNotificationsAction() {
 }
 
 export async function markConsultantNotificationsAsReadAction() {
-  const { currentUser } = await import("@clerk/nextjs/server");
+  const { createClient } = await import("@/utils/supabase/server");
   const { getUserByEmail } = await import("@/db/queries");
   const { or, and, isNull, eq } = await import("drizzle-orm");
   
-  const user = await currentUser();
-  const email = user?.primaryEmailAddress?.emailAddress;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const email = user?.email;
   if (!email) return;
   const platformUser = await getUserByEmail(email);
   if (!platformUser) return;

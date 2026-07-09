@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { timeLogs, platformUsers, leaveRequests } from "@/db/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
-import { currentUser } from "@clerk/nextjs/server";
+import { createClient } from "@/utils/supabase/server";
 import { getUserByEmail } from "@/db/queries";
 
 export async function GET(request: Request) {
   try {
-    const user = await currentUser();
-    const email = user?.primaryEmailAddress?.emailAddress;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const email = user?.email;
     if (!email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const platformUser = await getUserByEmail(email);
@@ -96,8 +97,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const user = await currentUser();
-    const email = user?.primaryEmailAddress?.emailAddress;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const email = user?.email;
     if (!email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const platformUser = await getUserByEmail(email);

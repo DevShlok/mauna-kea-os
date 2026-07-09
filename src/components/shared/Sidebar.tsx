@@ -12,7 +12,7 @@ import {
   Plus,
   Shield
 } from "lucide-react";
-import { SignOutButton } from "@clerk/nextjs";
+import { createClient } from "@/utils/supabase/client";
 import { useState } from "react";
 
 export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidateId, userName = "User" }: { userRole?: string; linkedClientId?: string; linkedCandidateId?: string; userName?: string; }) {
@@ -22,6 +22,12 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
   const initials = fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "MK";
 
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = '/sign-in';
+  };
 
   const handleMouseEnter = (title: string) => setHoveredCategory(title);
   const handleMouseLeave = () => setHoveredCategory(null);
@@ -162,11 +168,9 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
           <span className="text-white text-[15px] font-semibold block truncate">{fullName}</span>
           <span className="text-white/50 text-[12px] block capitalize">{userRole}</span>
         </div>
-        <SignOutButton redirectUrl="/sign-in">
-          <button className="text-white/45 hover:text-white transition-colors p-1" title="Sign Out">
-            <LogOut className="w-4 h-4" />
-          </button>
-        </SignOutButton>
+        <button onClick={handleSignOut} className="text-white/45 hover:text-white transition-colors p-1" title="Sign Out">
+          <LogOut className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );

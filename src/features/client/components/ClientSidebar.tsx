@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { SignOutButton } from "@clerk/nextjs";
+import { createClient } from "@/utils/supabase/client";
 import {
   Home,
   Star,
@@ -22,6 +22,13 @@ export function ClientSidebar({ clientName }: Props) {
   const tab = searchParams.get("tab");
 
   let activeTab = "dashboard";
+  
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = '/sign-in';
+  };
+
   if (pathname === "/client/mandates" && tab) {
     activeTab = tab;
   } else if (pathname.startsWith("/client/mandates/") || pathname.startsWith("/client/candidates/")) {
@@ -101,14 +108,13 @@ export function ClientSidebar({ clientName }: Props) {
           </span>
           <span className="text-white/50 text-[11px] block">Client</span>
         </div>
-        <SignOutButton redirectUrl="/sign-in">
-          <button
-            className="text-white/45 hover:text-white transition-colors p-1"
-            title="Sign Out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        </SignOutButton>
+        <button
+          onClick={handleSignOut}
+          className="text-white/45 hover:text-white transition-colors p-1"
+          title="Sign Out"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );
