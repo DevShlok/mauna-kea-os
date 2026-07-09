@@ -113,12 +113,11 @@ export default async function ClientCandidateDetailPage({
   // Only expose the AI report if it has been explicitly published to the client
   const isShared = reports[0]?.sharedWithClient || false;
   const rawReportData = (isShared ? (reports[0]?.reportData || {}) : {}) as Record<string, any>;
-  const accepted = rawReportData._acceptedSections || [];
-  const hiddenFields = ["Former Company", "Pedigree", "CTC", "Expected CTC", "Revenue Ownership", "Team Size Led", "_rawInputs", "error", "_format1", "_format2", "scores", "_acceptedSections", "matchScore", "readinessScore", "hireabilityScore", "Industry", "Geography"];
+  const excludeFields = ["_rawInputs", "error", "_format1", "_format2", "_acceptedSections"];
   
   const reportData: Record<string, any> = {};
   for (const key of Object.keys(rawReportData)) {
-    if (hiddenFields.includes(key) || accepted.includes(key)) {
+    if (!excludeFields.includes(key)) {
       reportData[key] = rawReportData[key];
     }
   }
