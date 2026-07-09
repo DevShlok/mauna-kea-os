@@ -9,7 +9,6 @@ export const requireRole = cache(async (allowedRoles: string[]) => {
   const email = user?.email;
 
   if (!email || !user) {
-    console.log(`[requireRole] No email or user found! Redirecting to /sign-in`);
     redirect("/sign-in");
   }
 
@@ -44,7 +43,7 @@ export const requireRole = cache(async (allowedRoles: string[]) => {
   if (!allowedRoles.includes(userRole)) {
     // Unauthorized! Route them to their proper portal based on their actual role
     if (userRole === "client") {
-      redirect("/client");
+      redirect("/client/mandates");
     } else if (userRole === "candidate") {
       redirect("/candidate");
     } else {
