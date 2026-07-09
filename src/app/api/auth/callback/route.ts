@@ -6,10 +6,13 @@ export async function GET(request: Request) {
   const code = searchParams.get('code');
   // if "next" is in param, use it as the redirect URL
   const next = searchParams.get('next') ?? '/dashboard';
+  let authError: any = null;
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
+    authError = error;
+    
     if (error) {
       console.error('Error exchanging code for session:', error.message);
     }
@@ -28,5 +31,5 @@ export async function GET(request: Request) {
   }
 
   // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/sign-in?error=AuthCallbackFailed&desc=${encodeURIComponent(error?.message || 'unknown_error')}`);
+  return NextResponse.redirect(`${origin}/sign-in?error=AuthCallbackFailed&desc=${encodeURIComponent(authError?.message || 'unknown_error')}`);
 }
