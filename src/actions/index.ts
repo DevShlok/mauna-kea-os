@@ -652,7 +652,7 @@ export async function getClientNotificationsAction() {
     LIMIT 10
   `);
   
-  return notifs as unknown as any[];
+  return JSON.parse(JSON.stringify(notifs));
 }
 
 export async function markClientNotificationsAsReadAction() {

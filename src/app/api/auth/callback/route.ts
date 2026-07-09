@@ -28,5 +28,5 @@ export async function GET(request: Request) {
   }
 
   // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/sign-in?error=AuthCallbackFailed`);
+  return NextResponse.redirect(`${origin}/sign-in?error=AuthCallbackFailed&desc=${encodeURIComponent(error?.message || 'unknown_error')}`);
 }
