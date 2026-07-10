@@ -4,7 +4,7 @@ import * as schema from './schema';
 
 const globalForDb = globalThis as unknown as { postgresConnection?: ReturnType<typeof postgres> };
 
-const dbUrl = process.env.DATABASE_URL!;
+const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL!;
 
 const connection = globalForDb.postgresConnection ?? postgres(dbUrl, { prepare: false });
 

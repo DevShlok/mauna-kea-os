@@ -187,15 +187,6 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
           Candidate
         </span>
       )}
-
-      <div className="flex items-center justify-center ml-2">
-        <button 
-          onClick={handleSignOut}
-          className="text-xs text-white/70 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-full transition-colors"
-        >
-          Sign Out
-        </button>
-      </div>
     </div>
   );
 }

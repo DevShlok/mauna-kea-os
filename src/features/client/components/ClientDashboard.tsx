@@ -454,8 +454,8 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
                         <div className="flex-1 min-w-0">
                           <h3 className="text-[15px] font-bold text-[#0b1f3a] truncate">{mandate.role}</h3>
                           <div className="flex items-center gap-3 mt-1 text-[12px] text-gray-400">
-                            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> Opened on {openedDate}</span>
-                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {daysOpen} days open</span>
+                            <span suppressHydrationWarning className="flex items-center gap-1"><Calendar className="w-3 h-3" /> Opened on {openedDate}</span>
+                            <span suppressHydrationWarning className="flex items-center gap-1"><Clock className="w-3 h-3" /> {daysOpen} days open</span>
                           </div>
                           <div className="flex items-center gap-1.5 mt-2.5">
                             {tags.map((t, i) => (
