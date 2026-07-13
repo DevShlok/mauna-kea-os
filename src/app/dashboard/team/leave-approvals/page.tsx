@@ -37,6 +37,21 @@ export default function LeaveApprovalsPage() {
   const onBreakUsers = teamUsers.filter(u => teamStatuses[u.id] === 'On Break');
   const displayLeaves = leaves.filter(l => l.status !== 'Withdrawn');
 
+  const handleUpdateStatus = async (id: number, newStatus: string) => {
+    try {
+      const res = await fetch('/api/leave-requests', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: newStatus })
+      });
+      if (res.ok) {
+        setLeaves(leaves.map(l => l.id === id ? { ...l, status: newStatus } : l));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <div className="max-w-screen-xl mx-auto pb-10 p-6">
       <div className="mb-6 flex flex-col gap-1">
@@ -72,7 +87,7 @@ export default function LeaveApprovalsPage() {
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Leave Type</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Duration</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Reason</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Status / Action</th>
               </tr>
             </thead>
             <tbody>
@@ -94,13 +109,20 @@ export default function LeaveApprovalsPage() {
                       {leave.reason || '-'}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2.5 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider ${
-                        leave.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
-                        leave.status === 'Withdrawn' ? 'bg-gray-100 text-gray-800' :
-                        'bg-amber-100 text-amber-800'
-                      }`}>
-                        {leave.status}
-                      </span>
+                      {leave.status === 'Pending' ? (
+                        <div className="flex gap-2">
+                          <button onClick={() => handleUpdateStatus(leave.id, 'Approved')} className="px-3 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold uppercase rounded-md transition-colors">Approve</button>
+                          <button onClick={() => handleUpdateStatus(leave.id, 'Rejected')} className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 text-xs font-bold uppercase rounded-md transition-colors">Reject</button>
+                        </div>
+                      ) : (
+                        <span className={`px-2.5 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider ${
+                          leave.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
+                          leave.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {leave.status}
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))

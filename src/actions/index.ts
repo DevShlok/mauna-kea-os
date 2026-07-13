@@ -256,7 +256,7 @@ export async function addFollowUpAction(data: any) {
   return { id, candId };
 }
 
-export async function addPlatformUserAction(data: { name: string; email: string; role: string; linkedClientId?: string; linkedCandidateId?: string }) {
+export async function addPlatformUserAction(data: { name: string; email: string; role: string; linkedClientId?: string; linkedCandidateId?: string; reportingManagerId?: string }) {
   revalidatePath("/dashboard", "layout");
   const id = "U-" + Math.floor(Math.random() * 10000);
   await db.insert(platformUsers).values({
@@ -268,6 +268,7 @@ export async function addPlatformUserAction(data: { name: string; email: string;
     initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
     linkedClientId: data.linkedClientId || null,
     linkedCandidateId: data.linkedCandidateId || null,
+    reportingManagerId: data.reportingManagerId || null,
     lastActive: new Date(),
   });
   revalidatePath("/dashboard/admin/users");
@@ -275,7 +276,7 @@ export async function addPlatformUserAction(data: { name: string; email: string;
   return id;
 }
 
-export async function updatePlatformUserAction(id: string, data: { name: string; email: string; role: string; linkedClientId?: string; linkedCandidateId?: string }) {
+export async function updatePlatformUserAction(id: string, data: { name: string; email: string; role: string; linkedClientId?: string; linkedCandidateId?: string; reportingManagerId?: string }) {
   revalidatePath("/dashboard", "layout");
   await db.update(platformUsers).set({
     name: data.name,
@@ -284,6 +285,7 @@ export async function updatePlatformUserAction(id: string, data: { name: string;
     initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
     linkedClientId: data.linkedClientId || null,
     linkedCandidateId: data.linkedCandidateId || null,
+    reportingManagerId: data.reportingManagerId || null,
   }).where(eq(platformUsers.id, id));
   revalidatePath("/dashboard/admin/users");
 }

@@ -195,6 +195,7 @@ export const platformUsers = pgTable('platform_users', {
   linkedCandidateId: varchar('linked_candidate_id', { length: 20 }), // set when role=candidate
   lastActive: datetime('last_active'),
   maxLeaves: int('max_leaves').default(20), // default to 20 days
+  reportingManagerId: varchar('reporting_manager_id', { length: 10 }), // references another user's id
   createdAt: datetime('created_at').default(sql`now()`),
 });
 

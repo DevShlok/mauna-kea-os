@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addPlatformUserAction } from "@/actions";
 
-export default function NewUserClient({ clients }: { clients: any[] }) {
+export default function NewUserClient({ clients, managers = [] }: { clients: any[], managers?: any[] }) {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", role: "consultant", linkedClientId: "" });
+  const [form, setForm] = useState({ name: "", email: "", role: "consultant", linkedClientId: "", reportingManagerId: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,6 +18,7 @@ export default function NewUserClient({ clients }: { clients: any[] }) {
       name: form.name,
       email: form.email,
       role: form.role,
+      reportingManagerId: form.reportingManagerId || undefined,
     };
 
     if (form.role === "client" && form.linkedClientId) {
@@ -57,6 +58,19 @@ export default function NewUserClient({ clients }: { clients: any[] }) {
                 <option value="candidate">Candidate</option>
               </select>
             </div>
+
+            {form.role === "consultant" && (
+              <div>
+                <label className="block text-[15px] font-bold text-[#6b7a99] uppercase tracking-wider mb-2">Reporting Manager</label>
+                <select value={form.reportingManagerId} onChange={e => setForm({...form, reportingManagerId: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[17px] outline-none focus:border-[#133255]">
+                  <option value="">Default (Neha)</option>
+                  {managers.map(m => (
+                    <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-2">Leaves will be sent to this manager for approval. Leave blank to default to Neha.</p>
+              </div>
+            )}
 
             {form.role === "client" && (
               <div>
