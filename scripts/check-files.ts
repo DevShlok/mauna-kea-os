@@ -14,7 +14,7 @@ async function checkFiles() {
     console.log("candidate_files:", files);
     
     const candidates = await db.execute(sql.raw(`SELECT id, profile_pic FROM candidates WHERE profile_pic IS NOT NULL LIMIT 5`));
-    console.log("candidates profile_pics:", candidates.map(c => ({...c, profile_pic: c.profile_pic.substring(0, 50)})));
+    console.log("candidates profile_pics:", candidates.map((c: any) => ({...c, profile_pic: c.profile_pic.substring(0, 50)})));
     
     const mandates = await db.execute(sql.raw(`SELECT id, jd_url, interview_notes_url, additional_docs_url FROM mandates LIMIT 5`));
     console.log("mandates:", mandates);

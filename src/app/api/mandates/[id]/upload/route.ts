@@ -39,10 +39,11 @@ export async function POST(
     let ext = "txt";
     let mimeType = "text/plain";
     let extractedText = "";
+    let nodeBuffer: Buffer | null = null;
     
     if (file) {
       const buffer = await file.arrayBuffer();
-      const nodeBuffer = Buffer.from(buffer);
+      nodeBuffer = Buffer.from(buffer);
       base64 = nodeBuffer.toString("base64");
       ext = file.name.split(".").pop() || "pdf";
       mimeType = file.type || "application/pdf";
@@ -108,7 +109,7 @@ export async function POST(
       const supabaseFileName = `mandates/${mandateId}-${docType}-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from('mauna-kea-documents')
-        .upload(supabaseFileName, nodeBuffer, {
+        .upload(supabaseFileName, nodeBuffer!, {
           contentType: mimeType
         });
         
