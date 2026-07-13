@@ -1,4 +1,6 @@
 "use client";
+import toast from "react-hot-toast";
+
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -60,7 +62,7 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
 
       if (error) {
         console.error("Upload error:", error);
-        alert("Failed to upload file. Make sure bucket permissions allow uploads.");
+        toast.error("Failed to upload file. Make sure bucket permissions allow uploads.");
         setIsUploading(prev => ({ ...prev, [type]: false }));
         return;
       }

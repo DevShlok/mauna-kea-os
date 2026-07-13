@@ -1,4 +1,6 @@
 "use client";
+import toast from "react-hot-toast";
+
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -203,7 +205,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
         }
       } catch (err) {
         console.error(err);
-        alert("Error generating PDF: " + String(err));
+        toast.error("Error generating PDF: " + String(err));
       } finally {
         setPrintTarget(null);
         setIsGeneratingPdf(false);
@@ -262,11 +264,11 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
         // We could also refresh the router to get the updated candidate master record
         router.refresh();
       } else {
-        alert(`Failed to upload ${type.toUpperCase()}`);
+        toast.error(`Failed to upload ${type.toUpperCase()}`);
       }
     } catch (err) {
       console.error(err);
-      alert(`Error uploading ${type.toUpperCase()}`);
+      toast.error(`Error uploading ${type.toUpperCase()}`);
     } finally {
       if (type === 'cv') setIsUploadingCv(false);
       else setIsUploadingLinkedin(false);
@@ -296,11 +298,11 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
         setCandidateFilesHistory(prev => prev.filter(f => f.id !== fileId));
         setSelectedFileIds(prev => prev.filter(id => id !== fileId));
       } else {
-        alert("Failed to delete file");
+        toast.error("Failed to delete file");
       }
     } catch (err) {
       console.error(err);
-      alert("Error deleting file");
+      toast.error("Error deleting file");
     } finally {
       setDeleteConfirmation(null);
     }
@@ -334,11 +336,11 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
         }
         await fetchCandidateFiles(candId);
       } else {
-        alert(`Failed to upload ${type}`);
+        toast.error(`Failed to upload ${type}`);
       }
     } catch (err) {
       console.error(err);
-      alert(`Error uploading ${type}`);
+      toast.error(`Error uploading ${type}`);
     } finally {
       if (type === 'Interview Notes') setIsUploadingNotes(false);
       else if (type === 'Superior Reference') setIsUploadingSupRef(false);
@@ -373,7 +375,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       }
 
       if (emptyFields.length > 0) {
-        alert(`Please fill in all empty fields in the drafted assessment before generating the final report:\n\n- ${emptyFields.join('\n- ')}`);
+        toast.error(`Please fill in all empty fields in the drafted assessment before generating the final report:\n\n- ${emptyFields.join('\n- ')}`);
         return;
       }
     }
@@ -420,11 +422,11 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           });
         }
       } else {
-        alert("Failed to synthesize the final report format using AI.");
+        toast.error("Failed to synthesize the final report format using AI.");
       }
     } catch (err) {
       console.error(err);
-      alert("Error generating final report format.");
+      toast.error("Error generating final report format.");
     } finally {
       setIsGeneratingFormat(false);
     }
@@ -602,7 +604,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
               setIsGenerating(false);
               clearInterval(interval);
             } else if (data.status === "Failed") {
-              alert("Report generation failed");
+              toast.error("Report generation failed");
               setIsGenerating(false);
               clearInterval(interval);
             }
@@ -616,8 +618,8 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
   }, [isGenerating, reportId]);
 
   const handleGenerate = async () => {
-    if (!selectedCandidate) return alert("Please select a candidate first.");
-    if (!frameworkId) return alert("Please select a Competency Framework or Mandate first.");
+    if (!selectedCandidate) return toast.error("Please select a candidate first.");
+    if (!frameworkId) return toast.error("Please select a Competency Framework or Mandate first.");
     setIsGenerating(true);
     setReportData(null);
 
@@ -659,7 +661,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       setReportId(data.reportId);
     } catch (e) {
       console.error(e);
-      alert("Error starting generation");
+      toast.error("Error starting generation");
       setIsGenerating(false);
     }
   };
@@ -680,7 +682,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       }
     } catch (e) {
       console.error(e);
-      alert("Error toggling publish status");
+      toast.error("Error toggling publish status");
     } finally {
       setIsPublishing(false);
     }
@@ -821,7 +823,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                                       if (file.extractedText) {
                                         setInterviewNotes(prev => prev ? prev + "\n\n" + file.extractedText : file.extractedText);
                                       } else {
-                                        alert("No text could be found for this document. If this is an older file, please delete it and re-upload it so the system can extract its text.");
+                                        toast.error("No text could be found for this document. If this is an older file, please delete it and re-upload it so the system can extract its text.");
                                       }
                                     }
                                   } else {
@@ -1080,7 +1082,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                                     setReportData(updatedReport);
                                     if (reportId) await saveReportDraftAction(reportId, updatedReport);
                                   } catch (err: any) {
-                                    alert("Error fetching LinkedIn: " + err.message);
+                                    toast.error("Error fetching LinkedIn: " + err.message);
                                   } finally {
                                     setIsScrapingLinkedin(false);
                                   }

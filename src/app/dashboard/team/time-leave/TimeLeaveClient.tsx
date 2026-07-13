@@ -1,5 +1,5 @@
 "use client";
-
+import toast from "react-hot-toast";
 import { useState, useEffect } from "react";
 import { Clock, CalendarDays, History } from "lucide-react";
 
@@ -69,7 +69,7 @@ export default function TimeLeaveClient() {
     e.preventDefault();
     if (!startDate || !endDate) return;
     if (new Date(endDate) < new Date(startDate)) {
-      alert("End date cannot be before the start date.");
+      toast.error("End date cannot be before the start date.");
       return;
     }
     setIsSubmitting(true);
@@ -82,7 +82,7 @@ export default function TimeLeaveClient() {
       });
       const data = await res.json();
       if (data.success) {
-        alert("Leave request submitted successfully!");
+        toast.success("Leave request submitted successfully!");
         const refreshRes = await fetch('/api/leave-requests');
         const refreshData = await refreshRes.json();
         if (refreshData.success) setLeaves(refreshData.requests);
@@ -92,7 +92,7 @@ export default function TimeLeaveClient() {
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to submit leave");
+      toast.error("Failed to submit leave");
     } finally {
       setIsSubmitting(false);
     }
@@ -102,7 +102,7 @@ export default function TimeLeaveClient() {
     e.preventDefault();
     if (!wfhStartDate || !wfhEndDate) return;
     if (new Date(wfhEndDate) < new Date(wfhStartDate)) {
-      alert("End date cannot be before the start date.");
+      toast.error("End date cannot be before the start date.");
       return;
     }
     setIsSubmittingWfh(true);
@@ -115,7 +115,7 @@ export default function TimeLeaveClient() {
       });
       const data = await res.json();
       if (data.success) {
-        alert("WFH request submitted successfully!");
+        toast.success("WFH request submitted successfully!");
         const refreshRes = await fetch('/api/leave-requests');
         const refreshData = await refreshRes.json();
         if (refreshData.success) setLeaves(refreshData.requests);
@@ -125,7 +125,7 @@ export default function TimeLeaveClient() {
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to submit WFH request");
+      toast.error("Failed to submit WFH request");
     } finally {
       setIsSubmittingWfh(false);
     }
@@ -146,11 +146,11 @@ export default function TimeLeaveClient() {
         const refreshData = await refreshRes.json();
         if (refreshData.success) setLeaves(refreshData.requests);
       } else {
-        alert(data.error || "Failed to withdraw");
+        toast.error(data.error || "Failed to withdraw");
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to withdraw leave");
+      toast.error("Failed to withdraw leave");
     } finally {
       setLeaveToWithdraw(null);
     }

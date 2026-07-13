@@ -1,4 +1,7 @@
 "use client";
+import { confirmDialog } from "@/components/ConfirmDialog";
+import toast from "react-hot-toast";
+
 import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -151,10 +154,10 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
         consultant: user?.fullName || "System"
       });
       setLogForm({ note: "", type: "In-person meeting", meetingFor: "Exploration", emailType: "Email received from Candidate with Resume/ showing interest", clientName: "", roleName: "", date: "", time: "" });
-      alert("Activity logged successfully!");
+      toast.success("Activity logged successfully!");
       router.refresh();
     } catch (err: any) {
-      alert(`Error logging activity: ${err.message}`);
+      toast.error(`Error logging activity: ${err.message}`);
     }
     setIsLogging(false);
   };
@@ -171,11 +174,11 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
       if (res.ok) {
         setCandidateFiles(prev => prev.filter(f => f.id !== fileId));
       } else {
-        alert("Failed to delete file");
+        toast.error("Failed to delete file");
       }
     } catch (err) {
       console.error(err);
-      alert("Error deleting file");
+      toast.error("Error deleting file");
     } finally {
       setDeleteConfirmation(null);
     }
@@ -202,14 +205,14 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
           fileUrl: data.url,
           createdAt: new Date().toISOString()
         }]);
-        alert("CV uploaded successfully!");
+        toast.success("CV uploaded successfully!");
         router.refresh();
       } else {
         const errData = await res.json().catch(() => ({}));
-        alert(`Upload failed: ${errData.error || res.statusText}`);
+        toast.error(`Upload failed: ${errData.error || res.statusText}`);
       }
     } catch (err: any) {
-      alert(`Error uploading CV: ${err.message}`);
+      toast.error(`Error uploading CV: ${err.message}`);
     }
     setIsUploading(false);
     e.target.value = '';
@@ -235,14 +238,14 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
           fileUrl: data.url,
           createdAt: new Date().toISOString()
         }]);
-        alert("LinkedIn PDF uploaded successfully!");
+        toast.success("LinkedIn PDF uploaded successfully!");
         router.refresh();
       } else {
         const errData = await res.json().catch(() => ({}));
-        alert(`Upload failed: ${errData.error || res.statusText}`);
+        toast.error(`Upload failed: ${errData.error || res.statusText}`);
       }
     } catch (err: any) {
-      alert(`Error uploading LinkedIn PDF: ${err.message}`);
+      toast.error(`Error uploading LinkedIn PDF: ${err.message}`);
     }
     setIsUploadingLinkedin(false);
     e.target.value = '';
@@ -251,7 +254,7 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
   const handleAddSubmission = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subForm.client || !subForm.role) {
-      alert("Client and Role are required");
+      toast.error("Client and Role are required");
       return;
     }
     setIsSubmitting(true);
@@ -272,7 +275,7 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
   const handleAddReference = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!refForm.name || !refForm.org) {
-      alert("Name and Organization are required");
+      toast.error("Name and Organization are required");
       return;
     }
     setIsSubmittingRef(true);
@@ -286,7 +289,7 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
   };
 
   const handleDeleteCandidate = async () => {
-    if (confirm(`Are you sure you want to permanently delete ${candidate.name}? This action cannot be undone and will delete all associated references, submissions, and reports.`)) {
+    if (await confirmDialog(`Are you sure you want to permanently delete ${candidate.name}? This action cannot be undone and will delete all associated references, submissions, and reports.`)) {
       setIsDeleting(true);
       await deleteFloatListEntryAction(candidate.id);
       router.push("/dashboard/candidates");

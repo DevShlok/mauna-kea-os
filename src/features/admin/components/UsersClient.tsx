@@ -1,4 +1,6 @@
 "use client";
+import { confirmDialog } from "@/components/ConfirmDialog";
+
 import { useState } from "react";
 import { updatePlatformUserAction, deletePlatformUserAction } from "@/actions";
 import { useRouter } from "next/navigation";
@@ -17,7 +19,7 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
   };
 
   const handleDeleteClick = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+    if (!await confirmDialog("Are you sure you want to delete this user?")) return;
     await deletePlatformUserAction(id);
     setUsers(users.filter(u => u.id !== id));
   };

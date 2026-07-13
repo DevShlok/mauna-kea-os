@@ -1,4 +1,6 @@
 "use client";
+import toast from "react-hot-toast";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -100,11 +102,11 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
       if (res.ok) {
         setCandidateFiles(prev => prev.filter(f => f.id !== fileId));
       } else {
-        alert("Failed to delete file");
+        toast.error("Failed to delete file");
       }
     } catch (err) {
       console.error(err);
-      alert("Error deleting file");
+      toast.error("Error deleting file");
     } finally {
       setDeleteConfirmation(null);
     }
@@ -152,7 +154,7 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
   const handleAddQual = (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
     if (!newQual.degree) {
-      alert("Please enter the degree/qualification.");
+      toast.error("Please enter the degree/qualification.");
       return;
     }
     setQuals([...quals, newQual]);
@@ -177,14 +179,14 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
   const handleSave = async () => {
     const hasAtLeastOnePrimary = form.name || form.linkedin || form.targetCompany || linkedinPdfFile || (isEdit && initialData?.linkedinPdf);
     if (!hasAtLeastOnePrimary) {
-      alert("Please fill out at least one of the Primary Details (Name, LinkedIn URL, Target Company, or LinkedIn PDF)");
+      toast.error("Please fill out at least one of the Primary Details (Name, LinkedIn URL, Target Company, or LinkedIn PDF)");
       return;
     }
 
     if (esopVesting.years > 0 && esopVesting.distribution.length > 0) {
       const sum = esopVesting.distribution.reduce((acc, val) => acc + (val || 0), 0);
       if (sum !== 100) {
-        alert("The ESOP vesting distribution must add up to exactly 100%. Currently it is " + sum + "%");
+        toast.error("The ESOP vesting distribution must add up to exactly 100%. Currently it is " + sum + "%");
         return;
       }
     }
@@ -250,7 +252,7 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
       router.refresh();
     } catch (e) {
       console.error(e);
-      alert("Error saving candidate");
+      toast.error("Error saving candidate");
       setIsSaving(false);
     }
   };

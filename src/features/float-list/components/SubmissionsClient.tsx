@@ -1,4 +1,6 @@
 "use client";
+import { confirmDialog } from "@/components/ConfirmDialog";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { addSubmissionAction, updateSubmissionAction, deleteSubmissionAction } from "@/actions";
@@ -236,7 +238,7 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
               <button 
                 disabled={isDeleting}
                 onClick={async () => {
-                  if (!confirm("Are you sure you want to delete this submission? It will also be removed from the Mandate Pipeline.")) return;
+                  if (!await confirmDialog("Are you sure you want to delete this submission? It will also be removed from the Mandate Pipeline.")) return;
                   setIsDeleting(true);
                   await deleteSubmissionAction(selectedSubmission.id);
                   setSubmissions(submissions.filter((s: any) => s.id !== selectedSubmission.id));

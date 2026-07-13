@@ -1,4 +1,7 @@
 "use client";
+import { confirmDialog } from "@/components/ConfirmDialog";
+import toast from "react-hot-toast";
+
 import Link from "next/link";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -16,7 +19,7 @@ export default function CandidateProfileClient({ mandates }: { mandates: any[] }
   const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleDelete() {
-    if (!confirm("Are you sure you want to remove this candidate from the pipeline? This will also remove their submission record.")) return;
+    if (!await confirmDialog("Are you sure you want to remove this candidate from the pipeline? This will also remove their submission record.")) return;
     setIsDeleting(true);
     await import("@/actions").then(m => m.removeCandidateFromMandateAction({
       id: candidate.id,
@@ -68,7 +71,7 @@ export default function CandidateProfileClient({ mandates }: { mandates: any[] }
         </div>
         <div className="flex gap-2">
           <button onClick={() => router.back()} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">← Back</button>
-          <button onClick={() => alert("Edit candidate details (Coming Soon)")} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Edit</button>
+          <button onClick={() => toast.error("Edit candidate details (Coming Soon)")} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Edit</button>
           <button onClick={() => router.push("/dashboard/workbench?candId=" + candidate.id + "&mandateId=" + mandate.id)} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Open in Workbench</button>
           <button onClick={handleDelete} disabled={isDeleting} className="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded text-xs font-bold hover:bg-red-100">{isDeleting ? 'Deleting...' : 'Delete'}</button>
         </div>

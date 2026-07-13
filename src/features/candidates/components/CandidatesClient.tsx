@@ -1,4 +1,6 @@
 "use client";
+import toast from "react-hot-toast";
+
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
@@ -203,7 +205,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
       }
 
       if (rows.length < 2) {
-        alert("File appears to be empty or missing data.");
+        toast.error("File appears to be empty or missing data.");
         setIsImporting(false);
         return;
       }
@@ -259,7 +261,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
       
     } catch (err) {
       console.error(err);
-      alert("Error processing file. If the file is valid, the AI mapping service might be temporarily overloaded. Please try again in a few moments.");
+      toast.error("Error processing file. If the file is valid, the AI mapping service might be temporarily overloaded. Please try again in a few moments.");
     } finally {
       setIsImporting(false);
       e.target.value = ''; // clear input
@@ -285,14 +287,14 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
 
       if (!res.success) throw new Error("Failed to process import");
 
-      alert("Successfully imported candidates!");
+      toast.success("Successfully imported candidates!");
       setImportMapping(null);
       setImportFileData([]);
       router.refresh(); // Or reload window
       window.location.reload();
     } catch (err) {
       console.error(err);
-      alert("Error importing candidates.");
+      toast.error("Error importing candidates.");
     } finally {
       setIsImporting(false);
     }
@@ -326,7 +328,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
       router.refresh();
     } catch (e) {
       console.error(e);
-      alert("Failed to update status");
+      toast.error("Failed to update status");
     }
   };
 
@@ -348,11 +350,11 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
         status: "Shared",
       });
       setSelectedIds(new Set());
-      alert("Candidates added to Float List successfully!");
+      toast.success("Candidates added to Float List successfully!");
       router.refresh();
     } catch (e) {
       console.error(e);
-      alert("Failed to float candidates.");
+      toast.error("Failed to float candidates.");
     } finally {
       setIsSubmitting(false);
     }
@@ -360,7 +362,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
 
   const handleBulkMandateSubmit = async () => {
     if (!mandateIdToAssign) {
-      alert("Please select a mandate.");
+      toast.error("Please select a mandate.");
       return;
     }
     const mandate = mandates.find(m => m.id.toString() === mandateIdToAssign);
@@ -376,11 +378,11 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
       setSelectedIds(new Set());
       setIsMandateModalOpen(false);
       setMandateIdToAssign("");
-      alert("Candidates added to mandate successfully!");
+      toast.success("Candidates added to mandate successfully!");
       router.refresh();
     } catch (e) {
       console.error(e);
-      alert("Failed to assign candidates.");
+      toast.error("Failed to assign candidates.");
     } finally {
       setIsSubmitting(false);
     }
@@ -395,7 +397,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
       router.refresh();
     } catch (e) {
       console.error(e);
-      alert("Failed to delete candidates.");
+      toast.error("Failed to delete candidates.");
     } finally {
       setIsSubmitting(false);
     }

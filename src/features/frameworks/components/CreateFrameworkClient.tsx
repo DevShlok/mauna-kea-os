@@ -1,4 +1,7 @@
 "use client";
+import { confirmDialog } from "@/components/ConfirmDialog";
+import toast from "react-hot-toast";
+
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,8 +42,8 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
     setCategories([...categories, { name: "New Category", weight: 0, criteria: [{ name: "New Criterion", weight: 100 }] }]);
   };
 
-  const handleRemoveCategory = (index: number) => {
-    if (confirm("Remove this category?")) {
+  const handleRemoveCategory = async (index: number) => {
+    if (await confirmDialog("Remove this category?")) {
       const newCats = [...categories];
       newCats.splice(index, 1);
       setCategories(newCats);
@@ -88,7 +91,7 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
     // Validate category weights sum to 100
     const catSum = categories.reduce((a, b) => a + (b.weight || 0), 0);
     if (catSum !== 100) {
-      alert(`Category weights sum to ${catSum}%. They must exactly sum to 100%.`);
+      toast.error(`Category weights sum to ${catSum}%. They must exactly sum to 100%.`);
       return;
     }
 
@@ -96,7 +99,7 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
     for (let i = 0; i < categories.length; i++) {
       const sum = categories[i].criteria.reduce((a, b) => a + b.weight, 0);
       if (sum !== 100) {
-        alert(`Category "${categories[i].name}" criteria weights sum to ${sum}%. They must exactly sum to 100%.`);
+        toast.error(`Category "${categories[i].name}" criteria weights sum to ${sum}%. They must exactly sum to 100%.`);
         return;
       }
     }
@@ -116,7 +119,7 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
   };
 
   const handleDelete = async () => {
-    if (confirm("Are you sure you want to permanently delete this framework?")) {
+    if (await confirmDialog("Are you sure you want to permanently delete this framework?")) {
       setIsDeleting(true);
       await deleteFrameworkAction(initialData.id);
       router.push("/dashboard/frameworks");

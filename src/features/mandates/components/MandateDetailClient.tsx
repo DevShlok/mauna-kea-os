@@ -1,4 +1,7 @@
 "use client";
+import { confirmDialog } from "@/components/ConfirmDialog";
+import toast from "react-hot-toast";
+
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -50,7 +53,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
     try {
       await updateMandateSearchNotesAction(mandate.id, searchNotes);
     } catch (e: any) {
-      alert("Failed to save search notes: " + e.message);
+      toast.error("Failed to save search notes: " + e.message);
     }
     setIsSavingNotes(false);
   }
@@ -88,13 +91,13 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
         jdText: docType === "jd" && data.extractedText ? data.extractedText : prev.jdText
       }));
     } catch (e: any) {
-      alert("Upload failed: " + e.message);
+      toast.error("Upload failed: " + e.message);
     }
     setUploadingDoc(null);
   }
 
   const handleRemoveDoc = async (docType: string) => {
-    if (!confirm("Are you sure you want to remove this file link?")) return;
+    if (!await confirmDialog("Are you sure you want to remove this file link?")) return;
     setUploadingDoc(docType);
     try {
       const res = await fetch(`/api/mandates/${mandate.id}/upload`, {
@@ -105,7 +108,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
       if (!res.ok) throw new Error("Failed to remove link");
       window.location.reload();
     } catch(err: any) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setUploadingDoc(null);
     }
@@ -134,7 +137,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
         [urlColMap[textModal.type]]: data.url 
       }));
     } catch (e: any) {
-      alert("Save failed: " + e.message);
+      toast.error("Save failed: " + e.message);
     }
     setUploadingDoc(null);
     setTextModal({ ...textModal, isOpen: false });
@@ -163,7 +166,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
   }
 
   async function handleDeleteMandate() {
-    if (confirm(`Are you sure you want to permanently delete the mandate for ${mandate.company} - ${mandate.role}? This will also delete all associated mandate candidates.`)) {
+    if (await confirmDialog(`Are you sure you want to permanently delete the mandate for ${mandate.company} - ${mandate.role}? This will also delete all associated mandate candidates.`)) {
       setIsDeleting(true);
       await deleteMandateAction(mandate.id);
       router.push("/dashboard/mandates");
@@ -576,7 +579,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                 <button onClick={() => setIsReportModalOpen(false)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Cancel</button>
                 <button 
                   onClick={() => {
-                    if (selectedReportCands.length === 0) return alert("Select at least one candidate");
+                    if (selectedReportCands.length === 0) return toast.error("Select at least one candidate");
                     router.push(`/dashboard/mandates/${mandate.id}/report?format=${reportFormat}&cands=${selectedReportCands.join(",")}`);
                   }}
                   className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]"

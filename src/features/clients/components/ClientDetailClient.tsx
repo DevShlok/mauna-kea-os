@@ -1,4 +1,6 @@
 "use client";
+import { confirmDialog } from "@/components/ConfirmDialog";
+
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -34,7 +36,7 @@ export default function ClientDetailClient({ client, mandates }: { client: Clien
   };
 
   const handleDelete = async () => {
-    if (confirm("Are you sure you want to delete this client?")) {
+    if (await confirmDialog("Are you sure you want to delete this client?")) {
       await deleteClientAction(client.id);
       router.push("/dashboard/clients");
     }
