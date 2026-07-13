@@ -8,6 +8,13 @@
       "when": 1783929915844,
       "tag": "0000_married_miss_america",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783954583685,
+      "tag": "0001_fix_indexes_and_rls",
+      "breakpoints": true
     }
   ]
 }
