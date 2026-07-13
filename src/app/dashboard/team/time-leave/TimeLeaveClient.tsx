@@ -61,6 +61,10 @@ export default function TimeLeaveClient() {
   const handleApplyLeave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!startDate || !endDate) return;
+    if (new Date(endDate) < new Date(startDate)) {
+      alert("End date cannot be before the start date.");
+      return;
+    }
     setIsSubmitting(true);
     
     try {
@@ -175,11 +179,16 @@ export default function TimeLeaveClient() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">Start Date</label>
-                  <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" required />
+                  <input type="date" value={startDate} onChange={e => {
+                    setStartDate(e.target.value);
+                    if (endDate && new Date(endDate) < new Date(e.target.value)) {
+                      setEndDate(e.target.value);
+                    }
+                  }} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" required />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">End Date</label>
-                  <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" required />
+                  <input type="date" min={startDate} value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" required />
                 </div>
               </div>
               <div>
