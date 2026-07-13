@@ -228,7 +228,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
               <div>
                 <div className="text-sm font-semibold text-gray-800">Job Description</div>
                 {mandate.jdUrl
-                  ? <a href={mandate.jdUrl} target="_blank" rel="noreferrer" className="text-xs text-[#133255] underline hover:text-[#133255] mt-1 block">View in Drive ↗</a>
+                  ? <a href={mandate.jdUrl} target="_blank" rel="noreferrer" className="text-xs text-[#133255] underline hover:text-[#133255] mt-1 block">View Document ↗</a>
                   : <div className="text-xs text-gray-400">{uploadingDoc === "jd" ? "Uploading..." : "No PDF/Word uploaded"}</div>
                 }
               </div>
@@ -265,7 +265,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
               <div>
                 <div className="text-sm font-semibold text-gray-800">Interview Notes</div>
                 {mandate.interviewNotesText ? <div className="text-xs text-green-600 font-medium">Text saved</div> : <div className="text-xs text-gray-400">No text added</div>}
-                {mandate.interviewNotesUrl && <a href={mandate.interviewNotesUrl} target="_blank" rel="noreferrer" className="text-xs text-[#133255] underline hover:text-[#133255] block mt-1">View in Drive ↗</a>}
+                {mandate.interviewNotesUrl && <a href={mandate.interviewNotesUrl} target="_blank" rel="noreferrer" className="text-xs text-[#133255] underline hover:text-[#133255] block mt-1">View Document ↗</a>}
               </div>
               <div className="flex gap-2 items-center">
                 <label className={`px-3 py-1 border rounded text-xs font-bold cursor-pointer transition-colors ${
@@ -305,7 +305,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
               <div>
                 <div className="text-sm font-semibold text-gray-800">Additional Docs</div>
                 {mandate.additionalDocsUrl
-                  ? <a href={mandate.additionalDocsUrl} target="_blank" rel="noreferrer" className="text-xs text-[#133255] underline hover:text-[#133255] mt-1 block">View in Drive ↗</a>
+                  ? <a href={mandate.additionalDocsUrl} target="_blank" rel="noreferrer" className="text-xs text-[#133255] underline hover:text-[#133255] mt-1 block">View Document ↗</a>
                   : <div className="text-xs text-gray-400">{uploadingDoc === "docs" ? "Uploading..." : "No PDF/Word uploaded"}</div>
                 }
               </div>

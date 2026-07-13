@@ -3,7 +3,13 @@ import { db } from "@/db";
 import { candidates, candidateFiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import * as mammoth from "mammoth";
+import { createClient } from "@supabase/supabase-js";
 const pdfParse = require("pdf-parse-new");
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! || ""
+);
 
 export async function POST(req: Request) {
   try {
@@ -66,9 +72,28 @@ export async function POST(req: Request) {
 
     const driveUrl = driveData.url;
 
-    // 3. Update DB with Drive URL and extracted text
+    // 2.5 Upload to Supabase Storage
+    const supabaseFileName = `cvs/${candId}-${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from('mauna-kea-documents')
+      .upload(supabaseFileName, nodeBuffer, {
+        contentType: file.type || "application/pdf"
+      });
+      
+    if (uploadError) {
+      console.error("Supabase upload error:", uploadError);
+      throw new Error("Supabase upload failed");
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('mauna-kea-documents')
+      .getPublicUrl(supabaseFileName);
+      
+    const supabaseUrl = publicUrlData.publicUrl;
+
+    // 3. Update DB with Supabase URL and extracted text
     await db.update(candidates)
-      .set({ hasCv: true, cvText, cvFileName: driveUrl })
+      .set({ hasCv: true, cvText, cvFileName: supabaseUrl })
       .where(eq(candidates.id, candId));
 
     // Also add to history table
@@ -76,7 +101,7 @@ export async function POST(req: Request) {
       candId: candId,
       fileType: 'CV / Resume',
       fileName: filename,
-      fileUrl: driveUrl,
+      fileUrl: supabaseUrl,
       extractedText: cvText
     });
 
@@ -98,14 +123,14 @@ export async function POST(req: Request) {
         fetch(sheetsWebhook, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ candId, cvUrl: driveUrl })
+          body: JSON.stringify({ candId, cvUrl: supabaseUrl }) // send Supabase URL to sheets
         }).catch(e => console.error("Sheets sync error:", e));
       } catch (err) {
         console.error("Sheets fetch failed:", err);
       }
     }
 
-    return NextResponse.json({ success: true, url: driveUrl });
+    return NextResponse.json({ success: true, url: supabaseUrl });
   } catch (error: any) {
     console.error("CV Upload Error:", error);
     return NextResponse.json({ error: "Failed to upload CV: " + error.message }, { status: 500 });

@@ -53,7 +53,7 @@ export async function GET(request: Request) {
       for (const u of allUsers) {
         const onLeave = activeLeaves.find(l => l.userId === u.id);
         if (onLeave) {
-          userStatusMap[u.id] = "On Leave";
+          userStatusMap[u.id] = onLeave.leaveType === "Work From Home" ? "WFH" : "On Leave";
           continue;
         }
 

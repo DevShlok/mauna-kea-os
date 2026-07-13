@@ -101,7 +101,9 @@ export async function POST(request: Request) {
       // Send notification specifically to their reporting manager
       await db.insert(consultantNotifications).values({
         userId: platformUser.reportingManagerId,
-        message: `${platformUser.name} applied for leave (${leaveType}).`,
+        message: leaveType === 'Work From Home' 
+          ? `${platformUser.name} applied for Work From Home.`
+          : `${platformUser.name} applied for leave (${leaveType}).`,
         link: '/dashboard/team/leave-approvals'
       });
     } else if (!isAutoApprove) {

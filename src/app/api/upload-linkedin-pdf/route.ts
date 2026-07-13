@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { candidates, candidateFiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! || ""
+);
 
 export async function POST(req: Request) {
   try {
@@ -49,9 +55,28 @@ export async function POST(req: Request) {
 
     const driveUrl = driveData.url;
 
-    // Update DB with Drive URL
+    // Upload to Supabase Storage
+    const supabaseFileName = `linkedin/${candId}-${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from('mauna-kea-documents')
+      .upload(supabaseFileName, nodeBuffer, {
+        contentType: file.type || "application/pdf"
+      });
+      
+    if (uploadError) {
+      console.error("Supabase upload error:", uploadError);
+      throw new Error("Supabase upload failed");
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('mauna-kea-documents')
+      .getPublicUrl(supabaseFileName);
+      
+    const supabaseUrl = publicUrlData.publicUrl;
+
+    // Update DB with Supabase URL
     await db.update(candidates)
-      .set({ linkedinPdf: driveUrl })
+      .set({ linkedinPdf: supabaseUrl })
       .where(eq(candidates.id, candId));
 
     // Also add to history table
@@ -59,7 +84,7 @@ export async function POST(req: Request) {
       candId: candId,
       fileType: 'Linkedin Profile',
       fileName: filename,
-      fileUrl: driveUrl
+      fileUrl: supabaseUrl
     });
 
     const { floatActivities } = await import("@/db/schema");
@@ -80,14 +105,14 @@ export async function POST(req: Request) {
         fetch(sheetsWebhook, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ candId, linkedinPdfUrl: driveUrl })
+          body: JSON.stringify({ candId, linkedinPdfUrl: supabaseUrl })
         }).catch(e => console.error("Sheets sync error:", e));
       } catch (err) {
         console.error("Sheets fetch failed:", err);
       }
     }
 
-    return NextResponse.json({ success: true, url: driveUrl, path: driveUrl });
+    return NextResponse.json({ success: true, url: supabaseUrl, path: supabaseUrl });
   } catch (error: any) {
     console.error("LinkedIn PDF Upload Error:", error);
     return NextResponse.json({ error: "Failed to upload LinkedIn PDF: " + error.message }, { status: 500 });

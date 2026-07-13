@@ -3,8 +3,14 @@ import { revalidateTag } from "next/cache";
 import { db } from "@/db";
 import { mandates } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { createClient } from "@supabase/supabase-js";
 const pdfParse = require("pdf-parse-new");
 const mammoth = require("mammoth");
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! || ""
+);
 
 export async function POST(
   req: NextRequest,
@@ -95,26 +101,54 @@ export async function POST(
     }
 
     const driveUrl = driveData.url;
+    let finalUrl = driveUrl;
+
+    if (file) {
+      // Upload to Supabase Storage
+      const supabaseFileName = `mandates/${mandateId}-${docType}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('mauna-kea-documents')
+        .upload(supabaseFileName, nodeBuffer, {
+          contentType: mimeType
+        });
+        
+      if (uploadError) {
+        console.error("Supabase upload error:", uploadError);
+        throw new Error("Supabase upload failed");
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('mauna-kea-documents')
+        .getPublicUrl(supabaseFileName);
+        
+      finalUrl = publicUrlData.publicUrl;
+    }
 
     // Map docType to the correct DB column
     const columnMap: Record<string, object> = {
-      jd: textContent ? { jdUrl: driveUrl, jdText: textContent } : { jdUrl: driveUrl },
-      notes: textContent 
-        ? { interviewNotesUrl: driveUrl, interviewNotesText: textContent } 
-        : { interviewNotesUrl: driveUrl, interviewNotesText: extractedText || undefined },
-      docs: { additionalDocsUrl: driveUrl },
+      jd: { jdUrl: finalUrl },
+      notes: { interviewNotesUrl: finalUrl },
+      docs: { additionalDocsUrl: finalUrl }
+    };
+    const textColumnMap: Record<string, object> = {
+      jd: { jdText: extractedText || textContent },
+      notes: { interviewNotesText: extractedText || textContent },
+      docs: { additionalDocsText: extractedText || textContent }
     };
 
-    if (!columnMap[docType]) {
-      return NextResponse.json({ error: "Invalid docType" }, { status: 400 });
+    let updateData = {};
+    if (file || textContent) {
+      updateData = { ...columnMap[docType], ...textColumnMap[docType] };
+    } else if (textContent) {
+      updateData = { ...textColumnMap[docType] };
     }
 
-    await db.update(mandates).set(columnMap[docType]).where(eq(mandates.id, mandateId));
+    await db.update(mandates).set(updateData).where(eq(mandates.id, mandateId));
     
     // @ts-ignore
     revalidateTag("dashboard-data");
 
-    return NextResponse.json({ success: true, url: driveUrl, extractedText: extractedText || undefined });
+    return NextResponse.json({ success: true, url: finalUrl, text: extractedText || textContent });
   } catch (error: any) {
     console.error("Mandate doc upload error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

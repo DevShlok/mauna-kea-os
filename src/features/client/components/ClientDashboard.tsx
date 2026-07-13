@@ -426,14 +426,22 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
                   <h2 className="text-[17px] font-bold text-[#0b1f3a]">Open Positions</h2>
                   <span className="bg-indigo-100 text-indigo-700 text-[12px] font-semibold rounded-full px-2.5 py-0.5">{openMandates.length}</span>
                 </div>
-                {openMandates.length > 5 && (
+                <div className="flex items-center gap-4">
                   <button
-                    onClick={() => setShowAllOpen(!showAllOpen)}
-                    className="text-[13px] text-indigo-600 font-medium hover:underline"
+                    onClick={() => router.push("/client/mandates/new")}
+                    className="text-[13px] font-bold bg-[#D8B15B] hover:bg-[#c4a150] text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
                   >
-                    {showAllOpen ? "Show Less" : "View All"}
+                    Send Mandate
                   </button>
-                )}
+                  {openMandates.length > 5 && (
+                    <button
+                      onClick={() => setShowAllOpen(!showAllOpen)}
+                      className="text-[13px] text-indigo-600 font-medium hover:underline"
+                    >
+                      {showAllOpen ? "Show Less" : "View All"}
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-col gap-3">

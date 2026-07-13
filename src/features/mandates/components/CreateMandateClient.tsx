@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { createMandateAction } from "@/actions";
+import { createClient } from "@/utils/supabase/client";
 
-export default function CreateMandateClient({ frameworks }: { frameworks: any[] }) {
+export default function CreateMandateClient({ frameworks, isClientMode = false, clientName = "" }: { frameworks: any[], isClientMode?: boolean, clientName?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialCompany = searchParams.get("company") || "";
+  const initialCompany = isClientMode ? clientName : (searchParams.get("company") || "");
 
   const [form, setForm] = useState({
     company: initialCompany,
@@ -21,6 +22,9 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
     pocEmail: "",
     pocPhone: "",
     frameworkId: "",
+    jdUrl: "",
+    interviewNotesUrl: "",
+    additionalDocsUrl: "",
     jdText: "",
     interviewNotesText: "",
     additionalDocsText: "",
@@ -35,6 +39,48 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
 
   const [isExtracting, setIsExtracting] = useState<Record<string, boolean>>({});
   const [extractedStatus, setExtractedStatus] = useState<Record<string, boolean>>({});
+  
+  const [isUploading, setIsUploading] = useState<Record<string, boolean>>({});
+  const supabase = createClient();
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "jd" | "notes" | "docs") => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(prev => ({ ...prev, [type]: true }));
+    
+    // Generate a unique filename using timestamp
+    const ext = file.name.split('.').pop();
+    const fileName = `${type}-${Date.now()}.${ext}`;
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('mauna-kea-documents')
+        .upload(`${type}s/${fileName}`, file);
+
+      if (error) {
+        console.error("Upload error:", error);
+        alert("Failed to upload file. Make sure bucket permissions allow uploads.");
+        setIsUploading(prev => ({ ...prev, [type]: false }));
+        return;
+      }
+
+      // Get the public URL
+      const { data: publicUrlData } = supabase.storage
+        .from('mauna-kea-documents')
+        .getPublicUrl(`${type}s/${fileName}`);
+
+      // Update the form state with the new URL
+      if (type === 'jd') setForm(prev => ({ ...prev, jdUrl: publicUrlData.publicUrl }));
+      if (type === 'notes') setForm(prev => ({ ...prev, interviewNotesUrl: publicUrlData.publicUrl }));
+      if (type === 'docs') setForm(prev => ({ ...prev, additionalDocsUrl: publicUrlData.publicUrl }));
+
+      setIsUploading(prev => ({ ...prev, [type]: false }));
+    } catch (err) {
+      console.error(err);
+      setIsUploading(prev => ({ ...prev, [type]: false }));
+    }
+  };
 
   const handleTagInput = (e: React.KeyboardEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
     if (e.key === "Enter") {
@@ -87,7 +133,11 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
     };
 
     const insertId = await createMandateAction(payload);
-    router.push("/dashboard/mandates/" + insertId);
+    if (isClientMode) {
+      router.push("/client/mandates");
+    } else {
+      router.push("/dashboard/mandates/" + insertId);
+    }
   };
 
   const inp = "w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]";
@@ -108,21 +158,23 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
   return (
     <div className="max-w-4xl mx-auto pb-10">
       <div className="flex items-center gap-2 text-sm text-gray-400 font-semibold mb-6">
-        <Link href="/dashboard/mandates" className="hover:text-[#133255]">Mandates</Link>
+        <Link href={isClientMode ? "/client/mandates" : "/dashboard/mandates"} className="hover:text-[#133255]">Mandates</Link>
         <span>/</span>
-        <span className="text-gray-800">Create New Mandate</span>
+        <span className="text-gray-800">{isClientMode ? "Send New Mandate" : "Create New Mandate"}</span>
       </div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Create New Mandate</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-8">{isClientMode ? "Send New Mandate" : "Create New Mandate"}</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col">
         {/* SECTION 1 */}
         <div className={section}>
           <div className={sectionHead}>1 — Search Details</div>
-          <div className="p-5 grid grid-cols-2 gap-5">
-            <div>
-              <label className="block text-xs font-bold text-gray-600 mb-1.5">Company <span className="text-red-500">*</span></label>
-              <input required value={form.company} onChange={(e) => setForm({...form, company: e.target.value})} type="text" className={inp} placeholder="Client company name"/>
-            </div>
+          <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+            {!isClientMode && (
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1.5">Company <span className="text-red-500">*</span></label>
+                <input required value={form.company} onChange={(e) => setForm({...form, company: e.target.value})} type="text" className={inp} placeholder="Client company name"/>
+              </div>
+            )}
             <div>
               <label className="block text-xs font-bold text-gray-600 mb-1.5">Role / Position <span className="text-red-500">*</span></label>
               <input required value={form.role} onChange={(e) => setForm({...form, role: e.target.value})} type="text" className={inp} placeholder="e.g. CFO, CHRO"/>
@@ -135,7 +187,7 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
               <label className="block text-xs font-bold text-gray-600 mb-1.5">Experience <span className="text-red-500">*</span></label>
               <input required value={form.exp} onChange={(e) => setForm({...form, exp: e.target.value})} type="text" className={inp} placeholder="e.g. 15-20 yrs"/>
             </div>
-            <div className="col-span-2 md:col-span-1">
+            <div className="col-span-1 md:col-span-1">
               <label className="block text-xs font-bold text-gray-600 mb-1.5">Work Mode</label>
               <div className="flex gap-4 mt-2">
                 {["On-site","Hybrid","Remote"].map((mode) => (
@@ -146,7 +198,7 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
                 ))}
               </div>
             </div>
-            <div className="col-span-2 md:col-span-1">
+            <div className="col-span-1 md:col-span-1">
               <label className="block text-xs font-bold text-gray-600 mb-1.5">Diversity Preference</label>
               <select value={form.diversity} onChange={(e) => setForm({...form, diversity: e.target.value})} className={inp + " bg-white"}>
                 <option value="">No preference</option>
@@ -175,22 +227,24 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
               </div>
               {renderTags(geography, setGeography)}
             </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-600 mb-1.5">Attach Evaluation Framework</label>
-              <select value={form.frameworkId} onChange={(e) => setForm({...form, frameworkId: e.target.value})} className={inp + " bg-white"}>
-                <option value="">None (Optional)</option>
-                {frameworks.map(f => (
-                  <option key={f.id} value={f.id}>{f.name}</option>
-                ))}
-              </select>
-            </div>
+            {!isClientMode && (
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1.5">Attach Evaluation Framework</label>
+                <select value={form.frameworkId} onChange={(e) => setForm({...form, frameworkId: e.target.value})} className={inp + " bg-white"}>
+                  <option value="">None (Optional)</option>
+                  {frameworks.map(f => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
 
         {/* SECTION 2 */}
         <div className={section}>
           <div className={sectionHead}>2 — Client Contact</div>
-          <div className="p-5 grid grid-cols-2 gap-5">
+          <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <label className="block text-xs font-bold text-gray-600 mb-1.5">POC Name <span className="text-red-500">*</span></label>
               <input required value={form.clientPOC} onChange={(e) => setForm({...form, clientPOC: e.target.value})} type="text" className={inp} placeholder="Client point of contact"/>
@@ -216,21 +270,37 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
         {/* SECTION 3 */}
         <div className={section}>
           <div className={sectionHead}>3 — Documents</div>
-          <div className="p-5 grid grid-cols-3 gap-5">
+          <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
               { id: 'jd', title: 'Job Description' },
-              { id: 'notes', title: 'Client Interview Notes' },
-              { id: 'docs', title: 'Additional Documents' }
+              { id: 'notes', title: 'Additional Notes' },
+              { id: 'docs', title: 'Other Documents' }
             ].map((doc) => (
               <div key={doc.id} className="flex flex-col">
                 <div className="text-sm font-bold text-[#133255] mb-2">{doc.title}</div>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 bg-white mb-2"
                      onClick={() => document.getElementById(`upload-${doc.id}`)?.click()}>
                   <div className="text-xl mb-1">📎</div>
-                  <div className="text-xs font-bold text-gray-700">Click to upload</div>
+                  <div className="text-xs font-bold text-gray-700">
+                    {isUploading[doc.id] ? "Uploading..." : "Click to upload"}
+                  </div>
                   <div className="text-[12px] text-gray-400 mt-1">PDF, DOCX, PPTX</div>
                 </div>
-                <input type="file" id={`upload-${doc.id}`} className="hidden" />
+                <input 
+                  type="file" 
+                  id={`upload-${doc.id}`} 
+                  className="hidden" 
+                  onChange={(e) => handleFileUpload(e, doc.id as any)} 
+                  accept=".pdf,.docx,.pptx"
+                />
+                
+                {/* Show uploaded URL if present */}
+                {(doc.id === 'jd' && form.jdUrl) || (doc.id === 'notes' && form.interviewNotesUrl) || (doc.id === 'docs' && form.additionalDocsUrl) ? (
+                  <div className="w-full py-1.5 bg-green-50 text-green-700 rounded text-xs font-bold border border-green-200 text-center mb-2">
+                    ✓ File Uploaded
+                  </div>
+                ) : null}
+
                 <button 
                   type="button" 
                   onClick={() => simulateOCR(doc.id)}
@@ -250,42 +320,46 @@ export default function CreateMandateClient({ frameworks }: { frameworks: any[] 
           </div>
         </div>
 
-        {/* SECTION 4 */}
-        <div className={section}>
-          <div className={sectionHead}>4 — Internal Notes</div>
-          <div className="p-5 grid grid-cols-2 gap-5">
-            <div>
-              <label className="block text-xs font-bold text-gray-600 mb-1.5">Consultant Notes</label>
-              <textarea 
-                value={form.consultantNotes} 
-                onChange={(e) => setForm({...form, consultantNotes: e.target.value})} 
-                rows={4} 
-                className={inp} 
-                placeholder="Internal notes about the search..."
-              ></textarea>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-600 mb-1.5">Open Questions</label>
-              <textarea 
-                value={form.openQuestions} 
-                onChange={(e) => setForm({...form, openQuestions: e.target.value})} 
-                rows={4} 
-                className={inp} 
-                placeholder="Questions to clarify with client..."
-              ></textarea>
+        {/* SECTION 4 - INTERNAL ONLY */}
+        {!isClientMode && (
+          <div className={section}>
+            <div className={sectionHead}>4 — Internal Notes</div>
+            <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1.5">Consultant Notes</label>
+                <textarea 
+                  value={form.consultantNotes} 
+                  onChange={(e) => setForm({...form, consultantNotes: e.target.value})} 
+                  rows={4} 
+                  className={inp} 
+                  placeholder="Internal notes about the search..."
+                ></textarea>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1.5">Open Questions</label>
+                <textarea 
+                  value={form.openQuestions} 
+                  onChange={(e) => setForm({...form, openQuestions: e.target.value})} 
+                  rows={4} 
+                  className={inp} 
+                  placeholder="Questions to clarify with client..."
+                ></textarea>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="flex justify-end gap-3 mt-2">
-          <button type="button" onClick={() => router.push("/dashboard/mandates")} className="px-5 py-2.5 border border-gray-200 text-gray-700 rounded text-sm font-bold hover:bg-gray-50">
+          <button type="button" onClick={() => router.push(isClientMode ? "/client/mandates" : "/dashboard/mandates")} className="px-5 py-2.5 border border-gray-200 text-gray-700 rounded text-sm font-bold hover:bg-gray-50">
             Cancel
           </button>
-          <button type="button" className="px-5 py-2.5 border border-[#133255] text-[#133255] rounded text-sm font-bold hover:bg-blue-50">
-            Save Draft
-          </button>
+          {!isClientMode && (
+            <button type="button" className="px-5 py-2.5 border border-[#133255] text-[#133255] rounded text-sm font-bold hover:bg-blue-50">
+              Save Draft
+            </button>
+          )}
           <button type="submit" className="px-6 py-2.5 bg-[#D8B15B] text-white rounded text-sm font-bold hover:bg-yellow-600 shadow-sm transition-colors">
-            Create Mandate
+            {isClientMode ? "Send Mandate" : "Create Mandate"}
           </button>
         </div>
       </form>

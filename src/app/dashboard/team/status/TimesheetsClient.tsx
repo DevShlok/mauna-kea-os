@@ -189,6 +189,7 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
                     <span className={`px-2.5 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider ${
                       teamStatuses[u.id] === 'On Break' ? 'bg-amber-100 text-amber-800' :
                       teamStatuses[u.id] === 'On Leave' ? 'bg-purple-100 text-purple-800' :
+                      teamStatuses[u.id] === 'WFH' ? 'bg-blue-100 text-blue-800' :
                       teamStatuses[u.id] === 'Active' ? 'bg-emerald-100 text-emerald-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>

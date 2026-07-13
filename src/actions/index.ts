@@ -20,15 +20,33 @@ export async function createMandateAction(data: any) {
     ctc: data.ctc,
     exp: data.exp,
     workMode: data.workMode,
+    diversity: data.diversity,
     clientPOC: data.clientPOC,
     pocEmail: data.pocEmail,
     pocPhone: data.pocPhone,
+    pocCc: data.pocCc || [],
+    sectors: data.sectors || [],
+    targetCompanies: data.targetCompanies || [],
+    geography: data.geography,
     consultant: data.consultant || "System",
     opened: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
     status: "universe",
     internalStatus: "contractsent",
+    jdUrl: data.jdUrl,
+    interviewNotesUrl: data.interviewNotesUrl,
+    additionalDocsUrl: data.additionalDocsUrl,
+    jdText: data.jdText,
+    interviewNotesText: data.interviewNotesText,
+    additionalDocsText: data.additionalDocsText,
+    searchNotes: data.searchNotes,
+    openQuestions: data.openQuestions,
+    frameworkId: data.frameworkId || null,
   }).returning({ insertId: mandates.id });
   revalidatePath("/dashboard/mandates");
+  revalidatePath("/client/mandates");
+  if (clientId) {
+    revalidatePath("/dashboard/clients/" + clientId);
+  }
   return result[0].insertId;
 }
 

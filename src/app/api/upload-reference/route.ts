@@ -3,7 +3,13 @@ import { db } from "@/db";
 import { candidates, candidateFiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import * as mammoth from "mammoth";
+import { createClient } from "@supabase/supabase-js";
 const pdfParse = require("pdf-parse-new");
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! || ""
+);
 
 export async function POST(req: Request) {
   try {
@@ -67,16 +73,35 @@ export async function POST(req: Request) {
 
     const driveUrl = driveData.url;
 
+    // 2.5 Upload to Supabase Storage
+    const supabaseFileName = `references/${candId}-${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from('mauna-kea-documents')
+      .upload(supabaseFileName, nodeBuffer, {
+        contentType: file.type || "application/pdf"
+      });
+      
+    if (uploadError) {
+      console.error("Supabase upload error:", uploadError);
+      throw new Error("Supabase upload failed");
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('mauna-kea-documents')
+      .getPublicUrl(supabaseFileName);
+      
+    const supabaseUrl = publicUrlData.publicUrl;
+
     // 3. Add to candidateFiles history table
     await db.insert(candidateFiles).values({
       candId: candId,
       fileType: type,
       fileName: filename,
-      fileUrl: driveUrl,
+      fileUrl: supabaseUrl,
       extractedText: extractedText
     });
 
-    return NextResponse.json({ success: true, url: driveUrl, text: extractedText });
+    return NextResponse.json({ success: true, url: supabaseUrl, text: extractedText });
   } catch (error: any) {
     console.error("Reference Upload Error:", error);
     return NextResponse.json({ error: "Failed to upload file: " + error.message }, { status: 500 });

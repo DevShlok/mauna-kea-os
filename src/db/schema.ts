@@ -1,4 +1,4 @@
-import { pgTable, integer as int, varchar, text, doublePrecision as float, boolean, timestamp as datetime, json, text as mediumtext, date, serial } from 'drizzle-orm/pg-core';
+import { pgTable, integer as int, varchar, text, doublePrecision as float, boolean, timestamp as datetime, json, text as mediumtext, date, serial, index } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 // ─── MANDATES ────────────────────────────────────────────
@@ -32,6 +32,12 @@ export const mandates = pgTable('mandates', {
   openQuestions: text('open_questions'),
   frameworkId: varchar('framework_id', { length: 20 }),
   createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => {
+  return {
+    companyIdx: index('mandates_company_idx').on(table.company),
+    statusIdx: index('mandates_status_idx').on(table.status),
+    internalStatusIdx: index('mandates_internal_status_idx').on(table.internalStatus)
+  };
 });
 
 // ─── MANDATE CANDIDATES ──────────────────────────────────
@@ -49,6 +55,10 @@ export const mandateCandidates = pgTable('mandate_candidates', {
   initials: varchar('initials', { length: 5 }),
   cvText: text('cv_text'),
   createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => {
+  return {
+    mandateIdIdx: index('mandate_candidates_mandate_id_idx').on(table.mandateId)
+  };
 });
 
 // ─── CANDIDATES (MASTER) ─────────────────────────────────
@@ -98,6 +108,10 @@ export const candidateFiles = pgTable('candidate_files', {
   fileUrl: varchar('file_url', { length: 1000 }).notNull(),
   extractedText: mediumtext('extracted_text'),
   createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => {
+  return {
+    candIdIdx: index('candidate_files_cand_id_idx').on(table.candId)
+  };
 });
 
 // ─── FLOAT REFERENCES ────────────────────────────────────
@@ -110,6 +124,10 @@ export const floatReferences = pgTable('float_references', {
   rel: varchar('rel', { length: 255 }),
   text: text('text'),
   createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => {
+  return {
+    candIdIdx: index('float_references_cand_id_idx').on(table.candId)
+  };
 });
 
 // ─── FLOATS (SUBMISSIONS) ────────────────────────────────
@@ -126,6 +144,10 @@ export const floats = pgTable('floats', {
   status: varchar('status', { length: 50 }),
   response: text('response'),
   createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => {
+  return {
+    candIdIdx: index('floats_cand_id_idx').on(table.candId)
+  };
 });
 
 // ─── FLOAT FOLLOW-UPS ────────────────────────────────────
@@ -140,6 +162,10 @@ export const floatFollowUps = pgTable('float_followups', {
   status: varchar('status', { length: 20 }),
   note: text('note'),
   createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => {
+  return {
+    candIdIdx: index('float_followups_cand_id_idx').on(table.candId)
+  };
 });
 
 // ─── FLOAT ACTIVITIES ────────────────────────────────────
@@ -153,6 +179,10 @@ export const floatActivities = pgTable('float_activities', {
   type: varchar('type', { length: 50 }),
   isPinned: boolean('is_pinned').default(false),
   createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => {
+  return {
+    candIdIdx: index('float_activities_cand_id_idx').on(table.candId)
+  };
 });
 
 // ─── FRAMEWORKS ──────────────────────────────────────────
@@ -172,6 +202,10 @@ export const frameworkCategories = pgTable('framework_categories', {
   name: varchar('name', { length: 255 }).notNull(),
   weight: int('weight').default(100),
   sortOrder: int('sort_order').default(0),
+}, (table) => {
+  return {
+    frameworkIdIdx: index('framework_categories_framework_id_idx').on(table.frameworkId)
+  };
 });
 
 export const frameworkCriteria = pgTable('framework_criteria', {
@@ -180,6 +214,10 @@ export const frameworkCriteria = pgTable('framework_criteria', {
   name: varchar('name', { length: 255 }).notNull(),
   weight: int('weight').default(10),
   sortOrder: int('sort_order').default(0),
+}, (table) => {
+  return {
+    categoryIdIdx: index('framework_criteria_category_id_idx').on(table.categoryId)
+  };
 });
 
 // ─── USERS ───────────────────────────────────────────────
@@ -197,6 +235,12 @@ export const platformUsers = pgTable('platform_users', {
   maxLeaves: int('max_leaves').default(20), // default to 20 days
   reportingManagerId: varchar('reporting_manager_id', { length: 10 }), // references another user's id
   createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => {
+  return {
+    linkedClientIdIdx: index('platform_users_linked_client_id_idx').on(table.linkedClientId),
+    linkedCandidateIdIdx: index('platform_users_linked_candidate_id_idx').on(table.linkedCandidateId),
+    reportingManagerIdIdx: index('platform_users_reporting_manager_id_idx').on(table.reportingManagerId)
+  };
 });
 
 // ─── CANDIDATE REPORTS (AI WORKBENCH) ────────────────────
@@ -208,6 +252,11 @@ export const candidateReports = pgTable('candidate_reports', {
   reportData: json('report_data'), // The dynamic JSON output from the AI
   sharedWithClient: boolean('shared_with_client').default(false), // Indicates if the report is visible to the client
   createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => {
+  return {
+    candidateIdIdx: index('candidate_reports_candidate_id_idx').on(table.candidateId),
+    frameworkIdIdx: index('candidate_reports_framework_id_idx').on(table.frameworkId)
+  };
 });
 
 // ─── CLIENTS ─────────────────────────────────────────────
@@ -230,6 +279,11 @@ export const clientNotifications = pgTable('client_notifications', {
   link: varchar('link', { length: 255 }),
   isRead: boolean('is_read').default(false),
   createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => {
+  return {
+    clientIdIdx: index('client_notifications_client_id_idx').on(table.clientId),
+    mandateIdIdx: index('client_notifications_mandate_id_idx').on(table.mandateId)
+  };
 });
 
 // ─── CLIENT REMARKS ──────────────────────────────────────
@@ -241,6 +295,12 @@ export const clientRemarks = pgTable('client_remarks', {
   remarkText: text('remark_text').notNull(),
   status: varchar('status', { length: 50 }).default('Pending'), // Pending, Completed, Closed
   createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => {
+  return {
+    clientIdIdx: index('client_remarks_client_id_idx').on(table.clientId),
+    mandateIdIdx: index('client_remarks_mandate_id_idx').on(table.mandateId),
+    candIdIdx: index('client_remarks_cand_id_idx').on(table.candId)
+  };
 });
 
 // ─── CONSULTANT NOTIFICATIONS ────────────────────────────
@@ -279,6 +339,11 @@ export const timeLogs = pgTable('time_logs', {
   action: varchar('action', { length: 20 }).notNull(), // 'clock_in', 'clock_out', 'break_start', 'break_end'
   timestamp: datetime('timestamp').notNull(),
   dateString: date('date_string').notNull(), // YYYY-MM-DD for easy daily grouping
+}, (table) => {
+  return {
+    userIdIdx: index('time_logs_user_id_idx').on(table.userId),
+    dateStringIdx: index('time_logs_date_string_idx').on(table.dateString)
+  };
 });
 
 export const leaveRequests = pgTable('leave_requests', {
@@ -291,6 +356,11 @@ export const leaveRequests = pgTable('leave_requests', {
   status: varchar('status', { length: 20 }).default('Pending'), // Pending, Approved, Rejected
   adminNotes: text('admin_notes'),
   createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => {
+  return {
+    userIdIdx: index('leave_requests_user_id_idx').on(table.userId),
+    statusIdx: index('leave_requests_status_idx').on(table.status)
+  };
 });
 
 export type TimeLog = typeof timeLogs.$inferSelect;

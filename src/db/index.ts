@@ -6,7 +6,10 @@ const globalForDb = globalThis as unknown as { postgresConnection?: ReturnType<t
 
 const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL!;
 
-const connection = globalForDb.postgresConnection ?? postgres(dbUrl, { prepare: false });
+const connection = globalForDb.postgresConnection ?? postgres(dbUrl, { 
+  prepare: false, 
+  max: process.env.NODE_ENV === 'development' ? 5 : 20 
+});
 
 if (process.env.NODE_ENV !== 'production') {
   globalForDb.postgresConnection = connection;

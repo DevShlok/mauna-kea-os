@@ -14,6 +14,13 @@ export default function TimeLeaveClient() {
   const [endDate, setEndDate] = useState("");
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // WFH Form
+  const [wfhStartDate, setWfhStartDate] = useState("");
+  const [wfhEndDate, setWfhEndDate] = useState("");
+  const [wfhReason, setWfhReason] = useState("");
+  const [isSubmittingWfh, setIsSubmittingWfh] = useState(false);
+
   const [leaveToWithdraw, setLeaveToWithdraw] = useState<number | null>(null);
 
   const getWorkingDays = (startStr: string, endStr: string) => {
@@ -76,7 +83,6 @@ export default function TimeLeaveClient() {
       const data = await res.json();
       if (data.success) {
         alert("Leave request submitted successfully!");
-        // Refresh leaves
         const refreshRes = await fetch('/api/leave-requests');
         const refreshData = await refreshRes.json();
         if (refreshData.success) setLeaves(refreshData.requests);
@@ -91,6 +97,40 @@ export default function TimeLeaveClient() {
       setIsSubmitting(false);
     }
   };
+
+  const handleApplyWfh = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!wfhStartDate || !wfhEndDate) return;
+    if (new Date(wfhEndDate) < new Date(wfhStartDate)) {
+      alert("End date cannot be before the start date.");
+      return;
+    }
+    setIsSubmittingWfh(true);
+    
+    try {
+      const res = await fetch('/api/leave-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leaveType: "Work From Home", startDate: wfhStartDate, endDate: wfhEndDate, reason: wfhReason })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("WFH request submitted successfully!");
+        const refreshRes = await fetch('/api/leave-requests');
+        const refreshData = await refreshRes.json();
+        if (refreshData.success) setLeaves(refreshData.requests);
+        setWfhStartDate("");
+        setWfhEndDate("");
+        setWfhReason("");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to submit WFH request");
+    } finally {
+      setIsSubmittingWfh(false);
+    }
+  };
+
 
   const confirmWithdraw = async () => {
     if (!leaveToWithdraw) return;
@@ -149,21 +189,7 @@ export default function TimeLeaveClient() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-6">
-          <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm p-6 flex flex-col justify-center items-center text-center">
-            <h2 className="text-lg font-bold text-[#133255] mb-2">My Break Status</h2>
-            <p className="text-sm text-gray-500 mb-6">Let the team know if you are stepping away.</p>
-            {clockStatus === 'Loading' ? (
-              <div className="w-full h-[45px] bg-gray-100 animate-pulse rounded-full" />
-            ) : clockStatus === 'On Break' ? (
-              <button onClick={handleBreakToggle} className="w-full px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-full transition-colors flex items-center justify-center gap-2">
-                <span className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" /> Return to Work
-              </button>
-            ) : (
-              <button onClick={handleBreakToggle} className="w-full px-6 py-3 bg-[#133255] hover:bg-[#0e2440] text-white font-bold rounded-full transition-colors">
-                Take a Break
-              </button>
-            )}
-          </div>
+
 
           <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm p-6">
             <h2 className="text-lg font-bold text-[#133255] mb-4">Apply for Leave</h2>
@@ -196,24 +222,69 @@ export default function TimeLeaveClient() {
                 <textarea value={reason} onChange={e => setReason(e.target.value)} rows={3} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255] resize-none"></textarea>
               </div>
               <button disabled={isSubmitting} type="submit" className="w-full px-4 py-2.5 bg-[#133255] text-white rounded text-sm font-bold hover:bg-[#0e3178] disabled:opacity-50">
-                {isSubmitting ? "Submitting..." : "Submit Leave Application"}
+                {isSubmitting ? "Submitting..." : "Submit Application"}
+              </button>
+            </form>
+          </div>
+
+          <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm p-6">
+            <h2 className="text-lg font-bold text-[#133255] mb-4">Apply for Work From Home</h2>
+            <form onSubmit={handleApplyWfh} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">Start Date</label>
+                  <input type="date" value={wfhStartDate} onChange={e => {
+                    setWfhStartDate(e.target.value);
+                    if (wfhEndDate && new Date(wfhEndDate) < new Date(e.target.value)) {
+                      setWfhEndDate(e.target.value);
+                    }
+                  }} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">End Date</label>
+                  <input type="date" min={wfhStartDate} value={wfhEndDate} onChange={e => setWfhEndDate(e.target.value)} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" required />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">Reason (Optional)</label>
+                <textarea value={wfhReason} onChange={e => setWfhReason(e.target.value)} rows={3} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255] resize-none"></textarea>
+              </div>
+              <button disabled={isSubmittingWfh} type="submit" className="w-full px-4 py-2.5 bg-[#133255] text-white rounded text-sm font-bold hover:bg-[#0e3178] disabled:opacity-50">
+                {isSubmittingWfh ? "Submitting..." : "Submit WFH Application"}
               </button>
             </form>
           </div>
         </div>
 
-        <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm">
-            <div className="p-4 border-b border-[#D4E0F0] bg-gray-50">
-              <h2 className="text-sm font-bold text-[#133255]">My Leave Requests</h2>
+        <div className="space-y-6 h-full flex flex-col">
+          <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm p-6 flex flex-col justify-center items-center text-center shrink-0">
+            <h2 className="text-lg font-bold text-[#133255] mb-2">My Break Status</h2>
+            <p className="text-sm text-gray-500 mb-6">Let the team know if you are stepping away.</p>
+            {clockStatus === 'Loading' ? (
+              <div className="w-full h-[45px] bg-gray-100 animate-pulse rounded-full" />
+            ) : clockStatus === 'On Break' ? (
+              <button onClick={handleBreakToggle} className="w-full px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-full transition-colors flex items-center justify-center gap-2">
+                <span className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" /> Return to Work
+              </button>
+            ) : (
+              <button onClick={handleBreakToggle} className="w-full px-6 py-3 bg-[#133255] hover:bg-[#0e2440] text-white font-bold rounded-full transition-colors">
+                Take a Break
+              </button>
+            )}
+          </div>
+
+          <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm flex flex-col flex-1 min-h-0">
+            <div className="p-4 border-b border-[#D4E0F0] bg-gray-50 shrink-0">
+              <h2 className="text-sm font-bold text-[#133255]">My Leave & WFH Requests</h2>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="p-4 space-y-3 overflow-y-auto flex-1">
               {leaves.length === 0 ? (
                 <div className="text-center text-gray-400 py-6 text-sm">No leave requests yet.</div>
               ) : (
                 leaves.map(leave => (
                   <div key={leave.id} className="border border-gray-100 rounded-lg p-3 bg-white shadow-sm flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-[#111]">{leave.leaveType} Leave</span>
+                      <span className="font-bold text-[#111]">{leave.leaveType}{leave.leaveType === 'Work From Home' ? '' : ' Leave'}</span>
                       <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase ${
                         leave.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
                         leave.status === 'Rejected' ? 'bg-red-100 text-red-800' :
@@ -240,6 +311,7 @@ export default function TimeLeaveClient() {
               )}
             </div>
           </div>
+        </div>
       </div>
 
       {leaveToWithdraw && (
