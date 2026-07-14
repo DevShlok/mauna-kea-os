@@ -29,6 +29,9 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
     additionalDocsUrl: "",
     jdText: "",
     interviewNotesText: "",
+
+
+
     additionalDocsText: "",
     consultantNotes: "",
     openQuestions: "",
@@ -43,6 +46,7 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
   const [extractedStatus, setExtractedStatus] = useState<Record<string, boolean>>({});
   
   const [isUploading, setIsUploading] = useState<Record<string, boolean>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const supabase = createClient();
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "jd" | "notes" | "docs") => {
@@ -120,25 +124,33 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.company || !form.role) return;
+    if (!form.company || !form.role || isSubmitting) return;
     
-    // We pass all the extended fields here. Note: Since we are not doing a real DB migration in this PR, 
-    // we assume createMandateAction will silently ignore or gracefully handle new fields until schema is pushed.
-    const payload = {
-      ...form,
-      sectors,
-      targetCompanies,
-      geography: geography.join(", "),
-      pocCc,
-      // rename consultantNotes to searchNotes to match what exists in DB if needed, or pass both
-      searchNotes: form.consultantNotes
-    };
+    setIsSubmitting(true);
+    
+    try {
+      // We pass all the extended fields here. Note: Since we are not doing a real DB migration in this PR, 
+      // we assume createMandateAction will silently ignore or gracefully handle new fields until schema is pushed.
+      const payload = {
+        ...form,
+        sectors,
+        targetCompanies,
+        geography: geography.join(", "),
+        pocCc,
+        // rename consultantNotes to searchNotes to match what exists in DB if needed, or pass both
+        searchNotes: form.consultantNotes
+      };
 
-    const insertId = await createMandateAction(payload);
-    if (isClientMode) {
-      router.push("/client/mandates");
-    } else {
-      router.push("/dashboard/mandates/" + insertId);
+      const insertId = await createMandateAction(payload);
+      if (isClientMode) {
+        router.push("/client/mandates");
+      } else {
+        router.push("/dashboard/mandates/" + insertId);
+      }
+    } catch (error) {
+      console.error(error);
+      setIsSubmitting(false);
+      toast.error("Failed to create mandate.");
     }
   };
 
@@ -360,8 +372,8 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
               Save Draft
             </button>
           )}
-          <button type="submit" className="px-6 py-2.5 bg-[#D8B15B] text-white rounded text-sm font-bold hover:bg-yellow-600 shadow-sm transition-colors">
-            {isClientMode ? "Send Mandate" : "Create Mandate"}
+          <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 bg-[#D8B15B] text-white rounded text-sm font-bold hover:bg-yellow-600 shadow-sm transition-colors disabled:opacity-50">
+            {isSubmitting ? "Submitting..." : (isClientMode ? "Send Mandate" : "Create Mandate")}
           </button>
         </div>
       </form>
