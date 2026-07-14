@@ -6,13 +6,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Client, Mandate } from "@/db/schema";
-import { ArrowLeft, Building2, User, Briefcase, Calendar, Trash2, Edit } from "lucide-react";
+import { ArrowLeft, Building2, User, Briefcase, Calendar, Trash2, Edit, Upload } from "lucide-react";
 import { updateClientAction, deleteClientAction } from "@/actions";
+import MandateImportModal from "@/features/mandates/components/MandateImportModal";
 
 export default function ClientDetailClient({ client, mandates }: { client: Client, mandates: Mandate[] }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
   const [isEditing, setIsEditing] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({ 
     name: client.name, 
@@ -75,6 +77,9 @@ export default function ClientDetailClient({ client, mandates }: { client: Clien
           </div>
           
           <div className="flex items-center gap-3">
+            <button onClick={() => setIsImportModalOpen(true)} className="px-4 py-2 bg-[#D8B15B] rounded-md text-sm font-bold text-[#133255] hover:bg-[#e8c97a] transition-colors flex items-center gap-2 shadow-sm">
+              <Upload className="w-4 h-4" /> Import Mandates
+            </button>
             <button onClick={() => setIsEditing(true)} className="px-4 py-2 border border-gray-200 rounded-md text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
               <Edit className="w-4 h-4" /> Edit
             </button>
@@ -83,6 +88,13 @@ export default function ClientDetailClient({ client, mandates }: { client: Clien
             </button>
           </div>
         </div>
+
+        <MandateImportModal 
+          isOpen={isImportModalOpen} 
+          onClose={() => setIsImportModalOpen(false)} 
+          clientId={client.id}
+          clientName={client.name}
+        />
 
         {/* Mandates Tabs */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

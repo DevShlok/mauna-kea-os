@@ -6,12 +6,15 @@ import { useState, useEffect } from "react";
 import { Client, Mandate } from "@/db/schema";
 import { Search } from "lucide-react";
 import { updateClientAction } from "@/actions";
+import ClientImportModal from "./ClientImportModal";
+import { Upload } from "lucide-react";
 
 export default function ClientsClient({ clients, mandates }: { clients: Client[], mandates: Mandate[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [verticalFilter, setVerticalFilter] = useState("All verticals");
   const [statusFilter, setStatusFilter] = useState("All status");
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [localClients, setLocalClients] = useState(clients);
   useEffect(() => {
@@ -77,12 +80,22 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
           </select>
 
           <button 
+            onClick={() => setIsImportModalOpen(true)}
+            className="h-10 px-4 rounded-md bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            Import
+          </button>
+
+          <button 
             onClick={() => router.push('/dashboard/clients/new')}
             className="h-10 px-6 rounded-md bg-[#D8B15B] text-[#133255] text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors flex items-center gap-2"
           >
             + Add client
           </button>
         </div>
+
+        <ClientImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
 
         {/* Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
