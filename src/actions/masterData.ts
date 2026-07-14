@@ -5,6 +5,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { masterClients, masterIndustries, masterLocations } from "@/db/schema";
 import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
 
 // ─────────────────────────────────────────────────────────
 // MASTER CLIENTS
@@ -149,4 +150,62 @@ export async function bulkInsertMasterLocationsAction(mappedData: any[]) {
   }
   revalidatePath("/dashboard", "layout");
   return { success: true, count: inserted };
+}
+
+// ─────────────────────────────────────────────────────────
+// MANUAL CRUD OPERATIONS
+// ─────────────────────────────────────────────────────────
+
+export async function createMasterClientAction(data: any) {
+  await db.insert(masterClients).values(data);
+  revalidatePath("/dashboard/admin/master-data");
+  return { success: true };
+}
+
+export async function updateMasterClientAction(id: number, data: any) {
+  await db.update(masterClients).set(data).where(eq(masterClients.id, id));
+  revalidatePath("/dashboard/admin/master-data");
+  return { success: true };
+}
+
+export async function deleteMasterClientAction(id: number) {
+  await db.delete(masterClients).where(eq(masterClients.id, id));
+  revalidatePath("/dashboard/admin/master-data");
+  return { success: true };
+}
+
+export async function createMasterIndustryAction(data: any) {
+  await db.insert(masterIndustries).values(data);
+  revalidatePath("/dashboard/admin/master-data");
+  return { success: true };
+}
+
+export async function updateMasterIndustryAction(id: number, data: any) {
+  await db.update(masterIndustries).set(data).where(eq(masterIndustries.id, id));
+  revalidatePath("/dashboard/admin/master-data");
+  return { success: true };
+}
+
+export async function deleteMasterIndustryAction(id: number) {
+  await db.delete(masterIndustries).where(eq(masterIndustries.id, id));
+  revalidatePath("/dashboard/admin/master-data");
+  return { success: true };
+}
+
+export async function createMasterLocationAction(data: any) {
+  await db.insert(masterLocations).values(data);
+  revalidatePath("/dashboard/admin/master-data");
+  return { success: true };
+}
+
+export async function updateMasterLocationAction(id: number, data: any) {
+  await db.update(masterLocations).set(data).where(eq(masterLocations.id, id));
+  revalidatePath("/dashboard/admin/master-data");
+  return { success: true };
+}
+
+export async function deleteMasterLocationAction(id: number) {
+  await db.delete(masterLocations).where(eq(masterLocations.id, id));
+  revalidatePath("/dashboard/admin/master-data");
+  return { success: true };
 }

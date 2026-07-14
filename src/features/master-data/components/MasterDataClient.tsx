@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { MasterClient, MasterIndustry, MasterLocation } from "@/db/schema";
-import { Upload, Database, Building2, MapPin, Briefcase } from "lucide-react";
+import { Upload, Database, Building2, MapPin, Briefcase, Plus, Edit2, Trash2 } from "lucide-react";
 import MasterDataImportModal from "./MasterDataImportModal";
+import MasterDataEditModal from "./MasterDataEditModal";
+import toast from "react-hot-toast";
+import { deleteMasterClientAction, deleteMasterIndustryAction, deleteMasterLocationAction } from "@/actions/masterData";
 
 export default function MasterDataClient({
   initialClients,
@@ -17,10 +20,29 @@ export default function MasterDataClient({
   const [activeTab, setActiveTab] = useState<"clients" | "industries" | "locations">("clients");
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importType, setImportType] = useState<"clients" | "industries" | "locations">("clients");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editInitialData, setEditInitialData] = useState<any>(null);
 
   const openImport = (type: "clients" | "industries" | "locations") => {
     setImportType(type);
     setIsImportModalOpen(true);
+  };
+
+  const openEdit = (data?: any) => {
+    setEditInitialData(data || null);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this entry?")) return;
+    try {
+      if (activeTab === "clients") await deleteMasterClientAction(id);
+      else if (activeTab === "industries") await deleteMasterIndustryAction(id);
+      else if (activeTab === "locations") await deleteMasterLocationAction(id);
+      toast.success("Deleted successfully!");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to delete");
+    }
   };
 
   return (
@@ -58,7 +80,13 @@ export default function MasterDataClient({
       </div>
 
       {/* Action Bar */}
-      <div className="flex justify-end mb-6">
+      <div className="flex justify-end mb-6 gap-3">
+        <button 
+          onClick={() => openEdit()}
+          className="h-10 px-5 rounded-md bg-white border border-gray-300 text-gray-700 text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" /> Add New
+        </button>
         <button 
           onClick={() => openImport(activeTab)}
           className="h-10 px-6 rounded-md bg-[#D8B15B] text-[#133255] text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors flex items-center gap-2"
@@ -77,16 +105,21 @@ export default function MasterDataClient({
                 <th className="px-6 py-3 font-semibold text-gray-500">Industry</th>
                 <th className="px-6 py-3 font-semibold text-gray-500">HR Leader</th>
                 <th className="px-6 py-3 font-semibold text-gray-500">Owner</th>
+                <th className="px-6 py-3 font-semibold text-gray-500 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {initialClients.length === 0 && <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-400">No master clients found. Import to populate dictionary.</td></tr>}
+              {initialClients.length === 0 && <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400">No master clients found. Import to populate dictionary.</td></tr>}
               {initialClients.map(c => (
                 <tr key={c.id}>
                   <td className="px-6 py-3 font-medium text-[#133255]">{c.companyName}</td>
                   <td className="px-6 py-3 text-gray-600">{c.industry || "-"}</td>
                   <td className="px-6 py-3 text-gray-600">{c.hrLeaderName || "-"}</td>
                   <td className="px-6 py-3 text-gray-600">{c.accountOwner || "-"}</td>
+                  <td className="px-6 py-3 text-right">
+                    <button onClick={() => openEdit(c)} className="p-1.5 text-gray-400 hover:text-[#133255] hover:bg-gray-100 rounded-md transition-colors"><Edit2 className="w-4 h-4" /></button>
+                    <button onClick={() => handleDelete(c.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors ml-1"><Trash2 className="w-4 h-4" /></button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -99,14 +132,19 @@ export default function MasterDataClient({
               <tr>
                 <th className="px-6 py-3 font-semibold text-gray-500">Sector / Industry</th>
                 <th className="px-6 py-3 font-semibold text-gray-500">Includes / Consolidated From</th>
+                <th className="px-6 py-3 font-semibold text-gray-500 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {initialIndustries.length === 0 && <tr><td colSpan={2} className="px-6 py-8 text-center text-gray-400">No master industries found.</td></tr>}
+              {initialIndustries.length === 0 && <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-400">No master industries found.</td></tr>}
               {initialIndustries.map(ind => (
                 <tr key={ind.id}>
                   <td className="px-6 py-3 font-medium text-[#133255]">{ind.sectorName}</td>
                   <td className="px-6 py-3 text-gray-600 max-w-md truncate">{ind.includesConsolidatedFrom || "-"}</td>
+                  <td className="px-6 py-3 text-right">
+                    <button onClick={() => openEdit(ind)} className="p-1.5 text-gray-400 hover:text-[#133255] hover:bg-gray-100 rounded-md transition-colors"><Edit2 className="w-4 h-4" /></button>
+                    <button onClick={() => handleDelete(ind.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors ml-1"><Trash2 className="w-4 h-4" /></button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -119,7 +157,7 @@ export default function MasterDataClient({
               <tr>
                 <th className="px-6 py-3 font-semibold text-gray-500">Standardized Location</th>
                 <th className="px-6 py-3 font-semibold text-gray-500">Raw Entry</th>
-                <th className="px-6 py-3 font-semibold text-gray-500">Mapping Action</th>
+                <th className="px-6 py-3 font-semibold text-gray-500 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -128,7 +166,10 @@ export default function MasterDataClient({
                 <tr key={loc.id}>
                   <td className="px-6 py-3 font-medium text-[#133255]">{loc.standardizedLocation}</td>
                   <td className="px-6 py-3 text-gray-600">{loc.rawEntry}</td>
-                  <td className="px-6 py-3 text-gray-600 text-xs">{loc.mappingAction || "-"}</td>
+                  <td className="px-6 py-3 text-right">
+                    <button onClick={() => openEdit(loc)} className="p-1.5 text-gray-400 hover:text-[#133255] hover:bg-gray-100 rounded-md transition-colors"><Edit2 className="w-4 h-4" /></button>
+                    <button onClick={() => handleDelete(loc.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors ml-1"><Trash2 className="w-4 h-4" /></button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -140,6 +181,12 @@ export default function MasterDataClient({
         isOpen={isImportModalOpen} 
         onClose={() => setIsImportModalOpen(false)} 
         type={importType} 
+      />
+      <MasterDataEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        type={activeTab}
+        initialData={editInitialData}
       />
     </div>
   );
