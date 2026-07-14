@@ -233,7 +233,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
       setImportFileData(allData);
       setImportHeaders(headers.filter((h: string) => h));
 
-      const data = await mapCandidatesAction(headers.filter((h: string) => h), sampleData);
+      const data: any = await mapCandidatesAction(headers.filter((h: string) => h), sampleData);
       
       if (!data || !data.mapping) {
         throw new Error("Failed to map candidates: AI returned empty response.");
