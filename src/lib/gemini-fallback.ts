@@ -25,7 +25,8 @@ export async function generateObjectWithFallback(options: any) {
       // The options object contains schema, prompt, etc. We just inject the model.
       const result = await generateObject({
         ...options,
-        model: google(modelName)
+        model: google(modelName),
+        maxRetries: 0 // Disable internal retries so we immediately fallback on rate limit
       });
       console.log(`[AI] Success with model: ${modelName}`);
       return result;
