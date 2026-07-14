@@ -6,7 +6,10 @@ import { Upload, Database, Building2, MapPin, Briefcase, Plus, Edit2, Trash2 } f
 import MasterDataImportModal from "./MasterDataImportModal";
 import MasterDataEditModal from "./MasterDataEditModal";
 import toast from "react-hot-toast";
-import { deleteMasterClientAction, deleteMasterIndustryAction, deleteMasterLocationAction } from "@/actions/masterData";
+import { 
+  deleteMasterClientAction, deleteMasterIndustryAction, deleteMasterLocationAction,
+  bulkDeleteMasterClientsAction, bulkDeleteMasterIndustriesAction, bulkDeleteMasterLocationsAction
+} from "@/actions/masterData";
 
 export default function MasterDataClient({
   initialClients,
@@ -22,6 +25,13 @@ export default function MasterDataClient({
   const [importType, setImportType] = useState<"clients" | "industries" | "locations">("clients");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editInitialData, setEditInitialData] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
+  const handleTabChange = (tab: "clients" | "industries" | "locations") => {
+    setActiveTab(tab);
+    setSelectedIds([]);
+  };
 
   const openImport = (type: "clients" | "industries" | "locations") => {
     setImportType(type);
@@ -40,8 +50,37 @@ export default function MasterDataClient({
       else if (activeTab === "industries") await deleteMasterIndustryAction(id);
       else if (activeTab === "locations") await deleteMasterLocationAction(id);
       toast.success("Deleted successfully!");
+      setSelectedIds(prev => prev.filter(selectedId => selectedId !== id));
     } catch (e: any) {
       toast.error(e.message || "Failed to delete");
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const toggleSelectAll = (ids: number[]) => {
+    if (selectedIds.length === ids.length && ids.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(ids);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} entries?`)) return;
+    setIsBulkDeleting(true);
+    try {
+      if (activeTab === "clients") await bulkDeleteMasterClientsAction(selectedIds);
+      else if (activeTab === "industries") await bulkDeleteMasterIndustriesAction(selectedIds);
+      else if (activeTab === "locations") await bulkDeleteMasterLocationsAction(selectedIds);
+      toast.success(`Deleted ${selectedIds.length} entries successfully!`);
+      setSelectedIds([]);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to delete entries");
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -60,19 +99,19 @@ export default function MasterDataClient({
       {/* Tabs */}
       <div className="flex border-b border-gray-200 mb-6">
         <button 
-          onClick={() => setActiveTab("clients")}
+          onClick={() => handleTabChange("clients")}
           className={`py-3 px-6 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'clients' ? 'border-[#133255] text-[#133255]' : 'border-transparent text-gray-400 hover:text-gray-700'}`}
         >
           <Building2 className="w-4 h-4" /> Client Dictionary ({initialClients.length})
         </button>
         <button 
-          onClick={() => setActiveTab("industries")}
+          onClick={() => handleTabChange("industries")}
           className={`py-3 px-6 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'industries' ? 'border-[#133255] text-[#133255]' : 'border-transparent text-gray-400 hover:text-gray-700'}`}
         >
           <Briefcase className="w-4 h-4" /> Industries ({initialIndustries.length})
         </button>
         <button 
-          onClick={() => setActiveTab("locations")}
+          onClick={() => handleTabChange("locations")}
           className={`py-3 px-6 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'locations' ? 'border-[#133255] text-[#133255]' : 'border-transparent text-gray-400 hover:text-gray-700'}`}
         >
           <MapPin className="w-4 h-4" /> Locations ({initialLocations.length})
@@ -81,6 +120,15 @@ export default function MasterDataClient({
 
       {/* Action Bar */}
       <div className="flex justify-end mb-6 gap-3">
+        {selectedIds.length > 0 && (
+          <button 
+            onClick={handleBulkDelete}
+            disabled={isBulkDeleting}
+            className="h-10 px-5 rounded-md bg-red-50 text-red-600 border border-red-200 text-sm font-bold shadow-sm hover:bg-red-100 transition-colors flex items-center gap-2 disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4" /> Delete Selected ({selectedIds.length})
+          </button>
+        )}
         <button 
           onClick={() => openEdit()}
           className="h-10 px-5 rounded-md bg-white border border-gray-300 text-gray-700 text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
@@ -101,6 +149,9 @@ export default function MasterDataClient({
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
+                <th className="px-6 py-3 w-10">
+                  <input type="checkbox" checked={selectedIds.length > 0 && selectedIds.length === initialClients.length} onChange={() => toggleSelectAll(initialClients.map(c => c.id))} className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]" />
+                </th>
                 <th className="px-6 py-3 font-semibold text-gray-500">Company Name</th>
                 <th className="px-6 py-3 font-semibold text-gray-500">Industry</th>
                 <th className="px-6 py-3 font-semibold text-gray-500">HR Leader</th>
@@ -109,9 +160,12 @@ export default function MasterDataClient({
               </tr>
             </thead>
             <tbody className="divide-y">
-              {initialClients.length === 0 && <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400">No master clients found. Import to populate dictionary.</td></tr>}
+              {initialClients.length === 0 && <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-400">No master clients found. Import to populate dictionary.</td></tr>}
               {initialClients.map(c => (
-                <tr key={c.id}>
+                <tr key={c.id} className={selectedIds.includes(c.id) ? "bg-[#133255]/5" : "hover:bg-gray-50"}>
+                  <td className="px-6 py-3">
+                    <input type="checkbox" checked={selectedIds.includes(c.id)} onChange={() => toggleSelect(c.id)} className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]" />
+                  </td>
                   <td className="px-6 py-3 font-medium text-[#133255]">{c.companyName}</td>
                   <td className="px-6 py-3 text-gray-600">{c.industry || "-"}</td>
                   <td className="px-6 py-3 text-gray-600">{c.hrLeaderName || "-"}</td>
@@ -130,15 +184,21 @@ export default function MasterDataClient({
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
+                <th className="px-6 py-3 w-10">
+                  <input type="checkbox" checked={selectedIds.length > 0 && selectedIds.length === initialIndustries.length} onChange={() => toggleSelectAll(initialIndustries.map(i => i.id))} className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]" />
+                </th>
                 <th className="px-6 py-3 font-semibold text-gray-500">Sector / Industry</th>
                 <th className="px-6 py-3 font-semibold text-gray-500">Includes / Consolidated From</th>
                 <th className="px-6 py-3 font-semibold text-gray-500 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {initialIndustries.length === 0 && <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-400">No master industries found.</td></tr>}
+              {initialIndustries.length === 0 && <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-400">No master industries found.</td></tr>}
               {initialIndustries.map(ind => (
-                <tr key={ind.id}>
+                <tr key={ind.id} className={selectedIds.includes(ind.id) ? "bg-[#133255]/5" : "hover:bg-gray-50"}>
+                  <td className="px-6 py-3">
+                    <input type="checkbox" checked={selectedIds.includes(ind.id)} onChange={() => toggleSelect(ind.id)} className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]" />
+                  </td>
                   <td className="px-6 py-3 font-medium text-[#133255]">{ind.sectorName}</td>
                   <td className="px-6 py-3 text-gray-600 max-w-md truncate">{ind.includesConsolidatedFrom || "-"}</td>
                   <td className="px-6 py-3 text-right">
@@ -155,17 +215,23 @@ export default function MasterDataClient({
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-6 py-3 font-semibold text-gray-500">Standardized Location</th>
+                <th className="px-6 py-3 w-10">
+                  <input type="checkbox" checked={selectedIds.length > 0 && selectedIds.length === initialLocations.length} onChange={() => toggleSelectAll(initialLocations.map(l => l.id))} className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]" />
+                </th>
                 <th className="px-6 py-3 font-semibold text-gray-500">Raw Entry</th>
+                <th className="px-6 py-3 font-semibold text-gray-500">Standardized Location</th>
                 <th className="px-6 py-3 font-semibold text-gray-500 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {initialLocations.length === 0 && <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-400">No master locations found.</td></tr>}
+              {initialLocations.length === 0 && <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-400">No master locations found.</td></tr>}
               {initialLocations.map(loc => (
-                <tr key={loc.id}>
-                  <td className="px-6 py-3 font-medium text-[#133255]">{loc.standardizedLocation}</td>
-                  <td className="px-6 py-3 text-gray-600">{loc.rawEntry}</td>
+                <tr key={loc.id} className={selectedIds.includes(loc.id) ? "bg-[#133255]/5" : "hover:bg-gray-50"}>
+                  <td className="px-6 py-3">
+                    <input type="checkbox" checked={selectedIds.includes(loc.id)} onChange={() => toggleSelect(loc.id)} className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]" />
+                  </td>
+                  <td className="px-6 py-3 font-medium text-[#133255]">{loc.rawEntry}</td>
+                  <td className="px-6 py-3 text-gray-600">{loc.standardizedLocation}</td>
                   <td className="px-6 py-3 text-right">
                     <button onClick={() => openEdit(loc)} className="p-1.5 text-gray-400 hover:text-[#133255] hover:bg-gray-100 rounded-md transition-colors"><Edit2 className="w-4 h-4" /></button>
                     <button onClick={() => handleDelete(loc.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors ml-1"><Trash2 className="w-4 h-4" /></button>

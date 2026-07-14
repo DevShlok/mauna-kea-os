@@ -41,7 +41,27 @@ export default function MasterDataImportModal({ isOpen, onClose, type }: { isOpe
         await workbook.xlsx.load(arrayBuffer);
       }
       
-      const worksheet = workbook.worksheets[0];
+      // 1. Try to find a sheet name that matches the import type
+      let worksheet = workbook.worksheets.find(ws => {
+        const name = ws.name.toLowerCase();
+        if (type === "clients" && (name.includes("client") || name.includes("compan"))) return true;
+        if (type === "industries" && (name.includes("industr") || name.includes("sector"))) return true;
+        if (type === "locations" && (name.includes("location") || name.includes("cit"))) return true;
+        return false;
+      });
+
+      // 2. Fallback: Find the worksheet with the most rows
+      if (!worksheet) {
+        worksheet = workbook.worksheets[0];
+        let maxRows = 0;
+        workbook.worksheets.forEach(ws => {
+          if (ws.rowCount > maxRows) {
+            maxRows = ws.rowCount;
+            worksheet = ws;
+          }
+        });
+      }
+      
       if (!worksheet) throw new Error("No worksheet found");
 
       const rows: any[] = [];
@@ -66,34 +86,47 @@ export default function MasterDataImportModal({ isOpen, onClose, type }: { isOpe
         return;
       }
 
-      const headers = rows[0].map((h: any) => h ? String(h).trim() : "");
+      // Find the best header row (the one with the most non-empty cells in the first 10 rows)
+      let headerRowIndex = 0;
+      let maxNonEmpty = 0;
+      for (let i = 0; i < Math.min(10, rows.length); i++) {
+        const nonEmpties = rows[i].filter((c: any) => c && String(c).trim().length > 0).length;
+        if (nonEmpties > maxNonEmpty) {
+          maxNonEmpty = nonEmpties;
+          headerRowIndex = i;
+        }
+      }
+
+      const headers = rows[headerRowIndex].map((h: any) => h ? String(h).trim() : "");
       
-      const sampleData = rows.slice(1, 3).map(row => {
+      // Ensure unique headers so we don't overwrite data
+      const uniqueHeaders = headers.map((h: string, idx: number) => {
+        if (!h) return `Column ${idx}`;
+        const count = headers.slice(0, idx).filter((prev: string) => prev === h).length;
+        return count > 0 ? `${h} (${count})` : h;
+      });
+      
+      setImportHeaders(uniqueHeaders);
+
+      const allData = rows.slice(headerRowIndex + 1).map((row: any) => {
         const obj: any = {};
-        headers.forEach((h: string, i: number) => {
-          if (h) obj[h] = row[i] || "";
+        uniqueHeaders.forEach((h: string, i: number) => {
+          obj[h] = row[i] || "";
         });
         return obj;
       });
 
-      const allData = rows.slice(1).map(row => {
-        const obj: any = {};
-        headers.forEach((h: string, i: number) => {
-          if (h) obj[h] = row[i] || "";
-        });
-        return obj;
-      });
+      const sampleData = allData.slice(0, 2);
 
       setImportFileData(allData);
-      setImportHeaders(headers.filter((h: string) => h));
 
       let data: any = null;
       if (type === "clients") {
-        data = await mapMasterClientsAction(headers.filter((h: string) => h), sampleData);
+        data = await mapMasterClientsAction(uniqueHeaders.filter((h: string) => h), sampleData);
       } else if (type === "industries") {
-        data = await mapMasterIndustriesAction(headers.filter((h: string) => h), sampleData);
+        data = await mapMasterIndustriesAction(uniqueHeaders.filter((h: string) => h), sampleData);
       } else if (type === "locations") {
-        data = await mapMasterLocationsAction(headers.filter((h: string) => h), sampleData);
+        data = await mapMasterLocationsAction(uniqueHeaders.filter((h: string) => h), sampleData);
       }
       
       if (!data || !data.mapping) {
@@ -101,7 +134,7 @@ export default function MasterDataImportModal({ isOpen, onClose, type }: { isOpe
       }
       
       const sanitizedMapping: any = {};
-      const validHeaders = headers.filter((h: string) => h);
+      const validHeaders = uniqueHeaders.filter((h: string) => h);
       
       Object.keys(data.mapping).forEach(key => {
         const aiValue = (data.mapping as any)[key];
@@ -112,7 +145,8 @@ export default function MasterDataImportModal({ isOpen, onClose, type }: { isOpe
         
         let matchedHeader = validHeaders.find((h: string) => h === aiValue);
         if (!matchedHeader) {
-          matchedHeader = validHeaders.find((h: string) => h.toLowerCase() === String(aiValue).toLowerCase());
+          const normalize = (str: string) => String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
+          matchedHeader = validHeaders.find((h: string) => normalize(h) === normalize(aiValue));
         }
         sanitizedMapping[key] = matchedHeader || null;
       });
@@ -222,16 +256,16 @@ export default function MasterDataImportModal({ isOpen, onClose, type }: { isOpe
                             <ArrowRight className="w-4 h-4 text-gray-300 inline-block" />
                           </td>
                           <td className="px-4 py-3">
-                            <select
-                              value={excelHeader || ""}
-                              onChange={e => setImportMapping({...importMapping, [dbKey]: e.target.value || null})}
-                              className="w-full h-9 px-3 border rounded-md bg-white text-sm focus:border-[#133255] outline-none"
-                            >
-                              <option value="">-- Ignored --</option>
-                              {importHeaders.map(h => (
-                                <option key={h} value={h}>{h}</option>
-                              ))}
-                            </select>
+                              <select
+                                value={excelHeader || ""}
+                                onChange={e => setImportMapping({...importMapping, [dbKey]: e.target.value || null})}
+                                className="w-full h-9 px-3 border rounded-md bg-white text-sm focus:border-[#133255] outline-none"
+                              >
+                                <option value="">-- Ignored --</option>
+                                {importHeaders.map((h, i) => (
+                                  <option key={`${h}-${i}`} value={h}>{h}</option>
+                                ))}
+                              </select>
                           </td>
                         </tr>
                       );

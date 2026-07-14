@@ -15,6 +15,13 @@
       "when": 1783954583685,
       "tag": "0001_fix_indexes_and_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784056630057,
+      "tag": "0002_nifty_lifeguard",
+      "breakpoints": true
     }
   ]
 }

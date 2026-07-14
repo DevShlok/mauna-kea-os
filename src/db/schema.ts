@@ -299,14 +299,14 @@ export type LeaveRequest = typeof leaveRequests.$inferSelect;
 // ─── MASTER DATA (DICTIONARIES / AUTOFILL) ───────────────
 export const masterIndustries = pgTable('master_industries', {
   id: serial('id').primaryKey(),
-  sectorName: varchar('sector_name', { length: 255 }).notNull().unique(),
+  sectorName: varchar('sector_name', { length: 255 }).notNull(),
   includesConsolidatedFrom: text('includes_consolidated_from'),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
 export const masterLocations = pgTable('master_locations', {
   id: serial('id').primaryKey(),
-  rawEntry: varchar('raw_entry', { length: 255 }).notNull().unique(),
+  rawEntry: varchar('raw_entry', { length: 255 }).notNull(),
   standardizedLocation: varchar('standardized_location', { length: 255 }).notNull(),
   mappingAction: text('mapping_action'),
   createdAt: datetime('created_at').default(sql`now()`),
@@ -314,7 +314,7 @@ export const masterLocations = pgTable('master_locations', {
 
 export const masterClients = pgTable('master_clients', {
   id: serial('id').primaryKey(),
-  companyName: varchar('company_name', { length: 255 }).notNull().unique(),
+  companyName: varchar('company_name', { length: 255 }).notNull(),
   industry: varchar('industry', { length: 255 }),
   accountOwner: varchar('account_owner', { length: 255 }),
   hrLeaderName: varchar('hr_leader_name', { length: 255 }),

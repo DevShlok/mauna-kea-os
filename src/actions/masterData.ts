@@ -5,7 +5,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { masterClients, masterIndustries, masterLocations } from "@/db/schema";
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 // ─────────────────────────────────────────────────────────
 // MASTER CLIENTS
@@ -80,7 +80,7 @@ export async function mapMasterIndustriesAction(headers: string[], sampleData: s
   const schema = z.object({
     mapping: z.object({
       sectorName: z.string().nullable().describe("Header matching Sector / Industry"),
-      includesConsolidatedFrom: z.string().nullable().describe("Header matching Includes / Consolidated From"),
+      includesConsolidatedFrom: z.string().nullable().describe("Header matching 'Includes / Consolidated From', or 'Industry / Sector- New', or similar. MUST be an exact match from the Headers array."),
     })
   });
 
@@ -105,7 +105,9 @@ export async function bulkInsertMasterIndustriesAction(mappedData: any[]) {
         includesConsolidatedFrom: row.includesConsolidatedFrom || "",
       });
       inserted++;
-    } catch (e) { }
+    } catch (e: any) { 
+      console.error("Failed to insert client row:", row, e.message); 
+    }
   }
   revalidatePath("/dashboard", "layout");
   return { success: true, count: inserted };
@@ -136,6 +138,9 @@ Sample: ${JSON.stringify(sampleData)}`
 export async function bulkInsertMasterLocationsAction(mappedData: any[]) {
   if (!mappedData || mappedData.length === 0) throw new Error("No data provided");
   
+  const fs = require('fs');
+  fs.appendFileSync('import-debug.log', "Bulk Insert Locations Received Rows: " + mappedData.length + "\n");
+  
   let inserted = 0;
   for (const row of mappedData) {
     if (!row.rawEntry || !row.standardizedLocation) continue;
@@ -146,7 +151,10 @@ export async function bulkInsertMasterLocationsAction(mappedData: any[]) {
         mappingAction: row.mappingAction || "",
       });
       inserted++;
-    } catch (e) { }
+    } catch (e: any) { 
+      console.error("Bulk Insert Error:", e.message); 
+      fs.appendFileSync('import-debug.log', "Insert Error for row " + JSON.stringify(row) + ": " + e.message + "\n");
+    }
   }
   revalidatePath("/dashboard", "layout");
   return { success: true, count: inserted };
@@ -206,6 +214,27 @@ export async function updateMasterLocationAction(id: number, data: any) {
 
 export async function deleteMasterLocationAction(id: number) {
   await db.delete(masterLocations).where(eq(masterLocations.id, id));
+  revalidatePath("/dashboard/admin/master-data");
+  return { success: true };
+}
+
+export async function bulkDeleteMasterClientsAction(ids: number[]) {
+  if (ids.length === 0) return { success: true };
+  await db.delete(masterClients).where(inArray(masterClients.id, ids));
+  revalidatePath("/dashboard/admin/master-data");
+  return { success: true };
+}
+
+export async function bulkDeleteMasterIndustriesAction(ids: number[]) {
+  if (ids.length === 0) return { success: true };
+  await db.delete(masterIndustries).where(inArray(masterIndustries.id, ids));
+  revalidatePath("/dashboard/admin/master-data");
+  return { success: true };
+}
+
+export async function bulkDeleteMasterLocationsAction(ids: number[]) {
+  if (ids.length === 0) return { success: true };
+  await db.delete(masterLocations).where(inArray(masterLocations.id, ids));
   revalidatePath("/dashboard/admin/master-data");
   return { success: true };
 }

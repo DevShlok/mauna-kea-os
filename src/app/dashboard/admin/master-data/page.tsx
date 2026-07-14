@@ -3,14 +3,16 @@ import { db } from "@/db";
 import { masterClients, masterIndustries, masterLocations } from "@/db/schema";
 import MasterDataClient from "@/features/master-data/components/MasterDataClient";
 
+import { asc } from "drizzle-orm";
+
 export const dynamic = "force-dynamic";
 
 export default async function MasterDataPage() {
   await requireRole(["admin"]);
 
-  const clients = await db.select().from(masterClients);
-  const industries = await db.select().from(masterIndustries);
-  const locations = await db.select().from(masterLocations);
+  const clients = await db.select().from(masterClients).orderBy(asc(masterClients.id));
+  const industries = await db.select().from(masterIndustries).orderBy(asc(masterIndustries.id));
+  const locations = await db.select().from(masterLocations).orderBy(asc(masterLocations.id));
 
   return <MasterDataClient initialClients={clients} initialIndustries={industries} initialLocations={locations} />;
 }
