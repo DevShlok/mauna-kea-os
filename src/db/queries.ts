@@ -1,5 +1,5 @@
 import { db } from './index';
-import { eq, sql, getTableColumns } from 'drizzle-orm';
+import { eq, sql, getTableColumns, desc } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
 import {
   mandates, mandateCandidates, candidates, floats, floatReferences,
@@ -9,7 +9,7 @@ import {
 
 // ─── MANDATES ────────────────────────────────────────────
 export const getMandates = async () => {
-  const rows = await db.select().from(mandates).orderBy(mandates.id);
+  const rows = await db.select().from(mandates).orderBy(desc(mandates.id));
   const cands = await db.select().from(mandateCandidates);
   return rows.map(m => ({
     ...m,
@@ -74,7 +74,7 @@ export const getMandateCandidateByExtId = async (extId: string) => {
 // ─── CANDIDATES (MASTER) ─────────────────────────────────
 export const getCandidates = async () => {
   const { cvText, profilePic, ...safeCols } = getTableColumns(candidates);
-  const rows = await db.select(safeCols).from(candidates).orderBy(candidates.id);
+  const rows = await db.select(safeCols).from(candidates).orderBy(desc(candidates.createdAt));
   return rows.map(c => ({
     ...c,
     qual: (c.qual ?? []) as any[],
@@ -164,7 +164,7 @@ export const getCandidateById = async (id: string) => {
 
 // ─── FLOATS (SUBMISSIONS) ────────────────────────────────
 export const getFloats = async () => {
-  const rows = await db.select().from(floats).orderBy(floats.dateShared);
+  const rows = await db.select().from(floats).orderBy(desc(floats.dateShared));
   return rows.map(s => ({ ...s, via: (s.via ?? []) as string[] }));
 };
 
@@ -175,7 +175,7 @@ export const getFollowUps = async () => {
 
 // ─── FRAMEWORKS ──────────────────────────────────────────
 export const getFrameworks = async () => {
-  const fws = await db.select().from(frameworks);
+  const fws = await db.select().from(frameworks).orderBy(desc(frameworks.createdAt));
   const cats = await db.select().from(frameworkCategories);
   const crits = await db.select().from(frameworkCriteria);
   const reports = await db.select({ frameworkId: candidateReports.frameworkId, candidateId: candidateReports.candidateId }).from(candidateReports);
@@ -227,7 +227,7 @@ export const getFrameworkById = async (id: string) => {
 
 // ─── USERS ───────────────────────────────────────────────
 export const getPlatformUsers = async () => {
-  return db.select().from(platformUsers);
+  return db.select().from(platformUsers).orderBy(desc(platformUsers.createdAt));
 };
 
 export const getUserByEmail = async (email: string) => {
