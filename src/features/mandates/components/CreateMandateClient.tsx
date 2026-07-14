@@ -2,18 +2,18 @@
 import toast from "react-hot-toast";
 
 
+
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { createMandateAction } from "@/actions";
 import { createClient } from "@/utils/supabase/client";
-import { ClientTypeahead } from "@/components/shared/Typeaheads";
+import { ClientTypeahead, LocationTypeahead, IndustryTypeahead } from "@/components/shared/Typeaheads";
 
-export default function CreateMandateClient({ frameworks, isClientMode = false, clientName = "" }: { frameworks: any[], isClientMode?: boolean, clientName?: string }) {
+export default function CreateMandateClient({ frameworks, isClientMode = false, clientName = "", masterLocations = [], masterClients = [], masterIndustries = [] }: { frameworks: any[], isClientMode?: boolean, clientName?: string, masterLocations?: any[], masterClients?: any[], masterIndustries?: any[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialCompany = isClientMode ? clientName : (searchParams.get("company") || "");
-
   const [form, setForm] = useState({
     company: initialCompany,
     role: "",
@@ -39,8 +39,10 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
   });
 
   const [sectors, setSectors] = useState<string[]>([]);
+  const [currentSecInput, setCurrentSecInput] = useState("");
   const [targetCompanies, setTargetCompanies] = useState<string[]>([]);
   const [geography, setGeography] = useState<string[]>([]);
+  const [currentLocInput, setCurrentLocInput] = useState("");
   const [pocCc, setPocCc] = useState<string[]>([]);
 
   const [isExtracting, setIsExtracting] = useState<Record<string, boolean>>({});
@@ -237,7 +239,28 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
             <div>
               <label className="block text-xs font-bold text-gray-600 mb-1.5">Target Sectors</label>
               <div className="border border-gray-200 rounded p-1 focus-within:border-[#133255] bg-white">
-                <input type="text" onKeyDown={(e) => handleTagInput(e, setSectors)} className="w-full outline-none text-sm p-1.5" placeholder="Type + Enter..." />
+                <IndustryTypeahead 
+                  value={currentSecInput} 
+                  onChange={setCurrentSecInput} 
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const val = e.currentTarget.value.trim();
+                      if (val) {
+                        setSectors(prev => [...prev, val]);
+                        setCurrentSecInput("");
+                      }
+                    }
+                  }}
+                  onSelect={(val) => {
+                    if (val) {
+                      setSectors(prev => [...prev, val]);
+                      setCurrentSecInput("");
+                    }
+                  }}
+                  className="w-full outline-none text-sm p-1.5" 
+                  placeholder="Type + Enter..." 
+                />
               </div>
               {renderTags(sectors, setSectors)}
             </div>
@@ -251,7 +274,28 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
             <div>
               <label className="block text-xs font-bold text-gray-600 mb-1.5">Geography</label>
               <div className="border border-gray-200 rounded p-1 focus-within:border-[#133255] bg-white">
-                <input type="text" onKeyDown={(e) => handleTagInput(e, setGeography)} className="w-full outline-none text-sm p-1.5" placeholder="Add locations..." />
+                <LocationTypeahead 
+                  value={currentLocInput} 
+                  onChange={setCurrentLocInput} 
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const val = e.currentTarget.value.trim();
+                      if (val) {
+                        setGeography(prev => [...prev, val]);
+                        setCurrentLocInput("");
+                      }
+                    }
+                  }}
+                  onSelect={(val) => {
+                    if (val) {
+                      setGeography(prev => [...prev, val]);
+                      setCurrentLocInput("");
+                    }
+                  }}
+                  className="w-full outline-none text-sm p-1.5" 
+                  placeholder="Add locations..." 
+                />
               </div>
               {renderTags(geography, setGeography)}
             </div>

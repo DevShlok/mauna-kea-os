@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClientAction } from "@/actions";
 
-export default function NewClientClient() {
+export default function NewClientClient({ industries = [] }: { industries?: any[] }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({ name: "", accountId: "", vertical: "", owner: "", status: "Active" });
@@ -39,7 +39,12 @@ export default function NewClientClient() {
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Vertical</label>
-                <input value={form.vertical} onChange={e => setForm({...form, vertical: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[15px] outline-none focus:border-[#133255]" placeholder="e.g. Financial services"/>
+                <input list="industry-suggestions" value={form.vertical} onChange={e => setForm({...form, vertical: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[15px] outline-none focus:border-[#133255]" placeholder="e.g. Financial services"/>
+                <datalist id="industry-suggestions">
+                  {industries.map((ind: any) => (
+                    <option key={ind.id} value={ind.standardizedIndustry || ind.rawEntry} />
+                  ))}
+                </datalist>
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Owner</label>

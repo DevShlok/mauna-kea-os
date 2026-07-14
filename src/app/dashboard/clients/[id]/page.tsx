@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/auth";
 import { db } from "@/db";
-import { clients, mandates } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { clients, mandates, masterIndustries } from "@/db/schema";
+import { eq, asc } from "drizzle-orm";
 import ClientDetailClient from "@/features/clients/components/ClientDetailClient";
 import { notFound } from "next/navigation";
 
@@ -19,5 +19,7 @@ export default async function ClientDetailPage({ params  }: { params: Promise<{ 
   // Fetch mandates for this client by matching the company name
   const clientMandates = await db.select().from(mandates).where(eq(mandates.company, client.name));
   
-  return <ClientDetailClient client={client} mandates={clientMandates} />;
+  const industries = await db.select().from(masterIndustries).orderBy(asc(masterIndustries.id));
+
+  return <ClientDetailClient client={client} mandates={clientMandates} industries={industries} />;
 }

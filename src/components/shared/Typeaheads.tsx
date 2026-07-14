@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { searchMasterLocationsAction, searchMasterIndustriesAction, searchMasterClientsAction } from "@/actions/searchMasterData";
 
-export function LocationTypeahead({ value, onChange, placeholder = "e.g., Bengaluru", className = "" }: { value: string, onChange: (val: string) => void, placeholder?: string, className?: string }) {
+export function LocationTypeahead({ value, onChange, onKeyDown, onSelect, placeholder = "e.g., Bengaluru", className = "" }: { value: string, onChange: (val: string) => void, onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void, onSelect?: (val: string) => void, placeholder?: string, className?: string }) {
   const [query, setQuery] = useState(value || "");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -45,6 +45,7 @@ export function LocationTypeahead({ value, onChange, placeholder = "e.g., Bengal
           setIsOpen(true);
         }}
         onFocus={() => setIsOpen(true)}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
         className={className || "w-full h-10 px-3 rounded-md border border-gray-200 text-sm focus:border-[#133255] outline-none transition-colors"}
       />
@@ -57,6 +58,7 @@ export function LocationTypeahead({ value, onChange, placeholder = "e.g., Bengal
               onClick={() => {
                 setQuery(s);
                 onChange(s);
+                if (onSelect) onSelect(s);
                 setIsOpen(false);
               }}
             >
@@ -69,7 +71,7 @@ export function LocationTypeahead({ value, onChange, placeholder = "e.g., Bengal
   );
 }
 
-export function IndustryTypeahead({ value, onChange, placeholder = "e.g., Technology", className = "" }: { value: string, onChange: (val: string) => void, placeholder?: string, className?: string }) {
+export function IndustryTypeahead({ value, onChange, onKeyDown, onSelect, placeholder = "e.g., Technology", className = "" }: { value: string, onChange: (val: string) => void, onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void, onSelect?: (val: string) => void, placeholder?: string, className?: string }) {
   const [query, setQuery] = useState(value || "");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -111,6 +113,7 @@ export function IndustryTypeahead({ value, onChange, placeholder = "e.g., Techno
           setIsOpen(true);
         }}
         onFocus={() => setIsOpen(true)}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
         className={className || "w-full h-10 px-3 rounded-md border border-gray-200 text-sm focus:border-[#133255] outline-none transition-colors"}
       />
@@ -123,6 +126,7 @@ export function IndustryTypeahead({ value, onChange, placeholder = "e.g., Techno
               onClick={() => {
                 setQuery(s);
                 onChange(s);
+                if (onSelect) onSelect(s);
                 setIsOpen(false);
               }}
             >

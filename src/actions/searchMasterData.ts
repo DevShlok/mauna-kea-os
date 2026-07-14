@@ -23,9 +23,14 @@ export async function searchMasterIndustriesAction(query: string) {
   if (!query) return [];
   const results = await db.select()
     .from(masterIndustries)
-    .where(ilike(masterIndustries.sectorName, `%${query}%`))
+    .where(or(
+      ilike(masterIndustries.rawEntry, `%${query}%`),
+      ilike(masterIndustries.standardizedIndustry, `%${query}%`)
+    ))
     .limit(10);
-  return results.map(r => r.sectorName);
+  
+  const uniqueIndustries = Array.from(new Set(results.map(r => r.standardizedIndustry || r.rawEntry).filter(Boolean))) as string[];
+  return uniqueIndustries;
 }
 
 export async function searchMasterClientsAction(query: string) {

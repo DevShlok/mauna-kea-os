@@ -10,7 +10,7 @@ import { ArrowLeft, Building2, User, Briefcase, Calendar, Trash2, Edit, Upload }
 import { updateClientAction, deleteClientAction } from "@/actions";
 import MandateImportModal from "@/features/mandates/components/MandateImportModal";
 
-export default function ClientDetailClient({ client, mandates }: { client: Client, mandates: Mandate[] }) {
+export default function ClientDetailClient({ client, mandates, industries = [] }: { client: any, mandates: any[], industries?: any[] }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
   const [isEditing, setIsEditing] = useState(false);
@@ -174,7 +174,12 @@ export default function ClientDetailClient({ client, mandates }: { client: Clien
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Vertical</label>
-                  <input value={form.vertical} onChange={e => setForm({...form, vertical: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
+                  <input list="industry-suggestions" value={form.vertical} onChange={e => setForm({...form, vertical: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
+                  <datalist id="industry-suggestions">
+                    {industries.map((ind: any) => (
+                      <option key={ind.id} value={ind.standardizedIndustry || ind.rawEntry} />
+                    ))}
+                  </datalist>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Owner</label>
