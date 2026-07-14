@@ -235,6 +235,10 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
 
       const data = await mapCandidatesAction(headers.filter((h: string) => h), sampleData);
       
+      if (!data || !data.mapping) {
+        throw new Error("Failed to map candidates: AI returned empty response.");
+      }
+      
       // AI sometimes returns slightly different casing. Match it exactly to the real headers.
       const sanitizedMapping: any = {};
       const validHeaders = headers.filter((h: string) => h);
