@@ -869,7 +869,21 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
               <div className="space-y-3">
                 {Object.keys(importMapping).map((dbKey) => (
                   <div key={dbKey} className="grid grid-cols-2 gap-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
-                    <div className="font-semibold text-gray-700 text-sm capitalize">{dbKey.replace(/([A-Z])/g, ' $1').trim()}</div>
+                    <div className="font-semibold text-gray-700 text-sm capitalize">
+                      {{
+                        name: "Name",
+                        designation: "Designation",
+                        company: "Company",
+                        phone: "Phone",
+                        email: "Email",
+                        previousCompany: "Previous Company",
+                        location: "Location",
+                        industry: "Industry",
+                        ctc: "CTC",
+                        totalExperience: "Total Experience (in Years)",
+                        yearQualified: "Year Qualified"
+                      }[dbKey as string] || dbKey.replace(/([A-Z])/g, ' $1').trim()}
+                    </div>
                     <select 
                       className="w-full text-sm border-gray-300 rounded-md bg-white p-2 outline-none focus:border-blue-500 border"
                       value={importMapping[dbKey] || ""}

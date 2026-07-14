@@ -1,7 +1,6 @@
 "use server";
 
-import { generateObject } from "ai";
-import { google } from "@ai-sdk/google";
+import { generateObjectWithFallback } from "@/lib/gemini-fallback";
 import { z } from "zod";
 import { db } from "@/db";
 import { candidates, candidateFiles } from "@/db/schema";
@@ -15,19 +14,20 @@ export async function mapCandidatesAction(headers: string[], sampleData: string[
   const schema = z.object({
     mapping: z.object({
       name: z.string().nullable().describe("Header matching Candidate Name"),
-      email: z.string().nullable().describe("Header matching Email Address"),
-      mobile: z.string().nullable().describe("Header matching Mobile/Phone Number"),
-      location: z.string().nullable().describe("Header matching Current Location"),
-      company: z.string().nullable().describe("Header matching Current Employer/Company"),
-      role: z.string().nullable().describe("Header matching Current Designation/Role"),
-      totalExp: z.string().nullable().describe("Header matching Total Experience"),
-      currentCtc: z.string().nullable().describe("Header matching Current CTC"),
-      notes: z.string().nullable().describe("Header matching Notes/Remarks"),
+      designation: z.string().nullable().describe("Header matching Designation/Role"),
+      company: z.string().nullable().describe("Header matching Current Company"),
+      phone: z.string().nullable().describe("Header matching Phone/Mobile number"),
+      email: z.string().nullable().describe("Header matching Email address"),
+      previousCompany: z.string().nullable().describe("Header matching Previous Company"),
+      location: z.string().nullable().describe("Header matching Location"),
+      industry: z.string().nullable().describe("Header matching Industry"),
+      ctc: z.string().nullable().describe("Header matching CTC or Salary"),
+      totalExperience: z.string().nullable().describe("Header matching Total Experience in Years"),
+      yearQualified: z.string().nullable().describe("Header matching Year Qualified or Graduation Year"),
     })
   });
 
-  const { object } = await generateObject({
-    model: google("gemini-3.5-flash"),
+  const { object } = await generateObjectWithFallback({
     schema,
     prompt: `You are an expert data mapping assistant. You are given a list of CSV headers and a few rows of sample data. 
 Your task is to map the provided CSV headers to the standard system fields. 
@@ -64,13 +64,15 @@ export async function processCandidatesAction(mappedCandidates: any[]) {
       id: newId,
       name: c.name || "Unknown",
       email: c.email || "",
-      mobile: c.mobile || "",
+      mobile: c.phone || "",
       location: c.location || "",
       company: c.company || "",
-      designation: c.role || "",
-      exp: c.totalExp ? parseInt(c.totalExp) : null,
-      ctc: c.currentCtc ? parseInt(c.currentCtc) : null,
-      notes: c.notes || "",
+      designation: c.designation || "",
+      exp: c.totalExperience ? parseInt(c.totalExperience) : null,
+      ctc: c.ctc ? parseInt(c.ctc) : null,
+      notes: c.industry ? `Industry: ${c.industry}` : "",
+      expTags: c.previousCompany ? [c.previousCompany] : [],
+      qual: c.yearQualified ? [{ degree: "Qualification", year: c.yearQualified }] : [],
       initials,
       status: "Active",
     };

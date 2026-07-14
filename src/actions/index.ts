@@ -10,9 +10,35 @@ export async function createMandateAction(data: any) {
   
   // Try to find the client by exact name match (case-insensitive)
   const existingClient = await db.select().from(clients).where(eq(sql`LOWER(${clients.name})`, (data.company || "").toLowerCase()));
-  const clientId = existingClient.length > 0 ? existingClient[0].id : null;
+  let clientId = existingClient.length > 0 ? existingClient[0].id : null;
   // Normalize company name if client exists
-  const companyName = existingClient.length > 0 ? existingClient[0].name : data.company;
+  let companyName = existingClient.length > 0 ? existingClient[0].name : data.company;
+
+  // Auto-initialize client and portal user if not found
+  if (!clientId && companyName) {
+    clientId = "CLI-" + Date.now().toString();
+    await db.insert(clients).values({
+      id: clientId,
+      name: companyName,
+      owner: data.consultant || "System",
+      status: "Active",
+    });
+
+    // Auto-grant portal access if POC email is provided
+    if (data.pocEmail && data.clientPOC) {
+      const initials = data.clientPOC.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+      await db.insert(platformUsers).values({
+        id: "U-" + Math.floor(Math.random() * 10000).toString(),
+        name: data.clientPOC,
+        email: data.pocEmail,
+        role: "client",
+        status: "Active",
+        initials,
+        linkedClientId: clientId,
+        lastActive: new Date(),
+      });
+    }
+  }
 
   const result = await db.insert(mandates).values({
     company: companyName,
