@@ -2,6 +2,8 @@
 import toast from "react-hot-toast";
 
 import { useState } from "react";
+import { Plus, X, Upload } from "lucide-react";
+import { LocationTypeahead, ClientTypeahead } from "@/components/shared/Typeaheads";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { addFloatListEntryAction, editFloatListEntryAction, bulkAddSubmissionAction } from "@/actions";
@@ -358,10 +360,12 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Location</label>
-                <select value={form.location} onChange={e=>setForm({...form, location:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]">
-                  <option value="">Select Location</option>
-                  {locations.map(l => <option key={l} value={l}>{l}</option>)}
-                </select>
+                <LocationTypeahead
+                  value={form.location}
+                  onChange={(val) => setForm({...form, location: val})}
+                  placeholder="Select Location"
+                  className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]"
+                />
               </div>
             </div>
 
@@ -372,7 +376,12 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
             <div className="grid grid-cols-3 gap-5 mb-6">
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current Company</label>
-                <input type="text" value={form.company} onChange={e=>setForm({...form, company:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Company Name" />
+                <ClientTypeahead
+                  value={form.company}
+                  onChange={(val) => setForm({...form, company: val})}
+                  placeholder="Company Name"
+                  className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]"
+                />
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current Designation</label>

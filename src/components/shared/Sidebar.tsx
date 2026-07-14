@@ -83,6 +83,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
       children: [
         { label: "Users", href: "/dashboard/admin/users", visibleTo: ["admin"] },
         { label: "Add a User", href: "/dashboard/admin/users/new", icon: Plus, visibleTo: ["admin"] },
+        { label: "Master Data", href: "/dashboard/admin/master-data", visibleTo: ["admin"] },
       ]
     }
   ];

@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { createMandateAction } from "@/actions";
 import { createClient } from "@/utils/supabase/client";
+import { ClientTypeahead } from "@/components/shared/Typeaheads";
 
 export default function CreateMandateClient({ frameworks, isClientMode = false, clientName = "" }: { frameworks: any[], isClientMode?: boolean, clientName?: string }) {
   const router = useRouter();
@@ -186,7 +187,20 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
             {!isClientMode && (
               <div>
                 <label className="block text-xs font-bold text-gray-600 mb-1.5">Company <span className="text-red-500">*</span></label>
-                <input required value={form.company} onChange={(e) => setForm({...form, company: e.target.value})} type="text" className={inp} placeholder="Client company name"/>
+                <ClientTypeahead 
+                  value={form.company} 
+                  onChange={(val) => setForm({...form, company: val})} 
+                  onClientSelect={(c) => {
+                    setForm(prev => ({
+                      ...prev, 
+                      company: c.companyName,
+                      clientPOC: c.hrLeaderName || prev.clientPOC,
+                      pocPhone: c.phone || prev.pocPhone
+                    }));
+                  }}
+                  className={inp} 
+                  placeholder="Client company name"
+                />
               </div>
             )}
             <div>

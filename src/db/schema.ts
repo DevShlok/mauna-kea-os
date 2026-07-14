@@ -295,3 +295,39 @@ export const leaveRequests = pgTable('leave_requests', {
 
 export type TimeLog = typeof timeLogs.$inferSelect;
 export type LeaveRequest = typeof leaveRequests.$inferSelect;
+
+// ─── MASTER DATA (DICTIONARIES / AUTOFILL) ───────────────
+export const masterIndustries = pgTable('master_industries', {
+  id: serial('id').primaryKey(),
+  sectorName: varchar('sector_name', { length: 255 }).notNull().unique(),
+  includesConsolidatedFrom: text('includes_consolidated_from'),
+  createdAt: datetime('created_at').default(sql`now()`),
+});
+
+export const masterLocations = pgTable('master_locations', {
+  id: serial('id').primaryKey(),
+  rawEntry: varchar('raw_entry', { length: 255 }).notNull().unique(),
+  standardizedLocation: varchar('standardized_location', { length: 255 }).notNull(),
+  mappingAction: text('mapping_action'),
+  createdAt: datetime('created_at').default(sql`now()`),
+});
+
+export const masterClients = pgTable('master_clients', {
+  id: serial('id').primaryKey(),
+  companyName: varchar('company_name', { length: 255 }).notNull().unique(),
+  industry: varchar('industry', { length: 255 }),
+  accountOwner: varchar('account_owner', { length: 255 }),
+  hrLeaderName: varchar('hr_leader_name', { length: 255 }),
+  phone: varchar('phone', { length: 100 }),
+  designation: varchar('designation', { length: 255 }),
+  linkedInUrl: varchar('linkedin_url', { length: 1000 }),
+  sourceUrl: varchar('source_url', { length: 1000 }),
+  sourceType: varchar('source_type', { length: 100 }),
+  confidence: varchar('confidence', { length: 50 }),
+  notes: text('notes'),
+  createdAt: datetime('created_at').default(sql`now()`),
+});
+
+export type MasterIndustry = typeof masterIndustries.$inferSelect;
+export type MasterLocation = typeof masterLocations.$inferSelect;
+export type MasterClient = typeof masterClients.$inferSelect;
