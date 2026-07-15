@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 export default function ClientsClient({ clients, mandates }: { clients: Client[], mandates: Mandate[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [verticalFilter, setVerticalFilter] = useState("All verticals");
+  const [verticalFilter, setVerticalFilter] = useState("All industries");
   const [statusFilter, setStatusFilter] = useState("All status");
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
@@ -25,7 +25,7 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
 
   const filteredClients = localClients.filter(c => {
     if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !(c.vertical && c.vertical.toLowerCase().includes(search.toLowerCase()))) return false;
-    if (verticalFilter !== "All verticals" && c.vertical !== verticalFilter) return false;
+    if (verticalFilter !== "All industries" && c.vertical !== verticalFilter) return false;
     if (statusFilter !== "All status" && c.status !== statusFilter) return false;
     return true;
   });
@@ -102,7 +102,7 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
             onChange={e => setVerticalFilter(e.target.value)}
             className="h-10 px-4 rounded-md border border-gray-200 text-sm bg-white outline-none cursor-pointer focus:border-[#133255]"
           >
-            <option value="All verticals">All verticals</option>
+            <option value="All industries">All industries</option>
             {verticals.map(v => <option key={v} value={v}>{v}</option>)}
           </select>
 
@@ -160,9 +160,9 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
                   <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
                 </th>
                 <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Account</th>
-                <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Vertical</th>
+                <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Industry</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Live Mandates</th>
-                <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Owner</th>
+                <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Account owner</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
               </tr>

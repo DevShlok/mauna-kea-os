@@ -27,7 +27,7 @@ export default function NewClientClient({ industries = [] }: { industries?: any[
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Company Name *</label>
+                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Client *</label>
                 <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[15px] outline-none focus:border-[#133255]" placeholder="e.g. Finova Tech"/>
               </div>
               <div>
@@ -38,7 +38,7 @@ export default function NewClientClient({ industries = [] }: { industries?: any[
 
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Vertical</label>
+                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Industry</label>
                 <input list="industry-suggestions" value={form.vertical} onChange={e => setForm({...form, vertical: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[15px] outline-none focus:border-[#133255]" placeholder="e.g. Financial services"/>
                 <datalist id="industry-suggestions">
                   {industries.map((ind: any) => (
@@ -47,7 +47,7 @@ export default function NewClientClient({ industries = [] }: { industries?: any[
                 </datalist>
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Owner</label>
+                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Account owner</label>
                 <input value={form.owner} onChange={e => setForm({...form, owner: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[15px] outline-none focus:border-[#133255]" placeholder="e.g. Sahil Bhatia"/>
               </div>
             </div>

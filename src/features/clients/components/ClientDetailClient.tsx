@@ -69,8 +69,8 @@ export default function ClientDetailClient({ client, mandates, industries = [] }
               </div>
               <div className="flex items-center gap-6 text-sm text-gray-500 font-medium">
                 <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {client.accountId || "No Account ID"}</span>
-                <span className="flex items-center gap-1.5"><Building2 className="w-4 h-4" /> {client.vertical || "No Vertical"}</span>
-                <span className="flex items-center gap-1.5"><User className="w-4 h-4" /> {client.owner || "No Owner"}</span>
+                <span className="flex items-center gap-1.5"><Building2 className="w-4 h-4" /> {client.vertical || "No Industry"}</span>
+                <span className="flex items-center gap-1.5"><User className="w-4 h-4" /> {client.owner || "No Account owner"}</span>
                 <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {new Date(client.createdAt!).toLocaleDateString()}</span>
               </div>
             </div>
@@ -165,7 +165,7 @@ export default function ClientDetailClient({ client, mandates, industries = [] }
             <form onSubmit={handleEditSubmit} className="p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Company Name *</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Client *</label>
                   <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
                 </div>
                 <div>
@@ -173,7 +173,7 @@ export default function ClientDetailClient({ client, mandates, industries = [] }
                   <input value={form.accountId} onChange={e => setForm({...form, accountId: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Vertical</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Industry</label>
                   <input list="industry-suggestions" value={form.vertical} onChange={e => setForm({...form, vertical: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
                   <datalist id="industry-suggestions">
                     {industries.map((ind: any) => (
@@ -182,7 +182,7 @@ export default function ClientDetailClient({ client, mandates, industries = [] }
                   </datalist>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Owner</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Account owner</label>
                   <input value={form.owner} onChange={e => setForm({...form, owner: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
                 </div>
                 <div>

@@ -3,6 +3,8 @@
 import { generateObjectWithFallback } from "@/lib/gemini-fallback";
 import { z } from "zod";
 import { db } from "@/db";
+import { createClient } from "@/utils/supabase/server";
+import { platformUsers } from "@/db/schema";
 import { candidates, candidateFiles } from "@/db/schema";
 import { revalidatePath } from "next/cache";
 
@@ -48,10 +50,30 @@ ${JSON.stringify(sampleData, null, 2)}`
 import { evaluateCandidateMatch } from "@/utils/fuzzy-match";
 import { eq } from "drizzle-orm";
 
+
+async function getCurrentUserName(): Promise<string> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.email) {
+      const dbUser = await db.select().from(platformUsers).where(eq(platformUsers.email, user.email));
+      if (dbUser.length > 0) return dbUser[0].name;
+      return user.email;
+    }
+  } catch(e) {}
+  return "Unknown";
+}
+
 export async function checkCandidateDuplicatesAction(mappedCandidates: any[]) {
   if (!mappedCandidates || mappedCandidates.length === 0) return { duplicates: [], newCandidates: [] };
 
   const existingCandidates = await db.select().from(candidates).where(eq(candidates.isDeleted, false));
+  const existingFiles = await db.select().from(candidateFiles);
+  
+  // Attach files to candidates for date checking
+  existingCandidates.forEach((c: any) => {
+    c.files = existingFiles.filter(f => f.candId === c.id);
+  });
   const duplicates = [];
   const newCandidates = [];
 
@@ -84,6 +106,7 @@ export async function checkCandidateDuplicatesAction(mappedCandidates: any[]) {
 }
 
 export async function finalizeCandidatesImportAction(newCandidates: any[], updatedCandidates: any[]) {
+  const updatedBy = await getCurrentUserName();
   let insertedCount = 0;
   let updatedCount = 0;
 
@@ -151,6 +174,8 @@ export async function finalizeCandidatesImportAction(newCandidates: any[], updat
     // Merge notes/tags if selected
     if (fieldsToUpdate.industry && c.industry) updatePayload.notes = c.industry;
 
+    updatePayload.updatedAt = new Date();
+    updatePayload.updatedBy = updatedBy;
     if (Object.keys(updatePayload).length > 0) {
       await db.update(candidates).set(updatePayload).where(eq(candidates.id, existingId));
       updatedCount++;

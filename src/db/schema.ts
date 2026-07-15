@@ -35,6 +35,8 @@ export const mandates = pgTable('mandates', {
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
+  updatedAt: datetime('updated_at').default(sql`now()`),
+  updatedBy: varchar('updated_by', { length: 255 }),
 });
 
 // ─── MANDATE CANDIDATES ──────────────────────────────────
