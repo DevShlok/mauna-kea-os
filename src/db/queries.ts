@@ -227,7 +227,14 @@ export const getFrameworkById = async (id: string) => {
 
 // ─── USERS ───────────────────────────────────────────────
 export const getPlatformUsers = async () => {
-  return db.select().from(platformUsers).where(eq(platformUsers.isDeleted, false)).orderBy(desc(platformUsers.createdAt));
+  const users = await db.select().from(platformUsers).where(eq(platformUsers.isDeleted, false)).orderBy(desc(platformUsers.createdAt));
+  const uniqueUsersMap = new Map();
+  for (const user of users) {
+    if (user.email && !uniqueUsersMap.has(user.email.toLowerCase())) {
+      uniqueUsersMap.set(user.email.toLowerCase(), user);
+    }
+  }
+  return Array.from(uniqueUsersMap.values());
 };
 
 export const getUserByEmail = async (email: string) => {
