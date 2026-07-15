@@ -350,7 +350,8 @@ export async function updatePlatformUserAction(id: string, data: { name: string;
 
 export async function deletePlatformUserAction(id: string) {
   revalidatePath("/dashboard", "layout");
-  await db.delete(platformUsers).where(eq(platformUsers.id, id));
+  const deletedBy = await getDeletedBy();
+  await db.update(platformUsers).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(platformUsers.id, id));
   revalidatePath("/dashboard/admin/users");
 }
 
@@ -432,29 +433,21 @@ export async function editFrameworkAction(id: string, data: any, mandateIds?: st
 
 export async function deleteFrameworkAction(id: string) {
   revalidatePath('/dashboard', 'layout');
-  
-  // Need to cascade delete
-  const oldCats = await db.select().from(frameworkCategories).where(eq(frameworkCategories.frameworkId, id));
-  for (const cat of oldCats) {
-    await db.delete(frameworkCriteria).where(eq(frameworkCriteria.categoryId, cat.id));
-  }
-  await db.delete(frameworkCategories).where(eq(frameworkCategories.frameworkId, id));
-  await db.delete(candidateReports).where(eq(candidateReports.frameworkId, id));
-  await db.update(mandates).set({ frameworkId: null }).where(eq(mandates.frameworkId, id));
-  await db.delete(frameworks).where(eq(frameworks.id, id));
+  const deletedBy = await getDeletedBy();
+  await db.update(frameworks).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(frameworks.id, id));
   revalidatePath('/dashboard/frameworks');
 }
 
 export async function deleteMandateAction(id: number) {
-  await db.delete(mandateCandidates).where(eq(mandateCandidates.mandateId, id));
-  await db.delete(mandates).where(eq(mandates.id, id));
+  const deletedBy = await getDeletedBy();
+  await db.update(mandates).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(mandates.id, id));
   revalidatePath("/dashboard/mandates");
 }
 
 export async function deleteMultipleMandatesAction(ids: number[]) {
   if (!ids || ids.length === 0) return;
-  await db.delete(mandateCandidates).where(inArray(mandateCandidates.mandateId, ids));
-  await db.delete(mandates).where(inArray(mandates.id, ids));
+  const deletedBy = await getDeletedBy();
+  await db.update(mandates).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(inArray(mandates.id, ids));
   revalidatePath("/dashboard/mandates");
 }
 
@@ -482,27 +475,27 @@ export async function updateClientAction(id: string, data: any) {
 }
 
 export async function deleteClientAction(id: string) {
-  await db.delete(clients).where(eq(clients.id, id));
+  const [client] = await db.select().from(clients).where(eq(clients.id, id));
+  const deletedBy = await getDeletedBy();
+  if (client) {
+    await db.update(mandates).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(mandates.company, client.name));
+  }
+  await db.update(clients).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(clients.id, id));
   return true;
 }
 
 export async function deleteSubmissionAction(id: string) {
   revalidatePath('/dashboard', 'layout');
-  await db.delete(floats).where(eq(floats.id, id));
+  const deletedBy = await getDeletedBy();
+  await db.update(floats).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(floats.id, id));
   revalidatePath('/dashboard/float-list');
   revalidatePath('/dashboard/float-list/submissions');
 }
 
 export async function deleteFloatListEntryAction(id: string) {
   revalidatePath("/dashboard", "layout");
-  await db.delete(mandateCandidates).where(eq(mandateCandidates.externalId, id));
-  await db.delete(floats).where(eq(floats.candId, id));
-  await db.delete(floatFollowUps).where(eq(floatFollowUps.candId, id));
-  await db.delete(floatActivities).where(eq(floatActivities.candId, id));
-  await db.delete(floatReferences).where(eq(floatReferences.candId, id));
-  await db.delete(candidateReports).where(eq(candidateReports.candidateId, id));
-  await db.delete(candidateFiles).where(eq(candidateFiles.candId, id));
-  await db.delete(candidates).where(eq(candidates.id, id));
+  const deletedBy = await getDeletedBy();
+  await db.update(candidates).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(candidates.id, id));
   revalidatePath("/dashboard/float-list/database");
   revalidatePath("/dashboard/mandates");
   revalidatePath("/dashboard/float-list/submissions");
@@ -821,17 +814,20 @@ export async function markConsultantNotificationsAsReadAction() {
 }
 export async function deleteMultipleClientsAction(ids: string[]) {
   if (!ids || ids.length === 0) return;
-  // Let's delete related platform users as well since there could be a FK
-  await db.delete(platformUsers).where(inArray(platformUsers.linkedClientId, ids));
-  await db.delete(clientNotifications).where(inArray(clientNotifications.clientId, ids));
-  await db.delete(clientRemarks).where(inArray(clientRemarks.clientId, ids));
-  await db.delete(clients).where(inArray(clients.id, ids));
+  const deletedBy = await getDeletedBy();
+  const clientsData = await db.select().from(clients).where(inArray(clients.id, ids));
+  const clientNames = clientsData.map(c => c.name);
+  if (clientNames.length > 0) {
+    await db.update(mandates).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(inArray(mandates.company, clientNames));
+  }
+  await db.update(clients).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(inArray(clients.id, ids));
   revalidatePath("/dashboard/clients");
 }
 export async function deleteMultiplePlatformUsersAction(ids: string[]) {
   if (!ids || ids.length === 0) return;
-  await db.delete(platformUsers).where(inArray(platformUsers.id, ids));
-  revalidatePath("/dashboard");
+  const deletedBy = await getDeletedBy();
+  await db.update(platformUsers).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(inArray(platformUsers.id, ids));
+  revalidatePath("/dashboard/admin/users");
 }
 
 

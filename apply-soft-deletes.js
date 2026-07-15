@@ -1,13 +1,8 @@
 const fs = require('fs');
 let code = fs.readFileSync('src/actions/index.ts', 'utf8');
 
-// Add getDeletedBy helper and imports
-if (!code.includes('getDeletedBy')) {
-  code = code.replace(
-    'import { revalidatePath } from "next/cache";',
-    `import { revalidatePath } from "next/cache";\nimport { createClient } from "@/utils/supabase/server";\n\nasync function getDeletedBy(): Promise<string> {\n  try {\n    const supabase = await createClient();\n    const { data: { user } } = await supabase.auth.getUser();\n    if (user?.email) {\n      const dbUser = await db.select().from(platformUsers).where(eq(platformUsers.email, user.email));\n      if (dbUser.length > 0) return dbUser[0].name;\n      return user.email;\n    }\n  } catch(e) {}\n  return "Unknown";\n}`
-  );
-}
+// Normalize newlines to LF for reliable string replacement
+code = code.replace(/\r\n/g, '\n');
 
 // 1. deletePlatformUserAction
 code = code.replace(
@@ -202,61 +197,6 @@ code = code.replace(
   revalidatePath("/dashboard/admin/users");
 }`
 );
-
-// Append missing functions
-if (!code.includes('deleteMultipleFrameworksAction')) {
-  code += `\n
-export async function deleteMultipleFrameworksAction(ids: string[]) {
-  if (!ids || ids.length === 0) return;
-  const deletedBy = await getDeletedBy();
-  await db.update(frameworks).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(inArray(frameworks.id, ids));
-  revalidatePath('/dashboard/frameworks');
-}
-
-export async function restoreEntityAction(entityType: string, ids: (string|number)[]) {
-  revalidatePath('/dashboard', 'layout');
-  if (ids.length === 0) return;
-  
-  if (entityType === 'clients') {
-    const clientsData = await db.select().from(clients).where(inArray(clients.id, ids as string[]));
-    const clientNames = clientsData.map(c => c.name);
-    if (clientNames.length > 0) {
-      await db.update(mandates).set({ isDeleted: false, deletedAt: null }).where(inArray(mandates.company, clientNames));
-    }
-    await db.update(clients).set({ isDeleted: false, deletedAt: null }).where(inArray(clients.id, ids as string[]));
-  } else if (entityType === 'mandates') {
-    await db.update(mandates).set({ isDeleted: false, deletedAt: null }).where(inArray(mandates.id, ids as number[]));
-  } else if (entityType === 'candidates') {
-    await db.update(candidates).set({ isDeleted: false, deletedAt: null }).where(inArray(candidates.id, ids as string[]));
-  } else if (entityType === 'floats') {
-    await db.update(floats).set({ isDeleted: false, deletedAt: null }).where(inArray(floats.id, ids as string[]));
-  } else if (entityType === 'users') {
-    await db.update(platformUsers).set({ isDeleted: false, deletedAt: null }).where(inArray(platformUsers.id, ids as string[]));
-  } else if (entityType === 'frameworks') {
-    await db.update(frameworks).set({ isDeleted: false, deletedAt: null }).where(inArray(frameworks.id, ids as string[]));
-  }
-}
-
-export async function hardDeleteEntityAction(entityType: string, ids: (string|number)[]) {
-  revalidatePath('/dashboard', 'layout');
-  if (ids.length === 0) return;
-  
-  if (entityType === 'clients') {
-    await db.delete(clients).where(inArray(clients.id, ids as string[]));
-  } else if (entityType === 'mandates') {
-    await db.delete(mandates).where(inArray(mandates.id, ids as number[]));
-  } else if (entityType === 'candidates') {
-    await db.delete(candidates).where(inArray(candidates.id, ids as string[]));
-  } else if (entityType === 'floats') {
-    await db.delete(floats).where(inArray(floats.id, ids as string[]));
-  } else if (entityType === 'users') {
-    await db.delete(platformUsers).where(inArray(platformUsers.id, ids as string[]));
-  } else if (entityType === 'frameworks') {
-    await db.delete(frameworks).where(inArray(frameworks.id, ids as string[]));
-  }
-}
-`;
-}
 
 fs.writeFileSync('src/actions/index.ts', code);
 console.log('Successfully applied all soft-deletes and deletedBy to src/actions/index.ts');
