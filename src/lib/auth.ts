@@ -1,3 +1,6 @@
+import { db } from "@/db";
+import { clients } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { createClient } from "@/utils/supabase/server";
 import { getUserByEmail } from "@/db/queries";
 import { redirect } from "next/navigation";
@@ -43,7 +46,13 @@ export const requireRole = cache(async (allowedRoles: string[]) => {
   if (!allowedRoles.includes(userRole)) {
     // Unauthorized! Route them to their proper portal based on their actual role
     if (userRole === "client") {
-      redirect("/client/mandates");
+      if (platformUser?.linkedClientId) {
+        const [clientRecord] = await db.select().from(clients).where(eq(clients.id, platformUser.linkedClientId));
+        if (clientRecord?.slug) {
+          redirect(`/${clientRecord.slug}`);
+        }
+      }
+      redirect("/sign-in");
     } else if (userRole === "candidate") {
       redirect("/candidate");
     } else {

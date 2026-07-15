@@ -42,6 +42,7 @@ type MandateDetail = {
 
 type Props = {
   mandate: MandateDetail;
+  clientSlug?: string;
 };
 
 // ─── Circular Score Ring ─────────────────────────────────
@@ -112,7 +113,7 @@ const FILTER_STAGES = [
 ] as const;
 
 // ─── Component ───────────────────────────────────────────
-export default function ClientMandateDetail({ mandate }: Props) {
+export default function ClientMandateDetail({ mandate, clientSlug }: Props) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [filterOpen, setFilterOpen] = useState(false);
@@ -124,7 +125,7 @@ export default function ClientMandateDetail({ mandate }: Props) {
       title: mandate.role,
       subtitle: "Position",
       showBack: true,
-      backUrl: "/client/mandates",
+      backUrl: `/${clientSlug || "client"}`,
     });
     return () => setTopbarConfig({});
   }, [mandate.role, setTopbarConfig]);

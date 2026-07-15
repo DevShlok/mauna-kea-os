@@ -2,6 +2,9 @@
 import { useState } from "react";
 import { restoreEntityAction, hardDeleteEntityAction } from "@/actions";
 import toast from "react-hot-toast";
+import { useDataTable } from "@/hooks/useDataTable";
+import { Pagination } from "@/components/DataTable/Pagination";
+import { SortableHeader } from "@/components/DataTable/SortableHeader";
 
 export default function RecycleBinClient({ items }: { items: any[] }) {
   const [localItems, setLocalItems] = useState(items);
@@ -10,6 +13,8 @@ export default function RecycleBinClient({ items }: { items: any[] }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filteredItems = localItems.filter(i => filterType === "All" || i.type === filterType);
+
+  const _dt = useDataTable({ data: filteredItems, defaultSortKey: "deletedAt", defaultSortDir: "desc" });
   const allSelected = filteredItems.length > 0 && selectedIds.size === filteredItems.length;
 
   const toggleAll = () => {
@@ -166,6 +171,18 @@ export default function RecycleBinClient({ items }: { items: any[] }) {
             })}
           </tbody>
         </table>
+        <Pagination
+          currentPage={_dt.currentPage}
+          totalPages={_dt.totalPages}
+          totalRows={_dt.totalRows}
+          startIndex={_dt.startIndex}
+          endIndex={_dt.endIndex}
+          pageSize={_dt.pageSize}
+          setPageSize={_dt.setPageSize}
+          goToPage={_dt.goToPage}
+          goToNextPage={_dt.goToNextPage}
+          goToPrevPage={_dt.goToPrevPage}
+        />
       </div>
     </div>
   );

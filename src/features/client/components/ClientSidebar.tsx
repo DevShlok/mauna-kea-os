@@ -13,10 +13,12 @@ import {
 import { usePathname, useSearchParams } from "next/navigation";
 
 type Props = {
+  clientSlug?: string;
   clientName: string;
 };
 
-export function ClientSidebar({ clientName }: Props) {
+export function ClientSidebar({ clientName, clientSlug }: Props) {
+  const prefix = clientSlug ? `/${clientSlug}` : '/client';
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab");
@@ -29,9 +31,9 @@ export function ClientSidebar({ clientName }: Props) {
     window.location.href = '/sign-in';
   };
 
-  if (pathname === "/client/mandates" && tab) {
+  if (pathname === `${prefix}` && tab) {
     activeTab = tab;
-  } else if (pathname.startsWith("/client/mandates/") || pathname.startsWith("/client/candidates/")) {
+  } else if ((pathname === `${prefix}` || pathname.startsWith(`${prefix}/mandates/`)) || pathname.startsWith(`${prefix}/candidates/`)) {
     activeTab = "dashboard";
   }
 
@@ -43,17 +45,17 @@ export function ClientSidebar({ clientName }: Props) {
     .toUpperCase();
 
   const navItems = [
-    { key: "dashboard", icon: Home, label: "Dashboard", href: "/client/mandates" },
-    { key: "shortlist", icon: Star, label: "Shortlist", href: "/client/mandates?tab=shortlist" },
-    { key: "insights", icon: BarChart3, label: "Insights", href: "/client/mandates?tab=insights" },
-    { key: "profile", icon: User, label: "Profile", href: "/client/mandates?tab=profile" },
+    { key: "dashboard", icon: Home, label: "Dashboard", href: `${prefix}` },
+    { key: "shortlist", icon: Star, label: "Shortlist", href: `${prefix}?tab=shortlist` },
+    { key: "insights", icon: BarChart3, label: "Insights", href: `${prefix}?tab=insights` },
+    { key: "profile", icon: User, label: "Profile", href: `${prefix}?tab=profile` },
   ];
 
   return (
     <div className="w-[260px] min-w-[260px] h-screen bg-[#0b1f3a] flex flex-col overflow-y-auto overflow-x-hidden shrink-0 text-white border-r border-[#D8B15B]">
       {/* ─── Logo ─── */}
       <Link
-        href="/client/mandates"
+        href={`${prefix}`}
         className="flex items-center gap-3 p-5 pb-4 border-b border-[#D8B15B] hover:bg-white/5 transition-colors"
       >
         <div className="bg-[#D8B15B] text-[#133255] font-serif text-lg font-bold w-10 h-10 flex items-center justify-center rounded">

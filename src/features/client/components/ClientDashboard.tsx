@@ -38,6 +38,7 @@ type Mandate = {
 
 type Props = {
   clientName: string;
+  clientSlug?: string;
   mandates: Mandate[];
   initialTab?: "dashboard" | "shortlist" | "insights" | "profile";
 };
@@ -156,7 +157,7 @@ function getRoleIcon(role: string) {
 }
 
 // ─── Main Component ──────────────────────────────────────
-export default function ClientDashboard({ clientName, mandates, initialTab = "dashboard" }: Props) {
+export default function ClientDashboard({ clientName, clientSlug, mandates, initialTab = "dashboard" }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab") as any;
@@ -231,7 +232,7 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
     : [];
 
   const navigateToMandate = (id: number) => {
-    router.push(`/client/mandates/${id}`);
+    router.push(`/${clientSlug || "client"}/mandates/${id}`);
   };
 
   // ─── Insights View ─────────────────────────────────────
@@ -428,7 +429,7 @@ export default function ClientDashboard({ clientName, mandates, initialTab = "da
                 </div>
                 <div className="flex items-center gap-4">
                   <button
-                    onClick={() => router.push("/client/mandates/new")}
+                    onClick={() => router.push(`/${clientSlug || "client"}/mandates/new`)}
                     className="text-[13px] font-bold bg-[#D8B15B] hover:bg-[#c4a150] text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
                   >
                     Send Mandate

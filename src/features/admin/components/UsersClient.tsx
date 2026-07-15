@@ -5,6 +5,9 @@ import { useState } from "react";
 import { updatePlatformUserAction, deletePlatformUserAction, deleteMultiplePlatformUsersAction } from "@/actions";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useDataTable } from "@/hooks/useDataTable";
+import { Pagination } from "@/components/DataTable/Pagination";
+import { SortableHeader } from "@/components/DataTable/SortableHeader";
 
 export default function UsersClient({ initialUsers, clients }: { initialUsers: any[], clients: any[] }) {
   const router = useRouter();
@@ -57,6 +60,8 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
     }
   };
 
+  const _dt = useDataTable({ data: users, defaultSortKey: "name", defaultSortDir: "asc" });
+
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="mb-6 flex flex-col gap-1">
@@ -107,7 +112,7 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
             </tr>
           </thead>
           <tbody>
-            {users.map((u) => (
+            {_dt.paginatedData.map((u) => (
               <tr key={u.id} className="border-b border-[#D4E0F0] hover:bg-[#f9fafc]">
                 <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
                   <input type="checkbox" checked={selectedIds.has(u.id)} onChange={() => toggleRow(u.id)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
@@ -136,6 +141,18 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
             ))}
           </tbody>
         </table>
+        <Pagination
+          currentPage={_dt.currentPage}
+          totalPages={_dt.totalPages}
+          totalRows={_dt.totalRows}
+          startIndex={_dt.startIndex}
+          endIndex={_dt.endIndex}
+          pageSize={_dt.pageSize}
+          setPageSize={_dt.setPageSize}
+          goToPage={_dt.goToPage}
+          goToNextPage={_dt.goToNextPage}
+          goToPrevPage={_dt.goToPrevPage}
+        />
       </div>
 
       {isAdding && (

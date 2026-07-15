@@ -4,20 +4,25 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { deleteMultipleFrameworksAction } from "@/actions";
 import toast from "react-hot-toast";
+import { useDataTable } from "@/hooks/useDataTable";
+import { Pagination } from "@/components/DataTable/Pagination";
+import { SortableHeader } from "@/components/DataTable/SortableHeader";
 
 export default function FrameworksClient({ initialFrameworks }: { initialFrameworks: any[] }) {
   const router = useRouter();
   const [localFrameworks, setLocalFrameworks] = useState(initialFrameworks);
+
+  const _dt = useDataTable({ data: localFrameworks, defaultSortKey: "name", defaultSortDir: "asc" });
 
   // Bulk Delete State
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allSelected = localFrameworks.length > 0 && selectedIds.size === localFrameworks.length;
+  const allSelected = _dt.paginatedData.length > 0 && selectedIds.size === _dt.paginatedData.length;
   const toggleAll = () => {
     if (allSelected) setSelectedIds(new Set());
-    else setSelectedIds(new Set(localFrameworks.map(f => f.id)));
+    else setSelectedIds(new Set(_dt.paginatedData.map((f: any) => f.id)));
   };
   const toggleRow = (id: string) => {
     const next = new Set(selectedIds);
@@ -87,7 +92,7 @@ export default function FrameworksClient({ initialFrameworks }: { initialFramewo
             </tr>
           </thead>
           <tbody>
-            {localFrameworks.map((fw: any) => {
+            {_dt.paginatedData.map((fw: any) => {
               const totalCriteria = fw.categories.reduce((s: number, c: any) => s + c.criteria.length, 0);
               return (
                 <tr key={fw.id} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => router.push("/dashboard/frameworks/" + fw.id)}>
@@ -110,6 +115,19 @@ export default function FrameworksClient({ initialFrameworks }: { initialFramewo
             })}
           </tbody>
         </table>
+
+        <Pagination
+          currentPage={_dt.currentPage}
+          totalPages={_dt.totalPages}
+          totalRows={_dt.totalRows}
+          startIndex={_dt.startIndex}
+          endIndex={_dt.endIndex}
+          pageSize={_dt.pageSize}
+          setPageSize={_dt.setPageSize}
+          goToPage={_dt.goToPage}
+          goToNextPage={_dt.goToNextPage}
+          goToPrevPage={_dt.goToPrevPage}
+        />
       </div>
 
       {/* Delete Confirmation Modal */}

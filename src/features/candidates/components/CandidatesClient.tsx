@@ -7,6 +7,9 @@ import { useState, useRef, useEffect } from "react";
 import { Candidate } from "@/db/schema";
 import { bulkAddSubmissionAction, bulkAssignToMandateAction, updateCandidateStatusAction, deleteMultipleCandidatesAction } from "@/actions";
 import { mapCandidatesAction, checkCandidateDuplicatesAction, finalizeCandidatesImportAction } from "@/actions/candidates";
+import { useDataTable } from "@/hooks/useDataTable";
+import { Pagination } from "@/components/DataTable/Pagination";
+import { SortableHeader } from "@/components/DataTable/SortableHeader";
 
 const MultiSelect = ({ options, selected, onChange, placeholder }: any) => {
   const [open, setOpen] = useState(false);
@@ -529,6 +532,23 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
     return matchSearch && matchCompany && matchDesignation && matchStatus && matchQual && matchExp && matchTenure && matchCtc;
   });
 
+  const {
+    paginatedData,
+    totalRows,
+    currentPage,
+    totalPages,
+    pageSize,
+    setPageSize,
+    goToPage,
+    goToNextPage,
+    goToPrevPage,
+    sortKey,
+    sortDir,
+    toggleSort,
+    startIndex,
+    endIndex,
+  } = useDataTable({ data: filtered, defaultSortKey: "createdAt", defaultSortDir: "desc" });
+
   const clearAllFilters = () => {
     setSearch('');
     setCompaniesFilter([]);
@@ -541,14 +561,14 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
   };
 
   const toggleAll = () => {
-    if (selectedIds.size === filtered.length) {
+    if (selectedIds.size === paginatedData.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filtered.map(c => c.id)));
+      setSelectedIds(new Set(paginatedData.map((c: any) => c.id)));
     }
   };
 
-  const allSelected = filtered.length > 0 && selectedIds.size === filtered.length;
+  const allSelected = paginatedData.length > 0 && paginatedData.every((c: any) => selectedIds.has(c.id));
 
   const exportToExcel = async () => {
     const ExcelJS = (await import('exceljs')).default;
@@ -801,19 +821,19 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
                 <th className="px-4 py-4 text-center w-10">
                   <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#1d4ed8] cursor-pointer" />
                 </th>
-                <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Name</th>
-                <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Current company</th>
-                <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Current designation</th>
+                <SortableHeader label="Name" colKey="name" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
+                <SortableHeader label="Current Company" colKey="company" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
+                <SortableHeader label="Current Designation" colKey="designation" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
                 <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Tenure (curr.)</th>
                 <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Qualifications</th>
-                <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Exp (yrs)</th>
+                <SortableHeader label="Exp (yrs)" colKey="exp" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
                 <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Prior experience</th>
-                <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">CTC</th>
-                <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Status</th>
+                <SortableHeader label="CTC" colKey="ctc" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
+                <SortableHeader label="Status" colKey="status" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
               </tr>
             </thead>
             <tbody>
-              {filtered.map((c: any, i: number) => (
+              {paginatedData.map((c: any, i: number) => (
                 <tr key={i} className="border-b border-[#eef1f7] hover:bg-[#f7f9fd] cursor-pointer transition-colors" onClick={() => router.push("/dashboard/candidates/" + c.id)}>
                   <td className="px-4 py-4 text-center" onClick={e => e.stopPropagation()}>
                     <input type="checkbox" checked={selectedIds.has(c.id)} onChange={() => toggleRow(c.id)} className="w-[18px] h-[18px] accent-[#1d4ed8] cursor-pointer" />
@@ -890,7 +910,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
+              {totalRows === 0 && (
                 <tr>
                   <td colSpan={10} className="px-4 py-10 text-center text-[#8a93a3] text-[13.5px]">
                     No candidates match these filters. <button onClick={clearAllFilters} className="text-[#1d4ed8] font-semibold">Clear filters</button>
@@ -900,6 +920,18 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalRows={totalRows}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          goToPage={goToPage}
+          goToNextPage={goToNextPage}
+          goToPrevPage={goToPrevPage}
+        />
       </div>
 
       {/* Add to Mandate Modal */}

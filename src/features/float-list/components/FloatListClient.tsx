@@ -5,6 +5,9 @@ import { useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { deleteMultipleCandidatesAction } from "@/actions";
 import toast from "react-hot-toast";
+import { useDataTable } from "@/hooks/useDataTable";
+import { Pagination } from "@/components/DataTable/Pagination";
+import { SortableHeader } from "@/components/DataTable/SortableHeader";
 
 export default function FloatListClient({ mandates, floats, allCandidatesMaster }: { mandates: any[], floats?: any[], allCandidatesMaster?: any[] }) {
   const router = useRouter();
@@ -62,15 +65,17 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
     return matchSearch && matchStage && matchMandate && matchCompany && matchDesignation;
   });
 
+  const _dt = useDataTable({ data: filtered, defaultSortKey: "name", defaultSortDir: "asc" });
+
   // Bulk Delete State
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allSelected = filtered.length > 0 && selectedIds.size === filtered.length;
+  const allSelected = _dt.paginatedData.length > 0 && _dt.paginatedData.every((c: any) => selectedIds.has(c.externalId));
   const toggleAll = () => {
     if (allSelected) setSelectedIds(new Set());
-    else setSelectedIds(new Set(filtered.map(c => c.externalId)));
+    else setSelectedIds(new Set(_dt.paginatedData.map((c: any) => c.externalId)));
   };
   const toggleRow = (externalId: string) => {
     const next = new Set(selectedIds);
@@ -168,7 +173,7 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
               </tr>
             </thead>
             <tbody>
-              {filtered.map((c, i) => (
+              {_dt.paginatedData.map((c, i) => (
                 <tr key={i} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => c.isFloatOnly ? router.push("/dashboard/candidates/" + c.externalId) : router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId)}>
                   <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
                     <input type="checkbox" checked={selectedIds.has(c.externalId)} onChange={() => toggleRow(c.externalId)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
@@ -201,7 +206,19 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
                 </tr>
               ))}
             </tbody>
-          </table>
+        </table>
+        <Pagination
+          currentPage={_dt.currentPage}
+          totalPages={_dt.totalPages}
+          totalRows={_dt.totalRows}
+          startIndex={_dt.startIndex}
+          endIndex={_dt.endIndex}
+          pageSize={_dt.pageSize}
+          setPageSize={_dt.setPageSize}
+          goToPage={_dt.goToPage}
+          goToNextPage={_dt.goToNextPage}
+          goToPrevPage={_dt.goToPrevPage}
+        />
         </div>
       </div>
 

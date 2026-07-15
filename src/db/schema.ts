@@ -238,6 +238,7 @@ export const candidateReports = pgTable('candidate_reports', {
 // ─── CLIENTS ─────────────────────────────────────────────
 export const clients = pgTable('clients', {
   id: varchar('id', { length: 50 }).primaryKey(),
+  slug: varchar('slug', { length: 255 }).unique(),
   name: varchar('name', { length: 255 }).notNull(),
   accountId: varchar('account_id', { length: 50 }),
   vertical: varchar('vertical', { length: 100 }),

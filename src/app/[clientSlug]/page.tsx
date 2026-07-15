@@ -9,11 +9,13 @@ import ClientDashboard from "@/features/client/components/ClientDashboard";
 export const dynamic = "force-dynamic";
 
 type PageProps = {
+  params: Promise<{ clientSlug: string }>;
   searchParams: Promise<{ tab?: string }>;
 };
 
 export default async function ClientMandatesPage(props: PageProps) {
   const searchParams = await props.searchParams;
+  const { clientSlug } = await props.params;
   const { platformUser } = await requireRole(["client"]);
   const tab = searchParams.tab || "dashboard";
 
@@ -37,7 +39,7 @@ export default async function ClientMandatesPage(props: PageProps) {
 
   return (
     <Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-[#f4f6fb]">Loading...</div>}>
-      <ClientDashboard clientName={clientName} mandates={filteredMandates} initialTab={tab as any} />
+      <ClientDashboard clientSlug={clientSlug} clientName={clientName} mandates={filteredMandates} initialTab={tab as any} />
     </Suspense>
   );
 }

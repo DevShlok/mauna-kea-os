@@ -8,7 +8,7 @@ import ClientMandateDetail from "@/features/client/components/ClientMandateDetai
 
 export const dynamic = "force-dynamic";
 
-export default async function ClientMandateDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ClientMandateDetailPage({ params }: { params: Promise<{ id: string; clientSlug: string }> }) {
   const { platformUser } = await requireRole(["client"]);
   const resolvedParams = await params;
   const mandate = await getMandateById(Number(resolvedParams.id));
@@ -25,11 +25,11 @@ export default async function ClientMandateDetailPage({ params }: { params: Prom
   if (platformUser?.linkedClientId) {
     const [client] = await db.select().from(clients).where(eq(clients.id, platformUser.linkedClientId));
     if (!client || mandate.company !== client.name) {
-      redirect("/client/mandates");
+      redirect(`/${(await params).clientSlug}/mandates`);
     }
     clientName = client.name;
   } else {
-    redirect("/client/mandates");
+    redirect(`/${(await params).clientSlug}/mandates`);
   }
 
   // Enrich candidates with profile pics from the master candidates table
@@ -72,5 +72,5 @@ export default async function ClientMandateDetailPage({ params }: { params: Prom
 
   const enrichedMandate = { ...mandate, candidates: enrichedCandidates };
 
-  return <ClientMandateDetail mandate={enrichedMandate} />;
+  return <ClientMandateDetail clientSlug={(await params).clientSlug} mandate={enrichedMandate} />;
 }

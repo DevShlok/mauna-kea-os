@@ -9,6 +9,9 @@ import { updateClientAction, deleteMultipleClientsAction } from "@/actions";
 import ClientImportModal from "./ClientImportModal";
 import { Upload } from "lucide-react";
 import toast from "react-hot-toast";
+import { useDataTable } from "@/hooks/useDataTable";
+import { Pagination } from "@/components/DataTable/Pagination";
+import { SortableHeader } from "@/components/DataTable/SortableHeader";
 
 export default function ClientsClient({ clients, mandates }: { clients: Client[], mandates: Mandate[] }) {
   const router = useRouter();
@@ -30,6 +33,23 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
     return true;
   });
 
+  const {
+    paginatedData,
+    totalRows,
+    currentPage,
+    totalPages,
+    pageSize,
+    setPageSize,
+    goToPage,
+    goToNextPage,
+    goToPrevPage,
+    sortKey,
+    sortDir,
+    toggleSort,
+    startIndex,
+    endIndex,
+  } = useDataTable({ data: filteredClients, defaultSortKey: "createdAt", defaultSortDir: "desc" });
+
   const getLiveMandatesCount = (clientName: string) => {
     return mandates.filter(m => m.company === clientName && m.status !== 'Closed' && m.status !== 'Lost').length;
   };
@@ -40,19 +60,17 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
     router.refresh();
   };
 
-
   const verticals = Array.from(new Set(clients.map(c => c.vertical).filter(Boolean))) as string[];
   const statuses = Array.from(new Set(clients.map(c => c.status).filter(Boolean))) as string[];
 
-  // Bulk Delete State
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allSelected = filteredClients.length > 0 && selectedIds.size === filteredClients.length;
+  const allSelected = paginatedData.length > 0 && paginatedData.every(c => selectedIds.has(c.id));
   const toggleAll = () => {
     if (allSelected) setSelectedIds(new Set());
-    else setSelectedIds(new Set(filteredClients.map(c => c.id)));
+    else setSelectedIds(new Set(paginatedData.map(c => c.id)));
   };
   const toggleRow = (id: string) => {
     const next = new Set(selectedIds);
@@ -159,16 +177,16 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
                 <th className="px-4 py-4 text-center w-10">
                   <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
                 </th>
-                <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Account</th>
-                <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Industry</th>
+                <SortableHeader label="Account" colKey="name" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} className="px-6" />
+                <SortableHeader label="Industry" colKey="vertical" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} className="px-6" />
                 <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Live Mandates</th>
-                <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Account owner</th>
-                <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                <SortableHeader label="Account Owner" colKey="owner" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} className="px-6" />
+                <SortableHeader label="Status" colKey="status" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} className="px-6" />
                 <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredClients.map(c => (
+              {paginatedData.map(c => (
                 <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => router.push(`/dashboard/clients/${c.id}`)}>
                   <td className="px-4 py-4 text-center" onClick={e => e.stopPropagation()}>
                     <input type="checkbox" checked={selectedIds.has(c.id)} onChange={() => toggleRow(c.id)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
@@ -207,13 +225,25 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
                   </td>
                 </tr>
               ))}
-              {filteredClients.length === 0 && (
+              {totalRows === 0 && (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">No clients found.</td>
                 </tr>
               )}
             </tbody>
           </table>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalRows={totalRows}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            pageSize={pageSize}
+            setPageSize={setPageSize}
+            goToPage={goToPage}
+            goToNextPage={goToNextPage}
+            goToPrevPage={goToPrevPage}
+          />
         </div>
 
       {/* Delete Confirmation Modal */}

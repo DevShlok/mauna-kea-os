@@ -7,7 +7,8 @@ import CreateMandateClient from "@/features/mandates/components/CreateMandateCli
 
 export const dynamic = "force-dynamic";
 
-export default async function ClientNewMandatePage() {
+export default async function ClientNewMandatePage({ params }: { params: Promise<{ clientSlug: string }> }) {
+  const { clientSlug } = await params;
   const { platformUser } = await requireRole(["client"]);
   
   let clientName = "Client";
@@ -21,7 +22,7 @@ export default async function ClientNewMandatePage() {
   return (
     <div className="flex-1 overflow-y-auto w-full bg-[#f4f6fb] pt-8">
       <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-        <CreateMandateClient frameworks={[]} isClientMode={true} clientName={clientName} />
+        <CreateMandateClient clientSlug={clientSlug} frameworks={[]} isClientMode={true} clientName={clientName} />
       </Suspense>
     </div>
   );

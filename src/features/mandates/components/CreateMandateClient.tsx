@@ -10,7 +10,7 @@ import { createMandateAction } from "@/actions";
 import { createClient } from "@/utils/supabase/client";
 import { ClientTypeahead, LocationTypeahead, IndustryTypeahead } from "@/components/shared/Typeaheads";
 
-export default function CreateMandateClient({ frameworks, isClientMode = false, clientName = "", masterLocations = [], masterClients = [], masterIndustries = [] }: { frameworks: any[], isClientMode?: boolean, clientName?: string, masterLocations?: any[], masterClients?: any[], masterIndustries?: any[] }) {
+export default function CreateMandateClient({ frameworks, isClientMode = false, clientName = "", clientSlug = "", masterLocations = [], masterClients = [], masterIndustries = [] }: { frameworks: any[], isClientMode?: boolean, clientName?: string, clientSlug?: string, masterLocations?: any[], masterClients?: any[], masterIndustries?: any[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialCompany = isClientMode ? clientName : (searchParams.get("company") || "");
@@ -146,7 +146,7 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
 
       const insertId = await createMandateAction(payload);
       if (isClientMode) {
-        router.push("/client/mandates");
+        router.push(`/${clientSlug || "client"}`);
       } else {
         router.push("/dashboard/mandates/" + insertId);
       }
@@ -175,7 +175,7 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
   return (
     <div className="max-w-4xl mx-auto pb-10">
       <div className="flex items-center gap-2 text-sm text-gray-400 font-semibold mb-6">
-        <Link href={isClientMode ? "/client/mandates" : "/dashboard/mandates"} className="hover:text-[#133255]">Mandates</Link>
+        <Link href={isClientMode ? `/${clientSlug || "client"}` : "/dashboard/mandates"} className="hover:text-[#133255]">Mandates</Link>
         <span>/</span>
         <span className="text-gray-800">{isClientMode ? "Send New Mandate" : "Create New Mandate"}</span>
       </div>
@@ -422,7 +422,7 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
         )}
 
         <div className="flex justify-end gap-3 mt-2">
-          <button type="button" onClick={() => router.push(isClientMode ? "/client/mandates" : "/dashboard/mandates")} className="px-5 py-2.5 border border-gray-200 text-gray-700 rounded text-sm font-bold hover:bg-gray-50">
+          <button type="button" onClick={() => router.push(isClientMode ? `/${clientSlug || "client"}` : "/dashboard/mandates")} className="px-5 py-2.5 border border-gray-200 text-gray-700 rounded text-sm font-bold hover:bg-gray-50">
             Cancel
           </button>
           {!isClientMode && (

@@ -394,6 +394,50 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
               </div>
             </div>
 
+            {/* Demographics & Relocation */}
+            <div className="border-t border-[#f0f0f0] pt-5 mb-3">
+              <div className="text-[13px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Demographics & Relocation</div>
+            </div>
+            <div className="grid grid-cols-3 gap-5 mb-6">
+              <div>
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Date of Birth</label>
+                <div className="relative">
+                  <input type="date" value={form.dob} onChange={e=>setForm({...form, dob:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" />
+                  {form.dob && <span className="absolute right-3 top-2.5 text-[12px] font-bold text-[#133255] bg-[#DCE5F4] px-2 py-0.5 rounded">{calculateAge(form.dob)} yrs</span>}
+                </div>
+              </div>
+              <div>
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Hometown</label>
+                <LocationTypeahead
+                  value={form.hometown}
+                  onChange={(val) => setForm({...form, hometown: val})}
+                  placeholder="e.g. Lucknow, UP"
+                  className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]"
+                />
+              </div>
+              <div>
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Relocation Preference</label>
+                <select value={form.relocationStatus} onChange={e=>setForm({...form, relocationStatus:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]">
+                  <option value="Open to relocation">Open to relocation</option>
+                  <option value="Not open to relocation">Not open to relocation</option>
+                  <option value="Open to preferred locations only">Open to preferred locations only</option>
+                </select>
+              </div>
+              {form.relocationStatus === "Open to preferred locations only" && (
+                <div className="col-span-3">
+                  <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Preferred Locations</label>
+                  <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#133255] transition-colors">
+                    {relocationPrefs.map(t => (
+                      <span key={t} className="px-2.5 py-1 bg-[#DCE5F4] text-[#133255] rounded-[12px] text-[14px] font-semibold flex items-center gap-1.5">
+                        {t} <span className="cursor-pointer font-bold opacity-60 hover:opacity-100" onClick={() => removeTag(t, setRelocationPrefs, relocationPrefs)}>�</span>
+                      </span>
+                    ))}
+                    <input type="text" className="border-none outline-none text-[16px] min-w-[200px] flex-1 bg-transparent h-8 px-2" placeholder="e.g. NCR, Bangalore, then Enter..." onKeyDown={e => handleAddTag(e, setRelocationPrefs, relocationPrefs)} />
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Professional */}
             <div className="border-t border-[#f0f0f0] pt-5 mb-3">
               <div className="text-[13px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Professional Details</div>

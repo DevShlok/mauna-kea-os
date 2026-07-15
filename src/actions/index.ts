@@ -83,7 +83,7 @@ export async function createMandateAction(data: any) {
     frameworkId: data.frameworkId || null,
   }).returning({ insertId: mandates.id });
   revalidatePath("/dashboard/mandates");
-  revalidatePath("/client/mandates");
+  revalidatePath("/[clientSlug]", "layout");
   if (clientId) {
     revalidatePath("/dashboard/clients/" + clientId);
   }
@@ -463,8 +463,19 @@ export async function deleteMultipleMandatesAction(ids: number[]) {
 
 export async function createClientAction(data: any) {
   revalidatePath("/dashboard/clients");
+  
+  let baseSlug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+  let slug = baseSlug || `client-${Date.now()}`;
+  let counter = 1;
+  while(true) {
+    const existing = await db.query.clients.findFirst({ where: (c, { eq }) => eq(c.slug, slug) });
+    if (!existing) break;
+    slug = `${baseSlug}-${counter++}`;
+  }
+
   await db.insert(clients).values({
     id: data.id || Date.now().toString(),
+    slug,
     name: data.name,
     accountId: data.accountId,
     vertical: data.vertical,
@@ -766,7 +777,8 @@ export async function submitClientRemarkAction(mandateId: number, candId: string
     });
   }
 
-  revalidatePath("/client/candidates", "layout");
+  revalidatePath("/[clientSlug]/candidates", "layout");
+  return { success: true };
 }
 
 export async function resolveClientRemarkAction(remarkId: number, status: string, message: string) {

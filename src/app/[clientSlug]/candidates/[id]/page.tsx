@@ -12,7 +12,7 @@ export default async function ClientCandidateDetailPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; clientSlug: string }>;
   searchParams: Promise<{ mandateId?: string }>;
 }) {
   const { platformUser } = await requireRole(["client"]);
@@ -50,7 +50,7 @@ export default async function ClientCandidateDetailPage({
 
   // Verify the client is authorized to view this candidate
   if (!platformUser?.linkedClientId) {
-    redirect("/client/mandates");
+    redirect(`/${(await params).clientSlug}/mandates`);
   }
 
   const [client] = await db
@@ -59,7 +59,7 @@ export default async function ClientCandidateDetailPage({
     .where(eq(clients.id, platformUser.linkedClientId));
 
   if (!client) {
-    redirect("/client/mandates");
+    redirect(`/${(await params).clientSlug}/mandates`);
   }
 
   // Find the mandateCandidate entry that links this candidate to one of this client's mandates
@@ -98,7 +98,7 @@ export default async function ClientCandidateDetailPage({
 
   const results = await query;
   if (results.length === 0) {
-    redirect("/client/mandates");
+    redirect(`/${(await params).clientSlug}/mandates`);
   }
 
   const { mandateCandidate, mandate } = results[0];

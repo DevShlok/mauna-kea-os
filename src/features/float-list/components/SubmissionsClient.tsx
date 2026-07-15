@@ -4,6 +4,9 @@ import { confirmDialog } from "@/components/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { addSubmissionAction, updateSubmissionAction, deleteSubmissionAction } from "@/actions";
+import { useDataTable } from "@/hooks/useDataTable";
+import { Pagination } from "@/components/DataTable/Pagination";
+import { SortableHeader } from "@/components/DataTable/SortableHeader";
 
 const STATUS_COLORS: Record<string, string> = {
   Shortlisted: "bg-green-100 text-green-800",
@@ -15,6 +18,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function SubmissionsClient({ initialSubmissions }: { initialSubmissions: any[] }) {
   const router = useRouter();
   const [submissions, setSubmissions] = useState(initialSubmissions);
+  const _dt = useDataTable({ data: submissions, defaultSortKey: "id", defaultSortDir: "desc" });
   const [isAdding, setIsAdding] = useState(false);
   const [form, setForm] = useState({ candName: "", candId: "", client: "", role: "" });
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
@@ -127,7 +131,19 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
                 );
               })}
             </tbody>
-          </table>
+        </table>
+        <Pagination
+          currentPage={_dt.currentPage}
+          totalPages={_dt.totalPages}
+          totalRows={_dt.totalRows}
+          startIndex={_dt.startIndex}
+          endIndex={_dt.endIndex}
+          pageSize={_dt.pageSize}
+          setPageSize={_dt.setPageSize}
+          goToPage={_dt.goToPage}
+          goToNextPage={_dt.goToNextPage}
+          goToPrevPage={_dt.goToPrevPage}
+        />
         </div>
       </div>
 

@@ -6,6 +6,9 @@ import { updateMandateFieldAction, deleteMultipleMandatesAction } from "@/action
 import toast from "react-hot-toast";
 
 import { STAGE_OPTIONS, INTERNAL_OPTIONS, formatMandateCtc } from "@/lib/helpers";
+import { useDataTable } from "@/hooks/useDataTable";
+import { Pagination } from "@/components/DataTable/Pagination";
+import { SortableHeader } from "@/components/DataTable/SortableHeader";
 
 type Candidate = { id: number; externalId: string; name: string; stage: string | null; score: number | null; hasReport: boolean | null; initials: string | null; mandateId: number; };
 type Mandate = { id: number; company: string; role: string; ctc: string | null; exp: string | null; sectors: string[]; status: string | null; internalStatus: string | null; consultant: string | null; candidates: Candidate[]; };
@@ -34,15 +37,32 @@ export default function MandatesClient({ initialMandates }: { initialMandates: M
     return matchSearch && matchCompany && matchRole && matchSector && matchStatus && matchInternal;
   });
 
+  const {
+    paginatedData,
+    totalRows,
+    currentPage,
+    totalPages,
+    pageSize,
+    setPageSize,
+    goToPage,
+    goToNextPage,
+    goToPrevPage,
+    sortKey,
+    sortDir,
+    toggleSort,
+    startIndex,
+    endIndex,
+  } = useDataTable({ data: filtered, defaultSortKey: "id", defaultSortDir: "desc" });
+
   // Bulk Delete State
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allSelected = filtered.length > 0 && selectedIds.size === filtered.length;
+  const allSelected = paginatedData.length > 0 && paginatedData.every(m => selectedIds.has(m.id));
   const toggleAll = () => {
     if (allSelected) setSelectedIds(new Set());
-    else setSelectedIds(new Set(filtered.map(m => m.id)));
+    else setSelectedIds(new Set(paginatedData.map(m => m.id)));
   };
   const toggleRow = (id: number) => {
     const next = new Set(selectedIds);
@@ -136,17 +156,17 @@ export default function MandatesClient({ initialMandates }: { initialMandates: M
               <th className="px-4 py-3 text-center w-10">
                 <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
               </th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Company</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Role</th>
+              <SortableHeader label="Company" colKey="company" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
+              <SortableHeader label="Role" colKey="role" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Budget</th>
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Experience</th>
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Sectors</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Internal</th>
+              <SortableHeader label="Status" colKey="status" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
+              <SortableHeader label="Internal" colKey="internalStatus" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Actions</th>
             </tr></thead>
             <tbody>
-              {filtered.map(m => (
+              {paginatedData.map(m => (
                 <tr key={m.id} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => router.push("/dashboard/mandates/" + m.id)}>
                   <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
                     <input type="checkbox" checked={selectedIds.has(m.id)} onChange={() => toggleRow(m.id)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
@@ -176,6 +196,18 @@ export default function MandatesClient({ initialMandates }: { initialMandates: M
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalRows={totalRows}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          goToPage={goToPage}
+          goToNextPage={goToNextPage}
+          goToPrevPage={goToPrevPage}
+        />
       </div>
 
       {/* Delete Confirmation Modal */}
