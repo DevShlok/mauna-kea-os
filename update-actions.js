@@ -1,50 +1,11 @@
-"use server";
+const fs = require('fs');
 
-import { generateObjectWithFallback } from "@/lib/gemini-fallback";
-import { z } from "zod";
-import { db } from "@/db";
-import { candidates, candidateFiles } from "@/db/schema";
-import { revalidatePath } from "next/cache";
+let code = fs.readFileSync('src/actions/candidates.ts', 'utf8');
 
-export async function mapCandidatesAction(headers: string[], sampleData: string[][]) {
-  if (!headers || !Array.isArray(headers)) {
-    throw new Error("Missing or invalid headers");
-  }
+// Replace processCandidatesAction with checkCandidateDuplicatesAction and finalizeCandidatesImportAction
+const processCandidatesActionBlock = code.substring(code.indexOf('export async function processCandidatesAction'));
 
-  const schema = z.object({
-    mapping: z.object({
-      name: z.string().nullable().describe("Header matching Candidate Name"),
-      designation: z.string().nullable().describe("Header matching Designation/Role"),
-      company: z.string().nullable().describe("Header matching Current Company"),
-      phone: z.string().nullable().describe("Header matching Phone/Mobile number"),
-      email: z.string().nullable().describe("Header matching Email address"),
-      previousCompany: z.string().nullable().describe("Header matching Previous Company"),
-      location: z.string().nullable().describe("Header matching Location"),
-      industry: z.string().nullable().describe("Header matching Industry"),
-      ctc: z.string().nullable().describe("Header matching CTC or Salary"),
-      totalExperience: z.string().nullable().describe("Header matching Total Experience in Years"),
-      yearQualified: z.string().nullable().describe("Header matching Year Qualified or Graduation Year"),
-    })
-  });
-
-  const { object } = await generateObjectWithFallback({
-    schema,
-    prompt: `You are an expert data mapping assistant. You are given a list of CSV headers and a few rows of sample data. 
-Your task is to map the provided CSV headers to the standard system fields. 
-If a system field does not clearly match any CSV header, return null for that field.
-Do not guess wildly; only map if there is a reasonable logical connection.
-
-CSV Headers:
-${JSON.stringify(headers, null, 2)}
-
-Sample Data (first 3 rows):
-${JSON.stringify(sampleData, null, 2)}`
-  });
-
-  return object;
-}
-
-
+const newActions = `
 import { evaluateCandidateMatch } from "@/utils/fuzzy-match";
 import { eq } from "drizzle-orm";
 
@@ -107,7 +68,7 @@ export async function finalizeCandidatesImportAction(newCandidates: any[], updat
       designation: c.designation || "",
       exp: c.totalExperience ? parseInt(c.totalExperience) : null,
       ctc: c.ctc ? parseInt(c.ctc) : null,
-      notes: c.industry ? `Industry: ${c.industry}` : "",
+      notes: c.industry ? \`Industry: \${c.industry}\` : "",
       expTags: c.previousCompany ? [c.previousCompany] : [],
       qual: c.yearQualified ? [{ degree: "Qualification", year: c.yearQualified }] : [],
       initials,
@@ -171,3 +132,8 @@ export async function finalizeCandidatesImportAction(newCandidates: any[], updat
   revalidatePath("/dashboard/candidates");
   return { success: true, insertedCount, updatedCount };
 }
+`;
+
+code = code.replace(processCandidatesActionBlock, newActions);
+fs.writeFileSync('src/actions/candidates.ts', code);
+console.log('Done');

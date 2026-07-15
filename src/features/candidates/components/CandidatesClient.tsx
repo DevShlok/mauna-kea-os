@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { Candidate } from "@/db/schema";
 import { bulkAddSubmissionAction, bulkAssignToMandateAction, updateCandidateStatusAction, deleteMultipleCandidatesAction } from "@/actions";
-import { mapCandidatesAction, processCandidatesAction } from "@/actions/candidates";
+import { mapCandidatesAction, checkCandidateDuplicatesAction, finalizeCandidatesImportAction } from "@/actions/candidates";
 
 const MultiSelect = ({ options, selected, onChange, placeholder }: any) => {
   const [open, setOpen] = useState(false);
@@ -119,6 +119,14 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
   const [importMapping, setImportMapping] = useState<any>(null);
   const [importFileData, setImportFileData] = useState<any[]>([]);
   const [importHeaders, setImportHeaders] = useState<string[]>([]);
+  // Duplicate Resolution States
+  const [isResolvingDuplicates, setIsResolvingDuplicates] = useState(false);
+  const [duplicateQueue, setDuplicateQueue] = useState<any[]>([]);
+  const [currentDuplicateIndex, setCurrentDuplicateIndex] = useState(0);
+  const [resolvedUpdates, setResolvedUpdates] = useState<any[]>([]);
+  const [newCandidatesQueue, setNewCandidatesQueue] = useState<any[]>([]);
+  const [fieldSelections, setFieldSelections] = useState<any>({});
+
   
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -272,7 +280,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
     }
   };
 
-  const confirmImport = async () => {
+    const confirmImport = async () => {
     if (!importMapping || importFileData.length === 0) return;
     setIsImporting(true);
     try {
@@ -287,20 +295,94 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
         return cand;
       });
 
-      const res = await processCandidatesAction(mappedCandidates);
+      const { duplicates, newCandidates } = await checkCandidateDuplicatesAction(mappedCandidates);
 
-      if (!res.success) throw new Error("Failed to process import");
-
-      toast.success("Successfully imported candidates!");
-      setImportMapping(null);
-      setImportFileData([]);
-      router.refresh(); // Or reload window
-      window.location.reload();
+      if (duplicates && duplicates.length > 0) {
+        setDuplicateQueue(duplicates);
+        setNewCandidatesQueue(newCandidates || []);
+        setCurrentDuplicateIndex(0);
+        setResolvedUpdates([]);
+        setIsResolvingDuplicates(true);
+        // Pre-fill fieldSelections for first duplicate
+        const initSelections: any = {};
+        const first = duplicates[0].incomingCandidate;
+        Object.keys(first).forEach(k => {
+          if (first[k]) initSelections[k] = true;
+        });
+        setFieldSelections(initSelections);
+      } else {
+        // No duplicates, proceed directly
+        const res = await finalizeCandidatesImportAction(newCandidates || [], []);
+        if (!res.success) throw new Error("Failed to process import");
+        toast.success("Successfully imported candidates!");
+        setImportMapping(null);
+        setImportFileData([]);
+        router.refresh();
+        window.location.reload();
+      }
     } catch (err) {
       console.error(err);
       toast.error("Error importing candidates.");
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  const handleNextDuplicate = async (action: 'replace' | 'keep' | 'update' | 'new') => {
+    const currentDuplicate = duplicateQueue[currentDuplicateIndex];
+    const updatedList = [...resolvedUpdates];
+    const newCandList = [...newCandidatesQueue];
+
+    if (action === 'replace') {
+      // Create a full update payload
+      const fullUpdate: any = {};
+      Object.keys(currentDuplicate.incomingCandidate).forEach(k => fullUpdate[k] = true);
+      updatedList.push({
+        incomingCandidate: currentDuplicate.incomingCandidate,
+        existingId: currentDuplicate.existingCandidate.id,
+        fieldsToUpdate: fullUpdate
+      });
+    } else if (action === 'update') {
+      updatedList.push({
+        incomingCandidate: currentDuplicate.incomingCandidate,
+        existingId: currentDuplicate.existingCandidate.id,
+        fieldsToUpdate: fieldSelections
+      });
+    } else if (action === 'new') {
+      newCandList.push(currentDuplicate.incomingCandidate);
+    }
+    // if 'keep', do nothing (skip)
+
+    setResolvedUpdates(updatedList);
+    setNewCandidatesQueue(newCandList);
+
+    if (currentDuplicateIndex < duplicateQueue.length - 1) {
+      const nextIdx = currentDuplicateIndex + 1;
+      setCurrentDuplicateIndex(nextIdx);
+      const nextInc = duplicateQueue[nextIdx].incomingCandidate;
+      const nextSelections: any = {};
+      Object.keys(nextInc).forEach(k => {
+        if (nextInc[k]) nextSelections[k] = true;
+      });
+      setFieldSelections(nextSelections);
+    } else {
+      // Done resolving
+      setIsResolvingDuplicates(false);
+      setIsImporting(true);
+      try {
+        const res = await finalizeCandidatesImportAction(newCandList, updatedList);
+        if (!res.success) throw new Error("Failed to finalize import");
+        toast.success("Successfully imported/updated candidates!");
+        setImportMapping(null);
+        setImportFileData([]);
+        setDuplicateQueue([]);
+        router.refresh();
+        window.location.reload();
+      } catch (err) {
+        toast.error("Error finalizing import");
+      } finally {
+        setIsImporting(false);
+      }
     }
   };
 
