@@ -42,7 +42,7 @@ export default function NewClientClient({ industries = [] }: { industries?: any[
                 <input list="industry-suggestions" value={form.vertical} onChange={e => setForm({...form, vertical: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[15px] outline-none focus:border-[#133255]" placeholder="e.g. Financial services"/>
                 <datalist id="industry-suggestions">
                   {industries.map((ind: any) => (
-                    <option key={ind.id} value={ind.standardizedIndustry || ind.rawEntry} />
+                    <option key={ind.id} value={ind.sectorName} />
                   ))}
                 </datalist>
               </div>
