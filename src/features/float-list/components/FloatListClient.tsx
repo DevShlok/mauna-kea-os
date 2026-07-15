@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { deleteMultipleCandidatesAction } from "@/actions";
+import toast from "react-hot-toast";
 
 export default function FloatListClient({ mandates, floats, allCandidatesMaster }: { mandates: any[], floats?: any[], allCandidatesMaster?: any[] }) {
   const router = useRouter();
@@ -60,6 +62,37 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
     return matchSearch && matchStage && matchMandate && matchCompany && matchDesignation;
   });
 
+  // Bulk Delete State
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const allSelected = filtered.length > 0 && selectedIds.size === filtered.length;
+  const toggleAll = () => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(filtered.map(c => c.externalId)));
+  };
+  const toggleRow = (externalId: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(externalId)) next.delete(externalId);
+    else next.add(externalId);
+    setSelectedIds(next);
+  };
+
+  const handleDeleteSelected = async () => {
+    setIsSubmitting(true);
+    try {
+      await deleteMultipleCandidatesAction(Array.from(selectedIds));
+      setSelectedIds(new Set());
+      setIsDeleteDialogOpen(false);
+      toast.success("Float entries deleted successfully");
+    } catch (e: any) {
+      toast.error("Failed to delete entries");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex justify-between items-center mb-8">
@@ -99,11 +132,32 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
         </select>
       </div>
       
+      {/* Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-4 bg-[#0E2150] text-white rounded-[13px] px-5 py-3 mb-4 shadow-md transition-all">
+          <div className="font-semibold text-sm">
+            <b className="text-[#d7a33c]">{selectedIds.size}</b> selected
+          </div>
+          <div className="ml-auto flex gap-3">
+            <button onClick={() => setIsDeleteDialogOpen(true)} className="px-3 py-2 bg-red-500 text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              Delete
+            </button>
+            <button onClick={() => setSelectedIds(new Set())} className="text-[#a9b7da] font-semibold text-[15px] hover:text-white px-2">
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b-2 border-gray-200">
+                <th className="px-4 py-3 text-center w-10">
+                  <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
+                </th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Name</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Company</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Designation</th>
@@ -116,6 +170,9 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
             <tbody>
               {filtered.map((c, i) => (
                 <tr key={i} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => c.isFloatOnly ? router.push("/dashboard/candidates/" + c.externalId) : router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId)}>
+                  <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
+                    <input type="checkbox" checked={selectedIds.has(c.externalId)} onChange={() => toggleRow(c.externalId)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded bg-[#133255] text-white flex items-center justify-center text-xs font-bold">{c.initials}</div>
@@ -147,6 +204,38 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
           </table>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#133255]/40 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-[20px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <h3 className="font-serif text-[21px] font-bold text-gray-900 mb-2">Delete Entries</h3>
+              <p className="text-[#4a5568] text-sm">
+                Are you sure you want to delete <b className="text-red-600">{selectedIds.size}</b> entr{selectedIds.size > 1 ? "ies" : "y"}? This action cannot be undone. All associated data will be permanently removed.
+              </p>
+              
+              <div className="mt-6 flex justify-end gap-3">
+                <button 
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                  className="px-5 py-2.5 rounded-xl font-bold text-sm text-[#4a5568] hover:bg-gray-100 transition-colors"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleDeleteSelected}
+                  className="px-5 py-2.5 rounded-xl font-bold text-sm bg-red-600 text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-50"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Deleting..." : "Delete Permanently"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

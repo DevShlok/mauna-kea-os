@@ -814,3 +814,8 @@ export async function deleteMultipleClientsAction(ids: string[]) {
   await db.delete(clients).where(inArray(clients.id, ids));
   revalidatePath("/dashboard/clients");
 }
+export async function deleteMultiplePlatformUsersAction(ids: string[]) {
+  if (!ids || ids.length === 0) return;
+  await db.delete(platformUsers).where(inArray(platformUsers.id, ids));
+  revalidatePath("/dashboard");
+}
