@@ -432,10 +432,16 @@ export async function deleteFrameworkAction(id: string) {
 }
 
 export async function deleteMandateAction(id: number) {
-  revalidatePath('/dashboard', 'layout');
   await db.delete(mandateCandidates).where(eq(mandateCandidates.mandateId, id));
   await db.delete(mandates).where(eq(mandates.id, id));
-  revalidatePath('/dashboard/mandates');
+  revalidatePath("/dashboard/mandates");
+}
+
+export async function deleteMultipleMandatesAction(ids: number[]) {
+  if (!ids || ids.length === 0) return;
+  await db.delete(mandateCandidates).where(inArray(mandateCandidates.mandateId, ids));
+  await db.delete(mandates).where(inArray(mandates.id, ids));
+  revalidatePath("/dashboard/mandates");
 }
 
 
@@ -462,7 +468,6 @@ export async function updateClientAction(id: string, data: any) {
 }
 
 export async function deleteClientAction(id: string) {
-  revalidatePath("/dashboard/clients");
   await db.delete(clients).where(eq(clients.id, id));
   return true;
 }
@@ -799,4 +804,13 @@ export async function markConsultantNotificationsAsReadAction() {
       )
     );
   revalidatePath("/dashboard", "layout");
+}
+export async function deleteMultipleClientsAction(ids: string[]) {
+  if (!ids || ids.length === 0) return;
+  // Let's delete related platform users as well since there could be a FK
+  await db.delete(platformUsers).where(inArray(platformUsers.linkedClientId, ids));
+  await db.delete(clientNotifications).where(inArray(clientNotifications.clientId, ids));
+  await db.delete(clientRemarks).where(inArray(clientRemarks.clientId, ids));
+  await db.delete(clients).where(inArray(clients.id, ids));
+  revalidatePath("/dashboard/clients");
 }

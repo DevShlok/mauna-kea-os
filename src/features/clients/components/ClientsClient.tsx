@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Client, Mandate } from "@/db/schema";
 import { Search } from "lucide-react";
-import { updateClientAction } from "@/actions";
+import { updateClientAction, deleteMultipleClientsAction } from "@/actions";
 import ClientImportModal from "./ClientImportModal";
 import { Upload } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function ClientsClient({ clients, mandates }: { clients: Client[], mandates: Mandate[] }) {
   const router = useRouter();
@@ -42,6 +43,37 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
 
   const verticals = Array.from(new Set(clients.map(c => c.vertical).filter(Boolean))) as string[];
   const statuses = Array.from(new Set(clients.map(c => c.status).filter(Boolean))) as string[];
+
+  // Bulk Delete State
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const allSelected = filteredClients.length > 0 && selectedIds.size === filteredClients.length;
+  const toggleAll = () => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(filteredClients.map(c => c.id)));
+  };
+  const toggleRow = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+  };
+
+  const handleDeleteSelected = async () => {
+    setIsSubmitting(true);
+    try {
+      await deleteMultipleClientsAction(Array.from(selectedIds));
+      setSelectedIds(new Set());
+      setIsDeleteDialogOpen(false);
+      toast.success("Clients deleted successfully");
+    } catch (e: any) {
+      toast.error("Failed to delete clients");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
@@ -97,11 +129,32 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
 
         <ClientImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
 
+        {/* Bulk Action Bar */}
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-4 bg-[#0E2150] text-white rounded-[13px] px-5 py-3 mb-4 shadow-md transition-all">
+            <div className="font-semibold text-sm">
+              <b className="text-[#d7a33c]">{selectedIds.size}</b> selected
+            </div>
+            <div className="ml-auto flex gap-3">
+              <button onClick={() => setIsDeleteDialogOpen(true)} className="px-3 py-2 bg-red-500 text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 flex items-center gap-1.5">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                Delete
+              </button>
+              <button onClick={() => setSelectedIds(new Set())} className="text-[#a9b7da] font-semibold text-[15px] hover:text-white px-2">
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-100">
+                <th className="px-4 py-4 text-center w-10">
+                  <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
+                </th>
                 <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Account</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Vertical</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Live Mandates</th>
@@ -112,7 +165,10 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
             </thead>
             <tbody>
               {filteredClients.map(c => (
-                <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => router.push(`/dashboard/clients/${c.id}`)}>
+                  <td className="px-4 py-4 text-center" onClick={e => e.stopPropagation()}>
+                    <input type="checkbox" checked={selectedIds.has(c.id)} onChange={() => toggleRow(c.id)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="font-bold text-[15px] text-gray-900">{c.name}</div>
                     <div className="text-[13px] text-gray-400">{c.accountId}</div>
@@ -135,7 +191,7 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
                       <option value="Inactive" className="bg-white text-gray-900">Inactive</option>
                     </select>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-2">
                       <Link href={`/dashboard/clients/${c.id}`} className="px-3 py-1.5 text-[13px] font-bold text-[#133255] border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
                         View
@@ -149,13 +205,43 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
               ))}
               {filteredClients.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">No clients found.</td>
+                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">No clients found.</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
 
+      {/* Delete Confirmation Modal */}
+      {isDeleteDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#133255]/40 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-[20px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <h3 className="font-serif text-[21px] font-bold text-gray-900 mb-2">Delete Clients</h3>
+              <p className="text-[#4a5568] text-sm">
+                Are you sure you want to delete <b className="text-red-600">{selectedIds.size}</b> client{selectedIds.size > 1 ? "s" : ""}? This action cannot be undone. All associated data will be permanently removed.
+              </p>
+              
+              <div className="mt-6 flex justify-end gap-3">
+                <button 
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                  className="px-5 py-2.5 rounded-xl font-bold text-sm text-[#4a5568] hover:bg-gray-100 transition-colors"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleDeleteSelected}
+                  className="px-5 py-2.5 rounded-xl font-bold text-sm bg-red-600 text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-50"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Deleting..." : "Delete Permanently"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
