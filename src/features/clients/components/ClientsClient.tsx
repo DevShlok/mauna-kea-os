@@ -75,6 +75,10 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
     }
   };
 
+  const selectedClients = localClients.filter(c => selectedIds.has(c.id));
+  const selectedClientNames = selectedClients.map(c => c.name);
+  const attachedMandatesCount = mandates.filter(m => selectedClientNames.includes(m.company)).length;
+
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
         <div className="text-[14px] text-gray-500 mb-1">Home / Clients</div>
@@ -218,8 +222,21 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
           <div className="bg-white w-full max-w-md rounded-[20px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="p-6">
               <h3 className="font-serif text-[21px] font-bold text-gray-900 mb-2">Delete Clients</h3>
+              <p className="text-[#4a5568] text-sm mb-3">
+                Are you sure you want to delete <b className="text-red-600">{selectedIds.size}</b> client{selectedIds.size > 1 ? "s" : ""}?
+              </p>
+              {attachedMandatesCount > 0 && (
+                <div className="bg-red-50 border border-red-100 rounded-lg p-3 mb-3">
+                  <p className="text-red-800 text-sm font-semibold">
+                    The client{selectedIds.size > 1 ? "s" : ""} you are trying to delete {selectedIds.size > 1 ? "have" : "has"} <b className="text-red-600">{attachedMandatesCount} mandate{attachedMandatesCount > 1 ? "s" : ""}</b> attached.
+                  </p>
+                  <p className="text-red-600 text-xs mt-1">
+                    These mandates (and any float list entries associated with them) will also be deleted.
+                  </p>
+                </div>
+              )}
               <p className="text-[#4a5568] text-sm">
-                Are you sure you want to delete <b className="text-red-600">{selectedIds.size}</b> client{selectedIds.size > 1 ? "s" : ""}? This action cannot be undone. All associated data will be permanently removed.
+                If you still wish to continue, click delete permanently.
               </p>
               
               <div className="mt-6 flex justify-end gap-3">

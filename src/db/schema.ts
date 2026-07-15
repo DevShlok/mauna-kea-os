@@ -31,6 +31,9 @@ export const mandates = pgTable('mandates', {
   additionalDocsText: text('additional_docs_text'),
   openQuestions: text('open_questions'),
   frameworkId: varchar('framework_id', { length: 20 }),
+  isDeleted: boolean('is_deleted').default(false),
+  deletedAt: datetime('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
@@ -86,6 +89,9 @@ export const candidates = pgTable('candidates', {
   profilePic: mediumtext('profile_pic'),
   esops: int('esops'),
   esopVesting: json('esop_vesting').$type<{ years: number; distribution: number[] }>(),
+  isDeleted: boolean('is_deleted').default(false),
+  deletedAt: datetime('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
@@ -109,6 +115,9 @@ export const floatReferences = pgTable('float_references', {
   org: varchar('org', { length: 255 }),
   rel: varchar('rel', { length: 255 }),
   text: text('text'),
+  isDeleted: boolean('is_deleted').default(false),
+  deletedAt: datetime('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
@@ -125,6 +134,9 @@ export const floats = pgTable('floats', {
   followUp: varchar('follow_up', { length: 20 }),
   status: varchar('status', { length: 50 }),
   response: text('response'),
+  isDeleted: boolean('is_deleted').default(false),
+  deletedAt: datetime('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
@@ -163,6 +175,9 @@ export const frameworks = pgTable('frameworks', {
   usedIn: int('used_in').default(0),
   lastModified: varchar('last_modified', { length: 50 }),
   reportSections: json('report_sections').$type<string[]>().default(['Relevant Experience', 'Motivation & Fit', 'Key Strengths', 'Areas to Probe', 'Mauna Kea Recommendation']),
+  isDeleted: boolean('is_deleted').default(false),
+  deletedAt: datetime('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
@@ -196,6 +211,9 @@ export const platformUsers = pgTable('platform_users', {
   lastActive: datetime('last_active'),
   maxLeaves: int('max_leaves').default(20), // default to 20 days
   reportingManagerId: varchar('reporting_manager_id', { length: 10 }), // references another user's id
+  isDeleted: boolean('is_deleted').default(false),
+  deletedAt: datetime('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
@@ -218,6 +236,9 @@ export const clients = pgTable('clients', {
   vertical: varchar('vertical', { length: 100 }),
   owner: varchar('owner', { length: 255 }),
   status: varchar('status', { length: 50 }).default('Active'),
+  isDeleted: boolean('is_deleted').default(false),
+  deletedAt: datetime('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 

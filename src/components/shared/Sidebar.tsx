@@ -10,7 +10,8 @@ import {
   Building2,
   ChevronRight,
   Plus,
-  Shield
+  Shield,
+  Trash2
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useState } from "react";
@@ -84,6 +85,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
         { label: "Users", href: "/dashboard/admin/users", visibleTo: ["admin"] },
         { label: "Add a User", href: "/dashboard/admin/users/new", icon: Plus, visibleTo: ["admin"] },
         { label: "Master Data", href: "/dashboard/admin/master-data", visibleTo: ["admin"] },
+        { label: "Recycle Bin", href: "/dashboard/admin/recycle-bin", icon: Trash2, visibleTo: ["admin"] },
       ]
     }
   ];

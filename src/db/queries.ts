@@ -1,5 +1,5 @@
 import { db } from './index';
-import { eq, sql, getTableColumns, desc } from 'drizzle-orm';
+import { eq, sql, getTableColumns, desc, and } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
 import {
   mandates, mandateCandidates, candidates, floats, floatReferences,
@@ -9,7 +9,7 @@ import {
 
 // ─── MANDATES ────────────────────────────────────────────
 export const getMandates = async () => {
-  const rows = await db.select().from(mandates).orderBy(desc(mandates.id));
+  const rows = await db.select().from(mandates).where(eq(mandates.isDeleted, false)).orderBy(desc(mandates.id));
   const cands = await db.select().from(mandateCandidates);
   return rows.map(m => ({
     ...m,
@@ -19,7 +19,7 @@ export const getMandates = async () => {
 };
 
 export const getMandateById = async (id: number) => {
-  const [mandate] = await db.select().from(mandates).where(eq(mandates.id, id));
+  const [mandate] = await db.select().from(mandates).where(and(eq(mandates.id, id), eq(mandates.isDeleted, false)));
   if (!mandate) return null;
   const cands = await db.select().from(mandateCandidates).where(eq(mandateCandidates.mandateId, id));
   return {
@@ -74,7 +74,7 @@ export const getMandateCandidateByExtId = async (extId: string) => {
 // ─── CANDIDATES (MASTER) ─────────────────────────────────
 export const getCandidates = async () => {
   const { cvText, profilePic, ...safeCols } = getTableColumns(candidates);
-  const rows = await db.select(safeCols).from(candidates).orderBy(desc(candidates.createdAt));
+  const rows = await db.select(safeCols).from(candidates).where(eq(candidates.isDeleted, false)).orderBy(desc(candidates.createdAt));
   return rows.map(c => ({
     ...c,
     qual: (c.qual ?? []) as any[],
@@ -85,12 +85,12 @@ export const getCandidates = async () => {
 };
 
 export const getCandidateById = async (id: string) => {
-  const [cand] = await db.select().from(candidates).where(eq(candidates.id, id));
+  const [cand] = await db.select().from(candidates).where(and(eq(candidates.id, id), eq(candidates.isDeleted, false)));
   if (!cand) return null;
   const activities = await db.select().from(floatActivities).where(eq(floatActivities.candId, id));
   
   // Fetch float submissions
-  const floatSubmissions = await db.select().from(floats).where(eq(floats.candId, id));
+  const floatSubmissions = await db.select().from(floats).where(and(eq(floats.candId, id), eq(floats.isDeleted, false)));
   
   // Fetch mandate submissions
   const mCands = await db.select({
@@ -103,7 +103,7 @@ export const getCandidateById = async (id: string) => {
   })
   .from(mandateCandidates)
   .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id))
-  .where(eq(mandateCandidates.externalId, id));
+  .where(and(eq(mandateCandidates.externalId, id), eq(mandates.isDeleted, false)));
 
   const submissionsMap = new Map();
 
@@ -164,7 +164,7 @@ export const getCandidateById = async (id: string) => {
 
 // ─── FLOATS (SUBMISSIONS) ────────────────────────────────
 export const getFloats = async () => {
-  const rows = await db.select().from(floats).orderBy(desc(floats.dateShared));
+  const rows = await db.select().from(floats).where(eq(floats.isDeleted, false)).orderBy(desc(floats.dateShared));
   return rows.map(s => ({ ...s, via: (s.via ?? []) as string[] }));
 };
 
@@ -175,7 +175,7 @@ export const getFollowUps = async () => {
 
 // ─── FRAMEWORKS ──────────────────────────────────────────
 export const getFrameworks = async () => {
-  const fws = await db.select().from(frameworks).orderBy(desc(frameworks.createdAt));
+  const fws = await db.select().from(frameworks).where(eq(frameworks.isDeleted, false)).orderBy(desc(frameworks.createdAt));
   const cats = await db.select().from(frameworkCategories);
   const crits = await db.select().from(frameworkCriteria);
   const reports = await db.select({ frameworkId: candidateReports.frameworkId, candidateId: candidateReports.candidateId }).from(candidateReports);
@@ -212,7 +212,7 @@ export const getFrameworks = async () => {
 };
 
 export const getFrameworkById = async (id: string) => {
-  const [fw] = await db.select().from(frameworks).where(eq(frameworks.id, id));
+  const [fw] = await db.select().from(frameworks).where(and(eq(frameworks.id, id), eq(frameworks.isDeleted, false)));
   if (!fw) return null;
   const cats = await db.select().from(frameworkCategories).where(eq(frameworkCategories.frameworkId, id));
   const crits = await db.select().from(frameworkCriteria);
@@ -227,19 +227,19 @@ export const getFrameworkById = async (id: string) => {
 
 // ─── USERS ───────────────────────────────────────────────
 export const getPlatformUsers = async () => {
-  return db.select().from(platformUsers).orderBy(desc(platformUsers.createdAt));
+  return db.select().from(platformUsers).where(eq(platformUsers.isDeleted, false)).orderBy(desc(platformUsers.createdAt));
 };
 
 export const getUserByEmail = async (email: string) => {
-  const [user] = await db.select().from(platformUsers).where(eq(platformUsers.email, email));
+  const [user] = await db.select().from(platformUsers).where(and(eq(platformUsers.email, email), eq(platformUsers.isDeleted, false)));
   return user || null;
 };
 
 // ─── ANALYTICS ───────────────────────────────────────────
 export const getAnalyticsData = async () => {
-  const [mandateCount] = await db.select({ count: sql<number>`count(*)` }).from(mandates);
+  const [mandateCount] = await db.select({ count: sql<number>`count(*)` }).from(mandates).where(eq(mandates.isDeleted, false));
   const [candCount] = await db.select({ count: sql<number>`count(*)` }).from(mandateCandidates);
-  const [flCount] = await db.select({ count: sql<number>`count(*)` }).from(candidates);
+  const [flCount] = await db.select({ count: sql<number>`count(*)` }).from(candidates).where(eq(candidates.isDeleted, false));
   return {
     activeMandates: Number(mandateCount?.count ?? 0),
     totalCandidates: Number(candCount?.count ?? 0),
