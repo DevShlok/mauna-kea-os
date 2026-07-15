@@ -98,6 +98,8 @@ export const candidates = pgTable('candidates', {
   relocationStatus: varchar('relocation_status', { length: 50 }),
   relocationPrefs: json('relocation_prefs').$type<string[]>(),
   createdAt: datetime('created_at').default(sql`now()`),
+  updatedAt: datetime('updated_at').default(sql`now()`),
+  updatedBy: varchar('updated_by', { length: 255 }),
 });
 
 // ─── CANDIDATE FILES (HISTORY) ───────────────────────────

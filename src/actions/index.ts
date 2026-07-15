@@ -470,13 +470,23 @@ export async function createClientAction(data: any) {
     vertical: data.vertical,
     owner: data.owner,
     status: data.status || "Active",
+    legalEntityName: data.legalEntityName || null,
+    contacts: data.contacts || [],
   });
   return true;
 }
 
 export async function updateClientAction(id: string, data: any) {
   revalidatePath("/dashboard/clients");
-  await db.update(clients).set(data).where(eq(clients.id, id));
+  await db.update(clients).set({
+    name: data.name,
+    accountId: data.accountId,
+    vertical: data.vertical,
+    owner: data.owner,
+    status: data.status || "Active",
+    legalEntityName: data.legalEntityName || null,
+    contacts: data.contacts || [],
+  }).where(eq(clients.id, id));
   return true;
 }
 

@@ -1,4 +1,6 @@
-"use client";
+const fs = require('fs');
+
+const code = `"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -136,3 +138,7 @@ export default function NewClientClient({ industries = [] }: { industries?: any[
     </div>
   );
 }
+`;
+
+fs.writeFileSync('src/features/clients/components/NewClientClient.tsx', code);
+console.log("Updated NewClientClient");

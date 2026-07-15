@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Client, Mandate } from "@/db/schema";
-import { ArrowLeft, Building2, User, Briefcase, Calendar, Trash2, Edit, Upload } from "lucide-react";
+import { ArrowLeft, Building2, User, Briefcase, Calendar, Trash2, Edit, Upload, Plus } from "lucide-react";
 import { updateClientAction, deleteClientAction } from "@/actions";
 import MandateImportModal from "@/features/mandates/components/MandateImportModal";
 
@@ -21,8 +21,10 @@ export default function ClientDetailClient({ client, mandates, industries = [] }
     accountId: client.accountId || "", 
     vertical: client.vertical || "", 
     owner: client.owner || "", 
-    status: client.status || "Active" 
+    status: client.status || "Active", 
+    legalEntityName: client.legalEntityName || "" 
   });
+  const [contacts, setContacts] = useState<{name: string, designation: string, number: string, email: string}[]>(client.contacts || []);
 
   const activeMandates = mandates.filter(m => m.status !== 'Closed' && m.status !== 'Lost');
   const completedMandates = mandates.filter(m => m.status === 'Closed' || m.status === 'Lost');
@@ -32,9 +34,23 @@ export default function ClientDetailClient({ client, mandates, industries = [] }
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    await updateClientAction(client.id, form);
+    await updateClientAction(client.id, { ...form, contacts });
     setIsSubmitting(false);
     setIsEditing(false);
+  };
+
+  const updateContact = (index: number, field: string, value: string) => {
+    const newContacts = [...contacts];
+    newContacts[index] = { ...newContacts[index], [field]: value };
+    setContacts(newContacts);
+  };
+
+  const addContact = () => {
+    setContacts([...contacts, {name: "", designation: "", number: "", email: ""}]);
+  };
+
+  const removeContact = (index: number) => {
+    setContacts(contacts.filter((_, i) => i !== index));
   };
 
   const handleDelete = async () => {
@@ -157,19 +173,26 @@ export default function ClientDetailClient({ client, mandates, industries = [] }
       {/* Edit Client Modal */}
       {isEditing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#133255]/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <h2 className="text-lg font-bold text-[#133255]">Edit Client</h2>
               <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-600 font-bold text-xl leading-none">&times;</button>
             </div>
             <form onSubmit={handleEditSubmit} className="p-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Client *</label>
-                  <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Client *</label>
+                    <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Legal Entity Name</label>
+                    <input value={form.legalEntityName} onChange={e => setForm({...form, legalEntityName: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Account ID</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Account ID</label>
                   <input value={form.accountId} onChange={e => setForm({...form, accountId: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
                 </div>
                 <div>
@@ -192,6 +215,50 @@ export default function ClientDetailClient({ client, mandates, industries = [] }
                     <option value="Prospect">Prospect</option>
                     <option value="Inactive">Inactive</option>
                   </select>
+                </div>
+                </div>
+                
+                {/* Contacts Section */}
+                <div className="mt-8 pt-6 border-t border-gray-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-[#9ca8be]">Client Contacts</h3>
+                    <button type="button" onClick={addContact} className="text-sm font-bold text-[#133255] flex items-center gap-1 hover:text-[#D8B15B] transition-colors">
+                      <Plus className="w-4 h-4" /> Add Contact
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {contacts.map((contact, idx) => (
+                      <div key={idx} className="p-4 bg-gray-50 border border-gray-100 rounded-lg relative">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Contact Name</label>
+                            <input value={contact.name} onChange={e => updateContact(idx, 'name', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-[#133255]" placeholder="Name" />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Designation</label>
+                            <input value={contact.designation} onChange={e => updateContact(idx, 'designation', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-[#133255]" placeholder="Designation" />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Contact Number</label>
+                            <input value={contact.number} onChange={e => updateContact(idx, 'number', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-[#133255]" placeholder="Phone Number" />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Contact Email</label>
+                            <input type="email" value={contact.email} onChange={e => updateContact(idx, 'email', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-[#133255]" placeholder="Email Address" />
+                          </div>
+                        </div>
+                        <button type="button" onClick={() => removeContact(idx)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors" title="Remove Contact">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    {contacts.length === 0 && (
+                      <div className="text-[13px] text-gray-500 italic text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                        No contacts added yet.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="mt-8 flex justify-end gap-3">
