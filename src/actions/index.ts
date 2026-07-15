@@ -200,6 +200,11 @@ export async function addFloatListEntryAction(data: any) {
     profilePic: data.profilePic || null,
     esops: data.esops ? Number(data.esops) : null,
     esopVesting: data.esopVesting || null,
+    dob: data.dob || null,
+    hometown: data.hometown || null,
+    stability: data.stability || null,
+    relocationStatus: data.relocationStatus || null,
+    relocationPrefs: data.relocationPrefs || null,
   });
   revalidatePath("/dashboard/float-list/database");
   return id;
@@ -246,6 +251,7 @@ export async function addSubmissionAction(data: any) {
         role: data.role,
         stage: "universe",
         initials: data.candName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+        isSentToClient: true,
       });
       revalidatePath(`/dashboard/mandates/${data.mandateId}`);
       revalidatePath(`/dashboard/mandates`);
@@ -550,6 +556,11 @@ export async function editFloatListEntryAction(id: string, data: any) {
     profilePic: data.profilePic || null,
     esops: data.esops ? Number(data.esops) : null,
     esopVesting: data.esopVesting || null,
+    dob: data.dob || null,
+    hometown: data.hometown || null,
+    stability: data.stability || null,
+    relocationStatus: data.relocationStatus || null,
+    relocationPrefs: data.relocationPrefs || null,
   }).where(eq(candidates.id, id));
   revalidatePath("/dashboard/float-list/database");
   revalidatePath("/dashboard/float-list/" + id);
@@ -581,6 +592,7 @@ export async function bulkAssignToMandateAction(data: { mandateId: number; candI
         initials: c.initials || c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
         score: c.score || null,
         hasReport: !!c.score,
+        isSentToClient: true, // Make visible by default
       });
 
       const mandateRows = await db.select().from(mandates).where(eq(mandates.id, data.mandateId));

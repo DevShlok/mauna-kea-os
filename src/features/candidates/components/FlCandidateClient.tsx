@@ -301,7 +301,19 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
     setActiveTiles(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const statusClass = candidate.status === 'Active' ? 'bg-[#e0f5e9] text-[#137a43] border-[#137a43]' :
+    const calculateAge = (dobString: string) => {
+    if (!dobString) return null;
+    const today = new Date();
+    const birthDate = new Date(dobString);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+const statusClass = candidate.status === 'Active' ? 'bg-[#e0f5e9] text-[#137a43] border-[#137a43]' :
                       candidate.status === 'Passive' ? 'bg-[#fef4e6] text-[#b36b00] border-[#b36b00]' :
                       'bg-[#fae6e6] text-[#c92a2a] border-[#c92a2a]';
 
@@ -346,6 +358,8 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
               <span className="text-[14px] text-[#6b7a99]">Not assessed</span>
             )}
             <span className="text-[14px] text-[#6b7a99]">Notice: {candidate.notice} days</span>
+            {candidate.dob && <span className="text-[14px] text-[#6b7a99]">Age: {calculateAge(candidate.dob)} yrs</span>}
+            {candidate.hometown && <span className="text-[14px] text-[#6b7a99]">Hometown: {candidate.hometown}</span>}
           </div>
 
           <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-4">

@@ -35,8 +35,6 @@ export const mandates = pgTable('mandates', {
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
-  updatedAt: datetime('updated_at').default(sql`now()`),
-  updatedBy: varchar('updated_by', { length: 255 }),
 });
 
 // ─── MANDATE CANDIDATES ──────────────────────────────────
@@ -94,6 +92,11 @@ export const candidates = pgTable('candidates', {
   isDeleted: boolean('is_deleted').default(false),
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),
+  dob: date('dob'),
+  hometown: varchar('hometown', { length: 100 }),
+  stability: json('stability').$type<{ current: string; previous: string }>(),
+  relocationStatus: varchar('relocation_status', { length: 50 }),
+  relocationPrefs: json('relocation_prefs').$type<string[]>(),
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
@@ -238,6 +241,8 @@ export const clients = pgTable('clients', {
   vertical: varchar('vertical', { length: 100 }),
   owner: varchar('owner', { length: 255 }),
   status: varchar('status', { length: 50 }).default('Active'),
+  legalEntityName: varchar('legal_entity_name', { length: 255 }),
+  contacts: json('contacts').$type<{name: string; designation: string; number: string; email: string}[]>().default([]),
   isDeleted: boolean('is_deleted').default(false),
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),

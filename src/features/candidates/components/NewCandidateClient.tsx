@@ -31,8 +31,16 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
     targetCompany: initialData?.targetCompany || "", 
     currency: initialData?.currency || "INR", 
     cvFileName: initialData?.cvFileName || "", 
-    notes: initialData?.notes || ""
+    notes: initialData?.notes || "",
+    dob: initialData?.dob ? new Date(initialData.dob).toISOString().split('T')[0] : "",
+    hometown: initialData?.hometown || "",
+    relocationStatus: initialData?.relocationStatus || "Open to relocation",
   });
+  
+  const [stability, setStability] = useState<{ current: string; previous: string }>(
+    initialData?.stability || { current: "", previous: "" }
+  );
+  const [relocationPrefs, setRelocationPrefs] = useState<string[]>(initialData?.relocationPrefs || []);
   
   const [quals, setQuals] = useState<any[]>(() => {
     return (initialData?.qual || []).map((q: any) => {
@@ -51,6 +59,18 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
   const [dreamCompanies, setDreamCompanies] = useState<string[]>(initialData?.dreamCos || []);
   const [linkedinPdfFile, setLinkedinPdfFile] = useState<File | null>(null);
   const [cvPdfFile, setCvPdfFile] = useState<File | null>(null);
+  const calculateAge = (dobString: string) => {
+    if (!dobString) return null;
+    const today = new Date();
+    const birthDate = new Date(dobString);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   const getInitialFiles = () => {
     let files = initialData?.files ? [...initialData.files] : [];
     
@@ -221,7 +241,12 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
         currency: form.currency,
         cvFileName: cvPdfFile ? cvPdfFile.name : form.cvFileName,
         notes: form.notes,
-        profilePic: profilePicBase64
+        profilePic: profilePicBase64,
+        dob: form.dob,
+        hometown: form.hometown,
+        stability,
+        relocationStatus: form.relocationStatus,
+        relocationPrefs
       };
 
       let candId = initialData?.id;
@@ -391,10 +416,7 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Total Experience (yrs)</label>
                 <input type="number" value={form.exp} onChange={e=>setForm({...form, exp:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" min="0" />
               </div>
-              <div>
-                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Tenure in current company (yrs)</label>
-                <input type="number" value={form.tenure} onChange={e=>setForm({...form, tenure:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" min="0" step="0.1" />
-              </div>
+
             </div>
 
             {/* Compensation & Status */}
@@ -430,6 +452,14 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Notice Period (days)</label>
                 <input type="number" value={form.notice} onChange={e=>setForm({...form, notice:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" min="0" max="365" />
+              </div>
+              <div>
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current Company Tenure <span className="text-gray-400 lowercase font-normal">(Stability)</span></label>
+                <input value={stability.current} onChange={e => setStability({...stability, current: e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. 5+ years" />
+              </div>
+              <div>
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Previous Company Tenure <span className="text-gray-400 lowercase font-normal">(Stability)</span></label>
+                <input value={stability.previous} onChange={e => setStability({...stability, previous: e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. 4+ years" />
               </div>
               {!readOnly && (
                 <div>
