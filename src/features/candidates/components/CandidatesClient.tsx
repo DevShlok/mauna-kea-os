@@ -576,22 +576,24 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
           <div className="text-[14px] text-gray-500 mb-1">Home / {isBulkMode ? "Select Candidates" : "Candidate Database"}</div>
           <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">{isBulkMode ? "Select Candidates for Action" : "Candidate Database"}</h1>
         </div>
-        <div className="flex gap-3 items-center">
-          {isImporting && <span className="text-sm text-gray-500 font-bold animate-pulse">Processing...</span>}
-          <label className={`px-5 py-2.5 bg-white border border-[#e4e8f0] text-[#4a5568] rounded-lg text-sm font-bold shadow-sm hover:bg-[#f8fafc] transition-colors inline-flex items-center gap-2 cursor-pointer ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            Import
-            <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} />
-          </label>
+        {!isBulkMode && (
+          <div className="flex gap-3 items-center">
+            {isImporting && <span className="text-sm text-gray-500 font-bold animate-pulse">Processing...</span>}
+            <label className={`px-5 py-2.5 bg-white border border-[#e4e8f0] text-[#4a5568] rounded-lg text-sm font-bold shadow-sm hover:bg-[#f8fafc] transition-colors inline-flex items-center gap-2 cursor-pointer ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Import
+              <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} />
+            </label>
 
-          <button onClick={exportToExcel} className="px-5 py-2.5 bg-white border border-[#e4e8f0] text-[#4a5568] rounded-lg text-sm font-bold shadow-sm hover:bg-[#f8fafc] transition-colors inline-flex items-center gap-2">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-            Export
-          </button>
-          <Link href="/dashboard/candidates/new" className="px-5 py-2.5 bg-[#D8B15B] text-[#133255] rounded-lg text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors inline-block">
-            + Add Candidate
-          </Link>
-        </div>
+            <button onClick={exportToExcel} className="px-5 py-2.5 bg-white border border-[#e4e8f0] text-[#4a5568] rounded-lg text-sm font-bold shadow-sm hover:bg-[#f8fafc] transition-colors inline-flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              Export
+            </button>
+            <Link href="/dashboard/candidates/new" className="px-5 py-2.5 bg-[#D8B15B] text-[#133255] rounded-lg text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors inline-block">
+              + Add Candidate
+            </Link>
+          </div>
+        )}
       </div>
       
       {/* Filters Bar */}
@@ -686,7 +688,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
         </div>
       
       {/* Bulk Action Bar */}
-      {isBulkMode && selectedIds.size > 0 && (
+      {selectedIds.size > 0 && (
         <div className="flex items-center gap-4 bg-[#0E2150] text-white rounded-[13px] px-5 py-3 mb-4 shadow-md transition-all">
           <div className="font-semibold text-sm">
             <b className="text-[#d7a33c]">{selectedIds.size}</b> selected
@@ -714,9 +716,9 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
           <table className="w-full text-sm min-w-[1200px]">
             <thead>
               <tr className="bg-white border-b border-[#e4e8f0]">
-                {isBulkMode && <th className="px-4 py-4 text-center w-10">
+                <th className="px-4 py-4 text-center w-10">
                   <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#1d4ed8] cursor-pointer" />
-                </th>}
+                </th>
                 <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Name</th>
                 <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Current company</th>
                 <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Current designation</th>
@@ -731,9 +733,9 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
             <tbody>
               {filtered.map((c: any, i: number) => (
                 <tr key={i} className="border-b border-[#eef1f7] hover:bg-[#f7f9fd] cursor-pointer transition-colors" onClick={() => router.push("/dashboard/candidates/" + c.id)}>
-                  {isBulkMode && <td className="px-4 py-4 text-center" onClick={e => e.stopPropagation()}>
+                  <td className="px-4 py-4 text-center" onClick={e => e.stopPropagation()}>
                     <input type="checkbox" checked={selectedIds.has(c.id)} onChange={() => toggleRow(c.id)} className="w-[18px] h-[18px] accent-[#1d4ed8] cursor-pointer" />
-                  </td>}
+                  </td>
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-[10px] bg-[#133255] text-white flex items-center justify-center text-[16px] font-bold flex-shrink-0">{c.initials}</div>

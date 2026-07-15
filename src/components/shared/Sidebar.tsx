@@ -39,8 +39,8 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
       visibleTo: ["admin", "consultant", "client"],
       children: [
         { label: "Client Database", href: "/dashboard/clients", visibleTo: ["admin", "consultant", "client"] },
-        { label: "Mandates", href: "/dashboard/mandates", visibleTo: ["admin", "consultant", "client"] },
         { label: "Add Client", href: "/dashboard/clients/new", icon: Plus, visibleTo: ["admin", "consultant", "client"] },
+        { label: "Mandates", href: "/dashboard/mandates", visibleTo: ["admin", "consultant", "client"] },
         { label: "Add Mandate", href: "/dashboard/mandates/new", icon: Plus, visibleTo: ["admin", "consultant", "client"] },
       ]
     },
@@ -50,8 +50,8 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
       visibleTo: ["admin", "consultant", "candidate"],
       children: [
         { label: "Candidate Database", href: "/dashboard/candidates", visibleTo: ["admin", "consultant", "candidate"] },
-        { label: "Float List", href: "/dashboard/float-list", visibleTo: ["admin", "consultant"] },
         { label: "Add Candidate", href: "/dashboard/candidates/new", icon: Plus, visibleTo: ["admin", "consultant", "candidate"] },
+        { label: "Float List", href: "/dashboard/float-list", visibleTo: ["admin", "consultant"] },
         { label: "Add to Float List", href: "/dashboard/candidates?mode=float", icon: Plus, visibleTo: ["admin", "consultant"] },
         { label: "Submissions", href: "/dashboard/float-list/submissions", visibleTo: ["admin", "consultant"] },
       ]
