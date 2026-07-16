@@ -173,10 +173,10 @@ export default function LandingPage() {
                 <p className="font-bold text-gray-900 text-sm mb-2.5 leading-snug">
                   Connecting exceptional talent with leadership opportunities.
                 </p>
-                <p className="text-[11px] sm:text-xs text-gray-500 leading-relaxed max-w-[420px] mx-auto">
+                <p className="text-[11px] sm:text-xs text-gray-500 leading-relaxed max-w-[480px] mx-auto">
                   Whether you are an organization looking to secure top-tier executive talent or
-                  a professional ready for your next strategic career move, we are here to support your growth.
-                  Share your brief details below, and our specialists will connect with you.
+                  a professional looking for your next career opportunity, we are here to support you.
+                  Share your details below, and our team will get back to you shortly.
                 </p>
               </div>
 
@@ -306,7 +306,7 @@ export default function LandingPage() {
 
 
 
-            <p className="py-4 text-[10px] text-gray-300 tracking-wider uppercase flex-shrink-0">
+            <p className="py-4 text-[10px] text-gray-400 tracking-wider uppercase flex-shrink-0 font-medium">
               © {new Date().getFullYear()} Mauna Kea · All rights reserved
             </p>
           </div>
