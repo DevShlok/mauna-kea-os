@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
+import Image from "next/image";
 import { submitContactForm } from "@/actions/contact";
+import { COUNTRY_CODES } from "@/lib/countries";
 
-const FormRow = ({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) => (
-  <div className="group flex rounded-xl overflow-hidden border border-gray-200/80 bg-white/60 backdrop-blur-md shadow-sm hover:shadow-md hover:border-gray-300/80 transition-all duration-300">
-    <div className="w-[140px] sm:w-[160px] flex-shrink-0 flex items-center px-4 py-3 bg-gray-50/80 border-r border-gray-200/60">
-      <span className="text-[12px] sm:text-[13px] text-gray-700 font-semibold tracking-tight">{label}{required && <span className="text-red-400 ml-0.5">*</span>}</span>
+const FormRow = ({ label, required, zIndex, children }: { label: string; required?: boolean; zIndex?: number; children: React.ReactNode }) => (
+  <div className="group flex rounded-xl border border-gray-200/80 bg-white/60 backdrop-blur-md shadow-sm hover:shadow-md hover:border-gray-300/80 transition-all duration-300" style={{ zIndex, position: zIndex ? 'relative' : undefined }}>
+    <div className="w-[160px] sm:w-[190px] flex-shrink-0 flex items-center px-4 py-3 bg-gray-50/80 border-r border-gray-200/60 rounded-l-xl">
+      <span className="text-[12px] sm:text-[13px] text-gray-700 font-semibold tracking-tight">{label}{required && <span className="text-gray-400 ml-0.5">*</span>}</span>
     </div>
     <div className="flex-1 min-w-0">{children}</div>
   </div>
@@ -27,22 +29,29 @@ export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
+  const [countryIso, setCountryIso] = useState("in");
+  const [isCountryOpen, setIsCountryOpen] = useState(false);
   const [description, setDescription] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { 
+    setMounted(true); 
+    
+    // Click outside handler for country dropdown
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsCountryOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      toast.error("Please enter a valid email address.");
-      return;
-    }
-    if (!phone.match(/^\d{10}$/)) {
-      toast.error("Phone number must be exactly 10 digits.");
-      return;
-    }
     
     setIsSubmitting(true);
     
@@ -81,12 +90,13 @@ export default function LandingPage() {
       <div
         className={`hidden lg:block lg:w-1/2 relative h-screen transition-all duration-1000 ease-out ${mounted ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}
       >
-        <img
+        <Image
           src="/login-image.png"
           alt="Mauna Kea Mountain"
-          className="absolute inset-0 w-full h-full object-cover"
+          fill
+          priority
+          className="object-cover"
         />
-        <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white/80 to-transparent" />
       </div>
 
       {/* ── Right Panel ── */}
@@ -170,14 +180,14 @@ export default function LandingPage() {
               </div>
 
               <form onSubmit={handleFormSubmit} className="space-y-3">
-                <FormRow label="How can we support you?" required>
+                <FormRow label="How can we help you ?" required>
                   <select
                     required value={supportType} onChange={e => setSupportType(e.target.value)}
                     className={`${inputCls} appearance-none cursor-pointer`}
                     style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")", backgroundPosition: 'right 12px center', backgroundRepeat: 'no-repeat', backgroundSize: '16px' }}
                   >
                     <option value="" disabled>Select an option</option>
-                    <option value="I want to expand my team/ I need advisory services">I want to expand my team / I need advisory services</option>
+                    <option value="I want to expand my team">I want to expand my team</option>
                     <option value="I am looking for a career change">I am looking for a career change</option>
                   </select>
                 </FormRow>
@@ -195,25 +205,61 @@ export default function LandingPage() {
                 </FormRow>
 
                 <FormRow label="Email" required>
-                  <input required type="email" placeholder="Enter your email" value={email} onChange={e => setEmail(e.target.value)} className={inputCls} />
+                  <input 
+                    required 
+                    type="email" 
+                    placeholder="Enter your email" 
+                    value={email} 
+                    onChange={e => {
+                      setEmail(e.target.value);
+                      e.target.setCustomValidity("");
+                    }} 
+                    onInvalid={e => (e.target as HTMLInputElement).setCustomValidity("Please enter a valid email address")}
+                    className={inputCls} 
+                  />
                 </FormRow>
 
-                <FormRow label="Phone no." required>
-                  <div className="flex items-center">
-                    <select
-                      value={countryCode} onChange={e => setCountryCode(e.target.value)}
-                      className="bg-transparent pl-4 pr-1 py-3 text-[13px] text-gray-600 border-r border-gray-200/60 outline-none cursor-pointer font-medium"
+                <FormRow label="Phone no." required zIndex={50}>
+                  <div className="relative flex items-center" ref={dropdownRef}>
+                    <button 
+                      type="button" 
+                      onClick={() => setIsCountryOpen(!isCountryOpen)} 
+                      className="relative z-50 flex items-center justify-center bg-transparent px-2 py-3 text-[13px] text-gray-600 border-r border-gray-200/60 outline-none cursor-pointer font-medium w-[90px] hover:bg-gray-50/50 transition-colors"
                     >
-                      <option value="+91">+91</option>
-                      <option value="+1">+1</option>
-                      <option value="+44">+44</option>
-                      <option value="+61">+61</option>
-                      <option value="+65">+65</option>
-                      <option value="+971">+971</option>
-                    </select>
+                      <div className="flex items-center space-x-2">
+                        <img src={`https://flagcdn.com/w20/${countryIso}.png`} className="w-[18px] h-[13px] object-cover rounded-sm shadow-sm" alt="" />
+                        <span>{countryCode}</span>
+                      </div>
+                    </button>
+                    
+                    {isCountryOpen && (
+                      <div className="absolute bottom-[calc(100%+4px)] left-0 w-[280px] max-h-[240px] overflow-y-auto bg-white/95 backdrop-blur-xl border border-gray-100 shadow-[0_-8px_30px_rgb(0,0,0,0.12)] rounded-xl z-50 p-1.5 custom-scrollbar">
+                        {COUNTRY_CODES.map((country) => (
+                          <button 
+                            key={country.name}
+                            type="button"
+                            onClick={() => { setCountryCode(country.code); setCountryIso(country.iso); setIsCountryOpen(false); }}
+                            className="w-full flex items-center px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-left"
+                          >
+                            <img src={`https://flagcdn.com/w20/${country.iso}.png`} className="w-[18px] h-[13px] object-cover rounded-sm shadow-sm mr-3 flex-shrink-0" alt="" />
+                            <span className="flex-1 font-medium text-gray-800 truncate mr-2">{country.name}</span>
+                            <span className="text-gray-400 font-semibold flex-shrink-0">{country.code}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <input
-                      required type="tel" placeholder="Enter 10-digit number" value={phone}
-                      onChange={e => { const val = e.target.value.replace(/\D/g, '').substring(0, 10); setPhone(val); }}
+                      required 
+                      type="tel" 
+                      pattern="\d{10}"
+                      placeholder="Enter 10-digit number" 
+                      value={phone}
+                      onChange={e => { 
+                        const val = e.target.value.replace(/\D/g, '').substring(0, 10); 
+                        setPhone(val); 
+                        e.target.setCustomValidity("");
+                      }}
+                      onInvalid={e => (e.target as HTMLInputElement).setCustomValidity("Please enter a valid phone number")}
                       className={inputCls}
                     />
                   </div>
