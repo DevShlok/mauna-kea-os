@@ -54,7 +54,7 @@ export async function submitContactForm(formData: FormData) {
 
     const webhookResponse = await fetch(webhookUrl, {
       method: "POST",
-      headers: { "Content-Type": "text/plain" }, // GAS prefers text/plain to avoid preflight
+      headers: { "Content-Type": "text/plain" },
       body: JSON.stringify(payload)
     });
 
@@ -65,12 +65,12 @@ export async function submitContactForm(formData: FormData) {
 
     const driveLink = webhookResult.fileUrl || "";
 
-    // 2. Send Email via Resend
+    // 2. Send Emails via Resend
     if (process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY);
       const fullPhone = `${countryCode} ${phone}`;
       
-      const emailBody = `
+      const internalEmailBody = `
 New Website Enquiry: ${supportType}
 
 Name: ${name}
@@ -83,14 +83,40 @@ Description: ${description}
 Drive Link: ${driveLink ? driveLink : "No file attached"}
       `;
 
+      // A) Send Internal Notification to recruitment
       await resend.emails.send({
         from: "Mauna Kea Website <info@maunakea.co.in>",
         to: "recruitment@maunakea.co.in",
         replyTo: email,
         subject: `New Website Enquiry: ${supportType} - ${name} - ${company}`,
-        text: emailBody,
+        text: internalEmailBody,
         attachments: emailAttachments,
       });
+
+      // B) Send Auto-Acknowledgement to the Submitter
+      const firstName = name.split(" ")[0];
+      const isCandidate = supportType.toLowerCase().includes("career change");
+      
+      const ackSubject = isCandidate 
+        ? "Re: New Website Enquiry: I am looking for a career change"
+        : "Re: New Website Enquiry: Looking to Hire";
+        
+      const ackBody = isCandidate
+        ? `Hi ${firstName},\n\nThank you for reaching out to Mauna Kea.\n\nWe have received your enquiry and profile successfully. Our team will review your information and reach out if your experience aligns with a current or future leadership opportunity.\n\nThis is an automated email. Please do not reply to this message.\n\nWarm regards,\n\nTeam Mauna Kea International`
+        : `Hi ${firstName},\n\nThank you for contacting Mauna Kea.\n\nWe have received your enquiry successfully. A member of our team will review your requirements and get in touch with you shortly.\n\nThis is an automated email. Please do not reply to this message.\n\nWarm regards,\n\nTeam Mauna Kea International`;
+
+      try {
+        await resend.emails.send({
+          from: "Mauna Kea <no-reply@maunakea.co.in>",
+          to: email,
+          subject: ackSubject,
+          text: ackBody,
+        });
+      } catch (ackError) {
+        console.error("Failed to send auto-acknowledgement:", ackError);
+        // We don't throw here to ensure the form submission is marked successful for the user.
+      }
+      
     } else {
       console.warn("RESEND_API_KEY is missing. Email was not sent, but Google Sheets was updated.");
     }
