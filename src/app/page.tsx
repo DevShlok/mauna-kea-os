@@ -95,6 +95,7 @@ export default function LandingPage() {
           alt="Mauna Kea Mountain"
           fill
           priority
+          sizes="50vw"
           className="object-cover"
         />
       </div>
