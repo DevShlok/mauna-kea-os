@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-
 const FormRow = ({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) => (
   <div className="group flex rounded-xl overflow-hidden border border-gray-200/80 bg-white/60 backdrop-blur-md shadow-sm hover:shadow-md hover:border-gray-300/80 transition-all duration-300">
     <div className="w-[140px] sm:w-[160px] flex-shrink-0 flex items-center px-4 py-3 bg-gray-50/80 border-r border-gray-200/60">
@@ -42,13 +41,68 @@ export default function LandingPage() {
       toast.error("Phone number must be exactly 10 digits.");
       return;
     }
+    
     setIsSubmitting(true);
-    await new Promise((res) => setTimeout(res, 1500));
-    toast.success("Thank you for reaching out. Our specialists will connect with you shortly!");
+    
+    try {
+      const webhookUrl = process.env.NEXT_PUBLIC_GOOGLE_WEBHOOK_URL;
+      if (!webhookUrl) throw new Error("Webhook URL is not configured. Add NEXT_PUBLIC_GOOGLE_WEBHOOK_URL to .env.local");
+
+      let fileBase64 = "";
+      let fileName = "";
+      let mimeType = "";
+
+      if (attachment) {
+        fileName = attachment.name;
+        mimeType = attachment.type || "application/octet-stream";
+        fileBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(attachment);
+          reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result.split(",")[1]);
+          };
+          reader.onerror = (error) => reject(error);
+        });
+      }
+
+      const payload = {
+        supportType,
+        name,
+        company,
+        position,
+        email,
+        countryCode,
+        phone,
+        description,
+        fileName,
+        mimeType,
+        fileBase64
+      };
+
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      
+      const result = await response.json();
+      
+      if (result.status === "success") {
+        toast.success("Thank you for reaching out. Our specialists will connect with you shortly!");
+        setSupportType(""); setName(""); setCompany(""); setPosition("");
+        setEmail(""); setPhone(""); setDescription(""); setAttachment(null);
+        const fileInput = document.getElementById("file-upload") as HTMLInputElement;
+        if (fileInput) fileInput.value = "";
+        setShowForm(false);
+      } else {
+        toast.error(result.message || "Something went wrong. Please try again.");
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Something went wrong. Please try again.");
+    }
+    
     setIsSubmitting(false);
-    setSupportType(""); setName(""); setCompany(""); setPosition("");
-    setEmail(""); setPhone(""); setDescription(""); setAttachment(null);
-    setShowForm(false);
   };
 
   return (
@@ -110,7 +164,7 @@ export default function LandingPage() {
               </h2>
               <div className="w-12 h-px bg-gray-300 mb-10" />
               <p className="text-2xl sm:text-[28px] font-serif italic text-gray-800 font-light mb-10 leading-relaxed">
-                &ldquo;Depth defines legacy.&rdquo;
+                &ldquo;Built on depth.&rdquo;
               </p>
               <div className="space-y-1.5 text-[13px] text-gray-500 font-normal mb-12 leading-relaxed">
                 <p>Our platform is evolving, but our search mandates never stop.</p>
@@ -198,6 +252,7 @@ export default function LandingPage() {
                 <FormRow label="Upload attachment">
                   <div className="px-4 py-3 flex items-center">
                     <input
+                      id="file-upload"
                       type="file" accept=".pdf,.doc,.docx,image/*"
                       onChange={e => setAttachment(e.target.files ? e.target.files[0] : null)}
                       className="w-full text-[12px] text-gray-600 file:mr-3 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-[11px] file:font-semibold file:bg-gray-900/10 file:text-gray-700 hover:file:bg-gray-900/20 file:transition-colors file:cursor-pointer"
