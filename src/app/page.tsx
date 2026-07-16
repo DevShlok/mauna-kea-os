@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { submitContactForm } from "@/actions/contact";
+
 const FormRow = ({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) => (
   <div className="group flex rounded-xl overflow-hidden border border-gray-200/80 bg-white/60 backdrop-blur-md shadow-sm hover:shadow-md hover:border-gray-300/80 transition-all duration-300">
     <div className="w-[140px] sm:w-[160px] flex-shrink-0 flex items-center px-4 py-3 bg-gray-50/80 border-r border-gray-200/60">
@@ -44,62 +46,30 @@ export default function LandingPage() {
     
     setIsSubmitting(true);
     
-    try {
-      const webhookUrl = process.env.NEXT_PUBLIC_GOOGLE_WEBHOOK_URL;
-      if (!webhookUrl) throw new Error("Webhook URL is not configured. Add NEXT_PUBLIC_GOOGLE_WEBHOOK_URL to .env.local");
-
-      let fileBase64 = "";
-      let fileName = "";
-      let mimeType = "";
-
-      if (attachment) {
-        fileName = attachment.name;
-        mimeType = attachment.type || "application/octet-stream";
-        fileBase64 = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(attachment);
-          reader.onload = () => {
-            const result = reader.result as string;
-            resolve(result.split(",")[1]);
-          };
-          reader.onerror = (error) => reject(error);
-        });
-      }
-
-      const payload = {
-        supportType,
-        name,
-        company,
-        position,
-        email,
-        countryCode,
-        phone,
-        description,
-        fileName,
-        mimeType,
-        fileBase64
-      };
-
-      const response = await fetch(webhookUrl, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-      
-      const result = await response.json();
-      
-      if (result.status === "success") {
-        toast.success("Thank you for reaching out. Our specialists will connect with you shortly!");
-        setSupportType(""); setName(""); setCompany(""); setPosition("");
-        setEmail(""); setPhone(""); setDescription(""); setAttachment(null);
-        const fileInput = document.getElementById("file-upload") as HTMLInputElement;
-        if (fileInput) fileInput.value = "";
-        setShowForm(false);
-      } else {
-        toast.error(result.message || "Something went wrong. Please try again.");
-      }
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error.message || "Something went wrong. Please try again.");
+    const formData = new FormData();
+    formData.append("supportType", supportType);
+    formData.append("name", name);
+    formData.append("company", company);
+    formData.append("position", position);
+    formData.append("email", email);
+    formData.append("countryCode", countryCode);
+    formData.append("phone", phone);
+    formData.append("description", description);
+    if (attachment) {
+      formData.append("attachment", attachment);
+    }
+    
+    const result = await submitContactForm(formData);
+    
+    if (result.success) {
+      toast.success("Thank you for reaching out. Our specialists will connect with you shortly!");
+      setSupportType(""); setName(""); setCompany(""); setPosition("");
+      setEmail(""); setPhone(""); setDescription(""); setAttachment(null);
+      const fileInput = document.getElementById("file-upload") as HTMLInputElement;
+      if (fileInput) fileInput.value = "";
+      setShowForm(false);
+    } else {
+      toast.error(result.error || "Something went wrong. Please try again.");
     }
     
     setIsSubmitting(false);

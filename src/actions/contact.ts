@@ -1,6 +1,5 @@
 "use server";
 
-import { uploadToDrive, appendRowToSheet } from "@/lib/google";
 import { Resend } from "resend";
 
 export async function submitContactForm(formData: FormData) {
@@ -15,54 +14,62 @@ export async function submitContactForm(formData: FormData) {
     const description = formData.get("description") as string;
     const attachment = formData.get("attachment") as File | null;
 
-    let driveLink = "";
+    let fileBase64 = "";
+    let fileName = "";
+    let mimeType = "";
     let emailAttachments: any[] = [];
 
     // Process attachment if provided
     if (attachment && attachment.size > 0) {
-      // Upload to Google Drive
-      driveLink = await uploadToDrive(attachment);
-
-      // Prepare for Resend
+      fileName = attachment.name;
+      mimeType = attachment.type || "application/octet-stream";
+      
       const buffer = Buffer.from(await attachment.arrayBuffer());
+      fileBase64 = buffer.toString('base64');
+      
+      // Prepare for Resend
       emailAttachments.push({
         filename: attachment.name,
         content: buffer,
       });
     }
 
-    // Prepare Sheets Row
-    const dateStr = new Date().toLocaleDateString("en-US", { timeZone: "Asia/Kolkata" });
-    const timeStr = new Date().toLocaleTimeString("en-US", { timeZone: "Asia/Kolkata" });
-    const fullPhone = `${countryCode} ${phone}`;
+    // 1. Send to Google Apps Script Webhook (for Drive and Sheets)
+    const webhookUrl = process.env.NEXT_PUBLIC_GOOGLE_WEBHOOK_URL;
+    if (!webhookUrl) throw new Error("Webhook URL is not configured in .env.local");
 
-    const rowData = [
-      `${dateStr} ${timeStr}`,
+    const payload = {
+      supportType,
       name,
       company,
       position,
       email,
       countryCode,
       phone,
-      driveLink,
       description,
-    ];
+      fileName,
+      mimeType,
+      fileBase64
+    };
 
-    // Determine Sheet Tab
-    // Users requirement:
-    // "I want to expand my team / I need advisory services" -> Form filled by Client
-    // "I am looking for a career change" -> Form filled by Candidate
-    let sheetTab = "Form filled by Client";
-    if (supportType.toLowerCase().includes("career change")) {
-      sheetTab = "Form filled by Candidate";
+    const webhookResponse = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" }, // GAS prefers text/plain to avoid preflight
+      body: JSON.stringify(payload)
+    });
+
+    const webhookResult = await webhookResponse.json();
+    if (webhookResult.status !== "success") {
+      throw new Error(webhookResult.message || "Failed to log data to Google Sheets.");
     }
 
-    // Write to Google Sheets
-    await appendRowToSheet(sheetTab, rowData);
+    const driveLink = webhookResult.fileUrl || "";
 
-    // Send Email via Resend
+    // 2. Send Email via Resend
     if (process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY);
+      const fullPhone = `${countryCode} ${phone}`;
+      
       const emailBody = `
 New Website Enquiry: ${supportType}
 
@@ -73,7 +80,7 @@ Email: ${email}
 Phone: ${fullPhone}
 Description: ${description}
 
-Attached File: ${driveLink ? driveLink : "No file attached"}
+Drive Link: ${driveLink ? driveLink : "No file attached"}
       `;
 
       await resend.emails.send({
@@ -84,6 +91,8 @@ Attached File: ${driveLink ? driveLink : "No file attached"}
         text: emailBody,
         attachments: emailAttachments,
       });
+    } else {
+      console.warn("RESEND_API_KEY is missing. Email was not sent, but Google Sheets was updated.");
     }
 
     return { success: true };
