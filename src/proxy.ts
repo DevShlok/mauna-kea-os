@@ -1,10 +1,23 @@
-import { type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/utils/supabase/middleware'
 
 export async function proxy(request: NextRequest) {
-  // Update the Supabase session and handle route protection
-  return await updateSession(request)
+  const path = request.nextUrl.pathname;
+  
+  // Allow under-development page and static assets
+  if (
+    path.startsWith("/under-development") ||
+    path.startsWith("/_next") ||
+    path.match(/\.(png|jpg|jpeg|svg|ico)$/i)
+  ) {
+    return await updateSession(request);
+  }
+
+  // Redirect all other traffic to under development
+  return NextResponse.redirect(new URL("/under-development", request.url));
 }
+
+export const middleware = proxy;
 
 export const config = {
   matcher: [
