@@ -4,17 +4,13 @@ import { updateSession } from '@/utils/supabase/middleware'
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   
-  // Allow under-development page and static assets
-  if (
-    path.startsWith("/under-development") ||
-    path.startsWith("/_next") ||
-    path.match(/\.(png|jpg|jpeg|svg|ico)$/i)
-  ) {
-    return await updateSession(request);
+  // Only redirect the root landing page (maunakea.co.in) to under-development
+  if (path === "/") {
+    return NextResponse.redirect(new URL("/under-development", request.url));
   }
 
-  // Redirect all other traffic to under development
-  return NextResponse.redirect(new URL("/under-development", request.url));
+  // Allow all other traffic (the internal OS) to proceed normally
+  return await updateSession(request);
 }
 
 export const middleware = proxy;
