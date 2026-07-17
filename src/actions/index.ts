@@ -380,7 +380,7 @@ export async function updatePlatformUserAction(id: string, data: { name: string;
 
 export async function deletePlatformUserAction(id: string) {
   revalidatePath("/dashboard", "layout");
-  const deletedBy = await getDeletedBy();
+  const deletedBy = await getCurrentUserName();
   await db.update(platformUsers).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(platformUsers.id, id));
   revalidatePath("/dashboard/admin/users");
 }

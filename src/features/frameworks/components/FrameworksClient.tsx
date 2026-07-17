@@ -6,7 +6,7 @@ import { deleteMultipleFrameworksAction } from "@/actions";
 import toast from "react-hot-toast";
 import { useDataTable } from "@/hooks/useDataTable";
 import { Pagination } from "@/components/DataTable/Pagination";
-import { SortableHeader } from "@/components/DataTable/SortableHeader";
+
 
 export default function FrameworksClient({ initialFrameworks }: { initialFrameworks: any[] }) {
   const router = useRouter();

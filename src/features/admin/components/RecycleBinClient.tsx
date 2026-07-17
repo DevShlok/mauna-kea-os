@@ -4,7 +4,7 @@ import { restoreEntityAction, hardDeleteEntityAction } from "@/actions";
 import toast from "react-hot-toast";
 import { useDataTable } from "@/hooks/useDataTable";
 import { Pagination } from "@/components/DataTable/Pagination";
-import { SortableHeader } from "@/components/DataTable/SortableHeader";
+
 
 export default function RecycleBinClient({ items }: { items: any[] }) {
   const [localItems, setLocalItems] = useState(items);

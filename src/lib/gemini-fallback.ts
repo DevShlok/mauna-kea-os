@@ -21,17 +21,13 @@ export async function generateObjectWithFallback(options: any) {
 
   for (const modelName of FALLBACK_MODELS) {
     try {
-      console.log(`[AI] Attempting generation with model: ${modelName}`);
-      // The options object contains schema, prompt, etc. We just inject the model.
       const result = await generateObject({
         ...options,
         model: google(modelName),
         maxRetries: 0 // Disable internal retries so we immediately fallback on rate limit
       });
-      console.log(`[AI] Success with model: ${modelName}`);
       return result;
     } catch (error: any) {
-      console.warn(`[AI] Generation failed with model ${modelName}: ${error?.message || "Unknown error"}`);
       lastError = error;
       // Continue to the next model in the array
     }

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useDataTable } from "@/hooks/useDataTable";
 import { Pagination } from "@/components/DataTable/Pagination";
-import { SortableHeader } from "@/components/DataTable/SortableHeader";
+
 
 export default function UsersClient({ initialUsers, clients }: { initialUsers: any[], clients: any[] }) {
   const router = useRouter();

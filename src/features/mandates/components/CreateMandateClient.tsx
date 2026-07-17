@@ -10,7 +10,7 @@ import { createMandateAction } from "@/actions";
 import { createClient } from "@/utils/supabase/client";
 import { ClientTypeahead, LocationTypeahead, IndustryTypeahead } from "@/components/shared/Typeaheads";
 
-export default function CreateMandateClient({ frameworks, isClientMode = false, clientName = "", clientSlug = "", masterLocations = [], masterClients = [], masterIndustries = [] }: { frameworks: any[], isClientMode?: boolean, clientName?: string, clientSlug?: string, masterLocations?: any[], masterClients?: any[], masterIndustries?: any[] }) {
+export default function CreateMandateClient({ frameworks, isClientMode = false, clientName = "", clientSlug = "" }: { frameworks: any[], isClientMode?: boolean, clientName?: string, clientSlug?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialCompany = isClientMode ? clientName : (searchParams.get("company") || "");

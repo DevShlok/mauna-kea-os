@@ -6,7 +6,7 @@ import { useState } from "react";
 import { addSubmissionAction, updateSubmissionAction, deleteSubmissionAction } from "@/actions";
 import { useDataTable } from "@/hooks/useDataTable";
 import { Pagination } from "@/components/DataTable/Pagination";
-import { SortableHeader } from "@/components/DataTable/SortableHeader";
+
 
 const STATUS_COLORS: Record<string, string> = {
   Shortlisted: "bg-green-100 text-green-800",
