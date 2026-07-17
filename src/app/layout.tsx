@@ -7,8 +7,8 @@ import { Toaster } from "react-hot-toast";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Mauna Kea OS",
-  description: "Executive Search OS",
+  title: "Mauna Kea",
+  description: "Executive Search & Advisory",
 };
 
 export default function RootLayout({
