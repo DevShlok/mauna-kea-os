@@ -137,11 +137,17 @@ export async function POST(
       docs: { additionalDocsText: extractedText || textContent }
     };
 
-    let updateData = {};
+    const { getCurrentUserName } = require("@/actions");
+    const updatedBy = await getCurrentUserName();
+    const existingLog = mandate?.auditLog || {};
+    existingLog[docType] = { updatedBy, updatedAt: new Date().toISOString() };
+    delete existingLog["Documents"]; // clean up old log
+
+    let updateData: any = { auditLog: existingLog };
     if (file || textContent) {
-      updateData = { ...columnMap[docType], ...textColumnMap[docType] };
+      updateData = { ...updateData, ...columnMap[docType], ...textColumnMap[docType] };
     } else if (textContent) {
-      updateData = { ...textColumnMap[docType] };
+      updateData = { ...updateData, ...textColumnMap[docType] };
     }
 
     await db.update(mandates).set(updateData).where(eq(mandates.id, mandateId));

@@ -35,6 +35,7 @@ export const mandates = pgTable('mandates', {
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
+  auditLog: json('audit_log').$type<Record<string, { updatedBy: string, updatedAt: string }>>().default({}),
 });
 
 // ─── MANDATE CANDIDATES ──────────────────────────────────
@@ -52,6 +53,7 @@ export const mandateCandidates = pgTable('mandate_candidates', {
   initials: varchar('initials', { length: 5 }),
   cvText: text('cv_text'),
   createdAt: datetime('created_at').default(sql`now()`),
+  addedBy: varchar('added_by', { length: 255 }),
 });
 
 // ─── CANDIDATES (MASTER) ─────────────────────────────────
@@ -100,6 +102,7 @@ export const candidates = pgTable('candidates', {
   createdAt: datetime('created_at').default(sql`now()`),
   updatedAt: datetime('updated_at').default(sql`now()`),
   updatedBy: varchar('updated_by', { length: 255 }),
+  auditLog: json('audit_log').$type<Record<string, { updatedBy: string, updatedAt: string }>>().default({}),
 });
 
 // ─── CANDIDATE FILES (HISTORY) ───────────────────────────

@@ -40,6 +40,23 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/client') || 
     request.nextUrl.pathname.startsWith('/candidate');
 
+  if (user && isProtectedRoute) {
+    // Whitelist check: Verify the user's email exists in platform_users
+    const { data: platformUser, error } = await supabase
+      .from('platform_users')
+      .select('id, name')
+      .eq('email', user.email)
+      .single();
+
+    if (error || !platformUser) {
+      // User not in whitelist. Block access.
+      await supabase.auth.signOut();
+      const url = request.nextUrl.clone();
+      url.pathname = '/unauthorized';
+      return NextResponse.redirect(url);
+    }
+  }
+
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/sign-in'

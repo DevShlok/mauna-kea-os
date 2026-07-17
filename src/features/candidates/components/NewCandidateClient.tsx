@@ -1,6 +1,18 @@
 "use client";
 import toast from "react-hot-toast";
 
+import { DeleteModal } from "./DeleteModal";
+
+const AuditText = ({ field, data }: { field: string, data: any }) => {
+  const log = data?.auditLog?.[field];
+  if (!log) return null;
+  return (
+    <div className="text-[10px] text-gray-400 italic mt-0.5 leading-tight">
+      Last updated by {log.updatedBy} on {new Date(log.updatedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+    </div>
+  );
+};
+
 import { useState } from "react";
 import { Plus, X, Upload } from "lucide-react";
 import { LocationTypeahead, ClientTypeahead } from "@/components/shared/Typeaheads";
@@ -451,14 +463,17 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
                   placeholder="Company Name"
                   className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]"
                 />
+                <AuditText field="company" data={initialData} />
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current Designation</label>
                 <input type="text" value={form.designation} onChange={e=>setForm({...form, designation:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Title" />
+                <AuditText field="designation" data={initialData} />
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Total Experience (yrs)</label>
                 <input type="number" value={form.exp} onChange={e=>setForm({...form, exp:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" min="0" />
+                <AuditText field="exp" data={initialData} />
               </div>
 
             </div>
@@ -476,34 +491,42 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
                   </select>
                   <input type="number" value={form.ctc} onChange={e=>setForm({...form, ctc:e.target.value})} className="flex-1 h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
                 </div>
+                <AuditText field="ctc" data={initialData} />
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Fixed CTC</label>
                 <input type="number" value={form.fixedCtc} onChange={e=>setForm({...form, fixedCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
+                <AuditText field="fixedCtc" data={initialData} />
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Variable CTC</label>
                 <input type="number" value={form.variableCtc} onChange={e=>setForm({...form, variableCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
+                <AuditText field="variableCtc" data={initialData} />
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Expected CTC</label>
                 <input type="number" value={form.expected} onChange={e=>setForm({...form, expected:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
+                <AuditText field="expected" data={initialData} />
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">ESOPs (in Lacs)</label>
                 <input type="number" value={form.esops} onChange={e=>setForm({...form, esops:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
+                <AuditText field="esops" data={initialData} />
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Notice Period (days)</label>
                 <input type="number" value={form.notice} onChange={e=>setForm({...form, notice:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" min="0" max="365" />
+                <AuditText field="notice" data={initialData} />
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current Company Tenure <span className="text-gray-400 lowercase font-normal">(Stability)</span></label>
                 <input value={stability.current} onChange={e => setStability({...stability, current: e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. 5+ years" />
+                <AuditText field="stability" data={initialData} />
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Previous Company Tenure <span className="text-gray-400 lowercase font-normal">(Stability)</span></label>
                 <input value={stability.previous} onChange={e => setStability({...stability, previous: e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. 4+ years" />
+                <AuditText field="stability" data={initialData} />
               </div>
               {!readOnly && (
                 <div>
@@ -513,6 +536,7 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
                     <option className="text-yellow-600">Passive</option>
                     <option className="text-red-600">Not Interested</option>
                   </select>
+                  <AuditText field="status" data={initialData} />
                 </div>
               )}
             </div>
@@ -645,11 +669,13 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
                   <div className="text-[15px] text-[#6b7a99]">{cvPdfFile ? 'Change CV' : 'Click to upload CV'}</div>
                   {cvPdfFile && <div className="text-[16px] font-bold text-[#111] mt-2 overflow-hidden text-ellipsis whitespace-nowrap">{cvPdfFile.name}</div>}
                 </label>
+                <AuditText field="cvFileName" data={initialData} />
               </div>
               {!readOnly && (
                 <div>
                   <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Additional Notes</label>
                   <textarea rows={5} value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})} className="w-full border-[1.5px] border-[#D4E0F0] rounded-md p-3 text-[16px] outline-none bg-white focus:border-[#133255] resize-vertical h-[155px]" placeholder="Any extra information..."></textarea>
+                  <AuditText field="notes" data={initialData} />
                 </div>
               )}
             </div>

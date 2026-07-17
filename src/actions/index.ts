@@ -6,7 +6,7 @@ import { eq, sql, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 
-async function getDeletedBy(): Promise<string> {
+export async function getCurrentUserName(): Promise<string> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -92,6 +92,28 @@ export async function createMandateAction(data: any) {
 
 export async function editMandateAction(id: number, data: any) {
   revalidatePath("/dashboard", "layout");
+  
+  const existing = await db.select().from(mandates).where(eq(mandates.id, id));
+  if (existing.length > 0) {
+    const auditLog = existing[0].auditLog || {};
+    const updatedBy = await getCurrentUserName();
+    const ts = new Date().toISOString();
+
+    if (existing[0].company !== data.company) auditLog["company"] = { updatedBy, updatedAt: ts };
+    if (existing[0].role !== data.role) auditLog["role"] = { updatedBy, updatedAt: ts };
+    if (existing[0].ctc !== data.ctc) auditLog["ctc"] = { updatedBy, updatedAt: ts };
+    if (existing[0].exp !== data.exp) auditLog["exp"] = { updatedBy, updatedAt: ts };
+    if (existing[0].workMode !== data.workMode) auditLog["workMode"] = { updatedBy, updatedAt: ts };
+    if (existing[0].clientPOC !== data.clientPOC) auditLog["clientPOC"] = { updatedBy, updatedAt: ts };
+    if (existing[0].pocEmail !== data.pocEmail) auditLog["pocEmail"] = { updatedBy, updatedAt: ts };
+    if (existing[0].pocPhone !== data.pocPhone) auditLog["pocPhone"] = { updatedBy, updatedAt: ts };
+    if (existing[0].consultant !== data.consultant) auditLog["consultant"] = { updatedBy, updatedAt: ts };
+    if (existing[0].target !== data.target) auditLog["target"] = { updatedBy, updatedAt: ts };
+    if (existing[0].geography !== data.geography) auditLog["geography"] = { updatedBy, updatedAt: ts };
+
+    data.auditLog = auditLog;
+  }
+
   await db.update(mandates).set({
     company: data.company,
     role: data.role,
@@ -104,6 +126,7 @@ export async function editMandateAction(id: number, data: any) {
     consultant: data.consultant,
     target: data.target,
     geography: data.geography,
+    auditLog: data.auditLog,
   }).where(eq(mandates.id, id));
   revalidatePath("/dashboard/mandates");
   revalidatePath(`/dashboard/mandates/${id}`);
@@ -248,6 +271,7 @@ export async function addSubmissionAction(data: any) {
         mandateId: Number(data.mandateId),
         name: data.candName,
         company: data.candCompany || "",
+        addedBy: await getCurrentUserName(),
         role: data.role,
         stage: "universe",
         initials: data.candName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
@@ -385,7 +409,16 @@ export async function updateMandateCandidateStageAction(candId: number, stage: s
 
 export async function updateMandateSearchNotesAction(id: number, text: string) {
   revalidatePath("/dashboard", "layout");
-  await db.update(mandates).set({ searchNotes: text }).where(eq(mandates.id, id));
+  
+  const existing = await db.select().from(mandates).where(eq(mandates.id, id));
+  if (existing.length > 0) {
+    const auditLog = existing[0].auditLog || {};
+    auditLog["Search Notes"] = { updatedBy: await getCurrentUserName(), updatedAt: new Date().toISOString() };
+    await db.update(mandates).set({ searchNotes: text, auditLog }).where(eq(mandates.id, id));
+  } else {
+    await db.update(mandates).set({ searchNotes: text }).where(eq(mandates.id, id));
+  }
+  
   revalidatePath(`/dashboard/mandates/${id}`);
 }
 
@@ -549,8 +582,36 @@ export async function deleteMultipleCandidatesAction(ids: string[]) {
 export async function editFloatListEntryAction(id: string, data: any) {
   revalidatePath("/dashboard", "layout");
   const candidateName = data.name || "Unknown Candidate";
+
+  const existing = await db.select().from(candidates).where(eq(candidates.id, id));
+  if (existing.length > 0) {
+    const auditLog = existing[0].auditLog || {};
+    const updatedBy = await getCurrentUserName();
+    const ts = new Date().toISOString();
+
+    if (existing[0].company !== data.company) auditLog["company"] = { updatedBy, updatedAt: ts };
+    if (existing[0].designation !== data.designation) auditLog["designation"] = { updatedBy, updatedAt: ts };
+    if (existing[0].exp !== (data.exp ? Number(data.exp) : null)) auditLog["exp"] = { updatedBy, updatedAt: ts };
+    if (existing[0].ctc !== (data.ctc ? Number(data.ctc) : null)) auditLog["ctc"] = { updatedBy, updatedAt: ts };
+    if (existing[0].fixedCtc !== (data.fixedCtc ? Number(data.fixedCtc) : null)) auditLog["fixedCtc"] = { updatedBy, updatedAt: ts };
+    if (existing[0].variableCtc !== (data.variableCtc ? Number(data.variableCtc) : null)) auditLog["variableCtc"] = { updatedBy, updatedAt: ts };
+    if (existing[0].expected !== (data.expected ? Number(data.expected) : null)) auditLog["expected"] = { updatedBy, updatedAt: ts };
+    if (existing[0].esops !== (data.esops ? Number(data.esops) : null)) auditLog["esops"] = { updatedBy, updatedAt: ts };
+    if (existing[0].notice !== (data.notice ? Number(data.notice) : null)) auditLog["notice"] = { updatedBy, updatedAt: ts };
+    if (JSON.stringify(existing[0].stability) !== JSON.stringify(data.stability || null)) auditLog["stability"] = { updatedBy, updatedAt: ts };
+    if (existing[0].status !== (data.status || "Active")) auditLog["status"] = { updatedBy, updatedAt: ts };
+    if (existing[0].cvFileName !== (data.cvFileName || null)) auditLog["cvFileName"] = { updatedBy, updatedAt: ts };
+    if (existing[0].notes !== (data.notes || null)) auditLog["notes"] = { updatedBy, updatedAt: ts };
+
+    delete auditLog["Professional Details"];
+    delete auditLog["Compensation"];
+
+    data.auditLog = auditLog;
+  }
+
   await db.update(candidates).set({
     name: candidateName,
+    auditLog: data.auditLog,
     company: data.company,
     designation: data.designation,
     email: data.email,

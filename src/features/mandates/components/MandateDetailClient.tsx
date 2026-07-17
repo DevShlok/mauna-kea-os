@@ -14,6 +14,16 @@ const PIPELINE_STAGES = [
   "universe","mapping","longlist","calllist","shortlist","interview","offer-sent","offer-accepted","closed",
 ];
 
+const AuditText = ({ field, data }: { field: string, data: any }) => {
+  const log = data?.auditLog?.[field];
+  if (!log) return null;
+  return (
+    <div className="text-[10px] text-gray-400 italic mt-0.5 leading-tight">
+      Last updated by {log.updatedBy} on {new Date(log.updatedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+    </div>
+  );
+};
+
 export default function MandateDetailClient({ initialMandate }: { initialMandate: any }) {
   const router = useRouter();
   const [mandate, setMandate] = useState(initialMandate);
@@ -59,17 +69,17 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
   }
 
   const detailRows = [
-    ["CTC Range", formatMandateCtc(mandate.ctc)],
-    ["Experience", mandate.exp],
-    ["Target Sectors", mandate.sectors.join(", ")],
-    ["Geography", mandate.geography],
-    ["Work Mode", mandate.workMode],
-    ["Opened", mandate.opened],
-    ["Target Close", mandate.target],
-    ["Consultant", mandate.consultant],
-    ["Client POC", mandate.clientPOC],
-    ["POC Email", mandate.pocEmail],
-    ["POC Phone", mandate.pocPhone],
+    ["CTC Range", formatMandateCtc(mandate.ctc), "ctc"],
+    ["Experience", mandate.exp, "exp"],
+    ["Target Sectors", mandate.sectors?.join(", ") || "", ""],
+    ["Geography", mandate.geography, "geography"],
+    ["Work Mode", mandate.workMode, "workMode"],
+    ["Opened", mandate.opened, ""],
+    ["Target Close", mandate.target, "target"],
+    ["Consultant", mandate.consultant, "consultant"],
+    ["Client POC", mandate.clientPOC, "clientPOC"],
+    ["POC Email", mandate.pocEmail, "pocEmail"],
+    ["POC Phone", mandate.pocPhone, "pocPhone"],
   ];
 
   async function handleDocUpload(docType: string, file: File) {
@@ -214,10 +224,13 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
           <h3 className="font-bold text-gray-900 text-base mb-4">Mandate Details</h3>
           <div className="divide-y divide-gray-50">
-            {detailRows.map(([k, v]) => (
-              <div key={k} className="flex justify-between py-2 text-sm">
-                <span className="text-gray-400">{k}</span>
-                <span className="font-semibold text-gray-800 text-right">{v}</span>
+            {detailRows.map(([k, v, auditKey]) => (
+              <div key={k as string} className="py-2 text-sm flex flex-col">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">{k as string}</span>
+                  <span className="font-semibold text-gray-800 text-right">{v as string}</span>
+                </div>
+                {auditKey && <AuditText field={auditKey as string} data={mandate} />}
               </div>
             ))}
           </div>
@@ -260,6 +273,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                 </button>
               )}
             </div>
+            <AuditText field="jd" data={mandate} />
           </div>
 
           {/* Interview Notes as Text */}
@@ -300,6 +314,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                 </button>
               </div>
             </div>
+            <AuditText field="notes" data={mandate} />
           </div>
 
           {/* Additional Docs as PDF/Word */}
@@ -337,6 +352,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                 </button>
               )}
             </div>
+            <AuditText field="docs" data={mandate} />
           </div>
           <div className="pt-2 border-t border-gray-100 flex-1 flex flex-col relative">
             <div className="flex justify-between items-center mb-2">
@@ -350,6 +366,9 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
               className="flex-1 min-h-24 p-3 border border-gray-200 rounded text-sm outline-none focus:border-[#133255] resize-none" 
               placeholder="Add internal notes..."
             />
+            <div className="flex justify-end mt-1">
+              <AuditText field="Search Notes" data={mandate} />
+            </div>
           </div>
         </div>
       </div>
@@ -418,6 +437,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                       <div>
                         <div className="font-semibold text-gray-800">{c.name}</div>
                         <div className="text-xs text-gray-400">{c.role} - {c.company}</div>
+                        {c.addedBy && <div className="text-[10px] text-gray-400 italic mt-0.5">Added by {c.addedBy}</div>}
                       </div>
                     </div>
                   </td>
