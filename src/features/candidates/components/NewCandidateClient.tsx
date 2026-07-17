@@ -1,7 +1,7 @@
 "use client";
 import toast from "react-hot-toast";
 
-import { DeleteModal } from "./DeleteModal";
+
 
 const AuditText = ({ field, data }: { field: string, data: any }) => {
   const log = data?.auditLog?.[field];
