@@ -9,6 +9,7 @@ import {
   LogOut,
   Building2,
   ChevronRight,
+  ChevronLeft,
   Plus,
   Shield,
   Trash2,
@@ -106,21 +107,19 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
   ];
 
   return (
-    <div className={`h-screen bg-[#0b1f3a] flex flex-col overflow-y-auto overflow-x-hidden shrink-0 text-white border-r border-[#D8B15B] transition-all duration-300 ease-in-out ${isCollapsed ? "w-[76px] min-w-[76px]" : "w-[270px] min-w-[270px]"}`}>
-      <div className={`flex items-center p-5 pb-4 border-b border-[#D8B15B] hover:bg-white/5 transition-colors ${isCollapsed ? "flex-col gap-4" : "justify-between gap-3"}`}>
-        <Link href="/dashboard" className={`flex items-center gap-3 overflow-hidden ${isCollapsed ? "justify-center" : ""}`}>
-          <div className="bg-[#D8B15B] text-[#133255] font-serif text-lg font-bold w-10 h-10 flex items-center justify-center rounded shrink-0">MK</div>
-          {!isCollapsed && (
-            <div className="whitespace-nowrap">
-              <span className="font-serif text-[16px] font-bold block leading-tight">Mauna Kea</span>
-              <span className="text-[11px] text-white/55 tracking-wider block">EXECUTIVE SEARCH OS</span>
-            </div>
-          )}
-        </Link>
-        <button onClick={toggleSidebar} className="text-white/50 hover:text-white transition-colors p-1 rounded-md hover:bg-white/10" title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
-          {isCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
-        </button>
-      </div>
+    <div className={`group relative h-screen transition-all duration-300 ease-in-out shrink-0 z-40 ${isCollapsed ? "w-[76px]" : "w-[270px]"}`}>
+      <div className="absolute inset-0 bg-[#0b1f3a] flex flex-col overflow-y-auto overflow-x-hidden text-white border-r border-[#D8B15B]">
+        <div className={`flex items-center p-5 pb-4 border-b border-[#D8B15B] hover:bg-white/5 transition-colors ${isCollapsed ? "justify-center" : ""}`}>
+          <Link href="/dashboard" className={`flex items-center gap-3 overflow-hidden ${isCollapsed ? "justify-center" : ""}`}>
+            <div className="bg-[#D8B15B] text-[#133255] font-serif text-lg font-bold w-10 h-10 flex items-center justify-center rounded shrink-0">MK</div>
+            {!isCollapsed && (
+              <div className="whitespace-nowrap">
+                <span className="font-serif text-[16px] font-bold block leading-tight">Mauna Kea</span>
+                <span className="text-[11px] text-white/55 tracking-wider block">EXECUTIVE SEARCH OS</span>
+              </div>
+            )}
+          </Link>
+        </div>
 
       <div className="flex-1 py-4 flex flex-col gap-1">
         {categories.filter(cat => cat.visibleTo.includes(userRole)).map((category, idx) => {
@@ -209,6 +208,16 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
           <LogOut className="w-4 h-4" />
         </button>
       </div>
+      </div>
+      
+      {/* Floating Toggle Button */}
+      <button 
+        onClick={toggleSidebar} 
+        className="absolute top-1/2 -right-3.5 -translate-y-1/2 bg-[#D8B15B] text-[#133255] p-1.5 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-50 flex items-center justify-center cursor-pointer border border-[#133255]"
+        title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+      >
+        {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+      </button>
     </div>
   );
 }
