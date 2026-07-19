@@ -1,10 +1,22 @@
 "use server";
+import { requireRole } from "@/lib/auth";
 
 import { db } from "@/db";
 import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles, clients, clientNotifications, clientRemarks, consultantNotifications } from "@/db/schema";
 import { eq, sql, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
+import {
+  createMandateSchema,
+  editMandateSchema,
+  frameworkSchema,
+  candidateUpsertSchema,
+  addSubmissionSchema,
+  addFollowUpSchema,
+  addReferenceSchema,
+  createClientSchema,
+  updateClientSchema,
+} from "@/lib/validations";
 
 export async function getCurrentUserName(): Promise<string> {
   try {
@@ -19,14 +31,16 @@ export async function getCurrentUserName(): Promise<string> {
   return "Unknown";
 }
 
-export async function createMandateAction(data: any) {
+export async function createMandateAction(data: unknown) {
+  await requireRole(["admin", "consultant"]);
+  const d = createMandateSchema.parse(data);
   revalidatePath("/dashboard", "layout");
   
   // Try to find the client by exact name match (case-insensitive)
-  const existingClient = await db.select().from(clients).where(eq(sql`LOWER(${clients.name})`, (data.company || "").toLowerCase()));
+  const existingClient = await db.select().from(clients).where(eq(sql`LOWER(${clients.name})`, (d.company || "").toLowerCase()));
   let clientId = existingClient.length > 0 ? existingClient[0].id : null;
   // Normalize company name if client exists
-  let companyName = existingClient.length > 0 ? existingClient[0].name : data.company;
+  let companyName = existingClient.length > 0 ? existingClient[0].name : d.company;
 
   // Auto-initialize client and portal user if not found
   if (!clientId && companyName) {
@@ -34,17 +48,17 @@ export async function createMandateAction(data: any) {
     await db.insert(clients).values({
       id: clientId,
       name: companyName,
-      owner: data.consultant || "System",
+      owner: d.consultant || "System",
       status: "Active",
     });
 
     // Auto-grant portal access if POC email is provided
-    if (data.pocEmail && data.clientPOC) {
-      const initials = data.clientPOC.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+    if (d.pocEmail && d.clientPOC) {
+      const initials = d.clientPOC.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
       await db.insert(platformUsers).values({
         id: "U-" + Math.floor(Math.random() * 10000).toString(),
-        name: data.clientPOC,
-        email: data.pocEmail,
+        name: d.clientPOC,
+        email: d.pocEmail,
         role: "client",
         status: "Active",
         initials,
@@ -56,31 +70,31 @@ export async function createMandateAction(data: any) {
 
   const result = await db.insert(mandates).values({
     company: companyName,
-    role: data.role,
-    ctc: data.ctc,
-    exp: data.exp,
-    workMode: data.workMode,
-    diversity: data.diversity,
-    clientPOC: data.clientPOC,
-    pocEmail: data.pocEmail,
-    pocPhone: data.pocPhone,
-    pocCc: data.pocCc || [],
-    sectors: data.sectors || [],
-    targetCompanies: data.targetCompanies || [],
-    geography: data.geography,
-    consultant: data.consultant || "System",
+    role: d.role,
+    ctc: d.ctc,
+    exp: d.exp,
+    workMode: d.workMode,
+    diversity: d.diversity,
+    clientPOC: d.clientPOC,
+    pocEmail: d.pocEmail,
+    pocPhone: d.pocPhone,
+    pocCc: d.pocCc || [],
+    sectors: d.sectors || [],
+    targetCompanies: d.targetCompanies || [],
+    geography: d.geography,
+    consultant: d.consultant || "System",
     opened: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
     status: "universe",
     internalStatus: "contractsent",
-    jdUrl: data.jdUrl,
-    interviewNotesUrl: data.interviewNotesUrl,
-    additionalDocsUrl: data.additionalDocsUrl,
-    jdText: data.jdText,
-    interviewNotesText: data.interviewNotesText,
-    additionalDocsText: data.additionalDocsText,
-    searchNotes: data.searchNotes,
-    openQuestions: data.openQuestions,
-    frameworkId: data.frameworkId || null,
+    jdUrl: d.jdUrl,
+    interviewNotesUrl: d.interviewNotesUrl,
+    additionalDocsUrl: d.additionalDocsUrl,
+    jdText: d.jdText,
+    interviewNotesText: d.interviewNotesText,
+    additionalDocsText: d.additionalDocsText,
+    searchNotes: d.searchNotes,
+    openQuestions: d.openQuestions,
+    frameworkId: d.frameworkId || null,
   }).returning({ insertId: mandates.id });
   revalidatePath("/dashboard/mandates");
   revalidatePath("/[clientSlug]", "layout");
@@ -90,7 +104,9 @@ export async function createMandateAction(data: any) {
   return result[0].insertId;
 }
 
-export async function editMandateAction(id: number, data: any) {
+export async function editMandateAction(id: number, data: unknown) {
+  await requireRole(["admin", "consultant"]);
+  const d = editMandateSchema.parse(data);
   revalidatePath("/dashboard", "layout");
   
   const existing = await db.select().from(mandates).where(eq(mandates.id, id));
@@ -99,40 +115,40 @@ export async function editMandateAction(id: number, data: any) {
     const updatedBy = await getCurrentUserName();
     const ts = new Date().toISOString();
 
-    if (existing[0].company !== data.company) auditLog["company"] = { updatedBy, updatedAt: ts };
-    if (existing[0].role !== data.role) auditLog["role"] = { updatedBy, updatedAt: ts };
-    if (existing[0].ctc !== data.ctc) auditLog["ctc"] = { updatedBy, updatedAt: ts };
-    if (existing[0].exp !== data.exp) auditLog["exp"] = { updatedBy, updatedAt: ts };
-    if (existing[0].workMode !== data.workMode) auditLog["workMode"] = { updatedBy, updatedAt: ts };
-    if (existing[0].clientPOC !== data.clientPOC) auditLog["clientPOC"] = { updatedBy, updatedAt: ts };
-    if (existing[0].pocEmail !== data.pocEmail) auditLog["pocEmail"] = { updatedBy, updatedAt: ts };
-    if (existing[0].pocPhone !== data.pocPhone) auditLog["pocPhone"] = { updatedBy, updatedAt: ts };
-    if (existing[0].consultant !== data.consultant) auditLog["consultant"] = { updatedBy, updatedAt: ts };
-    if (existing[0].target !== data.target) auditLog["target"] = { updatedBy, updatedAt: ts };
-    if (existing[0].geography !== data.geography) auditLog["geography"] = { updatedBy, updatedAt: ts };
-
-    data.auditLog = auditLog;
+    if (existing[0].company !== d.company) auditLog["company"] = { updatedBy, updatedAt: ts };
+    if (existing[0].role !== d.role) auditLog["role"] = { updatedBy, updatedAt: ts };
+    if (existing[0].ctc !== d.ctc) auditLog["ctc"] = { updatedBy, updatedAt: ts };
+    if (existing[0].exp !== d.exp) auditLog["exp"] = { updatedBy, updatedAt: ts };
+    if (existing[0].workMode !== d.workMode) auditLog["workMode"] = { updatedBy, updatedAt: ts };
+    if (existing[0].clientPOC !== d.clientPOC) auditLog["clientPOC"] = { updatedBy, updatedAt: ts };
+    if (existing[0].pocEmail !== d.pocEmail) auditLog["pocEmail"] = { updatedBy, updatedAt: ts };
+    if (existing[0].pocPhone !== d.pocPhone) auditLog["pocPhone"] = { updatedBy, updatedAt: ts };
+    if (existing[0].consultant !== d.consultant) auditLog["consultant"] = { updatedBy, updatedAt: ts };
+    if (existing[0].target !== d.target) auditLog["target"] = { updatedBy, updatedAt: ts };
+    if (existing[0].geography !== d.geography) auditLog["geography"] = { updatedBy, updatedAt: ts };
+    d.auditLog = auditLog;
   }
 
   await db.update(mandates).set({
-    company: data.company,
-    role: data.role,
-    ctc: data.ctc,
-    exp: data.exp,
-    workMode: data.workMode,
-    clientPOC: data.clientPOC,
-    pocEmail: data.pocEmail,
-    pocPhone: data.pocPhone,
-    consultant: data.consultant,
-    target: data.target,
-    geography: data.geography,
-    auditLog: data.auditLog,
+    company: d.company,
+    role: d.role,
+    ctc: d.ctc,
+    exp: d.exp,
+    workMode: d.workMode,
+    clientPOC: d.clientPOC,
+    pocEmail: d.pocEmail,
+    pocPhone: d.pocPhone,
+    consultant: d.consultant,
+    target: d.target,
+    geography: d.geography,
+    auditLog: d.auditLog,
   }).where(eq(mandates.id, id));
   revalidatePath("/dashboard/mandates");
   revalidatePath(`/dashboard/mandates/${id}`);
 }
 
 export async function updateMandateFieldAction(id: number, field: string, value: string) {
+  await requireRole(["admin", "consultant"]);
   if (field === "status") {
     await db.update(mandates).set({ status: value }).where(eq(mandates.id, id));
     // Also bulk-update all candidates in this mandate
@@ -145,13 +161,15 @@ export async function updateMandateFieldAction(id: number, field: string, value:
   }
 }
 
-export async function createFrameworkAction(data: any, mandateIds?: string[]) {
+export async function createFrameworkAction(data: unknown, mandateIds?: string[]) {
+  await requireRole(["admin", "consultant"]);
+  const d = frameworkSchema.parse(data);
   revalidatePath("/dashboard", "layout");
   const id = "FW-" + Date.now();
   await db.insert(frameworks).values({
     id,
-    name: data.name,
-    industry: data.industry,
+    name: d.name,
+    industry: d.industry,
     lastModified: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
   });
   
@@ -161,9 +179,9 @@ export async function createFrameworkAction(data: any, mandateIds?: string[]) {
     }
   }
 
-  if (data.categories && data.categories.length > 0) {
-    for (let i = 0; i < data.categories.length; i++) {
-      const cat = data.categories[i];
+  if (d.categories && d.categories.length > 0) {
+    for (let i = 0; i < d.categories.length; i++) {
+      const cat = d.categories[i];
       const res = await db.insert(frameworkCategories).values({
         frameworkId: id,
         name: cat.name,
@@ -189,61 +207,65 @@ export async function createFrameworkAction(data: any, mandateIds?: string[]) {
 }
 
 
-export async function addFloatListEntryAction(data: any) {
+export async function addFloatListEntryAction(data: unknown) {
+  await requireRole(["admin", "consultant"]);
+  const d = candidateUpsertSchema.parse(data);
   revalidatePath("/dashboard", "layout");
   const id = "CAND-" + Date.now();
-  const candidateName = data.name || "Unknown Candidate";
+  const candidateName = d.name || "Unknown Candidate";
   await db.insert(candidates).values({
     id,
     name: candidateName,
-    company: data.company,
-    designation: data.designation,
-    email: data.email,
-    mobile: data.mobile,
-    location: data.location,
-    exp: data.exp ? Number(data.exp) : null,
-    tenure: data.tenure ? Number(data.tenure) : null,
-    ctc: data.ctc ? Number(data.ctc) : null,
-    fixedCtc: data.fixedCtc ? Number(data.fixedCtc) : null,
-    variableCtc: data.variableCtc ? Number(data.variableCtc) : null,
-    expected: data.expected ? Number(data.expected) : null,
-    notice: data.notice ? Number(data.notice) : null,
-    status: data.status || "Active",
-    qual: data.qual || [],
-    dreamRoles: data.dreamRoles || [],
-    dreamCos: data.dreamCos || [],
-    expTags: data.expTags || [],
-    linkedin: data.linkedin || null,
-    targetCompany: data.targetCompany || null,
-    currency: data.currency || "INR",
-    cvFileName: data.cvFileName || null,
-    notes: data.notes || null,
+    company: d.company,
+    designation: d.designation,
+    email: d.email,
+    mobile: d.mobile,
+    location: d.location,
+    exp: d.exp ? Number(d.exp) : null,
+    tenure: d.tenure ? Number(d.tenure) : null,
+    ctc: d.ctc ? Number(d.ctc) : null,
+    fixedCtc: d.fixedCtc ? Number(d.fixedCtc) : null,
+    variableCtc: d.variableCtc ? Number(d.variableCtc) : null,
+    expected: d.expected ? Number(d.expected) : null,
+    notice: d.notice ? Number(d.notice) : null,
+    status: d.status || "Active",
+    qual: d.qual || [],
+    dreamRoles: d.dreamRoles || [],
+    dreamCos: d.dreamCos || [],
+    expTags: d.expTags || [],
+    linkedin: d.linkedin || null,
+    targetCompany: d.targetCompany || null,
+    currency: d.currency || "INR",
+    cvFileName: d.cvFileName || null,
+    notes: d.notes || null,
     initials: candidateName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
-    cvText: data.cvText || null,
-    profilePic: data.profilePic || null,
-    esops: data.esops ? Number(data.esops) : null,
-    esopVesting: data.esopVesting || null,
-    dob: data.dob || null,
-    hometown: data.hometown || null,
-    stability: data.stability || null,
-    relocationStatus: data.relocationStatus || null,
-    relocationPrefs: data.relocationPrefs || null,
+    cvText: d.cvText || null,
+    profilePic: d.profilePic || null,
+    esops: d.esops ? Number(d.esops) : null,
+    esopVesting: d.esopVesting || null,
+    dob: d.dob || null,
+    hometown: d.hometown || null,
+    stability: d.stability || null,
+    relocationStatus: d.relocationStatus || null,
+    relocationPrefs: d.relocationPrefs || null,
   });
   revalidatePath("/dashboard/float-list/database");
   return id;
 }
 
-export async function addSubmissionAction(data: any) {
+export async function addSubmissionAction(data: unknown) {
+  await requireRole(["admin", "consultant"]);
+  const d = addSubmissionSchema.parse(data);
   revalidatePath("/dashboard", "layout");
-  let candId = data.candId;
+  let candId = d.candId;
   
   if (!candId) {
     candId = "CAND-" + Date.now();
     await db.insert(candidates).values({
       id: candId,
-      name: data.candName,
+      name: d.candName,
       status: "Active",
-      initials: data.candName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+      initials: d.candName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
     });
   }
 
@@ -251,33 +273,33 @@ export async function addSubmissionAction(data: any) {
   await db.insert(floats).values({
     id,
     candId,
-    candName: data.candName,
-    client: data.client,
-    role: data.role,
-    consultant: data.consultant || "System",
+    candName: d.candName,
+    client: d.client,
+    role: d.role,
+    consultant: d.consultant || "System",
     dateShared: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
     status: "Shared",
   });
   
   // Link to Mandate Pipeline if submitted to an active mandate
-  if (data.mandateId) {
+  if (d.mandateId) {
     // Check if they are already in the pipeline to prevent duplicates
     const existing = await db.select().from(mandateCandidates).where(
-      sql`${mandateCandidates.externalId} = ${candId} AND ${mandateCandidates.mandateId} = ${data.mandateId}`
+      sql`${mandateCandidates.externalId} = ${candId} AND ${mandateCandidates.mandateId} = ${d.mandateId}`
     );
     if (existing.length === 0) {
       await db.insert(mandateCandidates).values({
         externalId: candId,
-        mandateId: Number(data.mandateId),
-        name: data.candName,
-        company: data.candCompany || "",
+        mandateId: Number(d.mandateId),
+        name: d.candName,
+        company: d.candCompany || "",
         addedBy: await getCurrentUserName(),
-        role: data.role,
+        role: d.role,
         stage: "universe",
-        initials: data.candName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+        initials: d.candName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
         isSentToClient: true,
       });
-      revalidatePath(`/dashboard/mandates/${data.mandateId}`);
+      revalidatePath(`/dashboard/mandates/${d.mandateId}`);
       revalidatePath(`/dashboard/mandates`);
       revalidatePath(`/dashboard/candidates`);
     }
@@ -291,6 +313,7 @@ export async function addSubmissionAction(data: any) {
 
 
 export async function removeCandidateFromMandateAction(data: { id: number; externalId: string; company: string; role: string; mandateId: number }) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   // Delete from mandateCandidates
   await db.delete(mandateCandidates).where(eq(mandateCandidates.id, data.id));
@@ -307,23 +330,26 @@ export async function removeCandidateFromMandateAction(data: { id: number; exter
 }
 
 export async function updateSubmissionAction(id: string, data: { via?: string[]; followUp?: string; response?: string; status?: string; candName?: string; client?: string; role?: string; consultant?: string; }) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   await db.update(floats).set(data).where(eq(floats.id, id));
   revalidatePath("/dashboard/float-list/submissions");
   revalidatePath("/dashboard/float-list/database");
 }
 
-export async function addFollowUpAction(data: any) {
+export async function addFollowUpAction(data: unknown) {
+  await requireRole(["admin", "consultant"]);
+  const d = addFollowUpSchema.parse(data);
   revalidatePath("/dashboard", "layout");
-  let candId = data.candId;
+  let candId = d.candId;
   
   if (!candId) {
     candId = "CAND-" + Date.now();
     await db.insert(candidates).values({
       id: candId,
-      name: data.candName,
+      name: d.candName,
       status: "Active",
-      initials: data.candName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
+      initials: d.candName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
     });
   }
 
@@ -331,13 +357,13 @@ export async function addFollowUpAction(data: any) {
   await db.insert(floatFollowUps).values({
     id,
     candId,
-    cand: data.candName,
-    client: data.client,
-    role: data.role,
-    consultant: data.consultant || "System",
-    dueDate: data.dueDate,
+    cand: d.candName,
+    client: d.client,
+    role: d.role,
+    consultant: d.consultant || "System",
+    dueDate: d.dueDate,
     status: "Pending",
-    note: data.note,
+    note: d.note,
   });
   revalidatePath("/dashboard/float-list/followups");
   revalidatePath("/dashboard/float-list/database");
@@ -345,6 +371,7 @@ export async function addFollowUpAction(data: any) {
 }
 
 export async function addPlatformUserAction(data: { name: string; email: string; role: string; linkedClientId?: string; linkedCandidateId?: string; reportingManagerId?: string }) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   const id = "U-" + Math.floor(Math.random() * 10000);
   await db.insert(platformUsers).values({
@@ -365,6 +392,7 @@ export async function addPlatformUserAction(data: { name: string; email: string;
 }
 
 export async function updatePlatformUserAction(id: string, data: { name: string; email: string; role: string; linkedClientId?: string; linkedCandidateId?: string; reportingManagerId?: string }) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   await db.update(platformUsers).set({
     name: data.name,
@@ -379,6 +407,7 @@ export async function updatePlatformUserAction(id: string, data: { name: string;
 }
 
 export async function deletePlatformUserAction(id: string) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   const deletedBy = await getCurrentUserName();
   await db.update(platformUsers).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(platformUsers.id, id));
@@ -386,21 +415,24 @@ export async function deletePlatformUserAction(id: string) {
 }
 
 
-export async function addReferenceAction(data: any) {
+export async function addReferenceAction(data: unknown) {
+  await requireRole(["admin", "consultant"]);
+  const d = addReferenceSchema.parse(data);
   revalidatePath("/dashboard", "layout");
   await db.insert(floatReferences).values({
-    candId: data.candId,
-    type: data.type,
-    name: data.name,
-    org: data.org,
-    rel: data.rel,
-    text: data.text,
+    candId: d.candId,
+    type: d.type,
+    name: d.name,
+    org: d.org,
+    rel: d.rel,
+    text: d.text,
   });
-  revalidatePath("/dashboard/float-list/" + data.candId);
+  revalidatePath("/dashboard/float-list/" + d.candId);
 }
 
 
 export async function updateMandateCandidateStageAction(candId: number, stage: string, mandateId: number) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   await db.update(mandateCandidates).set({ stage }).where(eq(mandateCandidates.id, candId));
   revalidatePath("/dashboard/candidates");
@@ -408,6 +440,7 @@ export async function updateMandateCandidateStageAction(candId: number, stage: s
 }
 
 export async function updateMandateSearchNotesAction(id: number, text: string) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   
   const existing = await db.select().from(mandates).where(eq(mandates.id, id));
@@ -422,11 +455,13 @@ export async function updateMandateSearchNotesAction(id: number, text: string) {
   revalidatePath(`/dashboard/mandates/${id}`);
 }
 
-export async function editFrameworkAction(id: string, data: any, mandateIds?: string[]) {
+export async function editFrameworkAction(id: string, data: unknown, mandateIds?: string[]) {
+  await requireRole(["admin", "consultant"]);
+  const d = frameworkSchema.parse(data);
   revalidatePath('/dashboard', 'layout');
   await db.update(frameworks).set({
-    name: data.name,
-    industry: data.industry,
+    name: d.name,
+    industry: d.industry,
     lastModified: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
   }).where(eq(frameworks.id, id));
 
@@ -443,9 +478,9 @@ export async function editFrameworkAction(id: string, data: any, mandateIds?: st
   }
   await db.delete(frameworkCategories).where(eq(frameworkCategories.frameworkId, id));
 
-  if (data.categories && data.categories.length > 0) {
-    for (let i = 0; i < data.categories.length; i++) {
-      const cat = data.categories[i];
+  if (d.categories && d.categories.length > 0) {
+    for (let i = 0; i < d.categories.length; i++) {
+      const cat = d.categories[i];
       const res = await db.insert(frameworkCategories).values({
         frameworkId: id,
         name: cat.name,
@@ -471,6 +506,7 @@ export async function editFrameworkAction(id: string, data: any, mandateIds?: st
 }
 
 export async function deleteFrameworkAction(id: string) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath('/dashboard', 'layout');
   const deletedBy = await getCurrentUserName();
   await db.update(frameworks).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(frameworks.id, id));
@@ -478,12 +514,14 @@ export async function deleteFrameworkAction(id: string) {
 }
 
 export async function deleteMandateAction(id: number) {
+  await requireRole(["admin", "consultant"]);
   const deletedBy = await getCurrentUserName();
   await db.update(mandates).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(mandates.id, id));
   revalidatePath("/dashboard/mandates");
 }
 
 export async function deleteMultipleMandatesAction(ids: number[]) {
+  await requireRole(["admin", "consultant"]);
   if (!ids || ids.length === 0) return;
   const deletedBy = await getCurrentUserName();
   await db.update(mandates).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(inArray(mandates.id, ids));
@@ -494,10 +532,12 @@ export async function deleteMultipleMandatesAction(ids: number[]) {
 
 // ─── CLIENTS ACTIONS ────────────────────────────────────────
 
-export async function createClientAction(data: any) {
+export async function createClientAction(data: unknown) {
+  await requireRole(["admin", "consultant"]);
+  const d = createClientSchema.parse(data);
   revalidatePath("/dashboard/clients");
   
-  let baseSlug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+  let baseSlug = d.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
   let slug = baseSlug || `client-${Date.now()}`;
   let counter = 1;
   while(true) {
@@ -507,34 +547,37 @@ export async function createClientAction(data: any) {
   }
 
   await db.insert(clients).values({
-    id: data.id || Date.now().toString(),
+    id: d.id || Date.now().toString(),
     slug,
-    name: data.name,
-    accountId: data.accountId,
-    vertical: data.vertical,
-    owner: data.owner,
-    status: data.status || "Active",
-    legalEntityName: data.legalEntityName || null,
-    contacts: data.contacts || [],
+    name: d.name,
+    accountId: d.accountId,
+    vertical: d.vertical,
+    owner: d.owner,
+    status: d.status || "Active",
+    legalEntityName: d.legalEntityName || null,
+    contacts: d.contacts || [],
   });
   return true;
 }
 
-export async function updateClientAction(id: string, data: any) {
+export async function updateClientAction(id: string, data: unknown) {
+  await requireRole(["admin", "consultant"]);
+  const d = updateClientSchema.parse(data);
   revalidatePath("/dashboard/clients");
   await db.update(clients).set({
-    name: data.name,
-    accountId: data.accountId,
-    vertical: data.vertical,
-    owner: data.owner,
-    status: data.status || "Active",
-    legalEntityName: data.legalEntityName || null,
-    contacts: data.contacts || [],
+    name: d.name,
+    accountId: d.accountId,
+    vertical: d.vertical,
+    owner: d.owner,
+    status: d.status || "Active",
+    legalEntityName: d.legalEntityName || null,
+    contacts: d.contacts || [],
   }).where(eq(clients.id, id));
   return true;
 }
 
 export async function deleteClientAction(id: string) {
+  await requireRole(["admin", "consultant"]);
   const [client] = await db.select().from(clients).where(eq(clients.id, id));
   const deletedBy = await getCurrentUserName();
   if (client) {
@@ -545,6 +588,7 @@ export async function deleteClientAction(id: string) {
 }
 
 export async function deleteSubmissionAction(id: string) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath('/dashboard', 'layout');
   const deletedBy = await getCurrentUserName();
   await db.update(floats).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(floats.id, id));
@@ -553,6 +597,7 @@ export async function deleteSubmissionAction(id: string) {
 }
 
 export async function deleteFloatListEntryAction(id: string) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   const deletedBy = await getCurrentUserName();
   await db.update(candidates).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(candidates.id, id));
@@ -563,6 +608,7 @@ export async function deleteFloatListEntryAction(id: string) {
 }
 
 export async function deleteMultipleCandidatesAction(ids: string[]) {
+  await requireRole(["admin", "consultant"]);
   if (!ids || ids.length === 0) return;
   revalidatePath("/dashboard", "layout");
   await db.delete(mandateCandidates).where(inArray(mandateCandidates.externalId, ids));
@@ -579,9 +625,11 @@ export async function deleteMultipleCandidatesAction(ids: string[]) {
   revalidatePath("/dashboard/candidates");
 }
 
-export async function editFloatListEntryAction(id: string, data: any) {
+export async function editFloatListEntryAction(id: string, data: unknown) {
+  await requireRole(["admin", "consultant"]);
+  const d = candidateUpsertSchema.parse(data);
   revalidatePath("/dashboard", "layout");
-  const candidateName = data.name || "Unknown Candidate";
+  const candidateName = d.name || "Unknown Candidate";
 
   const existing = await db.select().from(candidates).where(eq(candidates.id, id));
   if (existing.length > 0) {
@@ -589,60 +637,60 @@ export async function editFloatListEntryAction(id: string, data: any) {
     const updatedBy = await getCurrentUserName();
     const ts = new Date().toISOString();
 
-    if (existing[0].company !== data.company) auditLog["company"] = { updatedBy, updatedAt: ts };
-    if (existing[0].designation !== data.designation) auditLog["designation"] = { updatedBy, updatedAt: ts };
-    if (existing[0].exp !== (data.exp ? Number(data.exp) : null)) auditLog["exp"] = { updatedBy, updatedAt: ts };
-    if (existing[0].ctc !== (data.ctc ? Number(data.ctc) : null)) auditLog["ctc"] = { updatedBy, updatedAt: ts };
-    if (existing[0].fixedCtc !== (data.fixedCtc ? Number(data.fixedCtc) : null)) auditLog["fixedCtc"] = { updatedBy, updatedAt: ts };
-    if (existing[0].variableCtc !== (data.variableCtc ? Number(data.variableCtc) : null)) auditLog["variableCtc"] = { updatedBy, updatedAt: ts };
-    if (existing[0].expected !== (data.expected ? Number(data.expected) : null)) auditLog["expected"] = { updatedBy, updatedAt: ts };
-    if (existing[0].esops !== (data.esops ? Number(data.esops) : null)) auditLog["esops"] = { updatedBy, updatedAt: ts };
-    if (existing[0].notice !== (data.notice ? Number(data.notice) : null)) auditLog["notice"] = { updatedBy, updatedAt: ts };
-    if (JSON.stringify(existing[0].stability) !== JSON.stringify(data.stability || null)) auditLog["stability"] = { updatedBy, updatedAt: ts };
-    if (existing[0].status !== (data.status || "Active")) auditLog["status"] = { updatedBy, updatedAt: ts };
-    if (existing[0].cvFileName !== (data.cvFileName || null)) auditLog["cvFileName"] = { updatedBy, updatedAt: ts };
-    if (existing[0].notes !== (data.notes || null)) auditLog["notes"] = { updatedBy, updatedAt: ts };
+    if (existing[0].company !== d.company) auditLog["company"] = { updatedBy, updatedAt: ts };
+    if (existing[0].designation !== d.designation) auditLog["designation"] = { updatedBy, updatedAt: ts };
+    if (existing[0].exp !== (d.exp ? Number(d.exp) : null)) auditLog["exp"] = { updatedBy, updatedAt: ts };
+    if (existing[0].ctc !== (d.ctc ? Number(d.ctc) : null)) auditLog["ctc"] = { updatedBy, updatedAt: ts };
+    if (existing[0].fixedCtc !== (d.fixedCtc ? Number(d.fixedCtc) : null)) auditLog["fixedCtc"] = { updatedBy, updatedAt: ts };
+    if (existing[0].variableCtc !== (d.variableCtc ? Number(d.variableCtc) : null)) auditLog["variableCtc"] = { updatedBy, updatedAt: ts };
+    if (existing[0].expected !== (d.expected ? Number(d.expected) : null)) auditLog["expected"] = { updatedBy, updatedAt: ts };
+    if (existing[0].esops !== (d.esops ? Number(d.esops) : null)) auditLog["esops"] = { updatedBy, updatedAt: ts };
+    if (existing[0].notice !== (d.notice ? Number(d.notice) : null)) auditLog["notice"] = { updatedBy, updatedAt: ts };
+    if (JSON.stringify(existing[0].stability) !== JSON.stringify(d.stability || null)) auditLog["stability"] = { updatedBy, updatedAt: ts };
+    if (existing[0].status !== (d.status || "Active")) auditLog["status"] = { updatedBy, updatedAt: ts };
+    if (existing[0].cvFileName !== (d.cvFileName || null)) auditLog["cvFileName"] = { updatedBy, updatedAt: ts };
+    if (existing[0].notes !== (d.notes || null)) auditLog["notes"] = { updatedBy, updatedAt: ts };
 
     delete auditLog["Professional Details"];
     delete auditLog["Compensation"];
 
-    data.auditLog = auditLog;
+    d.auditLog = auditLog;
   }
 
   await db.update(candidates).set({
     name: candidateName,
-    auditLog: data.auditLog,
-    company: data.company,
-    designation: data.designation,
-    email: data.email,
-    mobile: data.mobile,
-    location: data.location,
-    exp: data.exp ? Number(data.exp) : null,
-    tenure: data.tenure ? Number(data.tenure) : null,
-    ctc: data.ctc ? Number(data.ctc) : null,
-    fixedCtc: data.fixedCtc ? Number(data.fixedCtc) : null,
-    variableCtc: data.variableCtc ? Number(data.variableCtc) : null,
-    expected: data.expected ? Number(data.expected) : null,
-    notice: data.notice ? Number(data.notice) : null,
-    status: data.status || "Active",
-    qual: data.qual || [],
-    dreamRoles: data.dreamRoles || [],
-    dreamCos: data.dreamCos || [],
-    expTags: data.expTags || [],
-    linkedin: data.linkedin || null,
-    targetCompany: data.targetCompany || null,
-    currency: data.currency || "INR",
-    cvFileName: data.cvFileName || null,
-    notes: data.notes || null,
+    auditLog: d.auditLog,
+    company: d.company,
+    designation: d.designation,
+    email: d.email,
+    mobile: d.mobile,
+    location: d.location,
+    exp: d.exp ? Number(d.exp) : null,
+    tenure: d.tenure ? Number(d.tenure) : null,
+    ctc: d.ctc ? Number(d.ctc) : null,
+    fixedCtc: d.fixedCtc ? Number(d.fixedCtc) : null,
+    variableCtc: d.variableCtc ? Number(d.variableCtc) : null,
+    expected: d.expected ? Number(d.expected) : null,
+    notice: d.notice ? Number(d.notice) : null,
+    status: d.status || "Active",
+    qual: d.qual || [],
+    dreamRoles: d.dreamRoles || [],
+    dreamCos: d.dreamCos || [],
+    expTags: d.expTags || [],
+    linkedin: d.linkedin || null,
+    targetCompany: d.targetCompany || null,
+    currency: d.currency || "INR",
+    cvFileName: d.cvFileName || null,
+    notes: d.notes || null,
     initials: candidateName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
-    profilePic: data.profilePic || null,
-    esops: data.esops ? Number(data.esops) : null,
-    esopVesting: data.esopVesting || null,
-    dob: data.dob || null,
-    hometown: data.hometown || null,
-    stability: data.stability || null,
-    relocationStatus: data.relocationStatus || null,
-    relocationPrefs: data.relocationPrefs || null,
+    profilePic: d.profilePic || null,
+    esops: d.esops ? Number(d.esops) : null,
+    esopVesting: d.esopVesting || null,
+    dob: d.dob || null,
+    hometown: d.hometown || null,
+    stability: d.stability || null,
+    relocationStatus: d.relocationStatus || null,
+    relocationPrefs: d.relocationPrefs || null,
   }).where(eq(candidates.id, id));
   revalidatePath("/dashboard/float-list/database");
   revalidatePath("/dashboard/float-list/" + id);
@@ -650,12 +698,14 @@ export async function editFloatListEntryAction(id: string, data: any) {
 }
 
 export async function updateCandidateStatusAction(id: string, status: string) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   await db.update(candidates).set({ status }).where(eq(candidates.id, id));
   revalidatePath("/dashboard/float-list/database");
 }
 
 export async function bulkAssignToMandateAction(data: { mandateId: number; candIds: string[]; role: string }) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   const cands = await db.select().from(candidates).where(inArray(candidates.id, data.candIds));
   
@@ -702,6 +752,7 @@ export async function bulkAssignToMandateAction(data: { mandateId: number; candI
 }
 
 export async function bulkAddSubmissionAction(data: { candIds: string[]; client: string; role: string; consultant: string; status?: string }) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   const cands = await db.select().from(candidates).where(inArray(candidates.id, data.candIds));
 
@@ -732,6 +783,7 @@ export async function logCandidateActivityAction(data: {
   date?: string;
   time?: string;
 }) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   
   const now = new Date();
@@ -751,6 +803,7 @@ export async function logCandidateActivityAction(data: {
 }
 
 export async function saveReportFormatAction(reportId: string, formatName: string, formatData: any) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   const existing = await db.select().from(candidateReports).where(eq(candidateReports.id, reportId));
   if (existing.length > 0) {
@@ -761,16 +814,19 @@ export async function saveReportFormatAction(reportId: string, formatName: strin
 }
 
 export async function saveReportDraftAction(reportId: string, updatedData: any) {
+  await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   await db.update(candidateReports).set({ reportData: updatedData }).where(eq(candidateReports.id, reportId));
 }
 
 export async function toggleActivityPinAction(id: number, isPinned: boolean) {
+  await requireRole(["admin", "consultant"]);
   await db.update(floatActivities).set({ isPinned }).where(eq(floatActivities.id, id));
   revalidatePath("/dashboard", "layout");
 }
 
 export async function sendCandidatesToClientAction(mandateId: number, candidateIds: number[]) {
+  await requireRole(["admin", "consultant"]);
   if (candidateIds.length === 0) return;
   await db.update(mandateCandidates).set({ isSentToClient: true }).where(inArray(mandateCandidates.id, candidateIds));
 
@@ -843,6 +899,7 @@ export async function submitClientRemarkAction(mandateId: number, candId: string
 }
 
 export async function resolveClientRemarkAction(remarkId: number, status: string, message: string) {
+  await requireRole(["admin", "consultant"]);
   const [remark] = await db.select().from(clientRemarks).where(eq(clientRemarks.id, remarkId));
   if (!remark) return;
 
@@ -860,6 +917,7 @@ export async function resolveClientRemarkAction(remarkId: number, status: string
 }
 
 export async function getConsultantNotificationsAction() {
+  await requireRole(["admin", "consultant"]);
   const { createClient } = await import("@/utils/supabase/server");
   const { getUserByEmail } = await import("@/db/queries");
   const { or, and, isNull, eq } = await import("drizzle-orm");
@@ -885,6 +943,7 @@ export async function getConsultantNotificationsAction() {
 }
 
 export async function markConsultantNotificationsAsReadAction() {
+  await requireRole(["admin", "consultant"]);
   const { createClient } = await import("@/utils/supabase/server");
   const { getUserByEmail } = await import("@/db/queries");
   const { or, and, isNull, eq } = await import("drizzle-orm");
@@ -908,6 +967,7 @@ export async function markConsultantNotificationsAsReadAction() {
   revalidatePath("/dashboard", "layout");
 }
 export async function deleteMultipleClientsAction(ids: string[]) {
+  await requireRole(["admin", "consultant"]);
   if (!ids || ids.length === 0) return;
   const deletedBy = await getCurrentUserName();
   const clientsData = await db.select().from(clients).where(inArray(clients.id, ids));
@@ -919,6 +979,7 @@ export async function deleteMultipleClientsAction(ids: string[]) {
   revalidatePath("/dashboard/clients");
 }
 export async function deleteMultiplePlatformUsersAction(ids: string[]) {
+  await requireRole(["admin", "consultant"]);
   if (!ids || ids.length === 0) return;
   const deletedBy = await getCurrentUserName();
   await db.update(platformUsers).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(inArray(platformUsers.id, ids));
@@ -927,6 +988,7 @@ export async function deleteMultiplePlatformUsersAction(ids: string[]) {
 
 
 export async function deleteMultipleFrameworksAction(ids: string[]) {
+  await requireRole(["admin", "consultant"]);
   if (!ids || ids.length === 0) return;
   const deletedBy = await getCurrentUserName();
   await db.update(frameworks).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(inArray(frameworks.id, ids));

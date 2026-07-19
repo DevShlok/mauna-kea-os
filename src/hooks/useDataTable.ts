@@ -2,14 +2,14 @@ import { useState, useMemo, useCallback } from "react";
 
 export type SortDir = "asc" | "desc" | null;
 
-export interface UseDataTableOptions<T> {
+interface UseDataTableOptions<T> {
   data: T[];
   defaultSortKey?: keyof T | null;
   defaultSortDir?: SortDir;
   defaultPageSize?: number;
 }
 
-export interface UseDataTableReturn<T> {
+interface UseDataTableReturn<T> {
   paginatedData: T[];
   totalRows: number;
   currentPage: number;

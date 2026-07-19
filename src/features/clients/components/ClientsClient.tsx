@@ -1,57 +1,76 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Client, Mandate } from "@/db/schema";
 import { Search } from "lucide-react";
 import { updateClientAction, deleteMultipleClientsAction } from "@/actions";
 import ClientImportModal from "./ClientImportModal";
-import { Upload } from "lucide-react";
+import { Upload, Plus } from "lucide-react";
 import toast from "react-hot-toast";
-import { useDataTable } from "@/hooks/useDataTable";
 import { Pagination } from "@/components/DataTable/Pagination";
 import { SortableHeader } from "@/components/DataTable/SortableHeader";
 
-export default function ClientsClient({ clients, mandates }: { clients: Client[], mandates: Mandate[] }) {
+export default function ClientsClient({ 
+  initialClients, 
+  metadata,
+  uniqueVerticals
+}: { 
+  initialClients: (Client & { mandates: Mandate[] })[];
+  metadata: { totalCount: number; totalPages: number; currentPage: number };
+  uniqueVerticals: string[];
+}) {
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [verticalFilter, setVerticalFilter] = useState("All industries");
-  const [statusFilter, setStatusFilter] = useState("All status");
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [verticalFilter, setVerticalFilter] = useState(searchParams.get("vertical") || "All industries");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "All status");
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [pageSize, setPageSize] = useState(Number(searchParams.get("pageSize")) || 50);
 
-  const [localClients, setLocalClients] = useState(clients);
+  const sortKey = searchParams.get("sortKey") || "createdAt";
+  const sortDir = (searchParams.get("sortDir") || "desc") as "asc" | "desc";
+
+  const [localClients, setLocalClients] = useState(initialClients);
   useEffect(() => {
-    setLocalClients(clients);
-  }, [clients]);
+    setLocalClients(initialClients);
+  }, [initialClients]);
 
+  const updateURL = (newParams: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(newParams).forEach(([k, v]) => {
+      if (v === "" || v === "All industries" || v === "All status") params.delete(k);
+      else params.set(k, v);
+    });
+    if (!newParams.page) params.set("page", "1");
+    router.push(`?${params.toString()}`);
+  };
 
-  const filteredClients = localClients.filter(c => {
-    if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !(c.vertical && c.vertical.toLowerCase().includes(search.toLowerCase()))) return false;
-    if (verticalFilter !== "All industries" && c.vertical !== verticalFilter) return false;
-    if (statusFilter !== "All status" && c.status !== statusFilter) return false;
-    return true;
-  });
+  const handleSearchBlur = () => updateURL({ search });
 
-  const {
-    paginatedData,
-    totalRows,
-    currentPage,
-    totalPages,
-    pageSize,
-    setPageSize,
-    goToPage,
-    goToNextPage,
-    goToPrevPage,
-    sortKey,
-    sortDir,
-    toggleSort,
-    startIndex,
-    endIndex,
-  } = useDataTable({ data: filteredClients, defaultSortKey: "createdAt", defaultSortDir: "desc" });
+  const toggleSort = (key: string) => {
+    const newDir = sortKey === key && sortDir === "asc" ? "desc" : "asc";
+    updateURL({ sortKey: key, sortDir: newDir });
+  };
 
-  const getLiveMandatesCount = (clientName: string) => {
-    return mandates.filter(m => m.company === clientName && m.status !== 'Closed' && m.status !== 'Lost').length;
+  const paginatedData = localClients;
+  const totalRows = metadata.totalCount;
+  const currentPage = metadata.currentPage;
+  const totalPages = metadata.totalPages;
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalRows);
+
+  const goToPage = (p: number) => updateURL({ page: p.toString() });
+  const goToNextPage = () => goToPage(Math.min(totalPages, currentPage + 1));
+  const goToPrevPage = () => goToPage(Math.max(1, currentPage - 1));
+  const handlePageSizeChange = (s: number) => {
+    setPageSize(s);
+    updateURL({ pageSize: s.toString(), page: "1" });
+  };
+
+  const getLiveMandatesCount = (client: typeof initialClients[0]) => {
+    return client.mandates.filter(m => m.status !== 'Closed' && m.status !== 'Lost').length;
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
@@ -60,8 +79,7 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
     router.refresh();
   };
 
-  const verticals = Array.from(new Set(clients.map(c => c.vertical).filter(Boolean))) as string[];
-  const statuses = Array.from(new Set(clients.map(c => c.status).filter(Boolean))) as string[];
+  // Removed old client arrays since we use uniqueVerticals passed from server
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -95,7 +113,7 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
 
   const selectedClients = localClients.filter(c => selectedIds.has(c.id));
   const selectedClientNames = selectedClients.map(c => c.name);
-  const attachedMandatesCount = mandates.filter(m => selectedClientNames.includes(m.company)).length;
+  const attachedMandatesCount = selectedClients.reduce((acc, c) => acc + (c.mandates?.length || 0), 0);
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
@@ -107,45 +125,47 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
           <div className="flex-1 relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input 
-              type="text" 
-              placeholder="Search by name, vertical..." 
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full h-10 pl-9 pr-4 rounded-md border border-gray-200 text-sm outline-none focus:border-[#133255] transition-colors"
-            />
+          type="text" 
+          placeholder="Search by client or industry..." 
+          value={search} 
+          onChange={e => setSearch(e.target.value)} 
+          onBlur={handleSearchBlur}
+          onKeyDown={e => e.key === "Enter" && handleSearchBlur()}
+          className="min-w-[250px] flex-1 pl-9 pr-4 h-10 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#133255] transition-colors"
+        />
           </div>
           
           <select 
-            value={verticalFilter} 
-            onChange={e => setVerticalFilter(e.target.value)}
-            className="h-10 px-4 rounded-md border border-gray-200 text-sm bg-white outline-none cursor-pointer focus:border-[#133255]"
-          >
-            <option value="All industries">All industries</option>
-            {verticals.map(v => <option key={v} value={v}>{v}</option>)}
-          </select>
-
-          <select 
-            value={statusFilter} 
-            onChange={e => setStatusFilter(e.target.value)}
-            className="h-10 px-4 rounded-md border border-gray-200 text-sm bg-white outline-none cursor-pointer focus:border-[#133255]"
-          >
-            <option value="All status">All status</option>
-            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
+          value={verticalFilter} 
+          onChange={e => { setVerticalFilter(e.target.value); updateURL({ vertical: e.target.value }); }} 
+          className="px-4 h-10 border border-gray-200 rounded-lg text-sm bg-white outline-none hover:border-[#133255] transition-colors min-w-[180px]">
+          <option value="All industries">All industries</option>
+          {uniqueVerticals.map(i => <option key={i} value={i}>{i}</option>)}
+        </select>
+        
+        <select 
+          value={statusFilter} 
+          onChange={e => { setStatusFilter(e.target.value); updateURL({ status: e.target.value }); }} 
+          className="px-4 h-10 border border-gray-200 rounded-lg text-sm bg-white outline-none hover:border-[#133255] transition-colors min-w-[180px]">
+          <option value="All status">All statuses</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+          <option value="Lead">Lead</option>
+        </select>
 
           <button 
             onClick={() => setIsImportModalOpen(true)}
-            className="h-10 px-4 rounded-md bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
+            className="h-10 px-4 rounded-lg bg-white border border-gray-200 text-gray-700 text-[13px] font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5"
           >
-            <Upload className="w-4 h-4" />
+            <Upload className="w-3.5 h-3.5" />
             Import
           </button>
 
           <button 
             onClick={() => router.push('/dashboard/clients/new')}
-            className="h-10 px-6 rounded-md bg-[#D8B15B] text-[#133255] text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors flex items-center gap-2"
+            className="h-10 px-4 rounded-lg bg-[#D8B15B] text-[#133255] text-[13px] font-bold shadow-sm hover:bg-[#e8c97a] transition-colors flex items-center gap-1.5"
           >
-            + Add client
+            <Plus className="w-3.5 h-3.5" /> Add client
           </button>
         </div>
 
@@ -177,12 +197,12 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
                 <th className="px-4 py-4 text-center w-10">
                   <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
                 </th>
-                <SortableHeader label="Account" colKey="name" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} className="px-6" />
-                <SortableHeader label="Industry" colKey="vertical" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} className="px-6" />
-                <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Live Mandates</th>
-                <SortableHeader label="Account Owner" colKey="owner" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} className="px-6" />
-                <SortableHeader label="Status" colKey="status" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} className="px-6" />
-                <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                <SortableHeader label="Client" colKey="name" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
+                <SortableHeader label="Industry" colKey="vertical" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
+                <th className="px-5 py-3.5 text-left text-[12px] font-bold text-gray-400 uppercase tracking-wider">Owner</th>
+                <th className="px-5 py-3.5 text-left text-[12px] font-bold text-gray-400 uppercase tracking-wider">Live Mandates</th>
+                <SortableHeader label="Status" colKey="status" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
+                <th className="px-5 py-3.5 text-left text-[12px] font-bold text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -196,8 +216,12 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
                     <div className="text-[13px] text-gray-400">{c.accountId}</div>
                   </td>
                   <td className="px-6 py-4 text-[15px] text-gray-600">{c.vertical || "-"}</td>
-                  <td className="px-6 py-4 text-[15px] font-semibold text-gray-900">{getLiveMandatesCount(c.name)}</td>
                   <td className="px-6 py-4 text-[15px] text-gray-600">{c.owner || "-"}</td>
+                    <td className="px-5 py-4">
+                      <div className="text-[14px] text-gray-600 font-medium">
+                        {getLiveMandatesCount(c)}
+                      </div>
+                    </td>
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                     <select
                       value={c.status || "Active"}
@@ -233,17 +257,17 @@ export default function ClientsClient({ clients, mandates }: { clients: Client[]
             </tbody>
           </table>
           <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalRows={totalRows}
-            startIndex={startIndex}
-            endIndex={endIndex}
-            pageSize={pageSize}
-            setPageSize={setPageSize}
-            goToPage={goToPage}
-            goToNextPage={goToNextPage}
-            goToPrevPage={goToPrevPage}
-          />
+          currentPage={currentPage}
+          totalPages={totalPages}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          totalRows={totalRows}
+          goToNextPage={goToNextPage}
+          goToPrevPage={goToPrevPage}
+          pageSize={pageSize}
+          setPageSize={handlePageSizeChange}
+          goToPage={goToPage}
+        />
         </div>
 
       {/* Delete Confirmation Modal */}

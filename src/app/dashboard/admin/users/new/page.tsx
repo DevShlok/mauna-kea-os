@@ -3,9 +3,11 @@ import { db } from "@/db";
 import { clients, platformUsers } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import NewUserClient from "@/features/admin/components/NewUserClient";
+import { Metadata } from "next";
 
-export const metadata = {
-  title: "Add User | Admin | Mauna Kea OS",
+export const metadata: Metadata = {
+  title: "Add User | Admin | Mauna Kea",
+  description: "Add a new platform user",
 };
 
 export default async function NewUserPage() {

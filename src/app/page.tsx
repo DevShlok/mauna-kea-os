@@ -171,7 +171,7 @@ export default function LandingPage() {
             >
               <div className="text-center mb-6">
                 <p className="font-bold text-gray-900 text-sm mb-2.5 leading-snug">
-                  Connecting exceptional talent with leadership opportunities.
+                  Connecting exceptional talent.
                 </p>
                 <p className="text-[11px] sm:text-xs text-gray-500 leading-relaxed max-w-[480px] mx-auto">
                   Whether you are an organization looking to secure top-tier executive talent or
@@ -304,9 +304,7 @@ export default function LandingPage() {
               </form>
             </div>
 
-
-
-            <p className="py-4 text-[10px] text-gray-400 tracking-wider uppercase flex-shrink-0 font-medium">
+            <p className="py-4 text-[10px] text-gray-600 tracking-wider uppercase flex-shrink-0 font-medium">
               © {new Date().getFullYear()} Mauna Kea · All rights reserved
             </p>
           </div>

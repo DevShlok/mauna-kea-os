@@ -92,15 +92,18 @@ export default function ClientDetailClient({ client, mandates, industries = [] }
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <button onClick={() => setIsImportModalOpen(true)} className="px-4 py-2 bg-[#D8B15B] rounded-md text-sm font-bold text-[#133255] hover:bg-[#e8c97a] transition-colors flex items-center gap-2 shadow-sm">
-              <Upload className="w-4 h-4" /> Import Mandates
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href={`/dashboard/mandates/new?company=${encodeURIComponent(client.name)}`} className="h-8 px-3 bg-[#133255] text-white rounded-md text-xs font-bold hover:bg-[#133255]/90 transition-colors flex items-center gap-1.5 shadow-sm">
+              <Plus className="w-3.5 h-3.5" /> Add Mandate
+            </Link>
+            <button onClick={() => setIsImportModalOpen(true)} className="h-8 px-3 bg-[#D8B15B] rounded-md text-xs font-bold text-[#133255] hover:bg-[#e8c97a] transition-colors flex items-center gap-1.5 shadow-sm">
+              <Upload className="w-3.5 h-3.5" /> Import Mandates
             </button>
-            <button onClick={() => setIsEditing(true)} className="px-4 py-2 border border-gray-200 rounded-md text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
-              <Edit className="w-4 h-4" /> Edit
+            <button onClick={() => setIsEditing(true)} className="h-8 px-3 border border-gray-200 rounded-md text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1.5">
+              <Edit className="w-3.5 h-3.5" /> Edit
             </button>
-            <button onClick={handleDelete} className="px-4 py-2 border border-red-200 bg-red-50 rounded-md text-sm font-bold text-red-600 hover:bg-red-100 transition-colors flex items-center gap-2">
-              <Trash2 className="w-4 h-4" /> Delete
+            <button onClick={handleDelete} className="h-8 px-3 border border-red-200 bg-red-50 rounded-md text-xs font-bold text-red-600 hover:bg-red-100 transition-colors flex items-center gap-1.5">
+              <Trash2 className="w-3.5 h-3.5" /> Delete
             </button>
           </div>
         </div>

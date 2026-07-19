@@ -1,81 +1,71 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { deleteMultipleCandidatesAction } from "@/actions";
 import toast from "react-hot-toast";
-import { useDataTable } from "@/hooks/useDataTable";
 import { Pagination } from "@/components/DataTable/Pagination";
 
-
-export default function FloatListClient({ mandates, floats, allCandidatesMaster }: { mandates: any[], floats?: any[], allCandidatesMaster?: any[] }) {
+export default function FloatListClient({ 
+  paginatedData, 
+  metadata 
+}: { 
+  paginatedData: any[], 
+  metadata: any 
+}) {
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [stageFilter, setStageFilter] = useState("");
-  const [mandateFilter, setMandateFilter] = useState("");
-  const [companyFilter, setCompanyFilter] = useState("");
-  const [designationFilter, setDesignationFilter] = useState("");
+  const searchParams = useSearchParams();
 
-  const mandateCandidates = mandates.flatMap((m) =>
-    m.candidates.map((c: any) => ({ ...c, mandateRole: m.role, mandateCompany: m.company, mandateId: m.id }))
-  );
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [stageFilter, setStageFilter] = useState(searchParams.get("stage") || "");
+  const [mandateFilter, setMandateFilter] = useState(searchParams.get("mandate") || "");
+  const [companyFilter, setCompanyFilter] = useState(searchParams.get("company") || "");
+  const [designationFilter, setDesignationFilter] = useState(searchParams.get("designation") || "");
+  const [pageSize, setPageSize] = useState(Number(searchParams.get("pageSize")) || 50);
 
-  const floatedCandidates: any[] = [];
-  if (floats && allCandidatesMaster) {
-    const floatMap = new Map();
-    for (const f of floats) {
-      if (f.client === "General" && !floatMap.has(f.candId)) {
-        floatMap.set(f.candId, true);
-        const cand = allCandidatesMaster.find(c => c.id === f.candId);
-        if (cand) {
-          floatedCandidates.push({
-            id: 'float-' + cand.id,
-            externalId: cand.id,
-            name: cand.name,
-            company: cand.company,
-            role: cand.designation,
-            stage: f.status || 'Shared',
-            score: cand.score,
-            hasReport: cand.hasReport,
-            initials: cand.initials,
-            mandateRole: 'General Float',
-            mandateCompany: 'General',
-            mandateId: 0,
-            isFloatOnly: true
-          });
-        }
-      }
-    }
-  }
+  const sortKey = searchParams.get("sortKey") || "createdAt";
+  const sortDir = searchParams.get("sortDir") || "desc";
 
-  const allCandidates = [...mandateCandidates, ...floatedCandidates];
+  const { uniqueMandates, uniqueCompanies, uniqueDesignations, totalCount: totalRows, totalPages, currentPage } = metadata;
+  
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalRows);
 
-  // Extract unique values for filters
-  const uniqueMandates = Array.from(new Set(allCandidates.map(c => `${c.mandateRole} @ ${c.mandateCompany}`))).sort();
-  const uniqueCompanies = Array.from(new Set(allCandidates.map(c => c.company).filter(Boolean))).sort();
-  const uniqueDesignations = Array.from(new Set(allCandidates.map(c => c.role).filter(Boolean))).sort();
+  const updateURL = (newParams: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(newParams).forEach(([k, v]) => {
+      if (v === "") params.delete(k);
+      else params.set(k, v);
+    });
+    if (!newParams.page) params.set("page", "1");
+    router.push(`?${params.toString()}`);
+  };
 
-  const filtered = allCandidates.filter((c) => {
-    const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) || c.company?.toLowerCase().includes(search.toLowerCase());
-    const matchStage = !stageFilter || c.stage === stageFilter;
-    const matchMandate = !mandateFilter || `${c.mandateRole} @ ${c.mandateCompany}` === mandateFilter;
-    const matchCompany = !companyFilter || c.company === companyFilter;
-    const matchDesignation = !designationFilter || c.role === designationFilter;
-    return matchSearch && matchStage && matchMandate && matchCompany && matchDesignation;
-  });
+  const handleSearchBlur = () => updateURL({ search });
 
-  const _dt = useDataTable({ data: filtered, defaultSortKey: "name", defaultSortDir: "asc" });
+  const toggleSort = (key: string) => {
+    const newDir = sortKey === key && sortDir === "asc" ? "desc" : "asc";
+    updateURL({ sortKey: key, sortDir: newDir });
+  };
+
+  const goToPage = (p: number) => updateURL({ page: p.toString() });
+  const goToNextPage = () => goToPage(Math.min(totalPages, currentPage + 1));
+  const goToPrevPage = () => goToPage(Math.max(1, currentPage - 1));
+  const handlePageSizeChange = (s: number) => {
+    setPageSize(s);
+    updateURL({ pageSize: s.toString(), page: "1" });
+  };
 
   // Bulk Delete State
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allSelected = _dt.paginatedData.length > 0 && _dt.paginatedData.every((c: any) => selectedIds.has(c.externalId));
+  const allSelected = paginatedData.length > 0 && paginatedData.every((c: any) => selectedIds.has(c.externalId));
   const toggleAll = () => {
     if (allSelected) setSelectedIds(new Set());
-    else setSelectedIds(new Set(_dt.paginatedData.map((c: any) => c.externalId)));
+    else setSelectedIds(new Set(paginatedData.map((c: any) => c.externalId)));
   };
   const toggleRow = (externalId: string) => {
     const next = new Set(selectedIds);
@@ -109,9 +99,17 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
       
       {/* Filters Bar */}
       <div className="flex flex-wrap gap-3 mb-6 bg-white p-3 border border-gray-200 rounded-xl shadow-sm">
-        <input type="text" placeholder="Search by Name/Company..." value={search} onChange={(e) => setSearch(e.target.value)} className="min-w-[200px] flex-1 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]"/>
+        <input 
+          type="text" 
+          placeholder="Search by Name/Company..." 
+          value={search} 
+          onChange={(e) => setSearch(e.target.value)}
+          onBlur={handleSearchBlur}
+          onKeyDown={e => e.key === "Enter" && handleSearchBlur()} 
+          className="min-w-[200px] flex-1 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]"
+        />
         
-        <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none">
+        <select value={stageFilter} onChange={(e) => { setStageFilter(e.target.value); updateURL({ stage: e.target.value }); }} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none">
           <option value="">All Stages</option>
           <option value="shortlist">Shortlist</option>
           <option value="interview">Interview</option>
@@ -121,19 +119,19 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
           <option value="mapping">Mapping</option>
         </select>
 
-        <select value={mandateFilter} onChange={(e) => setMandateFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[200px]">
+        <select value={mandateFilter} onChange={(e) => { setMandateFilter(e.target.value); updateURL({ mandate: e.target.value }); }} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[200px]">
           <option value="">All Mandates</option>
-          {uniqueMandates.map(m => <option key={m} value={m}>{m}</option>)}
+          {uniqueMandates.map((m: any) => <option key={m} value={m}>{m}</option>)}
         </select>
 
-        <select value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+        <select value={companyFilter} onChange={(e) => { setCompanyFilter(e.target.value); updateURL({ company: e.target.value }); }} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
           <option value="">All Companies</option>
-          {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
+          {uniqueCompanies.map((c: any) => <option key={c} value={c}>{c}</option>)}
         </select>
 
-        <select value={designationFilter} onChange={(e) => setDesignationFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+        <select value={designationFilter} onChange={(e) => { setDesignationFilter(e.target.value); updateURL({ designation: e.target.value }); }} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
           <option value="">All Designations</option>
-          {uniqueDesignations.map(d => <option key={d} value={d}>{d}</option>)}
+          {uniqueDesignations.map((d: any) => <option key={d} value={d}>{d}</option>)}
         </select>
       </div>
       
@@ -163,17 +161,17 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
                 <th className="px-4 py-3 text-center w-10">
                   <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Company</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Designation</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase cursor-pointer" onClick={() => toggleSort("name")}>Name {sortKey === "name" && (sortDir === "asc" ? "↑" : "↓")}</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase cursor-pointer" onClick={() => toggleSort("company")}>Company {sortKey === "company" && (sortDir === "asc" ? "↑" : "↓")}</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase cursor-pointer" onClick={() => toggleSort("role")}>Designation {sortKey === "role" && (sortDir === "asc" ? "↑" : "↓")}</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Mandate</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Stage</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Score</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase cursor-pointer" onClick={() => toggleSort("stage")}>Stage {sortKey === "stage" && (sortDir === "asc" ? "↑" : "↓")}</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase cursor-pointer" onClick={() => toggleSort("score")}>Score {sortKey === "score" && (sortDir === "asc" ? "↑" : "↓")}</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {_dt.paginatedData.map((c, i) => (
+              {paginatedData.map((c: any, i: number) => (
                 <tr key={i} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => c.isFloatOnly ? router.push("/dashboard/candidates/" + c.externalId) : router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId)}>
                   <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
                     <input type="checkbox" checked={selectedIds.has(c.externalId)} onChange={() => toggleRow(c.externalId)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
@@ -208,16 +206,16 @@ export default function FloatListClient({ mandates, floats, allCandidatesMaster 
             </tbody>
         </table>
         <Pagination
-          currentPage={_dt.currentPage}
-          totalPages={_dt.totalPages}
-          totalRows={_dt.totalRows}
-          startIndex={_dt.startIndex}
-          endIndex={_dt.endIndex}
-          pageSize={_dt.pageSize}
-          setPageSize={_dt.setPageSize}
-          goToPage={_dt.goToPage}
-          goToNextPage={_dt.goToNextPage}
-          goToPrevPage={_dt.goToPrevPage}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalRows={totalRows}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          pageSize={pageSize}
+          setPageSize={handlePageSizeChange}
+          goToPage={goToPage}
+          goToNextPage={goToNextPage}
+          goToPrevPage={goToPrevPage}
         />
         </div>
       </div>

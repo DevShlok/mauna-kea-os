@@ -1,5 +1,5 @@
 import { pgTable, integer as int, varchar, text, doublePrecision as float, boolean, timestamp as datetime, json, text as mediumtext, date, serial, index } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
+import { sql, relations } from 'drizzle-orm';
 
 // ─── MANDATES ────────────────────────────────────────────
 export const mandates = pgTable('mandates', {
@@ -36,7 +36,12 @@ export const mandates = pgTable('mandates', {
   deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
   auditLog: json('audit_log').$type<Record<string, { updatedBy: string, updatedAt: string }>>().default({}),
-});
+}, (table) => ({
+  companyIdx: index('mandates_company_idx').on(table.company),
+  roleIdx: index('mandates_role_idx').on(table.role),
+  statusIdx: index('mandates_status_idx').on(table.status),
+  isDeletedIdx: index('mandates_is_deleted_idx').on(table.isDeleted),
+}));
 
 // ─── MANDATE CANDIDATES ──────────────────────────────────
 export const mandateCandidates = pgTable('mandate_candidates', {
@@ -54,7 +59,11 @@ export const mandateCandidates = pgTable('mandate_candidates', {
   cvText: text('cv_text'),
   createdAt: datetime('created_at').default(sql`now()`),
   addedBy: varchar('added_by', { length: 255 }),
-});
+}, (table) => ({
+  mandateIdIdx: index('mc_mandate_id_idx').on(table.mandateId),
+  externalIdIdx: index('mc_external_id_idx').on(table.externalId),
+  stageIdx: index('mc_stage_idx').on(table.stage),
+}));
 
 // ─── CANDIDATES (MASTER) ─────────────────────────────────
 export const candidates = pgTable('candidates', {
@@ -103,7 +112,13 @@ export const candidates = pgTable('candidates', {
   updatedAt: datetime('updated_at').default(sql`now()`),
   updatedBy: varchar('updated_by', { length: 255 }),
   auditLog: json('audit_log').$type<Record<string, { updatedBy: string, updatedAt: string }>>().default({}),
-});
+}, (table) => ({
+  nameIdx: index('candidates_name_idx').on(table.name),
+  emailIdx: index('candidates_email_idx').on(table.email),
+  companyIdx: index('candidates_company_idx').on(table.company),
+  statusIdx: index('candidates_status_idx').on(table.status),
+  isDeletedIdx: index('candidates_is_deleted_idx').on(table.isDeleted),
+}));
 
 // ─── CANDIDATE FILES (HISTORY) ───────────────────────────
 export const candidateFiles = pgTable('candidate_files', {
@@ -148,7 +163,11 @@ export const floats = pgTable('floats', {
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
-});
+}, (table) => ({
+  candIdIdx: index('floats_cand_id_idx').on(table.candId),
+  isDeletedIdx: index('floats_is_deleted_idx').on(table.isDeleted),
+  statusIdx: index('floats_status_idx').on(table.status),
+}));
 
 // ─── FLOAT FOLLOW-UPS ────────────────────────────────────
 export const floatFollowUps = pgTable('float_followups', {
@@ -225,7 +244,11 @@ export const platformUsers = pgTable('platform_users', {
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
-});
+}, (table) => ({
+  emailIdx: index('users_email_idx').on(table.email),
+  roleIdx: index('users_role_idx').on(table.role),
+  isDeletedIdx: index('users_is_deleted_idx').on(table.isDeleted),
+}));
 
 // ─── CANDIDATE REPORTS (AI WORKBENCH) ────────────────────
 export const candidateReports = pgTable('candidate_reports', {
@@ -253,7 +276,12 @@ export const clients = pgTable('clients', {
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
-});
+}, (table) => ({
+  nameIdx: index('clients_name_idx').on(table.name),
+  statusIdx: index('clients_status_idx').on(table.status),
+  verticalIdx: index('clients_vertical_idx').on(table.vertical),
+  isDeletedIdx: index('clients_is_deleted_idx').on(table.isDeleted),
+}));
 
 // ─── CLIENT NOTIFICATIONS ────────────────────────────────
 export const clientNotifications = pgTable('client_notifications', {
@@ -365,3 +393,42 @@ export const masterClients = pgTable('master_clients', {
 export type MasterIndustry = typeof masterIndustries.$inferSelect;
 export type MasterLocation = typeof masterLocations.$inferSelect;
 export type MasterClient = typeof masterClients.$inferSelect;
+
+// ─── RELATIONS ───────────────────────────────────────────
+export const mandatesRelations = relations(mandates, ({ many }) => ({
+  candidates: many(mandateCandidates),
+}));
+
+export const mandateCandidatesRelations = relations(mandateCandidates, ({ one }) => ({
+  mandate: one(mandates, {
+    fields: [mandateCandidates.mandateId],
+    references: [mandates.id],
+  }),
+}));
+
+export const frameworksRelations = relations(frameworks, ({ many }) => ({
+  categories: many(frameworkCategories),
+  reports: many(candidateReports),
+}));
+
+export const frameworkCategoriesRelations = relations(frameworkCategories, ({ one, many }) => ({
+  framework: one(frameworks, {
+    fields: [frameworkCategories.frameworkId],
+    references: [frameworks.id],
+  }),
+  criteria: many(frameworkCriteria),
+}));
+
+export const frameworkCriteriaRelations = relations(frameworkCriteria, ({ one }) => ({
+  category: one(frameworkCategories, {
+    fields: [frameworkCriteria.categoryId],
+    references: [frameworkCategories.id],
+  }),
+}));
+
+export const candidateReportsRelations = relations(candidateReports, ({ one }) => ({
+  framework: one(frameworks, {
+    fields: [candidateReports.frameworkId],
+    references: [frameworks.id],
+  }),
+}));

@@ -3,7 +3,7 @@
 /**
  * Normalizes a string for comparison (lowercase, trims, removes special characters depending on type).
  */
-export function normalizeString(str: string | null | undefined, type: "name" | "email" | "mobile" | "company" = "name"): string {
+function normalizeString(str: string | null | undefined, type: "name" | "email" | "mobile" | "company" = "name"): string {
   if (!str) return "";
   let s = str.toLowerCase().trim();
   
@@ -48,7 +48,7 @@ function levenshteinDistance(a: string, b: string): number {
 /**
  * Calculates a similarity score between 0 and 100.
  */
-export function calculateSimilarityScore(a: string | null | undefined, b: string | null | undefined, type: "name" | "email" | "mobile" | "company" = "name"): number {
+function calculateSimilarityScore(a: string | null | undefined, b: string | null | undefined, type: "name" | "email" | "mobile" | "company" = "name"): number {
   const normA = normalizeString(a, type);
   const normB = normalizeString(b, type);
   

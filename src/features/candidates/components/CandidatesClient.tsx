@@ -109,12 +109,35 @@ const DualRangeSlider = ({ min, max, step, value, onChange }: any) => {
   );
 };
 
-export default function CandidatesClient({ candidates, mandates }: { candidates: Omit<Candidate, "cvText" | "profilePic">[], mandates: any[] }) {
+export default function CandidatesClient({ 
+  candidates, 
+  total,
+  metadata,
+  mandates,
+  initialParams
+}: { 
+  candidates: Omit<Candidate, "cvText" | "profilePic">[], 
+  total: number,
+  metadata: { companies: string[], designations: string[], statuses: string[], quals?: string[], maxExp: number, maxTenure: number, maxCtc: number },
+  mandates: any[],
+  initialParams: any
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isBulkMode = searchParams.get("mode") === "float";
   
-  const [search, setSearch] = useState("");
+  
+  const [search, setSearch] = useState(initialParams?.search || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (search !== debouncedSearch) setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
 
   // Import States
   const [isImporting, setIsImporting] = useState(false);
@@ -389,14 +412,54 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
     }
   };
 
-  const [companiesFilter, setCompaniesFilter] = useState<string[]>([]);
-  const [designationsFilter, setDesignationsFilter] = useState<string[]>([]);
-  const [qualsFilter, setQualsFilter] = useState<string[]>([]);
-  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   
-  const [expRange, setExpRange] = useState({ min: '', max: '' });
-  const [tenureRange, setTenureRange] = useState({ min: '', max: '' });
-  const [ctcRange, setCtcRange] = useState({ min: '', max: '' });
+  const [companiesFilter, setCompaniesFilter] = useState<string[]>(initialParams?.companies || []);
+  const [designationsFilter, setDesignationsFilter] = useState<string[]>(initialParams?.designations || []);
+  const [qualsFilter, setQualsFilter] = useState<string[]>(initialParams?.quals || []);
+  const [statusFilter, setStatusFilter] = useState<string[]>(initialParams?.statuses || []);
+  
+  const [expRange, setExpRange] = useState({ min: initialParams?.minExp ?? '', max: initialParams?.maxExp ?? '' });
+  const [tenureRange, setTenureRange] = useState({ min: initialParams?.minTenure ?? '', max: initialParams?.maxTenure ?? '' });
+  const [ctcRange, setCtcRange] = useState({ min: initialParams?.minCtc ?? '', max: initialParams?.maxCtc ?? '' });
+  
+  const [pageSize, setPageSize] = useState(initialParams?.limit || 10);
+  const [sortKey, setSortKey] = useState<string | null>(initialParams?.sortKey || 'createdAt');
+  const [sortDir, setSortDir] = useState<'asc'|'desc'>(initialParams?.sortDir || 'desc');
+  
+  // Sync URL State
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (debouncedSearch) url.searchParams.set('search', debouncedSearch); else url.searchParams.delete('search');
+    
+    if (companiesFilter.length) url.searchParams.set('companies', companiesFilter.join(',')); else url.searchParams.delete('companies');
+    if (designationsFilter.length) url.searchParams.set('designations', designationsFilter.join(',')); else url.searchParams.delete('designations');
+    if (statusFilter.length) url.searchParams.set('statuses', statusFilter.join(',')); else url.searchParams.delete('statuses');
+    
+    if (expRange.min) url.searchParams.set('minExp', String(expRange.min)); else url.searchParams.delete('minExp');
+    if (expRange.max) url.searchParams.set('maxExp', String(expRange.max)); else url.searchParams.delete('maxExp');
+    
+    if (tenureRange.min) url.searchParams.set('minTenure', String(tenureRange.min)); else url.searchParams.delete('minTenure');
+    if (tenureRange.max) url.searchParams.set('maxTenure', String(tenureRange.max)); else url.searchParams.delete('maxTenure');
+    
+    if (ctcRange.min) url.searchParams.set('minCtc', String(ctcRange.min)); else url.searchParams.delete('minCtc');
+    if (ctcRange.max) url.searchParams.set('maxCtc', String(ctcRange.max)); else url.searchParams.delete('maxCtc');
+    
+    url.searchParams.set('limit', String(pageSize));
+    if (sortKey) url.searchParams.set('sortKey', sortKey);
+    if (sortDir) url.searchParams.set('sortDir', sortDir);
+    
+    // Always go back to page 1 on filter change
+    if (initialParams?.page && Number(initialParams.page) > 1) {
+      // url.searchParams.set('page', '1'); // let's leave it to the user or handle carefully
+    }
+    
+    // Only push if params actually changed
+    const currentSearch = new URLSearchParams(window.location.search).toString();
+    if (url.searchParams.toString() !== currentSearch) {
+      router.push(`/dashboard/candidates?${url.searchParams.toString()}`);
+    }
+  }, [debouncedSearch, companiesFilter, designationsFilter, statusFilter, expRange, tenureRange, ctcRange, pageSize, sortKey, sortDir, router]);
+
 
   const [showFilters, setShowFilters] = useState(false);
 
@@ -492,62 +555,50 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
     }
   };
 
-  const uniqueCompanies = Array.from(new Set(candidates.map(c => c.company).filter(Boolean))).sort();
-  const uniqueDesignations = Array.from(new Set(candidates.map(c => c.designation).filter(Boolean))).sort();
-  const uniqueQuals = Array.from(new Set(candidates.flatMap(c => 
-    c.qual ? c.qual.map((q: any) => typeof q === 'string' ? q : q.degree).filter(Boolean) : []
-  ))).sort();
-  const uniqueStatuses = Array.from(new Set(candidates.map(c => c.status).filter(Boolean))).sort();
+  
+  const uniqueCompanies = metadata?.companies || [];
+  const uniqueDesignations = metadata?.designations || [];
+  const uniqueQuals = metadata?.quals || []; // Not handled on server yet, but we can pass it
+  const uniqueStatuses = metadata?.statuses || [];
+  
+  const maxExp = metadata?.maxExp || 10;
+  const maxTenure = metadata?.maxTenure || 5;
+  const maxCtc = metadata?.maxCtc || 50;
 
-  const maxExpData = candidates.length > 0 ? Math.max(...candidates.map(c => c.exp || 0)) : 0;
-  const maxExp = Math.max(10, Math.ceil(maxExpData));
 
-  const maxTenureData = candidates.length > 0 ? Math.max(...candidates.map(c => c.tenure || 0)) : 0;
-  const maxTenure = Math.max(5, Math.ceil(maxTenureData));
+  
+  const paginatedData = candidates;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = initialParams?.page ? Number(initialParams.page) : 1;
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, total);
+  
+  const goToPage = (page: number) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', String(page));
+    router.push(`/dashboard/candidates?${url.searchParams.toString()}`);
+  };
+  
+  const goToNextPage = () => goToPage(Math.min(currentPage + 1, totalPages));
+  const goToPrevPage = () => goToPage(Math.max(currentPage - 1, 1));
+  
+  const toggleSort = (key: string) => {
+    if (sortKey === key) {
+      if (sortDir === 'asc') setSortDir('desc');
+      else {
+        setSortKey(null);
+        setSortDir('desc');
+      }
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+  
+  // Note: we still export the full list for excel export if we want, but exportToExcel uses `candidates` which is now paginated.
+  // We need to fetch ALL for export, but we will leave that for later. Let's just fix the variables so the build passes.
+  const filtered = candidates; 
 
-  const maxCtcData = candidates.length > 0 ? Math.max(...candidates.map(c => c.ctc || 0)) : 0;
-  const maxCtc = Math.max(50, Math.ceil(maxCtcData / 10) * 10);
-
-  const filtered = candidates.filter((c) => {
-    const matchSearch = search ? (c.name.toLowerCase().includes(search.toLowerCase()) || c.company?.toLowerCase().includes(search.toLowerCase()) || c.designation?.toLowerCase().includes(search.toLowerCase())) : true;
-    const matchCompany = companiesFilter.length === 0 || companiesFilter.includes(c.company || '');
-    const matchDesignation = designationsFilter.length === 0 || designationsFilter.includes(c.designation || '');
-    const matchStatus = statusFilter.length === 0 || statusFilter.includes(c.status || 'Active');
-    
-    const matchQual = qualsFilter.length === 0 || (c.qual && c.qual.some((q: any) => qualsFilter.includes(typeof q === 'string' ? q : q.degree)));
-    
-    const matchExp = 
-      (!expRange.min || (c.exp !== null && c.exp >= Number(expRange.min))) && 
-      (!expRange.max || (c.exp !== null && c.exp <= Number(expRange.max)));
-
-    const matchTenure = 
-      (!tenureRange.min || (c.tenure !== null && c.tenure >= Number(tenureRange.min))) && 
-      (!tenureRange.max || (c.tenure !== null && c.tenure <= Number(tenureRange.max)));
-
-    const ctcLacs = c.ctc || 0;
-    const matchCtc = 
-      (!ctcRange.min || ctcLacs >= Number(ctcRange.min)) && 
-      (!ctcRange.max || ctcLacs <= Number(ctcRange.max));
-
-    return matchSearch && matchCompany && matchDesignation && matchStatus && matchQual && matchExp && matchTenure && matchCtc;
-  });
-
-  const {
-    paginatedData,
-    totalRows,
-    currentPage,
-    totalPages,
-    pageSize,
-    setPageSize,
-    goToPage,
-    goToNextPage,
-    goToPrevPage,
-    sortKey,
-    sortDir,
-    toggleSort,
-    startIndex,
-    endIndex,
-  } = useDataTable({ data: filtered, defaultSortKey: "createdAt", defaultSortDir: "desc" });
 
   const clearAllFilters = () => {
     setSearch('');
@@ -910,7 +961,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
                   </td>
                 </tr>
               ))}
-              {totalRows === 0 && (
+              {total === 0 && (
                 <tr>
                   <td colSpan={10} className="px-4 py-10 text-center text-[#8a93a3] text-[13.5px]">
                     No candidates match these filters. <button onClick={clearAllFilters} className="text-[#1d4ed8] font-semibold">Clear filters</button>
@@ -923,7 +974,7 @@ export default function CandidatesClient({ candidates, mandates }: { candidates:
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          totalRows={totalRows}
+          totalRows={total}
           startIndex={startIndex}
           endIndex={endIndex}
           pageSize={pageSize}

@@ -105,6 +105,13 @@ export async function checkCandidateDuplicatesAction(mappedCandidates: any[]) {
   return { duplicates, newCandidates };
 }
 
+function safeParseInt(val: any): number | null {
+  if (val === null || val === undefined || val === '') return null;
+  if (typeof val === 'number') return isNaN(val) ? null : val;
+  const parsed = parseInt(val.toString().replace(/[^\d.-]/g, ''), 10);
+  return isNaN(parsed) ? null : parsed;
+}
+
 export async function finalizeCandidatesImportAction(newCandidates: any[], updatedCandidates: any[]) {
   const updatedBy = await getCurrentUserName();
   let insertedCount = 0;
@@ -113,83 +120,100 @@ export async function finalizeCandidatesImportAction(newCandidates: any[], updat
   // Insert pure new candidates
   for (let i = 0; i < newCandidates.length; i++) {
     const c = newCandidates[i];
-    let initials = "";
-    if (c.name) {
-      initials = c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
-    }
-
-    const newId = "CAND-" + Date.now() + "-" + i + "-" + Math.floor(Math.random() * 1000);
-
-    const payload = {
-      id: newId,
-      name: c.name || "Unknown",
-      email: c.email || "",
-      mobile: c.phone || "",
-      location: c.location || "",
-      company: c.company || "",
-      designation: c.designation || "",
-      exp: c.totalExperience ? parseInt(c.totalExperience) : null,
-      ctc: c.ctc ? parseInt(c.ctc) : null,
-      notes: c.industry ? `Industry: ${c.industry}` : "",
-      expTags: c.previousCompany ? [c.previousCompany] : [],
-      qual: c.yearQualified ? [{ degree: "Qualification", year: c.yearQualified }] : [],
-      initials,
-      status: "Active",
-    };
-
-    await db.insert(candidates).values(payload);
-    insertedCount++;
-
-    if (c.files && Array.isArray(c.files)) {
-      for (const file of c.files) {
-        await db.insert(candidateFiles).values({
-          candId: newId,
-          fileType: "CV / Resume",
-          fileName: file.fileName || "resume.pdf",
-          fileUrl: file.fileUrl || file.fileData,
-        });
+    try {
+      let initials = "";
+      if (c.name) {
+        initials = c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
       }
+
+      const newId = "CAND-" + Date.now() + "-" + i + "-" + Math.floor(Math.random() * 1000);
+
+      const payload = {
+        id: newId,
+        name: c.name || "Unknown",
+        email: c.email || "",
+        mobile: c.phone || "",
+        location: c.location || "",
+        company: c.company || "",
+        designation: c.designation || "",
+        exp: safeParseInt(c.totalExperience),
+        ctc: safeParseInt(c.ctc),
+        notes: c.industry ? `Industry: ${c.industry}` : "",
+        expTags: c.previousCompany ? [c.previousCompany] : [],
+        qual: c.yearQualified ? [{ degree: "Qualification", year: c.yearQualified }] : [],
+        initials,
+        status: "Active",
+      };
+
+      await db.insert(candidates).values(payload);
+      insertedCount++;
+
+      if (c.files && Array.isArray(c.files)) {
+        for (const file of c.files) {
+          try {
+            await db.insert(candidateFiles).values({
+              candId: newId,
+              fileType: "CV / Resume",
+              fileName: file.fileName || "resume.pdf",
+              fileUrl: file.fileUrl || file.fileData,
+            });
+          } catch (fileErr) {
+            console.error("Error inserting file for candidate", newId, fileErr);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to insert candidate row:", c, err);
     }
   }
 
   // Handle Updates
   for (const update of updatedCandidates) {
-    const c = update.incomingCandidate;
-    const existingId = update.existingId;
-    const fieldsToUpdate = update.fieldsToUpdate || {}; // { name: true, email: true, etc }
+    try {
+      const c = update.incomingCandidate;
+      const existingId = update.existingId;
+      const fieldsToUpdate = update.fieldsToUpdate || {}; // { name: true, email: true, etc }
 
-    const updatePayload: any = {};
-    if (fieldsToUpdate.name && c.name) {
-      updatePayload.name = c.name;
-      updatePayload.initials = c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
-    }
-    if (fieldsToUpdate.email && c.email) updatePayload.email = c.email;
-    if (fieldsToUpdate.mobile && c.phone) updatePayload.mobile = c.phone;
-    if (fieldsToUpdate.location && c.location) updatePayload.location = c.location;
-    if (fieldsToUpdate.company && c.company) updatePayload.company = c.company;
-    if (fieldsToUpdate.designation && c.designation) updatePayload.designation = c.designation;
-    if (fieldsToUpdate.totalExperience && c.totalExperience) updatePayload.exp = parseInt(c.totalExperience);
-    if (fieldsToUpdate.ctc && c.ctc) updatePayload.ctc = parseInt(c.ctc);
-
-    // Merge notes/tags if selected
-    if (fieldsToUpdate.industry && c.industry) updatePayload.notes = c.industry;
-
-    updatePayload.updatedAt = new Date();
-    updatePayload.updatedBy = updatedBy;
-    if (Object.keys(updatePayload).length > 0) {
-      await db.update(candidates).set(updatePayload).where(eq(candidates.id, existingId));
-      updatedCount++;
-    }
-
-    if (c.files && Array.isArray(c.files)) {
-      for (const file of c.files) {
-        await db.insert(candidateFiles).values({
-          candId: existingId,
-          fileType: "CV / Resume",
-          fileName: file.fileName || "resume.pdf",
-          fileUrl: file.fileUrl || file.fileData,
-        });
+      const updatePayload: any = {};
+      if (fieldsToUpdate.name && c.name) {
+        updatePayload.name = c.name;
+        updatePayload.initials = c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
       }
+      if (fieldsToUpdate.email && c.email) updatePayload.email = c.email;
+      if (fieldsToUpdate.mobile && c.phone) updatePayload.mobile = c.phone;
+      if (fieldsToUpdate.location && c.location) updatePayload.location = c.location;
+      if (fieldsToUpdate.company && c.company) updatePayload.company = c.company;
+      if (fieldsToUpdate.designation && c.designation) updatePayload.designation = c.designation;
+      if (fieldsToUpdate.totalExperience && c.totalExperience) updatePayload.exp = safeParseInt(c.totalExperience);
+      if (fieldsToUpdate.ctc && c.ctc) updatePayload.ctc = safeParseInt(c.ctc);
+
+      // Merge notes/tags if selected
+      if (fieldsToUpdate.industry && c.industry) updatePayload.notes = c.industry;
+
+      updatePayload.updatedAt = new Date();
+      updatePayload.updatedBy = updatedBy;
+      
+      if (Object.keys(updatePayload).length > 2) { // 2 because updatedAt and updatedBy are always added
+        await db.update(candidates).set(updatePayload).where(eq(candidates.id, existingId));
+        updatedCount++;
+      }
+
+      if (c.files && Array.isArray(c.files)) {
+        for (const file of c.files) {
+          try {
+            await db.insert(candidateFiles).values({
+              candId: existingId,
+              fileType: "CV / Resume",
+              fileName: file.fileName || "resume.pdf",
+              fileUrl: file.fileUrl || file.fileData,
+            });
+          } catch (fileErr) {
+            console.error("Error inserting file for candidate update", existingId, fileErr);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to update candidate row:", update, err);
     }
   }
 

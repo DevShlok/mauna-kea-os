@@ -50,36 +50,41 @@ export async function bulkInsertClientsAction(mappedClients: any[]) {
     const c = mappedClients[i];
     if (!c.name) continue;
 
-    const clientId = "CLI-" + Date.now().toString() + "-" + i;
+    try {
+      const clientId = "CLI-" + Date.now().toString() + "-" + i;
 
-    // Insert Client
-    await db.insert(clients).values({
-      id: clientId,
-      name: c.name,
-      vertical: c.vertical || "",
-      owner: c.owner || "System",
-      status: "Active",
-    });
+      // Insert Client
+      await db.insert(clients).values({
+        id: clientId,
+        name: c.name,
+        vertical: c.vertical || "",
+        owner: c.owner || "System",
+        status: "Active",
+      });
 
-    // Auto-generate Platform User if POC details exist
-    if (c.pocName && c.pocEmail) {
-      const initials = c.pocName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
-      
-      // Check if user exists
-      const existingUser = await db.select().from(platformUsers).where(eq(platformUsers.email, c.pocEmail));
-      
-      if (existingUser.length === 0) {
-        await db.insert(platformUsers).values({
-          id: "U-" + Math.floor(Math.random() * 10000).toString() + i,
-          name: c.pocName,
-          email: c.pocEmail,
-          role: "client",
-          status: "Active",
-          initials,
-          linkedClientId: clientId,
-          lastActive: new Date(),
-        });
+      // Auto-generate Platform User if POC details exist
+      if (c.pocName && c.pocEmail) {
+        const initials = c.pocName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+        
+        // Check if user exists
+        const existingUser = await db.select().from(platformUsers).where(eq(platformUsers.email, c.pocEmail));
+        
+        if (existingUser.length === 0) {
+          const uId = "U-" + Math.floor(Math.random() * 10000000).toString().substring(0, 8);
+          await db.insert(platformUsers).values({
+            id: uId,
+            name: c.pocName,
+            email: c.pocEmail,
+            role: "client",
+            status: "Active",
+            initials,
+            linkedClientId: clientId,
+            lastActive: new Date(),
+          });
+        }
       }
+    } catch (err) {
+      console.error("Failed to insert client row:", c, err);
     }
   }
 
@@ -131,23 +136,27 @@ export async function bulkInsertMandatesAction(mappedMandates: any[], clientId: 
   for (let i = 0; i < mappedMandates.length; i++) {
     const m = mappedMandates[i];
     
-    // We enforce that they belong to the specified client
-    const companyName = clientName || m.company || "Unknown Company";
-    
-    if (!m.role) continue;
+    try {
+      // We enforce that they belong to the specified client
+      const companyName = clientName || m.company || "Unknown Company";
+      
+      if (!m.role) continue;
 
-    await db.insert(mandates).values({
-      company: companyName,
-      role: m.role,
-      ctc: m.ctc || "",
-      exp: m.exp || "",
-      geography: m.geography || "",
-      clientPOC: m.pocName || "",
-      pocEmail: m.pocEmail || "",
-      pocPhone: m.pocPhone || "",
-      status: "universe",
-      internalStatus: "contractsent",
-    });
+      await db.insert(mandates).values({
+        company: companyName,
+        role: m.role,
+        ctc: m.ctc || "",
+        exp: m.exp || "",
+        geography: m.geography || "",
+        clientPOC: m.pocName || "",
+        pocEmail: m.pocEmail || "",
+        pocPhone: m.pocPhone || "",
+        status: "universe",
+        internalStatus: "contractsent",
+      });
+    } catch (err) {
+      console.error("Failed to insert mandate row:", m, err);
+    }
   }
 
   revalidatePath("/dashboard", "layout");

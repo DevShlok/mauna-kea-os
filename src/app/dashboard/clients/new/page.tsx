@@ -3,9 +3,11 @@ import NewClientClient from "@/features/clients/components/NewClientClient";
 import { db } from "@/db";
 import { masterIndustries } from "@/db/schema";
 import { asc } from "drizzle-orm";
+import { Metadata } from "next";
 
-export const metadata = {
-  title: "Add Client | Mauna Kea OS",
+export const metadata: Metadata = {
+  title: "Add Client | Mauna Kea",
+  description: "Add a new client to the Mauna Kea platform",
 };
 
 export default async function NewClientPage() {

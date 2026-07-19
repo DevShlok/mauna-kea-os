@@ -1,26 +1,71 @@
 import { requireRole } from "@/lib/auth";
-import { db } from "@/db";
-import { eq, sql, and } from "drizzle-orm";
-import { clients, mandates } from "@/db/schema";
+import { getClientsPaginated } from "@/db/queries";
 import ClientsClient from "@/features/clients/components/ClientsClient";
-
-import { getUserByEmail } from "@/db/queries";
+import { db } from "@/db";
+import { clients, mandates } from "@/db/schema";
+import { eq, inArray } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
-export default async function ClientsPage() {
+export default async function ClientsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const { platformUser: pUser, email } = await requireRole(["admin", "consultant"]);
+  const params = await searchParams;
 
-  let allClients = await db.select().from(clients).where(eq(clients.isDeleted, false));
-  let allMandates = await db.select().from(mandates).where(eq(mandates.isDeleted, false));
-  
-  if (email) {
-    if (pUser?.role === "client" && pUser.linkedClientId) {
-      allClients = allClients.filter(c => c.id === pUser.linkedClientId);
-      const allowedClientNames = allClients.map(c => c.name);
-      allMandates = allMandates.filter(m => allowedClientNames.includes(m.company));
+  const page = typeof params.page === "string" ? parseInt(params.page, 10) : 1;
+  const pageSize = typeof params.pageSize === "string" ? parseInt(params.pageSize, 10) : 50;
+  const search = typeof params.search === "string" ? params.search : "";
+  const verticalFilter = typeof params.vertical === "string" ? params.vertical : "";
+  const sortKey = typeof params.sortKey === "string" ? params.sortKey : "id";
+  const sortDir = params.sortDir === "asc" ? "asc" : "desc";
+
+  let finalSearch = search;
+  // If client role, they can only see their own client record
+  if (email && pUser?.role === "client" && pUser.linkedClientId) {
+    const [linkedClient] = await db.select().from(clients).where(eq(clients.id, pUser.linkedClientId));
+    if (linkedClient) {
+      finalSearch = linkedClient.name;
+    } else {
+      return <ClientsClient initialClients={[]} metadata={{ totalCount: 0, totalPages: 1, currentPage: 1 }} uniqueVerticals={[]} />;
     }
   }
 
-  return <ClientsClient clients={allClients} mandates={allMandates} />;
+  const { data: clientsData, metadata } = await getClientsPaginated({
+    page,
+    pageSize,
+    search: finalSearch,
+    vertical: verticalFilter,
+    sortKey,
+    sortDir,
+  });
+
+  // Fetch mandates for these specific clients
+  const clientNames = clientsData.map(c => c.name);
+  let relevantMandates: any[] = [];
+  if (clientNames.length > 0) {
+    relevantMandates = await db.select().from(mandates).where(
+      inArray(mandates.company, clientNames)
+    );
+  }
+
+  const enhancedClients = clientsData.map(c => ({
+    ...c,
+    mandates: relevantMandates.filter(m => m.company === c.name && !m.isDeleted)
+  }));
+
+  // Fetch unique verticals for dropdown
+  const allClientsForDropdowns = await db.select({ vertical: clients.vertical }).from(clients).where(eq(clients.isDeleted, false));
+  const uniqueVerticals = Array.from(new Set(allClientsForDropdowns.map(c => c.vertical).filter(Boolean))) as string[];
+  uniqueVerticals.sort();
+
+  return (
+    <ClientsClient 
+      initialClients={enhancedClients} 
+      metadata={metadata}
+      uniqueVerticals={uniqueVerticals}
+    />
+  );
 }

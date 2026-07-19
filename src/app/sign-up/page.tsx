@@ -100,7 +100,7 @@ export default function SignUpPage() {
               </span>
             </h2>
             <p className="text-[15px] leading-[1.8] text-white/45 max-w-[400px]">
-              Get started with Mauna Kea OS — the AI-powered platform that&apos;s redefining how leadership talent is discovered, evaluated, and placed across India&apos;s top organizations.
+              Get started with Mauna Kea — the AI-powered platform that&apos;s redefining how leadership talent is discovered, evaluated, and placed across India&apos;s top organizations.
             </p>
           </div>
 
@@ -142,7 +142,7 @@ export default function SignUpPage() {
             
             <div className="px-8 pt-10 pb-2">
               <h3 className="text-[22px] font-semibold text-white/90 mb-1.5">Create your account</h3>
-              <p className="text-[13px] text-white/40">Get started with Mauna Kea OS</p>
+              <p className="text-[13px] text-white/40">Get started with Mauna Kea</p>
             </div>
 
             <div className="px-8 pt-6 pb-8">

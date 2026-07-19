@@ -1,58 +1,84 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 import { updateMandateFieldAction, deleteMultipleMandatesAction } from "@/actions";
 import toast from "react-hot-toast";
 
 import { STAGE_OPTIONS, INTERNAL_OPTIONS, formatMandateCtc } from "@/lib/helpers";
-import { useDataTable } from "@/hooks/useDataTable";
 import { Pagination } from "@/components/DataTable/Pagination";
 import { SortableHeader } from "@/components/DataTable/SortableHeader";
 
 type Candidate = { id: number; externalId: string; name: string; stage: string | null; score: number | null; hasReport: boolean | null; initials: string | null; mandateId: number; };
 type Mandate = { id: number; company: string; role: string; ctc: string | null; exp: string | null; sectors: string[]; status: string | null; internalStatus: string | null; consultant: string | null; candidates: Candidate[]; };
 
-export default function MandatesClient({ initialMandates }: { initialMandates: Mandate[] }) {
+export default function MandatesClient({ 
+  initialMandates, 
+  metadata,
+  uniqueCompanies,
+  uniqueRoles,
+  uniqueSectors 
+}: { 
+  initialMandates: Mandate[];
+  metadata: { totalCount: number; totalPages: number; currentPage: number };
+  uniqueCompanies: string[];
+  uniqueRoles: string[];
+  uniqueSectors: string[];
+}) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const [mandates, setMandates] = useState(initialMandates);
-  const [search, setSearch] = useState("");
-  const [companyFilter, setCompanyFilter] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
-  const [sectorFilter, setSectorFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [internalFilter, setInternalFilter] = useState("");
+  
+  // Sync state with props
+  useEffect(() => {
+    setMandates(initialMandates);
+  }, [initialMandates]);
 
-  const uniqueCompanies = Array.from(new Set(mandates.map(m => m.company))).sort();
-  const uniqueRoles = Array.from(new Set(mandates.map(m => m.role))).sort();
-  const uniqueSectors = Array.from(new Set(mandates.flatMap(m => m.sectors))).sort();
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [companyFilter, setCompanyFilter] = useState(searchParams.get("company") || "");
+  const [roleFilter, setRoleFilter] = useState(searchParams.get("role") || "");
+  const [sectorFilter, setSectorFilter] = useState(searchParams.get("sector") || "");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "");
+  const [internalFilter, setInternalFilter] = useState(searchParams.get("internalStatus") || "");
+  const [pageSize, setPageSize] = useState(Number(searchParams.get("pageSize")) || 50);
+  
+  const sortKey = searchParams.get("sortKey") || "id";
+  const sortDir = (searchParams.get("sortDir") || "desc") as "asc" | "desc";
 
-  const filtered = mandates.filter(m => {
-    const matchSearch = m.company.toLowerCase().includes(search.toLowerCase()) || m.role.toLowerCase().includes(search.toLowerCase());
-    const matchCompany = !companyFilter || m.company === companyFilter;
-    const matchRole = !roleFilter || m.role === roleFilter;
-    const matchSector = !sectorFilter || m.sectors.includes(sectorFilter);
-    const matchStatus = !statusFilter || m.status === statusFilter;
-    const matchInternal = !internalFilter || m.internalStatus === internalFilter;
-    return matchSearch && matchCompany && matchRole && matchSector && matchStatus && matchInternal;
-  });
+  const updateURL = (newParams: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(newParams).forEach(([k, v]) => {
+      if (v === "") params.delete(k);
+      else params.set(k, v);
+    });
+    // Reset page to 1 when filters change (unless page is explicitly provided)
+    if (!newParams.page) {
+      params.set("page", "1");
+    }
+    router.push(`?${params.toString()}`);
+  };
 
-  const {
-    paginatedData,
-    totalRows,
-    currentPage,
-    totalPages,
-    pageSize,
-    setPageSize,
-    goToPage,
-    goToNextPage,
-    goToPrevPage,
-    sortKey,
-    sortDir,
-    toggleSort,
-    startIndex,
-    endIndex,
-  } = useDataTable({ data: filtered, defaultSortKey: "id", defaultSortDir: "desc" });
+  const handleSearchBlur = () => updateURL({ search });
+  
+  const toggleSort = (key: string) => {
+    const newDir = sortKey === key && sortDir === "asc" ? "desc" : "asc";
+    updateURL({ sortKey: key, sortDir: newDir });
+  };
+  const paginatedData = mandates;
+  const totalRows = metadata.totalCount;
+  const currentPage = metadata.currentPage;
+  const totalPages = metadata.totalPages;
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalRows);
+
+  const goToPage = (p: number) => updateURL({ page: p.toString() });
+  const goToNextPage = () => goToPage(Math.min(totalPages, currentPage + 1));
+  const goToPrevPage = () => goToPage(Math.max(1, currentPage - 1));
+  const handlePageSizeChange = (s: number) => {
+    setPageSize(s);
+    updateURL({ pageSize: s.toString(), page: "1" });
+  };
 
   // Bulk Delete State
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -103,29 +129,51 @@ export default function MandatesClient({ initialMandates }: { initialMandates: M
         </Link>
       </div>
       <div className="flex flex-wrap gap-3 mb-6 bg-white p-3 border border-gray-200 rounded-xl shadow-sm">
-        <input type="text" placeholder="Search mandates..." value={search} onChange={e => setSearch(e.target.value)} className="min-w-[200px] flex-1 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]"/>
+        <input 
+          type="text" 
+          placeholder="Search mandates..." 
+          value={search} 
+          onChange={e => setSearch(e.target.value)} 
+          onBlur={handleSearchBlur}
+          onKeyDown={e => e.key === "Enter" && handleSearchBlur()}
+          className="min-w-[200px] flex-1 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]"/>
         
-        <select value={companyFilter} onChange={e => setCompanyFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+        <select 
+          value={companyFilter} 
+          onChange={e => { setCompanyFilter(e.target.value); updateURL({ company: e.target.value }); }} 
+          className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
           <option value="">All Companies</option>
           {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         
-        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+        <select 
+          value={roleFilter} 
+          onChange={e => { setRoleFilter(e.target.value); updateURL({ role: e.target.value }); }} 
+          className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
           <option value="">All Roles</option>
           {uniqueRoles.map(r => <option key={r} value={r}>{r}</option>)}
         </select>
         
-        <select value={sectorFilter} onChange={e => setSectorFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+        <select 
+          value={sectorFilter} 
+          onChange={e => { setSectorFilter(e.target.value); updateURL({ sector: e.target.value }); }} 
+          className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
           <option value="">All Sectors</option>
           {uniqueSectors.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+        <select 
+          value={statusFilter} 
+          onChange={e => { setStatusFilter(e.target.value); updateURL({ status: e.target.value }); }} 
+          className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
           <option value="">All Statuses</option>
           {STAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         
-        <select value={internalFilter} onChange={e => setInternalFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+        <select 
+          value={internalFilter} 
+          onChange={e => { setInternalFilter(e.target.value); updateURL({ internalStatus: e.target.value }); }} 
+          className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
           <option value="">All Internal</option>
           {INTERNAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
@@ -197,17 +245,17 @@ export default function MandatesClient({ initialMandates }: { initialMandates: M
           </table>
         </div>
         <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalRows={totalRows}
-          startIndex={startIndex}
-          endIndex={endIndex}
-          pageSize={pageSize}
-          setPageSize={setPageSize}
-          goToPage={goToPage}
-          goToNextPage={goToNextPage}
-          goToPrevPage={goToPrevPage}
-        />
+        currentPage={currentPage}
+        totalPages={totalPages}
+        startIndex={startIndex}
+        endIndex={endIndex}
+        totalRows={totalRows}
+        goToNextPage={goToNextPage}
+        goToPrevPage={goToPrevPage}
+        pageSize={pageSize}
+        setPageSize={handlePageSizeChange}
+        goToPage={goToPage}
+      />
       </div>
 
       {/* Delete Confirmation Modal */}
