@@ -11,10 +11,12 @@ import {
   ChevronRight,
   Plus,
   Shield,
-  Trash2
+  Trash2,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidateId, userName = "User" }: { userRole?: string; linkedClientId?: string; linkedCandidateId?: string; userName?: string; }) {
   const pathname = usePathname();
@@ -23,6 +25,19 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
   const initials = fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "MK";
 
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebarCollapsed");
+    if (saved) setIsCollapsed(saved === "true");
+  }, []);
+
+  const toggleSidebar = () => {
+    setIsCollapsed(prev => {
+      localStorage.setItem("sidebarCollapsed", String(!prev));
+      return !prev;
+    });
+  };
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -91,14 +106,21 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
   ];
 
   return (
-    <div className="w-[270px] min-w-[270px] h-screen bg-[#0b1f3a] flex flex-col overflow-y-auto overflow-x-hidden shrink-0 text-white border-r border-[#D8B15B]">
-      <Link href="/dashboard" className="flex items-center gap-3 p-5 pb-4 border-b border-[#D8B15B] hover:bg-white/5 transition-colors">
-        <div className="bg-[#D8B15B] text-[#133255] font-serif text-lg font-bold w-10 h-10 flex items-center justify-center rounded">MK</div>
-        <div>
-          <span className="font-serif text-[16px] font-bold block leading-tight">Mauna Kea</span>
-          <span className="text-[11px] text-white/55 tracking-wider block">EXECUTIVE SEARCH OS</span>
-        </div>
-      </Link>
+    <div className={`h-screen bg-[#0b1f3a] flex flex-col overflow-y-auto overflow-x-hidden shrink-0 text-white border-r border-[#D8B15B] transition-all duration-300 ease-in-out ${isCollapsed ? "w-[76px] min-w-[76px]" : "w-[270px] min-w-[270px]"}`}>
+      <div className={`flex items-center p-5 pb-4 border-b border-[#D8B15B] hover:bg-white/5 transition-colors ${isCollapsed ? "flex-col gap-4" : "justify-between gap-3"}`}>
+        <Link href="/dashboard" className={`flex items-center gap-3 overflow-hidden ${isCollapsed ? "justify-center" : ""}`}>
+          <div className="bg-[#D8B15B] text-[#133255] font-serif text-lg font-bold w-10 h-10 flex items-center justify-center rounded shrink-0">MK</div>
+          {!isCollapsed && (
+            <div className="whitespace-nowrap">
+              <span className="font-serif text-[16px] font-bold block leading-tight">Mauna Kea</span>
+              <span className="text-[11px] text-white/55 tracking-wider block">EXECUTIVE SEARCH OS</span>
+            </div>
+          )}
+        </Link>
+        <button onClick={toggleSidebar} className="text-white/50 hover:text-white transition-colors p-1 rounded-md hover:bg-white/10" title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
+          {isCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+        </button>
+      </div>
 
       <div className="flex-1 py-4 flex flex-col gap-1">
         {categories.filter(cat => cat.visibleTo.includes(userRole)).map((category, idx) => {
@@ -119,20 +141,29 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
               onMouseLeave={handleMouseLeave}
             >
               <div 
-                className={`flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-all duration-200 ${
+                className={`flex items-center gap-3 py-3.5 cursor-pointer transition-all duration-200 ${
                   isHighlighted 
                     ? "bg-white/12 text-white font-semibold border-l-[3px] border-[#D8B15B] scale-[1.02]" 
                     : "text-white/70 hover:bg-white/5 hover:text-white border-l-[3px] border-transparent"
-                }`}
+                } ${isCollapsed ? "px-0 justify-center" : "px-5"}`}
+                onClick={() => {
+                  if (isCollapsed) setIsCollapsed(false);
+                }}
+                title={isCollapsed ? category.title : undefined}
               >
                 <category.icon className={`w-[19px] h-[19px] shrink-0 ${isHighlighted ? "text-[#D8B15B]" : ""}`} />
-                <span className="text-[15px] flex-1 tracking-wide">{category.title}</span>
-                <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? "rotate-90 text-white" : "text-white/30"}`} />
+                {!isCollapsed && (
+                  <>
+                    <span className="text-[15px] flex-1 tracking-wide">{category.title}</span>
+                    <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? "rotate-90 text-white" : "text-white/30"}`} />
+                  </>
+                )}
               </div>
               
-              <div 
-                className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
-              >
+              {!isCollapsed && (
+                <div 
+                  className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+                >
                 <div className="overflow-hidden min-h-0 flex flex-col bg-[#06152a]/50">
                   <div className="flex flex-col py-1">
                   {visibleChildren.map((child, childIdx) => {
@@ -157,21 +188,24 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                   })}
                   </div>
                 </div>
-              </div>
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
-      <div className="mt-auto p-4 border-t border-white/10 flex items-center gap-3">
-        <div className="w-[38px] h-[38px] bg-[#D8B15B] text-[#133255] rounded-full flex items-center justify-center font-serif text-[15px] font-bold shrink-0">
+      <div className={`mt-auto p-4 border-t border-white/10 flex items-center overflow-hidden ${isCollapsed ? "flex-col gap-4 justify-center" : "gap-3"}`}>
+        <div className="w-[38px] h-[38px] bg-[#D8B15B] text-[#133255] rounded-full flex items-center justify-center font-serif text-[15px] font-bold shrink-0" title={isCollapsed ? fullName : undefined}>
           {initials}
         </div>
-        <div className="flex-1 min-w-0">
-          <span className="text-white text-[15px] font-semibold block truncate">{fullName}</span>
-          <span className="text-white/50 text-[12px] block capitalize">{userRole}</span>
-        </div>
-        <button onClick={handleSignOut} className="text-white/45 hover:text-white transition-colors p-1" title="Sign Out">
+        {!isCollapsed && (
+          <div className="flex-1 min-w-0">
+            <span className="text-white text-[15px] font-semibold block truncate">{fullName}</span>
+            <span className="text-white/50 text-[12px] block capitalize">{userRole}</span>
+          </div>
+        )}
+        <button onClick={handleSignOut} className="text-white/45 hover:text-white transition-colors p-1 shrink-0" title="Sign Out">
           <LogOut className="w-4 h-4" />
         </button>
       </div>
