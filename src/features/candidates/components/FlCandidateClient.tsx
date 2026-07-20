@@ -6,6 +6,7 @@ import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useSt
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { addSubmissionAction, addReferenceAction, deleteFloatListEntryAction, logCandidateActivityAction, toggleActivityPinAction, resolveClientRemarkAction } from "@/actions";
+import { convertToClientContactAction, updatePastCompaniesAction } from "@/actions/candidates";
 import { createClient } from "@/utils/supabase/client";
 import { Pin } from "lucide-react";
 
@@ -29,7 +30,7 @@ function Tile({ id, icon, name, meta, content, isOpen, toggle }: any) {
   );
 }
 
-export default function FlCandidateClient({ candidate, mandates = [], userRole = "consultant", readOnly = false, clientRemarks = [] }: { candidate: any; mandates?: any[]; userRole?: string; readOnly?: boolean; clientRemarks?: any[] }) {
+export default function FlCandidateClient({ candidate, mandates = [], userRole = "consultant", readOnly = false, clientRemarks = [], allClients = [] }: { candidate: any; mandates?: any[]; userRole?: string; readOnly?: boolean; clientRemarks?: any[]; allClients?: any[] }) {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
 
@@ -112,6 +113,66 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
   const handleTogglePin = async (id: number, currentPinned: boolean) => {
     setLocalActivities((prev: any[]) => prev.map(a => a.id === id ? { ...a, isPinned: !currentPinned } : a));
     await toggleActivityPinAction(id, !currentPinned);
+  };
+
+  const [isClientContactModalOpen, setIsClientContactModalOpen] = useState(false);
+  const [clientContactForm, setClientContactForm] = useState({ clientId: "", name: candidate.name || "", designation: candidate.designation || "", number: candidate.mobile || "", email: candidate.email || "" });
+  const [isConvertingClient, setIsConvertingClient] = useState(false);
+
+  const [isPastCompanyModalOpen, setIsPastCompanyModalOpen] = useState(false);
+  const [pastCompanyInput, setPastCompanyInput] = useState("");
+  const [localPastCompanies, setLocalPastCompanies] = useState<string[]>(candidate.pastCompanies || []);
+  const [isUpdatingPastCompanies, setIsUpdatingPastCompanies] = useState(false);
+
+  const handleConvertToClientContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!clientContactForm.clientId) {
+      toast.error("Please select a client.");
+      return;
+    }
+    setIsConvertingClient(true);
+    try {
+      await convertToClientContactAction(candidate.id, clientContactForm.clientId, {
+        name: clientContactForm.name,
+        designation: clientContactForm.designation,
+        number: clientContactForm.number,
+        email: clientContactForm.email
+      });
+      toast.success("Successfully converted to Client Contact!");
+      setIsClientContactModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to convert");
+    } finally {
+      setIsConvertingClient(false);
+    }
+  };
+
+  const handleAddPastCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pastCompanyInput.trim()) return;
+    const newArr = [...localPastCompanies, pastCompanyInput.trim()];
+    setIsUpdatingPastCompanies(true);
+    try {
+      await updatePastCompaniesAction(candidate.id, newArr);
+      setLocalPastCompanies(newArr);
+      setPastCompanyInput("");
+      toast.success("Added past company");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update past companies");
+    } finally {
+      setIsUpdatingPastCompanies(false);
+    }
+  };
+
+  const handleRemovePastCompany = async (company: string) => {
+    const newArr = localPastCompanies.filter(c => c !== company);
+    try {
+      await updatePastCompaniesAction(candidate.id, newArr);
+      setLocalPastCompanies(newArr);
+      toast.success("Removed past company");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove");
+    }
   };
 
   const handleLogActivity = async (e: React.FormEvent) => {
@@ -408,10 +469,25 @@ const statusClass = candidate.status === 'Active' ? 'bg-[#e0f5e9] text-[#137a43]
             </div>
           )}
 
+          <div className="mb-4 p-4 bg-[#fafbfd] border border-[#D4E0F0] rounded-lg">
+            <div className="text-[13px] font-bold tracking-wide uppercase text-[#111] mb-3 flex items-center justify-between">
+              Past Companies
+              <button onClick={() => setIsPastCompanyModalOpen(true)} className="text-[#D8B15B] hover:underline text-[12px]">Manage</button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {localPastCompanies.length > 0 ? localPastCompanies.map(pc => (
+                <span key={pc} className="px-2 py-1 bg-white border border-[#D4E0F0] rounded text-[13px] font-bold text-[#4a5568]">{pc}</span>
+              )) : (
+                <span className="text-[13px] text-[#6b7a99]">No past companies tracked.</span>
+              )}
+            </div>
+          </div>
+
           <div className="flex gap-2 mt-2">
             <Link href="/dashboard/candidates" className="px-3 py-1.5 rounded-md text-[14px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">← Back</Link>
             <button onClick={() => setIsSubModalOpen(true)} className="px-3 py-1.5 rounded-md text-[14px] font-semibold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a] transition-all">Submit to Client</button>
             <button className="px-3 py-1.5 rounded-md text-[14px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">Export</button>
+            <button onClick={() => setIsClientContactModalOpen(true)} className="px-3 py-1.5 rounded-md text-[14px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">Convert to Client Contact</button>
             <div className="flex-1"></div>
             <Link href={`/dashboard/candidates/${candidate.id}/edit`} className="px-3 py-1.5 rounded-md text-[14px] font-semibold text-[#133255] bg-[#DCE5F4] hover:bg-[#c5d3ec] transition-all border border-[#bacce6]">Edit Profile</Link>
             <button 
@@ -960,6 +1036,79 @@ const statusClass = candidate.status === 'Active' ? 'bg-[#e0f5e9] text-[#137a43]
         </div>
       )}
 
+      {isPastCompanyModalOpen && (
+        <div className="fixed inset-0 bg-[#111]/50 flex items-center justify-center z-[100] backdrop-blur-sm">
+          <div className="bg-white rounded-[10px] shadow-lg w-[400px] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[19px] font-bold text-[#111] flex justify-between items-center">
+              Manage Past Companies
+              <button onClick={() => setIsPastCompanyModalOpen(false)} className="text-[#6b7a99] hover:text-[#111]">✕</button>
+            </div>
+            <div className="p-5">
+              <div className="flex flex-wrap gap-2 mb-4">
+                {localPastCompanies.map(pc => (
+                  <div key={pc} className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-[13px] font-bold text-[#4a5568]">
+                    {pc}
+                    <button onClick={() => handleRemovePastCompany(pc)} className="text-gray-400 hover:text-red-500 ml-1">✕</button>
+                  </div>
+                ))}
+                {localPastCompanies.length === 0 && <span className="text-gray-500 text-[13px] italic">No past companies added.</span>}
+              </div>
+              <form onSubmit={handleAddPastCompany} className="flex gap-2">
+                <input required value={pastCompanyInput} onChange={e=>setPastCompanyInput(e.target.value)} className="flex-1 h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="E.g. Zomato" />
+                <button type="submit" disabled={isUpdatingPastCompanies} className="px-4 h-10 rounded-md text-[14px] font-semibold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a] transition-all whitespace-nowrap">Add</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isClientContactModalOpen && (
+        <div className="fixed inset-0 bg-[#111]/50 flex items-center justify-center z-[100] backdrop-blur-sm">
+          <div className="bg-white rounded-[10px] shadow-lg w-[450px] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[19px] font-bold text-[#111] flex justify-between items-center">
+              Convert to Client Contact
+              <button onClick={() => setIsClientContactModalOpen(false)} className="text-[#6b7a99] hover:text-[#111]">✕</button>
+            </div>
+            <form onSubmit={handleConvertToClientContact} className="p-5 flex flex-col gap-4">
+              <div>
+                <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Select Client <span className="text-red-500">*</span></label>
+                <select required value={clientContactForm.clientId} onChange={e=>setClientContactForm({...clientContactForm, clientId: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]">
+                  <option value="">-- Select an existing client --</option>
+                  {allClients?.map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Contact Name <span className="text-red-500">*</span></label>
+                  <input required value={clientContactForm.name} onChange={e=>setClientContactForm({...clientContactForm, name: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Designation</label>
+                  <input value={clientContactForm.designation} onChange={e=>setClientContactForm({...clientContactForm, designation: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Phone Number</label>
+                  <input value={clientContactForm.number} onChange={e=>setClientContactForm({...clientContactForm, number: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Email</label>
+                  <input type="email" value={clientContactForm.email} onChange={e=>setClientContactForm({...clientContactForm, email: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" />
+                </div>
+              </div>
+              <div className="flex gap-2.5 justify-end mt-4">
+                <button type="button" onClick={() => setIsClientContactModalOpen(false)} className="px-4 py-2 rounded-md text-[15px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all">Cancel</button>
+                <button type="submit" disabled={isConvertingClient} className="px-4 py-2 rounded-md text-[15px] font-semibold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a] transition-all">
+                  {isConvertingClient ? "Converting..." : "Convert"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

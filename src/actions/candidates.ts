@@ -220,3 +220,35 @@ export async function finalizeCandidatesImportAction(newCandidates: any[], updat
   revalidatePath("/dashboard/candidates");
   return { success: true, insertedCount, updatedCount };
 }
+
+import { clients } from "@/db/schema";
+
+export async function convertToClientContactAction(candId: string, clientId: string, contactData: { name: string, designation: string, number: string, email: string }) {
+  const [client] = await db.select().from(clients).where(eq(clients.id, clientId));
+  if (!client) throw new Error("Client not found");
+
+  const currentContacts = Array.isArray(client.contacts) ? client.contacts : [];
+  
+  if (currentContacts.some((c: any) => c.linkedCandidateId === candId)) {
+    throw new Error("Candidate is already a contact for this client");
+  }
+
+  const newContact = {
+    ...contactData,
+    linkedCandidateId: candId
+  };
+
+  await db.update(clients).set({
+    contacts: [...currentContacts, newContact]
+  }).where(eq(clients.id, clientId));
+
+  revalidatePath(`/dashboard/clients/${clientId}`);
+  revalidatePath(`/dashboard/candidates/${candId}`);
+  return { success: true };
+}
+
+export async function updatePastCompaniesAction(candId: string, pastCompanies: string[]) {
+  await db.update(candidates).set({ pastCompanies }).where(eq(candidates.id, candId));
+  revalidatePath(`/dashboard/candidates/${candId}`);
+  return { success: true };
+}

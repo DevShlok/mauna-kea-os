@@ -10,7 +10,7 @@ import { ArrowLeft, Building2, User, Briefcase, Calendar, Trash2, Edit, Upload, 
 import { updateClientAction, deleteClientAction } from "@/actions";
 import MandateImportModal from "@/features/mandates/components/MandateImportModal";
 
-export default function ClientDetailClient({ client, mandates, industries = [] }: { client: any, mandates: any[], industries?: any[] }) {
+export default function ClientDetailClient({ client, mandates, industries = [], associatedCandidates = [] }: { client: any, mandates: any[], industries?: any[], associatedCandidates?: any[] }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
   const [isEditing, setIsEditing] = useState(false);
@@ -171,6 +171,91 @@ export default function ClientDetailClient({ client, mandates, industries = [] }
             </table>
           </div>
         </div>
+
+        {/* Client Contacts Display */}
+        <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+            <h2 className="text-[15px] font-bold text-[#133255]">Client Contacts</h2>
+            <button onClick={() => setIsEditing(true)} className="text-sm font-bold text-[#1d4ed8] hover:underline">Manage Contacts</button>
+          </div>
+          <div className="p-0">
+            {client.contacts && client.contacts.length > 0 ? (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/50">
+                    <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Designation</th>
+                    <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Phone</th>
+                    <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider text-right">Profile</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {client.contacts.map((c: any, idx: number) => (
+                    <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-3 font-bold text-[14px] text-gray-900">{c.name}</td>
+                      <td className="px-6 py-3 text-[14px] text-gray-600">{c.designation || "-"}</td>
+                      <td className="px-6 py-3 text-[14px] text-gray-600">{c.number || "-"}</td>
+                      <td className="px-6 py-3 text-[14px] text-gray-600">{c.email || "-"}</td>
+                      <td className="px-6 py-3 text-right">
+                        {c.linkedCandidateId ? (
+                          <Link href={`/dashboard/candidates/${c.linkedCandidateId}`} className="text-[13px] font-bold text-[#1d4ed8] hover:underline flex items-center justify-end gap-1">
+                            <User className="w-3.5 h-3.5" /> View Profile
+                          </Link>
+                        ) : (
+                          <span className="text-[13px] text-gray-400">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="px-6 py-8 text-center text-sm text-gray-500">
+                No contacts added yet.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Associated Candidates Display */}
+        {associatedCandidates.length > 0 && (
+          <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+              <h2 className="text-[15px] font-bold text-[#133255]">Associated Candidates from Database</h2>
+              <p className="text-[13px] text-gray-500 mt-0.5">Candidates who currently work or previously worked here.</p>
+            </div>
+            <div className="p-0">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/50">
+                    <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Designation</th>
+                    <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Current Company</th>
+                    <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Relationship</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {associatedCandidates.map(ac => {
+                    const isCurrent = ac.company?.toLowerCase() === client.name.toLowerCase();
+                    return (
+                      <tr key={ac.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => router.push(`/dashboard/candidates/${ac.id}`)}>
+                        <td className="px-6 py-3 font-bold text-[14px] text-[#133255] hover:underline">{ac.name}</td>
+                        <td className="px-6 py-3 text-[14px] text-gray-600">{ac.designation || "-"}</td>
+                        <td className="px-6 py-3 text-[14px] text-gray-600 font-medium">{ac.company || "-"}</td>
+                        <td className="px-6 py-3">
+                          <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${isCurrent ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}`}>
+                            {isCurrent ? 'Current Employee' : 'Ex-Employee'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Edit Client Modal */}
