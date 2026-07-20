@@ -118,7 +118,7 @@ export default function CandidatesClient({
 }: { 
   candidates: Omit<Candidate, "cvText" | "profilePic">[], 
   total: number,
-  metadata: { companies: string[], designations: string[], statuses: string[], quals?: string[], maxExp: number, maxTenure: number, maxCtc: number },
+  metadata: { companies: string[], designations: string[], statuses: string[], locations?: string[], quals?: string[], maxExp: number, maxTenure: number, maxCtc: number },
   mandates: any[],
   initialParams: any
 }) {
@@ -417,6 +417,7 @@ export default function CandidatesClient({
   const [designationsFilter, setDesignationsFilter] = useState<string[]>(initialParams?.designations || []);
   const [qualsFilter, setQualsFilter] = useState<string[]>(initialParams?.quals || []);
   const [statusFilter, setStatusFilter] = useState<string[]>(initialParams?.statuses || []);
+  const [locationsFilter, setLocationsFilter] = useState<string[]>(initialParams?.locations || []);
   
   const [expRange, setExpRange] = useState({ min: initialParams?.minExp ?? '', max: initialParams?.maxExp ?? '' });
   const [tenureRange, setTenureRange] = useState({ min: initialParams?.minTenure ?? '', max: initialParams?.maxTenure ?? '' });
@@ -434,6 +435,7 @@ export default function CandidatesClient({
     if (companiesFilter.length) url.searchParams.set('companies', companiesFilter.join(',')); else url.searchParams.delete('companies');
     if (designationsFilter.length) url.searchParams.set('designations', designationsFilter.join(',')); else url.searchParams.delete('designations');
     if (statusFilter.length) url.searchParams.set('statuses', statusFilter.join(',')); else url.searchParams.delete('statuses');
+    if (locationsFilter.length) url.searchParams.set('locations', locationsFilter.join(',')); else url.searchParams.delete('locations');
     
     if (expRange.min) url.searchParams.set('minExp', String(expRange.min)); else url.searchParams.delete('minExp');
     if (expRange.max) url.searchParams.set('maxExp', String(expRange.max)); else url.searchParams.delete('maxExp');
@@ -458,7 +460,7 @@ export default function CandidatesClient({
     if (url.searchParams.toString() !== currentSearch) {
       router.push(`/dashboard/candidates?${url.searchParams.toString()}`);
     }
-  }, [debouncedSearch, companiesFilter, designationsFilter, statusFilter, expRange, tenureRange, ctcRange, pageSize, sortKey, sortDir, router]);
+  }, [debouncedSearch, companiesFilter, designationsFilter, statusFilter, locationsFilter, expRange, tenureRange, ctcRange, pageSize, sortKey, sortDir, router]);
 
 
   const [showFilters, setShowFilters] = useState(false);
@@ -590,6 +592,7 @@ export default function CandidatesClient({
   const uniqueDesignations = metadata?.designations || [];
   const uniqueQuals = metadata?.quals || []; // Not handled on server yet, but we can pass it
   const uniqueStatuses = metadata?.statuses || [];
+  const uniqueLocations = metadata?.locations || [];
   
   const maxExp = metadata?.maxExp || 10;
   const maxTenure = metadata?.maxTenure || 5;
@@ -636,6 +639,7 @@ export default function CandidatesClient({
     setDesignationsFilter([]);
     setQualsFilter([]);
     setStatusFilter([]);
+    setLocationsFilter([]);
     setExpRange({ min: '', max: '' });
     setTenureRange({ min: '', max: '' });
     setCtcRange({ min: '', max: '' });
@@ -793,7 +797,7 @@ export default function CandidatesClient({
             <span>{showFilters ? 'Hide Filters' : 'Advanced Filters'}</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
           </button>
-          {(search || companiesFilter.length > 0 || designationsFilter.length > 0 || qualsFilter.length > 0 || statusFilter.length > 0 || expRange.min || expRange.max || tenureRange.min || tenureRange.max || ctcRange.min || ctcRange.max) && (
+          {(search || companiesFilter.length > 0 || designationsFilter.length > 0 || qualsFilter.length > 0 || statusFilter.length > 0 || locationsFilter.length > 0 || expRange.min || expRange.max || tenureRange.min || tenureRange.max || ctcRange.min || ctcRange.max) && (
             <button onClick={clearAllFilters} className="px-3 py-2 text-[15px] text-[#1d4ed8] font-semibold hover:underline">
               Clear All Filters
             </button>
@@ -813,6 +817,10 @@ export default function CandidatesClient({
             <div>
               <label className="block text-[13px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Qualification</label>
               <MultiSelect options={uniqueQuals} selected={qualsFilter} onChange={setQualsFilter} placeholder="Any" />
+            </div>
+            <div>
+              <label className="block text-[13px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Location</label>
+              <MultiSelect options={uniqueLocations} selected={locationsFilter} onChange={setLocationsFilter} placeholder="Any" />
             </div>
 <div>
               <label className="block text-[13px] font-bold tracking-wider uppercase text-[#8a93a3] mb-1.5">Experience (yrs)</label>
@@ -909,9 +917,9 @@ export default function CandidatesClient({
                   <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#1d4ed8] cursor-pointer" />
                 </th>
                 <SortableHeader label="Name" colKey="name" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
+                <SortableHeader label="Location" colKey="location" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
                 <SortableHeader label="Current Company" colKey="company" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
                 <SortableHeader label="Current Designation" colKey="designation" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
-                <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Tenure (curr.)</th>
                 <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Qualifications</th>
                 <SortableHeader label="Exp (yrs)" colKey="exp" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
                 <th className="px-4 py-4 text-left text-[13px] font-bold text-[#8a93a3] uppercase tracking-wider">Prior experience</th>
@@ -929,14 +937,21 @@ export default function CandidatesClient({
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-[10px] bg-[#133255] text-white flex items-center justify-center text-[16px] font-bold flex-shrink-0">{c.initials}</div>
                       <div>
-                        <div className="font-bold text-[#133255] text-[14.5px] hover:underline">{c.name}</div>
-                        <div className="text-[11.5px] text-[#8a93a3] mt-0.5">📍 {c.location || "Unknown"}</div>
+                        <div className="font-bold text-[#133255] text-[14.5px] flex items-center gap-2">
+                          <span className="hover:underline">{c.name}</span>
+                          {c.linkedin && (
+                            <a href={c.linkedin.startsWith('http') ? c.linkedin : `https://${c.linkedin}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-[#0a66c2] text-white hover:bg-[#004182] transition-colors shadow-sm" onClick={e => e.stopPropagation()} title="LinkedIn Profile">
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                            </a>
+                          )}
+                        </div>
+                        <div className="text-[11.5px] text-[#8a93a3] mt-0.5">{c.email || c.mobile || "No Contact Info"}</div>
                       </div>
                     </div>
                   </td>
+                  <td className="px-4 py-4"><b className="text-gray-900">{c.location || "-"}</b></td>
                   <td className="px-4 py-4"><b className="text-gray-900">{c.company || "-"}</b></td>
                   <td className="px-4 py-4 text-[#5a6679]">{c.designation || "-"}</td>
-                  <td className="px-4 py-4 text-gray-900 font-bold">{c.tenure ? `${c.tenure} yr${c.tenure > 1 ? 's' : ''}` : "-"}</td>
                   <td className="px-4 py-4">
                     <div className="flex flex-col gap-1">
                       {c.qual && c.qual.length > 0 ? (

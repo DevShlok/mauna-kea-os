@@ -27,6 +27,7 @@ export default async function CandidatesPage(props: { searchParams: Promise<{ [k
   const companies = parseArrayParam(resolvedParams.companies);
   const designations = parseArrayParam(resolvedParams.designations);
   const statuses = parseArrayParam(resolvedParams.statuses);
+  const locations = parseArrayParam(resolvedParams.locations);
   
   const minExp = resolvedParams.minExp ? Number(resolvedParams.minExp) : undefined;
   const maxExp = resolvedParams.maxExp ? Number(resolvedParams.maxExp) : undefined;
@@ -39,7 +40,7 @@ export default async function CandidatesPage(props: { searchParams: Promise<{ [k
   const sortDir = resolvedParams.sortDir === 'asc' || resolvedParams.sortDir === 'desc' ? resolvedParams.sortDir : undefined;
 
   const [paginatedData, mandates] = await Promise.all([
-    getCandidatesPaginated({ page, limit, search, companies, designations, statuses, minExp, maxExp, minTenure, maxTenure, minCtc, maxCtc, sortKey, sortDir }),
+    getCandidatesPaginated({ page, limit, search, companies, designations, statuses, locations, minExp, maxExp, minTenure, maxTenure, minCtc, maxCtc, sortKey, sortDir }),
     getMandatesLight()
   ]);
   
@@ -48,6 +49,6 @@ export default async function CandidatesPage(props: { searchParams: Promise<{ [k
     total={paginatedData.total}
     metadata={paginatedData.metadata}
     mandates={mandates} 
-    initialParams={{ page, limit, search, companies, designations, statuses, minExp, maxExp, minTenure, maxTenure, minCtc, maxCtc, sortKey, sortDir }}
+    initialParams={{ page, limit, search, companies, designations, statuses, locations, minExp, maxExp, minTenure, maxTenure, minCtc, maxCtc, sortKey, sortDir }}
   />;
 }

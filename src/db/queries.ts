@@ -323,6 +323,7 @@ interface CandidateQueryParams {
   companies?: string[];
   designations?: string[];
   statuses?: string[];
+  locations?: string[];
   quals?: string[];
   minExp?: number;
   maxExp?: number;
@@ -335,7 +336,7 @@ interface CandidateQueryParams {
 }
 
 export const getCandidatesPaginated = cache(async (params: CandidateQueryParams) => {
-  const { page = 1, limit = 20, search, companies, designations, statuses, minExp, maxExp, minTenure, maxTenure, minCtc, maxCtc, sortKey, sortDir } = params;
+  const { page = 1, limit = 20, search, companies, designations, statuses, locations, minExp, maxExp, minTenure, maxTenure, minCtc, maxCtc, sortKey, sortDir } = params;
   
   const conditions: any[] = [eq(candidates.isDeleted, false)];
   
@@ -351,6 +352,7 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
   if (companies && companies.length > 0) conditions.push(inArray(candidates.company, companies));
   if (designations && designations.length > 0) conditions.push(inArray(candidates.designation, designations));
   if (statuses && statuses.length > 0) conditions.push(inArray(candidates.status, statuses));
+  if (locations && locations.length > 0) conditions.push(inArray(candidates.location, locations));
   
   if (minExp !== undefined) conditions.push(gte(candidates.exp, minExp));
   if (maxExp !== undefined) conditions.push(lte(candidates.exp, maxExp));
@@ -397,6 +399,7 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
       array_agg(DISTINCT company) FILTER (WHERE company IS NOT NULL) as companies,
       array_agg(DISTINCT designation) FILTER (WHERE designation IS NOT NULL) as designations,
       array_agg(DISTINCT status) FILTER (WHERE status IS NOT NULL) as statuses,
+      array_agg(DISTINCT location) FILTER (WHERE location IS NOT NULL) as locations,
       MAX(exp) as max_exp,
       MAX(tenure) as max_tenure,
       MAX(ctc) as max_ctc
@@ -419,6 +422,7 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
       companies: (meta.companies || []).sort(),
       designations: (meta.designations || []).sort(),
       statuses: (meta.statuses || []).sort(),
+      locations: (meta.locations || []).sort(),
       maxExp: Math.max(10, Math.ceil(Number(meta.max_exp || 0))),
       maxTenure: Math.max(5, Math.ceil(Number(meta.max_tenure || 0))),
       maxCtc: Math.max(50, Math.ceil(Number(meta.max_ctc || 0) / 10) * 10),
