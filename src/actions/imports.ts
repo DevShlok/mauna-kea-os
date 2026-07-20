@@ -46,12 +46,15 @@ export async function bulkInsertClientsAction(mappedClients: any[]) {
     throw new Error("No clients provided");
   }
 
+  let insertedCount = 0;
+  let failedRows: string[] = [];
+
   for (let i = 0; i < mappedClients.length; i++) {
     const c = mappedClients[i];
     if (!c.name) continue;
 
     try {
-      const clientId = "CLI-" + Date.now().toString() + "-" + i;
+      const clientId = ("CLI-" + Date.now().toString() + "-" + i).substring(0, 50);
 
       // Insert Client
       await db.insert(clients).values({
@@ -62,6 +65,8 @@ export async function bulkInsertClientsAction(mappedClients: any[]) {
         status: "Active",
       });
 
+      insertedCount++;
+
       // Auto-generate Platform User if POC details exist
       if (c.pocName && c.pocEmail) {
         const initials = c.pocName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
@@ -70,7 +75,7 @@ export async function bulkInsertClientsAction(mappedClients: any[]) {
         const existingUser = await db.select().from(platformUsers).where(eq(platformUsers.email, c.pocEmail));
         
         if (existingUser.length === 0) {
-          const uId = "U-" + Math.floor(Math.random() * 10000000).toString().substring(0, 8);
+          const uId = "U-" + Math.floor(Math.random() * 9999999).toString().padStart(7, '0');
           await db.insert(platformUsers).values({
             id: uId,
             name: c.pocName,
@@ -85,10 +90,12 @@ export async function bulkInsertClientsAction(mappedClients: any[]) {
       }
     } catch (err) {
       console.error("Failed to insert client row:", c, err);
+      failedRows.push(c.name || `Row ${i + 1}`);
     }
   }
 
   revalidatePath("/dashboard", "layout");
+  return { success: true, insertedCount, failedCount: failedRows.length, failedRows };
 }
 
 // ─────────────────────────────────────────────────────────
@@ -133,6 +140,9 @@ export async function bulkInsertMandatesAction(mappedMandates: any[], clientId: 
     throw new Error("No mandates provided");
   }
 
+  let insertedCount = 0;
+  let failedRows: string[] = [];
+
   for (let i = 0; i < mappedMandates.length; i++) {
     const m = mappedMandates[i];
     
@@ -154,10 +164,14 @@ export async function bulkInsertMandatesAction(mappedMandates: any[], clientId: 
         status: "universe",
         internalStatus: "contractsent",
       });
+
+      insertedCount++;
     } catch (err) {
       console.error("Failed to insert mandate row:", m, err);
+      failedRows.push(`${m.role || 'Unknown Role'} at ${m.company || 'Unknown Company'}`);
     }
   }
 
   revalidatePath("/dashboard", "layout");
+  return { success: true, insertedCount, failedCount: failedRows.length, failedRows };
 }

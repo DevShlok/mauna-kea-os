@@ -136,9 +136,13 @@ export default function MandateImportModal({ isOpen, onClose, clientId, clientNa
         return m;
       });
 
-      await bulkInsertMandatesAction(mappedMandates, clientId, clientName);
+      const res = await bulkInsertMandatesAction(mappedMandates, clientId, clientName);
 
-      toast.success("Successfully imported mandates!");
+      if (res.failedCount && res.failedCount > 0) {
+        toast.error(`Imported with errors. Failed to import ${res.failedCount} rows: ${res.failedRows?.join(', ')}`);
+      } else {
+        toast.success("Successfully imported mandates!");
+      }
       setImportMapping(null);
       setImportFileData([]);
       onClose();

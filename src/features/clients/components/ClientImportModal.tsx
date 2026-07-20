@@ -138,9 +138,13 @@ export default function ClientImportModal({ isOpen, onClose }: { isOpen: boolean
         return cl;
       });
 
-      await bulkInsertClientsAction(mappedClients);
+      const res = await bulkInsertClientsAction(mappedClients);
 
-      toast.success("Successfully imported clients!");
+      if (res.failedCount && res.failedCount > 0) {
+        toast.error(`Imported with errors. Failed to import ${res.failedCount} rows: ${res.failedRows?.join(', ')}`);
+      } else {
+        toast.success("Successfully imported clients!");
+      }
       setImportMapping(null);
       setImportFileData([]);
       onClose();

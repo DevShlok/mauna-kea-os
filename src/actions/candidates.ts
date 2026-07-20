@@ -5,8 +5,9 @@ import { z } from "zod";
 import { db } from "@/db";
 import { createClient } from "@/utils/supabase/server";
 import { platformUsers } from "@/db/schema";
-import { candidates, candidateFiles } from "@/db/schema";
+import { candidates, candidateFiles, clients } from "@/db/schema";
 import { revalidatePath } from "next/cache";
+import crypto from "crypto";
 
 export async function mapCandidatesAction(headers: string[], sampleData: string[][]) {
   if (!headers || !Array.isArray(headers)) {
@@ -112,10 +113,16 @@ function safeParseInt(val: any): number | null {
   return isNaN(parsed) ? null : parsed;
 }
 
+function safeStr(val: any, maxLen: number): string {
+  if (!val) return "";
+  return String(val).substring(0, maxLen);
+}
+
 export async function finalizeCandidatesImportAction(newCandidates: any[], updatedCandidates: any[]) {
   const updatedBy = await getCurrentUserName();
   let insertedCount = 0;
   let updatedCount = 0;
+  let failedRows: string[] = [];
 
   // Insert pure new candidates
   for (let i = 0; i < newCandidates.length; i++) {
@@ -126,16 +133,16 @@ export async function finalizeCandidatesImportAction(newCandidates: any[], updat
         initials = c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
       }
 
-      const newId = "CAND-" + Date.now() + "-" + i + "-" + Math.floor(Math.random() * 1000);
+      const newId = `CAND-${crypto.randomUUID()}`;
 
       const payload = {
         id: newId,
-        name: c.name || "Unknown",
-        email: c.email || "",
-        mobile: c.phone || "",
-        location: c.location || "",
-        company: c.company || "",
-        designation: c.designation || "",
+        name: safeStr(c.name || "Unknown", 255),
+        email: safeStr(c.email || "", 255),
+        mobile: safeStr(c.phone || "", 20),
+        location: safeStr(c.location || "", 100),
+        company: safeStr(c.company || "", 255),
+        designation: safeStr(c.designation || "", 255),
         exp: safeParseInt(c.totalExperience),
         ctc: safeParseInt(c.ctc),
         notes: c.industry ? `Industry: ${c.industry}` : "",
@@ -164,6 +171,7 @@ export async function finalizeCandidatesImportAction(newCandidates: any[], updat
       }
     } catch (err) {
       console.error("Failed to insert candidate row:", c, err);
+      failedRows.push(c.name || `Row ${i + 1}`);
     }
   }
 
@@ -214,14 +222,14 @@ export async function finalizeCandidatesImportAction(newCandidates: any[], updat
       }
     } catch (err) {
       console.error("Failed to update candidate row:", update, err);
+      failedRows.push(update.incomingCandidate?.name || `Update Row`);
     }
   }
 
   revalidatePath("/dashboard/candidates");
-  return { success: true, insertedCount, updatedCount };
+  return { success: true, insertedCount, updatedCount, failedCount: failedRows.length, failedRows };
 }
 
-import { clients } from "@/db/schema";
 
 export async function convertToClientContactAction(candId: string, clientId: string, contactData: { name: string, designation: string, number: string, email: string }) {
   const [client] = await db.select().from(clients).where(eq(clients.id, clientId));

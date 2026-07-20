@@ -46,7 +46,7 @@ export const mandates = pgTable('mandates', {
 // ─── MANDATE CANDIDATES ──────────────────────────────────
 export const mandateCandidates = pgTable('mandate_candidates', {
   id: serial('id').primaryKey(),
-  externalId: varchar('external_id', { length: 20 }).notNull(),
+  externalId: varchar('external_id', { length: 50 }).notNull(),
   mandateId: int('mandate_id').notNull().references(() => mandates.id),
   name: varchar('name', { length: 255 }).notNull(),
   company: varchar('company', { length: 255 }),
@@ -67,7 +67,7 @@ export const mandateCandidates = pgTable('mandate_candidates', {
 
 // ─── CANDIDATES (MASTER) ─────────────────────────────────
 export const candidates = pgTable('candidates', {
-  id: varchar('id', { length: 20 }).primaryKey(),
+  id: varchar('id', { length: 50 }).primaryKey(),
   initials: varchar('initials', { length: 5 }),
   name: varchar('name', { length: 255 }).notNull(),
   mobile: varchar('mobile', { length: 20 }),
@@ -124,7 +124,7 @@ export const candidates = pgTable('candidates', {
 // ─── CANDIDATE FILES (HISTORY) ───────────────────────────
 export const candidateFiles = pgTable('candidate_files', {
   id: serial('id').primaryKey(),
-  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
   fileType: varchar('file_type', { length: 50 }).notNull(), // 'CV / Resume' or 'Linkedin Profile'
   fileName: varchar('file_name', { length: 255 }).notNull(),
   fileUrl: varchar('file_url', { length: 1000 }).notNull(),
@@ -137,7 +137,7 @@ export const candidateFiles = pgTable('candidate_files', {
 // ─── FLOAT REFERENCES ────────────────────────────────────
 export const floatReferences = pgTable('float_references', {
   id: serial('id').primaryKey(),
-  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
   type: varchar('type', { length: 50 }),
   name: varchar('name', { length: 255 }),
   org: varchar('org', { length: 255 }),
@@ -153,8 +153,8 @@ export const floatReferences = pgTable('float_references', {
 
 // ─── FLOATS (SUBMISSIONS) ────────────────────────────────
 export const floats = pgTable('floats', {
-  id: varchar('id', { length: 20 }).primaryKey(),
-  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
+  id: varchar('id', { length: 50 }).primaryKey(),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
   candName: varchar('cand_name', { length: 255 }),
   client: varchar('client', { length: 255 }),
   role: varchar('role', { length: 255 }),
@@ -176,8 +176,8 @@ export const floats = pgTable('floats', {
 
 // ─── FLOAT FOLLOW-UPS ────────────────────────────────────
 export const floatFollowUps = pgTable('float_followups', {
-  id: varchar('id', { length: 20 }).primaryKey(),
-  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
+  id: varchar('id', { length: 50 }).primaryKey(),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
   cand: varchar('cand', { length: 255 }),
   client: varchar('client', { length: 255 }),
   role: varchar('role', { length: 255 }),
@@ -193,7 +193,7 @@ export const floatFollowUps = pgTable('float_followups', {
 // ─── FLOAT ACTIVITIES ────────────────────────────────────
 export const floatActivities = pgTable('float_activities', {
   id: serial('id').primaryKey(),
-  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
   date: varchar('date', { length: 20 }),
   time: varchar('time', { length: 20 }),
   consultant: varchar('consultant', { length: 255 }),
@@ -207,7 +207,7 @@ export const floatActivities = pgTable('float_activities', {
 
 // ─── FRAMEWORKS ──────────────────────────────────────────
 export const frameworks = pgTable('frameworks', {
-  id: varchar('id', { length: 20 }).primaryKey(),
+  id: varchar('id', { length: 50 }).primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   industry: varchar('industry', { length: 255 }),
   usedIn: int('used_in').default(0),
@@ -241,7 +241,7 @@ export const frameworkCriteria = pgTable('framework_criteria', {
 
 // ─── USERS ───────────────────────────────────────────────
 export const platformUsers = pgTable('platform_users', {
-  id: varchar('id', { length: 10 }).primaryKey(),
+  id: varchar('id', { length: 50 }).primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull(),
   role: varchar('role', { length: 50 }).default('candidate'), // admin | consultant | client | candidate
@@ -249,10 +249,10 @@ export const platformUsers = pgTable('platform_users', {
   lastLogin: varchar('last_login', { length: 100 }),
   initials: varchar('initials', { length: 5 }),
   linkedClientId: varchar('linked_client_id', { length: 50 }), // set when role=client
-  linkedCandidateId: varchar('linked_candidate_id', { length: 20 }), // set when role=candidate
+  linkedCandidateId: varchar('linked_candidate_id', { length: 50 }), // set when role=candidate
   lastActive: datetime('last_active'),
   maxLeaves: int('max_leaves').default(20), // default to 20 days
-  reportingManagerId: varchar('reporting_manager_id', { length: 10 }), // references another user's id
+  reportingManagerId: varchar('reporting_manager_id', { length: 50 }), // references another user's id
   isDeleted: boolean('is_deleted').default(false),
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),
@@ -265,8 +265,8 @@ export const platformUsers = pgTable('platform_users', {
 
 // ─── CANDIDATE REPORTS (AI WORKBENCH) ────────────────────
 export const candidateReports = pgTable('candidate_reports', {
-  id: varchar('id', { length: 20 }).primaryKey(),
-  candidateId: varchar('candidate_id', { length: 20 }).notNull(), // Can be Candidate or MandateCandidate ID
+  id: varchar('id', { length: 50 }).primaryKey(),
+  candidateId: varchar('candidate_id', { length: 50 }).notNull(), // Can be Candidate or MandateCandidate ID
   frameworkId: varchar('framework_id', { length: 20 }).notNull().references(() => frameworks.id),
   status: varchar('status', { length: 50 }).default('Generating'), // Generating, Completed, Failed
   reportData: json('report_data'), // The dynamic JSON output from the AI
@@ -318,7 +318,7 @@ export const clientRemarks = pgTable('client_remarks', {
   id: serial('id').primaryKey(),
   clientId: varchar('client_id', { length: 50 }).notNull().references(() => clients.id),
   mandateId: int('mandate_id').notNull().references(() => mandates.id),
-  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
   remarkText: text('remark_text').notNull(),
   status: varchar('status', { length: 50 }).default('Pending'), // Pending, Completed, Closed
   createdAt: datetime('created_at').default(sql`now()`),
@@ -331,7 +331,7 @@ export const clientRemarks = pgTable('client_remarks', {
 // ─── CONSULTANT NOTIFICATIONS ────────────────────────────
 export const consultantNotifications = pgTable('consultant_notifications', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id', { length: 10 }),
+  userId: varchar('user_id', { length: 50 }),
   targetRole: varchar('target_role', { length: 20 }),
   message: text('message').notNull(),
   link: varchar('link', { length: 255 }),
@@ -360,7 +360,7 @@ export type ConsultantNotification = typeof consultantNotifications.$inferSelect
 // ─── TIME & LEAVE MANAGEMENT ─────────────────────────────
 export const timeLogs = pgTable('time_logs', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id', { length: 10 }).notNull().references(() => platformUsers.id),
+  userId: varchar('user_id', { length: 50 }).notNull().references(() => platformUsers.id),
   action: varchar('action', { length: 20 }).notNull(), // 'clock_in', 'clock_out', 'break_start', 'break_end'
   timestamp: datetime('timestamp').notNull(),
   dateString: date('date_string').notNull(), // YYYY-MM-DD for easy daily grouping
@@ -371,7 +371,7 @@ export const timeLogs = pgTable('time_logs', {
 
 export const leaveRequests = pgTable('leave_requests', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id', { length: 10 }).notNull().references(() => platformUsers.id),
+  userId: varchar('user_id', { length: 50 }).notNull().references(() => platformUsers.id),
   leaveType: varchar('leave_type', { length: 50 }).notNull(), // Sick, Casual, Privilege, etc.
   startDate: date('start_date').notNull(),
   endDate: date('end_date').notNull(),
@@ -464,8 +464,8 @@ export const candidateReportsRelations = relations(candidateReports, ({ one }) =
 // ─── ENGAGEMENT LISTS (CALLING & BD) ────────────────────────
 export const engagementListItems = pgTable('engagement_list_items', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id', { length: 10 }).notNull().references(() => platformUsers.id),
-  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
+  userId: varchar('user_id', { length: 50 }).notNull().references(() => platformUsers.id),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
   listType: varchar('list_type', { length: 20 }).notNull(), // 'Calling', 'BD'
   status: varchar('status', { length: 50 }).default('Pending'), 
   nextFollowUp: date('next_follow_up'),
@@ -478,14 +478,14 @@ export const engagementListItems = pgTable('engagement_list_items', {
 
 export const callPlans = pgTable('call_plans', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id', { length: 10 }).notNull().references(() => platformUsers.id),
+  userId: varchar('user_id', { length: 50 }).notNull().references(() => platformUsers.id),
   type: varchar('type', { length: 20 }).notNull(), // Weekly, Daily
   date: date('date').notNull(), // Start of week or specific day
   targetCandIds: json('target_cand_ids').$type<string[]>().default([]),
   targetClientIds: json('target_client_ids').$type<string[]>().default([]),
   planText: text('plan_text'), // For Weekly plans
   isReviewed: boolean('is_reviewed').default(false),
-  reviewedBy: varchar('reviewed_by', { length: 10 }),
+  reviewedBy: varchar('reviewed_by', { length: 50 }),
   createdAt: datetime('created_at').default(sql`now()`),
 }, (table) => ({
   userIdIdx: index('cp_user_id_idx').on(table.userId),

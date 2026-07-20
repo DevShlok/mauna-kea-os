@@ -340,7 +340,11 @@ export default function CandidatesClient({
         // No duplicates, proceed directly
         const res = await finalizeCandidatesImportAction(newCandidates || [], []);
         if (!res.success) throw new Error("Failed to process import");
-        toast.success("Successfully imported candidates!");
+        if (res.failedCount && res.failedCount > 0) {
+          toast.error(`Imported with errors. Failed to import ${res.failedCount} rows: ${res.failedRows?.join(', ')}`);
+        } else {
+          toast.success("Successfully imported candidates!");
+        }
         setImportMapping(null);
         setImportFileData([]);
         router.refresh();
@@ -398,7 +402,11 @@ export default function CandidatesClient({
       try {
         const res = await finalizeCandidatesImportAction(newCandList, updatedList);
         if (!res.success) throw new Error("Failed to finalize import");
-        toast.success("Successfully imported/updated candidates!");
+        if (res.failedCount && res.failedCount > 0) {
+          toast.error(`Imported with errors. Failed to import ${res.failedCount} rows: ${res.failedRows?.join(', ')}`);
+        } else {
+          toast.success("Successfully imported candidates!");
+        }
         setImportMapping(null);
         setImportFileData([]);
         setDuplicateQueue([]);
