@@ -1,7 +1,7 @@
 import React from 'react';
 import { db } from "@/db";
-import { callPlans, platformUsers } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { callPlans, platformUsers, callingListItems, bdListItems, candidates } from "@/db/schema";
+import { eq, desc, and } from "drizzle-orm";
 import { requireRole } from "@/lib/auth";
 import PlanningClient from "@/features/calls/components/PlanningClient";
 
@@ -24,10 +24,8 @@ export default async function PlanningPage() {
       userName: platformUsers.name,
       type: callPlans.type,
       date: callPlans.date,
-      targetCalls: callPlans.targetCalls,
-      completedCalls: callPlans.completedCalls,
-      pendingReason: callPlans.pendingReason,
-      carryForwardCount: callPlans.carryForwardCount,
+      targetCandIds: callPlans.targetCandIds,
+      targetClientIds: callPlans.targetClientIds,
       planText: callPlans.planText,
       isReviewed: callPlans.isReviewed,
     })
@@ -40,6 +38,34 @@ export default async function PlanningPage() {
   
   const allPlans = await plansQuery.orderBy(desc(callPlans.createdAt));
 
+  // Fetch candidates from user's Calling List and BD List
+  const callListCandsRaw = await db.select({
+    candId: candidates.id,
+    name: candidates.name,
+    designation: candidates.designation,
+    company: candidates.company,
+    status: callingListItems.status,
+  }).from(callingListItems)
+  .innerJoin(candidates, eq(callingListItems.candId, candidates.id))
+  .where(eq(callingListItems.userId, userId));
+
+  const bdListCandsRaw = await db.select({
+    candId: candidates.id,
+    name: candidates.name,
+    designation: candidates.designation,
+    company: candidates.company,
+    status: bdListItems.status,
+  }).from(bdListItems)
+  .innerJoin(candidates, eq(bdListItems.candId, candidates.id))
+  .where(eq(bdListItems.userId, userId));
+
+  const callListCands = callListCandsRaw.map(c => ({ ...c, list: 'Calling' }));
+  const bdListCands = bdListCandsRaw.map(c => ({ ...c, list: 'BD' }));
+
+  // Note: For now we combine them as "availableTargets"
+  // Later if clients module is fully fleshed out, we can separate targets.
+  const availableTargets = [...callListCands, ...bdListCands];
+
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex justify-between items-center mb-6">
@@ -49,7 +75,7 @@ export default async function PlanningPage() {
         </div>
       </div>
       
-      <PlanningClient plans={allPlans} isAdmin={isAdmin} />
+      <PlanningClient plans={allPlans} availableTargets={availableTargets} isAdmin={isAdmin} />
     </div>
   );
 }

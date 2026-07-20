@@ -491,10 +491,8 @@ export const callPlans = pgTable('call_plans', {
   userId: varchar('user_id', { length: 10 }).notNull().references(() => platformUsers.id),
   type: varchar('type', { length: 20 }).notNull(), // Weekly, Daily
   date: date('date').notNull(), // Start of week or specific day
-  targetCalls: int('target_calls').default(0),
-  completedCalls: int('completed_calls').default(0),
-  pendingReason: text('pending_reason'),
-  carryForwardCount: int('carry_forward_count').default(0),
+  targetCandIds: json('target_cand_ids').$type<string[]>().default([]),
+  targetClientIds: json('target_client_ids').$type<string[]>().default([]),
   planText: text('plan_text'), // For Weekly plans
   isReviewed: boolean('is_reviewed').default(false),
   reviewedBy: varchar('reviewed_by', { length: 10 }),

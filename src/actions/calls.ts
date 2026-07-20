@@ -57,10 +57,9 @@ export async function logCallActivityAction(data: {
 export async function createPlanAction(data: {
   type: "Weekly" | "Daily";
   date: string;
-  targetCalls: number;
+  targetCandIds: string[];
+  targetClientIds: string[];
   planText?: string;
-  pendingReason?: string;
-  carryForwardCount?: number;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -81,20 +80,18 @@ export async function createPlanAction(data: {
 
   if (existing.length > 0) {
     await db.update(callPlans).set({
-      targetCalls: data.targetCalls,
+      targetCandIds: data.targetCandIds,
+      targetClientIds: data.targetClientIds,
       planText: data.planText,
-      pendingReason: data.pendingReason,
-      carryForwardCount: data.carryForwardCount,
     }).where(eq(callPlans.id, existing[0].id));
   } else {
     await db.insert(callPlans).values({
       userId,
       type: data.type,
       date: data.date,
-      targetCalls: data.targetCalls,
+      targetCandIds: data.targetCandIds,
+      targetClientIds: data.targetClientIds,
       planText: data.planText,
-      pendingReason: data.pendingReason,
-      carryForwardCount: data.carryForwardCount,
     });
   }
 }
