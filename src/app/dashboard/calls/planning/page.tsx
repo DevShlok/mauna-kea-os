@@ -1,6 +1,6 @@
 import React from 'react';
 import { db } from "@/db";
-import { callPlans, platformUsers, callingListItems, bdListItems, candidates } from "@/db/schema";
+import { callPlans, platformUsers, engagementListItems, candidates } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { requireRole } from "@/lib/auth";
 import PlanningClient from "@/features/calls/components/PlanningClient";
@@ -38,33 +38,22 @@ export default async function PlanningPage() {
   
   const allPlans = await plansQuery.orderBy(desc(callPlans.createdAt));
 
-  // Fetch candidates from user's Calling List and BD List
-  const callListCandsRaw = await db.select({
+  // Fetch candidates from user's Engagement Lists
+  const engagementListCandsRaw = await db.select({
     candId: candidates.id,
     name: candidates.name,
     designation: candidates.designation,
     company: candidates.company,
-    status: callingListItems.status,
-  }).from(callingListItems)
-  .innerJoin(candidates, eq(callingListItems.candId, candidates.id))
-  .where(eq(callingListItems.userId, userId));
+    status: engagementListItems.status,
+    listType: engagementListItems.listType,
+  }).from(engagementListItems)
+  .innerJoin(candidates, eq(engagementListItems.candId, candidates.id))
+  .where(eq(engagementListItems.userId, userId));
 
-  const bdListCandsRaw = await db.select({
-    candId: candidates.id,
-    name: candidates.name,
-    designation: candidates.designation,
-    company: candidates.company,
-    status: bdListItems.status,
-  }).from(bdListItems)
-  .innerJoin(candidates, eq(bdListItems.candId, candidates.id))
-  .where(eq(bdListItems.userId, userId));
-
-  const callListCands = callListCandsRaw.map(c => ({ ...c, list: 'Calling' }));
-  const bdListCands = bdListCandsRaw.map(c => ({ ...c, list: 'BD' }));
-
-  // Note: For now we combine them as "availableTargets"
-  // Later if clients module is fully fleshed out, we can separate targets.
-  const availableTargets = [...callListCands, ...bdListCands];
+  const availableTargets = engagementListCandsRaw.map(c => ({ 
+    ...c, 
+    list: c.listType 
+  }));
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">

@@ -5,8 +5,9 @@ import Link from "next/link";
 import { Phone, Mail, User } from "lucide-react";
 import CallLogModal from "@/components/shared/CallLogModal";
 
-export default function CallsClient({ items, listType }: { items: any[], listType: "BD" | "Calling" }) {
+export default function CallsClient({ items }: { items: any[] }) {
   const [logModalCandId, setLogModalCandId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"All" | "Calling" | "BD">("All");
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -30,21 +31,44 @@ export default function CallsClient({ items, listType }: { items: any[], listTyp
     }
   };
 
+  const filteredItems = items.filter(item => activeTab === "All" || item.listType === activeTab);
+
   return (
     <div className="bg-white border border-[#e4e8f0] rounded-[16px] overflow-hidden shadow-sm">
+      <div className="flex bg-[#f4f7fd] p-1 rounded-lg m-4 w-fit">
+        <button 
+          className={`px-4 py-1.5 text-sm font-bold rounded-md transition-all ${activeTab === 'All' ? 'bg-white text-[#133255] shadow-sm' : 'text-[#6b7a99]'}`}
+          onClick={() => setActiveTab('All')}
+        >
+          All
+        </button>
+        <button 
+          className={`px-4 py-1.5 text-sm font-bold rounded-md transition-all ${activeTab === 'Calling' ? 'bg-white text-[#133255] shadow-sm' : 'text-[#6b7a99]'}`}
+          onClick={() => setActiveTab('Calling')}
+        >
+          Calling List
+        </button>
+        <button 
+          className={`px-4 py-1.5 text-sm font-bold rounded-md transition-all ${activeTab === 'BD' ? 'bg-white text-[#133255] shadow-sm' : 'text-[#6b7a99]'}`}
+          onClick={() => setActiveTab('BD')}
+        >
+          BD List
+        </button>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[#f8fafc] border-b border-[#e4e8f0]">
-              <th className="px-5 py-3 text-left font-bold text-[#4a5568] w-[25%]">Candidate</th>
-              <th className="px-5 py-3 text-left font-bold text-[#4a5568] w-[25%]">Current Role</th>
+              <th className="px-5 py-3 text-left font-bold text-[#4a5568] w-[20%]">Candidate</th>
+              <th className="px-5 py-3 text-left font-bold text-[#4a5568] w-[20%]">Current Role</th>
+              <th className="px-5 py-3 text-left font-bold text-[#4a5568] w-[10%]">List</th>
               <th className="px-5 py-3 text-left font-bold text-[#4a5568] w-[15%]">Status</th>
-              {listType === "Calling" && <th className="px-5 py-3 text-left font-bold text-[#4a5568] w-[15%]">Next Follow Up</th>}
+              <th className="px-5 py-3 text-left font-bold text-[#4a5568] w-[15%]">Next Follow Up</th>
               <th className="px-5 py-3 text-left font-bold text-[#4a5568] w-[20%]">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => (
+            {filteredItems.map((item) => (
               <tr key={item.id} className="border-b border-[#e4e8f0] hover:bg-gray-50/50">
                 <td className="px-5 py-4">
                   <div className="flex flex-col">
@@ -63,6 +87,11 @@ export default function CallsClient({ items, listType }: { items: any[], listTyp
                   <div className="text-gray-500 text-[13px]">{item.candCompany || 'N/A'}</div>
                 </td>
                 <td className="px-5 py-4">
+                  <span className="px-2 py-0.5 rounded-[4px] text-[11px] font-bold uppercase bg-[#eef2fb] text-[#133255]">
+                    {item.listType}
+                  </span>
+                </td>
+                <td className="px-5 py-4">
                   <span className={`px-2.5 py-1 rounded-[6px] text-[12px] font-bold tracking-wide uppercase ${getStatusColor(item.status)}`}>
                     {item.status}
                   </span>
@@ -72,11 +101,9 @@ export default function CallsClient({ items, listType }: { items: any[], listTyp
                     </div>
                   )}
                 </td>
-                {listType === "Calling" && (
-                  <td className="px-5 py-4 text-[#4a5568] font-semibold">
-                    {item.nextFollowUp || '-'}
-                  </td>
-                )}
+                <td className="px-5 py-4 text-[#4a5568] font-semibold">
+                  {item.nextFollowUp || '-'}
+                </td>
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-2">
                     <button 
@@ -96,10 +123,10 @@ export default function CallsClient({ items, listType }: { items: any[], listTyp
                 </td>
               </tr>
             ))}
-            {items.length === 0 && (
+            {filteredItems.length === 0 && (
               <tr>
-                <td colSpan={listType === "Calling" ? 5 : 4} className="px-5 py-10 text-center text-gray-500">
-                  No candidates in this list. Go to the Candidate Database to add some.
+                <td colSpan={6} className="px-5 py-10 text-center text-gray-500">
+                  No candidates found in {activeTab === "All" ? "any list" : `the ${activeTab} list`}.
                 </td>
               </tr>
             )}
@@ -110,7 +137,7 @@ export default function CallsClient({ items, listType }: { items: any[], listTyp
       {logModalCandId && (
         <CallLogModal 
           candId={logModalCandId}
-          listType={listType}
+          listType={items.find(i => i.candId === logModalCandId)?.listType || "Calling"}
           onClose={() => setLogModalCandId(null)}
         />
       )}

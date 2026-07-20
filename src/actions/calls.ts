@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { floatActivities, platformUsers, callingListItems, bdListItems, callPlans } from "@/db/schema";
+import { floatActivities, platformUsers, engagementListItems, callPlans } from "@/db/schema";
 import { eq, sql, and } from "drizzle-orm";
 import { createClient } from "@/utils/supabase/server";
 
@@ -36,22 +36,19 @@ export async function logCallActivityAction(data: {
   });
 
   // 2. Update status and nextFollowUp in the respective list
-  if (data.listType === "BD") {
-    await db.update(bdListItems)
-      .set({
-        status: data.status,
-        notes: data.note,
-      })
-      .where(and(eq(bdListItems.candId, data.candId), eq(bdListItems.userId, userId)));
-  } else {
-    await db.update(callingListItems)
-      .set({
-        status: data.status,
-        nextFollowUp: data.nextFollowUp || null,
-        notes: data.note,
-      })
-      .where(and(eq(callingListItems.candId, data.candId), eq(callingListItems.userId, userId)));
-  }
+  await db.update(engagementListItems)
+    .set({
+      status: data.status,
+      notes: data.note,
+      nextFollowUp: data.nextFollowUp || null,
+    })
+    .where(
+      and(
+        eq(engagementListItems.candId, data.candId), 
+        eq(engagementListItems.userId, userId),
+        eq(engagementListItems.listType, data.listType)
+      )
+    );
 }
 
 export async function createPlanAction(data: {

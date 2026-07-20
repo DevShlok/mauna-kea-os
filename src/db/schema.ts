@@ -460,30 +460,19 @@ export const candidateReportsRelations = relations(candidateReports, ({ one }) =
   }),
 }));
 
-// ─── BD & CALLING LISTS ──────────────────────────────────
-export const bdListItems = pgTable('bd_list_items', {
+// ─── ENGAGEMENT LISTS (CALLING & BD) ────────────────────────
+export const engagementListItems = pgTable('engagement_list_items', {
   id: serial('id').primaryKey(),
   userId: varchar('user_id', { length: 10 }).notNull().references(() => platformUsers.id),
   candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
-  status: varchar('status', { length: 50 }).default('Pending'), // Pending, In Progress, Converted, Archived
-  notes: text('notes'),
-  createdAt: datetime('created_at').default(sql`now()`),
-}, (table) => ({
-  userIdIdx: index('bd_user_id_idx').on(table.userId),
-  candIdIdx: index('bd_cand_id_idx').on(table.candId),
-}));
-
-export const callingListItems = pgTable('calling_list_items', {
-  id: serial('id').primaryKey(),
-  userId: varchar('user_id', { length: 10 }).notNull().references(() => platformUsers.id),
-  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
-  status: varchar('status', { length: 50 }).default('To Call'), // To Call, Left Voicemail, Connected - Follow Up, Connected - Not Interested, Do Not Contact
+  listType: varchar('list_type', { length: 20 }).notNull(), // 'Calling', 'BD'
+  status: varchar('status', { length: 50 }).default('Pending'), 
   nextFollowUp: date('next_follow_up'),
   notes: text('notes'),
   createdAt: datetime('created_at').default(sql`now()`),
 }, (table) => ({
-  userIdIdx: index('cl_user_id_idx').on(table.userId),
-  candIdIdx: index('cl_cand_id_idx').on(table.candId),
+  userIdIdx: index('el_user_id_idx').on(table.userId),
+  candIdIdx: index('el_cand_id_idx').on(table.candId),
 }));
 
 export const callPlans = pgTable('call_plans', {
@@ -502,6 +491,5 @@ export const callPlans = pgTable('call_plans', {
   dateIdx: index('cp_date_idx').on(table.date),
 }));
 
-export type BdListItem = typeof bdListItems.$inferSelect;
-export type CallingListItem = typeof callingListItems.$inferSelect;
+export type EngagementListItem = typeof engagementListItems.$inferSelect;
 export type CallPlan = typeof callPlans.$inferSelect;

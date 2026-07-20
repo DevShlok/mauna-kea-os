@@ -75,12 +75,11 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
       ]
     },
     {
-      title: "Call & BD Lists",
+      title: "Engagement Lists",
       icon: PhoneCall,
       visibleTo: ["admin", "consultant"],
       children: [
-        { label: "My Call List", href: "/dashboard/calls", visibleTo: ["admin", "consultant"] },
-        { label: "My BD List", href: "/dashboard/bd-list", visibleTo: ["admin", "consultant"] },
+        { label: "My Engagement Lists", href: "/dashboard/calls", visibleTo: ["admin", "consultant"] },
         { label: "Weekly Planning", href: "/dashboard/calls/planning", visibleTo: ["admin", "consultant"] },
       ]
     },

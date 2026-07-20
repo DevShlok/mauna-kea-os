@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { Candidate } from "@/db/schema";
-import { bulkAddSubmissionAction, bulkAssignToMandateAction, updateCandidateStatusAction, deleteMultipleCandidatesAction, bulkAddToBdListAction, bulkAddToCallingListAction } from "@/actions";
+import { bulkAddSubmissionAction, bulkAssignToMandateAction, updateCandidateStatusAction, deleteMultipleCandidatesAction, bulkAddToEngagementListAction } from "@/actions";
 import { mapCandidatesAction, checkCandidateDuplicatesAction, finalizeCandidatesImportAction } from "@/actions/candidates";
 import { useDataTable } from "@/hooks/useDataTable";
 import { Pagination } from "@/components/DataTable/Pagination";
@@ -543,7 +543,7 @@ export default function CandidatesClient({
   const handleBulkAddToBdList = async () => {
     setIsSubmitting(true);
     try {
-      await bulkAddToBdListAction(Array.from(selectedIds));
+      await bulkAddToEngagementListAction(Array.from(selectedIds), "BD");
       setSelectedIds(new Set());
       toast.success("Candidates added to BD List successfully!");
       router.refresh();
@@ -558,7 +558,7 @@ export default function CandidatesClient({
   const handleBulkAddToCallingList = async () => {
     setIsSubmitting(true);
     try {
-      await bulkAddToCallingListAction(Array.from(selectedIds));
+      await bulkAddToEngagementListAction(Array.from(selectedIds), "Calling");
       setSelectedIds(new Set());
       toast.success("Candidates added to Calling List successfully!");
       router.refresh();
