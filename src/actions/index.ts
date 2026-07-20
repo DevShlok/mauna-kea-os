@@ -2,7 +2,7 @@
 import { requireRole } from "@/lib/auth";
 
 import { db } from "@/db";
-import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles, clients, clientNotifications, clientRemarks, consultantNotifications } from "@/db/schema";
+import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles, clients, clientNotifications, clientRemarks, consultantNotifications, bdListItems, callingListItems } from "@/db/schema";
 import { eq, sql, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
@@ -1036,4 +1036,52 @@ export async function hardDeleteEntityAction(entityType: string, ids: (string|nu
   } else if (entityType === 'frameworks') {
     await db.delete(frameworks).where(inArray(frameworks.id, ids as string[]));
   }
+}
+
+export async function bulkAddToBdListAction(candIds: string[]) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email) throw new Error("Unauthorized");
+  
+  const dbUser = await db.select().from(platformUsers).where(eq(platformUsers.email, user.email));
+  if (dbUser.length === 0) throw new Error("User not found");
+  const userId = dbUser[0].id;
+
+  for (const candId of candIds) {
+    // Check if already in list
+    const existing = await db.select().from(bdListItems).where(
+      sql`${bdListItems.userId} = ${userId} AND ${bdListItems.candId} = ${candId}`
+    );
+    if (existing.length === 0) {
+      await db.insert(bdListItems).values({
+        userId,
+        candId,
+      });
+    }
+  }
+  revalidatePath('/dashboard/bd-list');
+}
+
+export async function bulkAddToCallingListAction(candIds: string[]) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email) throw new Error("Unauthorized");
+  
+  const dbUser = await db.select().from(platformUsers).where(eq(platformUsers.email, user.email));
+  if (dbUser.length === 0) throw new Error("User not found");
+  const userId = dbUser[0].id;
+
+  for (const candId of candIds) {
+    // Check if already in list
+    const existing = await db.select().from(callingListItems).where(
+      sql`${callingListItems.userId} = ${userId} AND ${callingListItems.candId} = ${candId}`
+    );
+    if (existing.length === 0) {
+      await db.insert(callingListItems).values({
+        userId,
+        candId,
+      });
+    }
+  }
+  revalidatePath('/dashboard/calls');
 }

@@ -14,7 +14,8 @@ import {
   Shield,
   Trash2,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  PhoneCall
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useState, useEffect } from "react";
@@ -71,6 +72,16 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
         { label: "Float List", href: "/dashboard/float-list", visibleTo: ["admin", "consultant"] },
         { label: "Add to Float List", href: "/dashboard/candidates?mode=float", icon: Plus, visibleTo: ["admin", "consultant"] },
         { label: "Submissions", href: "/dashboard/float-list/submissions", visibleTo: ["admin", "consultant"] },
+      ]
+    },
+    {
+      title: "Call & BD Lists",
+      icon: PhoneCall,
+      visibleTo: ["admin", "consultant"],
+      children: [
+        { label: "My Call List", href: "/dashboard/calls", visibleTo: ["admin", "consultant"] },
+        { label: "My BD List", href: "/dashboard/bd-list", visibleTo: ["admin", "consultant"] },
+        { label: "Weekly Planning", href: "/dashboard/calls/planning", visibleTo: ["admin", "consultant"] },
       ]
     },
     {

@@ -459,3 +459,51 @@ export const candidateReportsRelations = relations(candidateReports, ({ one }) =
     references: [frameworks.id],
   }),
 }));
+
+// ─── BD & CALLING LISTS ──────────────────────────────────
+export const bdListItems = pgTable('bd_list_items', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id', { length: 10 }).notNull().references(() => platformUsers.id),
+  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
+  status: varchar('status', { length: 50 }).default('Pending'), // Pending, In Progress, Converted, Archived
+  notes: text('notes'),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  userIdIdx: index('bd_user_id_idx').on(table.userId),
+  candIdIdx: index('bd_cand_id_idx').on(table.candId),
+}));
+
+export const callingListItems = pgTable('calling_list_items', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id', { length: 10 }).notNull().references(() => platformUsers.id),
+  candId: varchar('cand_id', { length: 20 }).notNull().references(() => candidates.id),
+  status: varchar('status', { length: 50 }).default('To Call'), // To Call, Left Voicemail, Connected - Follow Up, Connected - Not Interested, Do Not Contact
+  nextFollowUp: date('next_follow_up'),
+  notes: text('notes'),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  userIdIdx: index('cl_user_id_idx').on(table.userId),
+  candIdIdx: index('cl_cand_id_idx').on(table.candId),
+}));
+
+export const callPlans = pgTable('call_plans', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id', { length: 10 }).notNull().references(() => platformUsers.id),
+  type: varchar('type', { length: 20 }).notNull(), // Weekly, Daily
+  date: date('date').notNull(), // Start of week or specific day
+  targetCalls: int('target_calls').default(0),
+  completedCalls: int('completed_calls').default(0),
+  pendingReason: text('pending_reason'),
+  carryForwardCount: int('carry_forward_count').default(0),
+  planText: text('plan_text'), // For Weekly plans
+  isReviewed: boolean('is_reviewed').default(false),
+  reviewedBy: varchar('reviewed_by', { length: 10 }),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  userIdIdx: index('cp_user_id_idx').on(table.userId),
+  dateIdx: index('cp_date_idx').on(table.date),
+}));
+
+export type BdListItem = typeof bdListItems.$inferSelect;
+export type CallingListItem = typeof callingListItems.$inferSelect;
+export type CallPlan = typeof callPlans.$inferSelect;

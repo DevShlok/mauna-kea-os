@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { Candidate } from "@/db/schema";
-import { bulkAddSubmissionAction, bulkAssignToMandateAction, updateCandidateStatusAction, deleteMultipleCandidatesAction } from "@/actions";
+import { bulkAddSubmissionAction, bulkAssignToMandateAction, updateCandidateStatusAction, deleteMultipleCandidatesAction, bulkAddToBdListAction, bulkAddToCallingListAction } from "@/actions";
 import { mapCandidatesAction, checkCandidateDuplicatesAction, finalizeCandidatesImportAction } from "@/actions/candidates";
 import { useDataTable } from "@/hooks/useDataTable";
 import { Pagination } from "@/components/DataTable/Pagination";
@@ -540,6 +540,36 @@ export default function CandidatesClient({
     }
   };
 
+  const handleBulkAddToBdList = async () => {
+    setIsSubmitting(true);
+    try {
+      await bulkAddToBdListAction(Array.from(selectedIds));
+      setSelectedIds(new Set());
+      toast.success("Candidates added to BD List successfully!");
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to add to BD List.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBulkAddToCallingList = async () => {
+    setIsSubmitting(true);
+    try {
+      await bulkAddToCallingListAction(Array.from(selectedIds));
+      setSelectedIds(new Set());
+      toast.success("Candidates added to Calling List successfully!");
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to add to Calling List.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleDeleteSelected = async () => {
     setIsSubmitting(true);
     try {
@@ -849,6 +879,12 @@ export default function CandidatesClient({
           <div className="ml-auto flex gap-3">
             <button onClick={() => setIsMandateModalOpen(true)} className="px-3 py-2 bg-[#d7a33c] text-[#23304f] rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105">
               ＋ Add to Mandate
+            </button>
+            <button onClick={handleBulkAddToBdList} disabled={isSubmitting} className="px-3 py-2 bg-[#1d4ed8] text-white rounded-[9px] text-[15px] font-bold shadow-md hover:bg-[#1e40af] disabled:opacity-50">
+              ＋ Add to BD List
+            </button>
+            <button onClick={handleBulkAddToCallingList} disabled={isSubmitting} className="px-3 py-2 bg-[#0ea5e9] text-white rounded-[9px] text-[15px] font-bold shadow-md hover:bg-[#0284c7] disabled:opacity-50">
+              ＋ Add to Calling List
             </button>
             <button onClick={handleBulkFloatSubmit} disabled={isSubmitting} className="px-3 py-2 bg-[#1f9d57] text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 disabled:opacity-50">
               {isSubmitting ? "Floating..." : "➤ Float"}
