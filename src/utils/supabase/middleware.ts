@@ -46,6 +46,7 @@ export async function updateSession(request: NextRequest) {
       .from('platform_users')
       .select('id, name')
       .eq('email', user.email)
+      .limit(1)
       .single();
 
     if (error || !platformUser) {

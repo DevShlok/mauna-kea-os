@@ -1,0 +1,1 @@
+import { db } from './src/db/index'; import { platformUsers } from './src/db/schema'; import { ilike } from 'drizzle-orm'; async function run() { const users = await db.select().from(platformUsers).where(ilike(platformUsers.email, '%nikhil%')); console.log(users); process.exit(0); } run();
