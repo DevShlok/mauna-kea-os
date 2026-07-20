@@ -56,10 +56,9 @@ export default async function ClientsPage({
     mandates: relevantMandates.filter(m => m.company === c.name && !m.isDeleted)
   }));
 
-  // Fetch unique verticals for dropdown
-  const allClientsForDropdowns = await db.select({ vertical: clients.vertical }).from(clients).where(eq(clients.isDeleted, false));
-  const uniqueVerticals = Array.from(new Set(allClientsForDropdowns.map(c => c.vertical).filter(Boolean))) as string[];
-  uniqueVerticals.sort();
+  // Fetch unique verticals for dropdown efficiently
+  const verticalRows = await db.selectDistinct({ vertical: clients.vertical }).from(clients).where(eq(clients.isDeleted, false));
+  const uniqueVerticals = verticalRows.map(c => c.vertical).filter(Boolean).sort() as string[];
 
   return (
     <ClientsClient 

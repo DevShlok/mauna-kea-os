@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import CandidateReportPDF from "@/components/reports/CandidateReportPDF";
 import { generateFormatAction } from "@/actions/cv";
 import { updateCandidateStatusAction, saveReportFormatAction, saveReportDraftAction } from "@/actions";
+import { searchCandidatesAction } from "@/actions/search";
 import FormatOne from "@/components/reports/FormatOne";
 import FormatTwo from "@/components/reports/FormatTwo";
 
@@ -21,12 +22,9 @@ interface WorkbenchClientProps {
 export default function WorkbenchClient({ initialCandidate, frameworks, candidates, mandates, readOnly = false }: WorkbenchClientProps) {
   const router = useRouter();
   
-  const allCandidates = useMemo(() => {
-    return candidates.map(c => ({
-      ...c,
-      searchId: c.id.toString(),
-    }));
-  }, [candidates]);
+  const [asyncCandidates, setAsyncCandidates] = useState<any[]>([]);
+  const [isSearchingCandidates, setIsSearchingCandidates] = useState(false);
+  const [selectedCandidateRef, setSelectedCandidateRef] = useState<any>(initialCandidate || null);
 
   const [selectedCandidateId, setSelectedCandidateId] = useState(
     initialCandidate ? (initialCandidate.externalId || initialCandidate.id).toString() : ""
@@ -41,13 +39,25 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
   const [isSharedWithClient, setIsSharedWithClient] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
 
-  const sortedAndFilteredCandidates = useMemo(() => {
-    let result = allCandidates.filter(c => 
-      c.name.toLowerCase().includes(candidateSearch.toLowerCase()) ||
-      c.company?.toLowerCase().includes(candidateSearch.toLowerCase()) ||
-      c.designation?.toLowerCase().includes(candidateSearch.toLowerCase())
-    );
+  useEffect(() => {
+    const fetchCands = async () => {
+      setIsSearchingCandidates(true);
+      if (candidateSearch.length === 1) {
+        setIsSearchingCandidates(false);
+        return;
+      }
+      try {
+        const res = await searchCandidatesAction(candidateSearch, 50);
+        setAsyncCandidates(res.map(c => ({ ...c, searchId: c.id.toString() })));
+      } catch (e) {}
+      setIsSearchingCandidates(false);
+    };
+    const timer = setTimeout(fetchCands, 300);
+    return () => clearTimeout(timer);
+  }, [candidateSearch]);
 
+  const sortedAndFilteredCandidates = useMemo(() => {
+    let result = [...asyncCandidates];
     if (sortConfig) {
       result.sort((a, b) => {
         const aVal = a[sortConfig.key] || "";
@@ -58,7 +68,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       });
     }
     return result;
-  }, [allCandidates, candidateSearch, sortConfig]);
+  }, [asyncCandidates, sortConfig]);
 
   const requestSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -141,7 +151,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           return;
         }
         
-        const candidateRef = allCandidates.find(c => c.searchId === selectedCandidateId);
+        const candidateRef = selectedCandidateRef;
         const filename = target === 'draft' ? `${candidateRef?.name || 'Candidate'}_Draft.pdf` : `${candidateRef?.name || 'Candidate'}_Report.pdf`;
 
         if (target === 'draft') {
@@ -234,18 +244,18 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       setCandidateFilesHistory([]);
       return;
     }
-    const candidateRef = allCandidates.find(c => c.searchId === selectedCandidateId);
+    const candidateRef = selectedCandidateRef;
     if (candidateRef) {
       const candId = candidateRef.externalId || candidateRef.id;
       fetchCandidateFiles(candId);
     }
-  }, [selectedCandidateId, allCandidates]);
+  }, [selectedCandidateId, selectedCandidateRef]);
 
   const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>, type: 'cv' | 'linkedin') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const candidateRef = allCandidates.find(c => c.searchId === selectedCandidateId);
+    const candidateRef = selectedCandidateRef;
     if (!candidateRef) return;
     const candId = candidateRef.externalId || candidateRef.id;
 
@@ -312,7 +322,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const candidateRef = allCandidates.find(c => c.searchId === selectedCandidateId);
+    const candidateRef = selectedCandidateRef;
     if (!candidateRef) return;
     const candId = candidateRef.externalId || candidateRef.id;
 
@@ -471,7 +481,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
     }
   };
 
-  const selectedCandidate = allCandidates.find(c => c.searchId === selectedCandidateId);
+  const selectedCandidate = selectedCandidateRef;
   const selectedFramework = frameworks.find(f => f.id === frameworkId);
   const selectedMandate = mandates.find(m => m.id.toString() === mandateId) || { role: "Candidate Profile", company: "" };
 
@@ -535,7 +545,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       return;
     }
 
-    const candidateRef = allCandidates.find(c => c.searchId === selectedCandidateId);
+    const candidateRef = selectedCandidateRef;
     if (!candidateRef) return;
 
     const candidateId = candidateRef.externalId || candidateRef.id;
@@ -1220,6 +1230,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                     sortedAndFilteredCandidates.map(c => (
                       <tr key={c.searchId} className="hover:bg-blue-50/50 transition-colors group cursor-pointer" onClick={() => {
                         setSelectedCandidateId(c.searchId);
+                        setSelectedCandidateRef(c);
                         setIsCandidateModalOpen(false);
                       }}>
                         <td className="px-6 py-4">

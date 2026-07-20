@@ -1,5 +1,5 @@
 import { requireRole } from "@/lib/auth";
-import { getCandidatesPaginated, getMandates } from "@/db/queries";
+import { getCandidatesPaginated, getMandatesLight } from "@/db/queries";
 import CandidatesClient from "@/features/candidates/components/CandidatesClient";
 import { redirect } from "next/navigation";
 
@@ -40,7 +40,7 @@ export default async function CandidatesPage(props: { searchParams: Promise<{ [k
 
   const [paginatedData, mandates] = await Promise.all([
     getCandidatesPaginated({ page, limit, search, companies, designations, statuses, minExp, maxExp, minTenure, maxTenure, minCtc, maxCtc, sortKey, sortDir }),
-    getMandates()
+    getMandatesLight()
   ]);
   
   return <CandidatesClient 

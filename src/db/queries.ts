@@ -20,6 +20,16 @@ export const getMandates = cache(async () => {
   }));
 });
 
+export const getMandatesLight = cache(async () => {
+  return await db.select({
+    id: mandates.id,
+    company: mandates.company,
+    role: mandates.role,
+    status: mandates.status,
+    frameworkId: mandates.frameworkId
+  }).from(mandates).where(eq(mandates.isDeleted, false)).orderBy(desc(mandates.id));
+});
+
 export const getMandatesPaginated = cache(async (params: {
   page: number;
   pageSize: number;

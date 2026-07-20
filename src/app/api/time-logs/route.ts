@@ -34,7 +34,7 @@ export async function GET(request: Request) {
 
     const all = searchParams.get('all') === 'true';
     if (all) {
-      const allUsers = await db.select().from(platformUsers);
+      const allUsers = (await db.select().from(platformUsers)).filter(u => u.role === 'admin' || u.role === 'consultant');
       
       const now = new Date();
       const dateString = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0];

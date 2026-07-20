@@ -1,5 +1,5 @@
 import { requireRole } from "@/lib/auth";
-import { getMandateCandidateByExtId, getFrameworks, getCandidates, getAllMandateCandidates, getMandates, getCandidateById, getUserByEmail } from "@/db/queries";
+import { getMandateCandidateByExtId, getFrameworks, getCandidates, getAllMandateCandidates, getMandates, getMandatesLight, getCandidateById, getUserByEmail } from "@/db/queries";
 import { db } from "@/db";
 import { clients } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -18,30 +18,24 @@ export default async function WorkbenchPage({ searchParams  }: { searchParams: P
     initialCandidate = await getCandidateById(flCandId);
   }
 
-  let [frameworksList, candidates, mandatesList] = await Promise.all([
-    getFrameworks(),
-    getCandidates(),
-    getMandates()
-  ]);
+  let frameworksList = await getFrameworks();
   
+  let candidates: any[] = [];
+  let mandatesList = await getMandatesLight();
   let readOnly = false;
+  
   if (email) {
     if (pUser?.role === "client" && pUser.linkedClientId) {
       readOnly = true;
       const [client] = await db.select().from(clients).where(eq(clients.id, pUser.linkedClientId));
       if (client) {
         mandatesList = mandatesList.filter(m => m.company === client.name);
-        // Client shouldn't see candidates from the general float list (unless submitted to their mandates)
-        // so we filter out all `candidates` (master DB) to force them to select from `mandateCandidates`
-        candidates = [];
       } else {
         mandatesList = [];
-        candidates = [];
       }
     } else if (pUser?.role === "candidate" && pUser.linkedCandidateId) {
       readOnly = true;
       mandatesList = [];
-      candidates = candidates.filter(c => c.id.toString() === pUser.linkedCandidateId);
     }
   }
 

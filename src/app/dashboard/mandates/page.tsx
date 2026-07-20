@@ -3,7 +3,7 @@ import { getMandatesPaginated } from "@/db/queries";
 import MandatesClient from "@/features/mandates/components/MandatesClient";
 import { db } from "@/db";
 import { clients, mandates } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 export default async function MandatesPage({
   searchParams,
@@ -32,12 +32,18 @@ export default async function MandatesPage({
     else return <MandatesClient initialMandates={[]} metadata={{ totalCount: 0, totalPages: 1, currentPage: 1 }} uniqueCompanies={[]} uniqueRoles={[]} uniqueSectors={[]} />;
   }
 
-  // Pre-fetch unique values for dropdowns (this is still N+1-ish if we fetch all, but we can just select distinct).
-  // For industry grade, we should do distinct selects. For now, fetch distinct from DB.
-  const allMandatesForDropdowns = await db.select({ company: mandates.company, role: mandates.role, sectors: mandates.sectors }).from(mandates).where(eq(mandates.isDeleted, false));
-  const uniqueCompanies = Array.from(new Set(allMandatesForDropdowns.map(m => m.company))).sort();
-  const uniqueRoles = Array.from(new Set(allMandatesForDropdowns.map(m => m.role))).sort();
-  const uniqueSectors = Array.from(new Set(allMandatesForDropdowns.flatMap(m => (m.sectors ?? []) as string[]))).sort();
+  // Pre-fetch unique values for dropdowns using highly optimized DISTINCT database queries.
+  // This prevents memory leaks and OOM crashes by offloading aggregation to Postgres.
+  const companyRows = await db.selectDistinct({ company: mandates.company }).from(mandates).where(eq(mandates.isDeleted, false));
+  const uniqueCompanies = companyRows.map(r => r.company).filter(Boolean).sort();
+
+  const roleRows = await db.selectDistinct({ role: mandates.role }).from(mandates).where(eq(mandates.isDeleted, false));
+  const uniqueRoles = roleRows.map(r => r.role).filter(Boolean).sort();
+
+  // Extract unique sectors from JSON array directly in SQL
+  const sectorsResult = await db.execute(sql`SELECT DISTINCT json_array_elements_text(sectors) as sector FROM mandates WHERE is_deleted = false AND sectors IS NOT NULL AND json_typeof(sectors) = 'array'`);
+  const sectorRows = Array.isArray(sectorsResult) ? sectorsResult : ((sectorsResult as any).rows || []);
+  const uniqueSectors = sectorRows.map((r: any) => r.sector as string).filter(Boolean).sort();
 
   const { data, metadata } = await getMandatesPaginated({
     page,

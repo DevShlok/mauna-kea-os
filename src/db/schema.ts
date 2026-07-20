@@ -129,7 +129,9 @@ export const candidateFiles = pgTable('candidate_files', {
   fileUrl: varchar('file_url', { length: 1000 }).notNull(),
   extractedText: mediumtext('extracted_text'),
   createdAt: datetime('created_at').default(sql`now()`),
-});
+}, (table) => ({
+  candIdIdx: index('cf_cand_id_idx').on(table.candId),
+}));
 
 // ─── FLOAT REFERENCES ────────────────────────────────────
 export const floatReferences = pgTable('float_references', {
@@ -144,7 +146,9 @@ export const floatReferences = pgTable('float_references', {
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
-});
+}, (table) => ({
+  candIdIdx: index('fr_cand_id_idx').on(table.candId),
+}));
 
 // ─── FLOATS (SUBMISSIONS) ────────────────────────────────
 export const floats = pgTable('floats', {
@@ -181,7 +185,9 @@ export const floatFollowUps = pgTable('float_followups', {
   status: varchar('status', { length: 20 }),
   note: text('note'),
   createdAt: datetime('created_at').default(sql`now()`),
-});
+}, (table) => ({
+  candIdIdx: index('ff_cand_id_idx').on(table.candId),
+}));
 
 // ─── FLOAT ACTIVITIES ────────────────────────────────────
 export const floatActivities = pgTable('float_activities', {
@@ -194,7 +200,9 @@ export const floatActivities = pgTable('float_activities', {
   type: varchar('type', { length: 50 }),
   isPinned: boolean('is_pinned').default(false),
   createdAt: datetime('created_at').default(sql`now()`),
-});
+}, (table) => ({
+  candIdIdx: index('fa_cand_id_idx').on(table.candId),
+}));
 
 // ─── FRAMEWORKS ──────────────────────────────────────────
 export const frameworks = pgTable('frameworks', {
@@ -216,7 +224,9 @@ export const frameworkCategories = pgTable('framework_categories', {
   name: varchar('name', { length: 255 }).notNull(),
   weight: int('weight').default(100),
   sortOrder: int('sort_order').default(0),
-});
+}, (table) => ({
+  frameworkIdIdx: index('fc_framework_id_idx').on(table.frameworkId),
+}));
 
 export const frameworkCriteria = pgTable('framework_criteria', {
   id: serial('id').primaryKey(),
@@ -224,7 +234,9 @@ export const frameworkCriteria = pgTable('framework_criteria', {
   name: varchar('name', { length: 255 }).notNull(),
   weight: int('weight').default(10),
   sortOrder: int('sort_order').default(0),
-});
+}, (table) => ({
+  categoryIdIdx: index('fcr_category_id_idx').on(table.categoryId),
+}));
 
 // ─── USERS ───────────────────────────────────────────────
 export const platformUsers = pgTable('platform_users', {
@@ -259,7 +271,10 @@ export const candidateReports = pgTable('candidate_reports', {
   reportData: json('report_data'), // The dynamic JSON output from the AI
   sharedWithClient: boolean('shared_with_client').default(false), // Indicates if the report is visible to the client
   createdAt: datetime('created_at').default(sql`now()`),
-});
+}, (table) => ({
+  candidateIdIdx: index('cr_candidate_id_idx').on(table.candidateId),
+  frameworkIdIdx: index('cr_framework_id_idx').on(table.frameworkId),
+}));
 
 // ─── CLIENTS ─────────────────────────────────────────────
 export const clients = pgTable('clients', {
@@ -292,7 +307,10 @@ export const clientNotifications = pgTable('client_notifications', {
   link: varchar('link', { length: 255 }),
   isRead: boolean('is_read').default(false),
   createdAt: datetime('created_at').default(sql`now()`),
-});
+}, (table) => ({
+  clientIdIdx: index('cn_client_id_idx').on(table.clientId),
+  mandateIdIdx: index('cn_mandate_id_idx').on(table.mandateId),
+}));
 
 // ─── CLIENT REMARKS ──────────────────────────────────────
 export const clientRemarks = pgTable('client_remarks', {
@@ -303,7 +321,11 @@ export const clientRemarks = pgTable('client_remarks', {
   remarkText: text('remark_text').notNull(),
   status: varchar('status', { length: 50 }).default('Pending'), // Pending, Completed, Closed
   createdAt: datetime('created_at').default(sql`now()`),
-});
+}, (table) => ({
+  clientIdIdx: index('crem_client_id_idx').on(table.clientId),
+  mandateIdIdx: index('crem_mandate_id_idx').on(table.mandateId),
+  candIdIdx: index('crem_cand_id_idx').on(table.candId),
+}));
 
 // ─── CONSULTANT NOTIFICATIONS ────────────────────────────
 export const consultantNotifications = pgTable('consultant_notifications', {
@@ -341,7 +363,10 @@ export const timeLogs = pgTable('time_logs', {
   action: varchar('action', { length: 20 }).notNull(), // 'clock_in', 'clock_out', 'break_start', 'break_end'
   timestamp: datetime('timestamp').notNull(),
   dateString: date('date_string').notNull(), // YYYY-MM-DD for easy daily grouping
-});
+}, (table) => ({
+  userIdIdx: index('tl_user_id_idx').on(table.userId),
+  dateStringIdx: index('tl_date_string_idx').on(table.dateString),
+}));
 
 export const leaveRequests = pgTable('leave_requests', {
   id: serial('id').primaryKey(),
@@ -353,7 +378,9 @@ export const leaveRequests = pgTable('leave_requests', {
   status: varchar('status', { length: 20 }).default('Pending'), // Pending, Approved, Rejected
   adminNotes: text('admin_notes'),
   createdAt: datetime('created_at').default(sql`now()`),
-});
+}, (table) => ({
+  userIdIdx: index('lr_user_id_idx').on(table.userId),
+}));
 
 export type TimeLog = typeof timeLogs.$inferSelect;
 export type LeaveRequest = typeof leaveRequests.$inferSelect;
