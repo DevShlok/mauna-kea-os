@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { createPlanAction, reviewPlanAction } from "@/actions/calls";
 import { useRouter } from "next/navigation";
+import { Search, X } from "lucide-react";
 
 export default function PlanningClient({ plans, availableTargets, isAdmin }: { plans: any[], availableTargets: any[], isAdmin: boolean }) {
   const router = useRouter();
@@ -11,6 +12,15 @@ export default function PlanningClient({ plans, availableTargets, isAdmin }: { p
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
   const [targetTypeTab, setTargetTypeTab] = useState<"Candidate" | "Client">("Candidate");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const selectedTargetObjs = availableTargets.filter(t => selectedTargets.includes(t.candId));
+  const filteredTargets = availableTargets.filter(target => 
+    !selectedTargets.includes(target.candId) &&
+    (target.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    target.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    target.designation?.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const [form, setForm] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -69,75 +79,107 @@ export default function PlanningClient({ plans, availableTargets, isAdmin }: { p
   const filteredPlans = plans.filter(p => p.type === activeTab);
 
   return (
-    <div className="flex gap-6 items-start">
+    <div className="flex flex-col gap-6">
       {/* Create Plan Form */}
-      <div className="w-1/3 bg-white border border-[#e4e8f0] rounded-[16px] shadow-sm p-6 sticky top-6">
+      <div className="w-full bg-white border border-[#e4e8f0] rounded-[16px] shadow-sm p-6">
         <h2 className="text-xl font-bold text-[#133255] mb-5">Create New Plan</h2>
         
-        <div className="flex bg-[#f4f7fd] p-1 rounded-lg mb-6">
+        <div className="flex bg-[#f4f7fd] p-1 rounded-lg mb-6 w-fit">
           <button 
-            className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${activeTab === 'Weekly' ? 'bg-white text-[#133255] shadow-sm' : 'text-[#6b7a99]'}`}
+            className={`px-8 py-1.5 text-sm font-bold rounded-md transition-all ${activeTab === 'Weekly' ? 'bg-white text-[#133255] shadow-sm' : 'text-[#6b7a99]'}`}
             onClick={() => setActiveTab('Weekly')}
           >
-            Weekly
+            Weekly Plan
           </button>
           <button 
-            className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${activeTab === 'Daily' ? 'bg-white text-[#133255] shadow-sm' : 'text-[#6b7a99]'}`}
+            className={`px-8 py-1.5 text-sm font-bold rounded-md transition-all ${activeTab === 'Daily' ? 'bg-white text-[#133255] shadow-sm' : 'text-[#6b7a99]'}`}
             onClick={() => setActiveTab('Daily')}
           >
-            Daily
+            Daily Plan
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">
-              {activeTab === 'Weekly' ? "Week Commencing" : "Date"} <span className="text-red-500">*</span>
-            </label>
-            <input 
-              required
-              type="date" 
-              value={form.date} 
-              onChange={e => setForm({...form, date: e.target.value})} 
-              className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" 
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">
+                {activeTab === 'Weekly' ? "Week Commencing" : "Date"} <span className="text-red-500">*</span>
+              </label>
+              <input 
+                required
+                type="date" 
+                min={new Date().toISOString().split('T')[0]}
+                value={form.date} 
+                onChange={e => setForm({...form, date: e.target.value})} 
+                className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" 
+              />
+            </div>
 
-          <div>
-            <div className="flex justify-between items-center mb-1.5">
-              <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99]">Select Targets <span className="text-red-500">*</span></label>
-              <div className="flex gap-2">
-                <button type="button" onClick={() => setTargetTypeTab("Candidate")} className={`text-[12px] font-bold uppercase tracking-wider ${targetTypeTab === "Candidate" ? "text-[#133255]" : "text-gray-400"}`}>Candidates</button>
-                <span className="text-gray-300">|</span>
-                <button type="button" onClick={() => setTargetTypeTab("Client")} className={`text-[12px] font-bold uppercase tracking-wider ${targetTypeTab === "Client" ? "text-[#133255]" : "text-gray-400"}`}>Clients</button>
+            <div className="flex-1">
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99]">Select Targets <span className="text-red-500">*</span></label>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setTargetTypeTab("Candidate")} className={`text-[12px] font-bold uppercase tracking-wider ${targetTypeTab === "Candidate" ? "text-[#133255]" : "text-gray-400"}`}>Candidates</button>
+                  <span className="text-gray-300">|</span>
+                  <button type="button" onClick={() => setTargetTypeTab("Client")} className={`text-[12px] font-bold uppercase tracking-wider ${targetTypeTab === "Client" ? "text-[#133255]" : "text-gray-400"}`}>Clients</button>
+                </div>
               </div>
-            </div>
-            
-            <div className="border-[1.5px] border-[#D4E0F0] rounded-md overflow-hidden bg-white max-h-[250px] overflow-y-auto">
-              {targetTypeTab === "Candidate" && availableTargets.length > 0 ? (
-                availableTargets.map(target => (
-                  <label key={target.candId} className="flex items-center gap-3 p-2.5 border-b border-[#f0f4f8] hover:bg-[#f8fafc] cursor-pointer">
-                    <input type="checkbox" checked={selectedTargets.includes(target.candId)} onChange={() => toggleTarget(target.candId)} className="w-4 h-4 text-[#133255] rounded border-gray-300 focus:ring-[#133255]" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[14px] font-bold text-[#111] truncate">{target.name}</div>
-                      <div className="text-[12px] text-gray-500 truncate">{target.designation} at {target.company}</div>
+              
+              <div className="border-[1.5px] border-[#D4E0F0] rounded-md p-3 bg-white shadow-sm">
+                {/* Selected Chips */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {selectedTargetObjs.map(t => (
+                    <div key={t.candId} className="flex items-center gap-1.5 bg-[#eef2fb] text-[#133255] px-2.5 py-1.5 rounded-md text-[13px] font-semibold border border-[#d4e0f0]">
+                      <span>{t.name}</span>
+                      <button type="button" onClick={() => toggleTarget(t.candId)} className="text-[#133255] hover:text-red-500 rounded p-0.5 transition-colors"><X size={14} /></button>
                     </div>
-                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#eef2fb] text-[#133255]">{target.list}</span>
-                  </label>
-                ))
-              ) : targetTypeTab === "Candidate" ? (
-                <div className="p-4 text-center text-gray-500 text-[13px]">No candidates in your Calling or BD lists.</div>
-              ) : (
-                <div className="p-4 text-center text-gray-500 text-[13px]">Client selection coming soon.</div>
-              )}
+                  ))}
+                  {selectedTargets.length === 0 && <div className="text-gray-400 text-[13px] italic py-1">No targets selected yet. Search below to add.</div>}
+                </div>
+
+                {/* Search & Select */}
+                <div className="relative mb-2">
+                  <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+                  <input 
+                    type="text" 
+                    placeholder={`Search ${targetTypeTab.toLowerCase()}s by name, company, or designation...`}
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="w-full h-9 pl-9 pr-3 text-[14px] bg-[#f8fafc] border border-[#e4e8f0] rounded-md outline-none focus:border-[#133255] transition-colors"
+                  />
+                </div>
+                
+                {targetTypeTab === "Candidate" ? (
+                  <div className="max-h-[200px] overflow-y-auto border border-[#f0f4f8] rounded bg-[#f8fafc]">
+                    {filteredTargets.length > 0 ? (
+                      filteredTargets.slice(0, 50).map(target => (
+                        <div key={target.candId} onClick={() => toggleTarget(target.candId)} className="flex justify-between items-center p-2.5 border-b border-[#f0f4f8] hover:bg-white cursor-pointer transition-colors group">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[14px] font-bold text-[#111] truncate group-hover:text-[#133255] transition-colors">{target.name}</div>
+                            <div className="text-[12px] text-gray-500 truncate">{target.designation} at {target.company}</div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#eef2fb] text-[#133255]">{target.list}</span>
+                            <span className="text-[12px] font-semibold text-[#133255] opacity-0 group-hover:opacity-100 transition-opacity">Select +</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-gray-500 text-[13px]">No matching {targetTypeTab.toLowerCase()}s.</div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-gray-500 text-[13px]">Client selection coming soon.</div>
+                )}
+              </div>
+              <div className="text-right text-[12px] text-[#6b7a99] mt-1 font-bold">{selectedTargets.length} selected</div>
             </div>
-            <div className="text-right text-[12px] text-[#6b7a99] mt-1 font-bold">{selectedTargets.length} selected</div>
           </div>
 
           <button 
             type="submit" 
-            disabled={isSubmitting} 
-            className="w-full h-11 mt-2 rounded-md text-[15px] font-bold bg-[#133255] text-white hover:bg-[#0e2150] transition-colors flex items-center justify-center gap-2"
+            disabled={isSubmitting || selectedTargets.length === 0} 
+            className="w-full h-11 rounded-md text-[15px] font-bold bg-[#133255] text-white hover:bg-[#0e2150] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {isSubmitting ? "Saving..." : `Save ${activeTab} Plan`}
           </button>
@@ -145,7 +187,7 @@ export default function PlanningClient({ plans, availableTargets, isAdmin }: { p
       </div>
 
       {/* Plan List */}
-      <div className="w-2/3 bg-white border border-[#e4e8f0] rounded-[16px] shadow-sm overflow-hidden">
+      <div className="w-full bg-white border border-[#e4e8f0] rounded-[16px] shadow-sm overflow-hidden">
         <div className="p-5 border-b border-[#D4E0F0] flex justify-between items-center bg-[#f8fafc]">
           <h2 className="text-[17px] font-bold text-[#133255]">Submitted {activeTab} Plans</h2>
         </div>
