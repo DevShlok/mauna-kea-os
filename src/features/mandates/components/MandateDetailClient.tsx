@@ -418,7 +418,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
             <MandateKanbanBoard 
               candidates={mandate.candidates} 
               onDragEnd={async (candId, newStage) => {
-                await updateMandateCandidateStageAction(Number(candId), newStage);
+                await updateMandateCandidateStageAction(Number(candId), newStage, mandate.id);
                 setMandate((prev: any) => ({
                   ...prev,
                   candidates: prev.candidates.map((c: any) => c.id.toString() === candId ? { ...c, stage: newStage } : c)
