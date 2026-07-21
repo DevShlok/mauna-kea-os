@@ -25,7 +25,7 @@ const AuditText = ({ field, data }: { field: string, data: any }) => {
   );
 };
 
-export default function MandateDetailClient({ initialMandate }: { initialMandate: any }) {
+export default function MandateDetailClient({ initialMandate, consultants = [], currentUser = "System" }: { initialMandate: any, consultants?: string[], currentUser?: string }) {
   const router = useRouter();
   const [mandate, setMandate] = useState(initialMandate);
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null); // "jd" | "notes" | "docs"
@@ -623,7 +623,11 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Consultant</label>
-                  <input value={editForm.consultant || ""} onChange={e => setEditForm({...editForm, consultant: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+                  <select value={editForm.consultant || currentUser} onChange={e => setEditForm({...editForm, consultant: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none bg-white">
+                    {Array.from(new Set([...consultants, editForm.consultant || currentUser])).map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-gray-600 mb-1">Client POC</label>

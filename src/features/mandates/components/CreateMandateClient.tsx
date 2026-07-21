@@ -10,7 +10,7 @@ import { createMandateAction } from "@/actions";
 import { createClient } from "@/utils/supabase/client";
 import { ClientTypeahead, LocationTypeahead, IndustryTypeahead } from "@/components/shared/Typeaheads";
 
-export default function CreateMandateClient({ frameworks, isClientMode = false, clientName = "", clientSlug = "" }: { frameworks: any[], isClientMode?: boolean, clientName?: string, clientSlug?: string }) {
+export default function CreateMandateClient({ frameworks, isClientMode = false, clientName = "", clientSlug = "", consultants = [], currentUser = "System" }: { frameworks: any[], isClientMode?: boolean, clientName?: string, clientSlug?: string, consultants?: string[], currentUser?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialCompany = isClientMode ? clientName : (searchParams.get("company") || "");
@@ -36,6 +36,7 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
     additionalDocsText: "",
     consultantNotes: "",
     openQuestions: "",
+    consultant: currentUser,
   });
 
   const [sectors, setSectors] = useState<string[]>([]);
@@ -236,6 +237,19 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
                 <option value="Diversity hire required">Diversity hire required</option>
               </select>
             </div>
+            {!isClientMode && (
+              <div className="col-span-1 md:col-span-1">
+                <label className="block text-xs font-bold text-gray-600 mb-1.5">Consultant in Charge <span className="text-red-500">*</span></label>
+                <select required value={form.consultant} onChange={(e) => setForm({...form, consultant: e.target.value})} className={inp + " bg-white"}>
+                  <option value={currentUser}>{currentUser}</option>
+                  {consultants.filter(c => c !== currentUser).map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                  {/* Fallback if user doesn't exist in consultants array */}
+                  {!consultants.includes(currentUser) && currentUser !== "System" && <option value="System">System</option>}
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-xs font-bold text-gray-600 mb-1.5">Target Sectors</label>
               <div className="border border-gray-200 rounded p-1 focus-within:border-[#133255] bg-white">

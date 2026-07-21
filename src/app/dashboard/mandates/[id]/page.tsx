@@ -1,5 +1,5 @@
 import { requireRole } from "@/lib/auth";
-import { getMandateById, getUserByEmail } from "@/db/queries";
+import { getMandateById, getConsultants } from "@/db/queries";
 import MandateDetailClient from "@/features/mandates/components/MandateDetailClient";
 import { db } from "@/db";
 import { clients } from "@/db/schema";
@@ -21,5 +21,8 @@ export default async function MandateDetailPage({ params  }: { params: Promise<{
     }
   }
 
-  return <MandateDetailClient initialMandate={mandate} />;
+  const consultants = await getConsultants();
+  const currentUser = pUser?.name || "System";
+
+  return <MandateDetailClient initialMandate={mandate} consultants={consultants} currentUser={currentUser} />;
 }

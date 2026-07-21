@@ -1,18 +1,19 @@
 import { requireRole } from "@/lib/auth";
-import { getFrameworks } from "@/db/queries";
+import { getFrameworks, getConsultants } from "@/db/queries";
 import CreateMandateClient from "@/features/mandates/components/CreateMandateClient";
 
 import { Suspense } from "react";
 
 
 export default async function CreateMandatePage() {
-  await requireRole(["admin", "consultant"]);
-
+  const { platformUser } = await requireRole(["admin", "consultant"]);
   const frameworks = await getFrameworks();
+  const consultants = await getConsultants();
+  const currentUser = platformUser?.name || "System";
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <CreateMandateClient frameworks={frameworks} />
+      <CreateMandateClient frameworks={frameworks} consultants={consultants} currentUser={currentUser} />
     </Suspense>
   );
 }

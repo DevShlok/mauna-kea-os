@@ -7,6 +7,12 @@ import {
   frameworkCriteria, platformUsers, candidateReports, candidateFiles, clients
 } from './schema';
 
+// ─── PLATFORM USERS ──────────────────────────────────────
+export const getConsultants = cache(async () => {
+  const users = await db.select({ name: platformUsers.name }).from(platformUsers).where(inArray(platformUsers.role, ["admin", "consultant"]));
+  return users.map(u => u.name).filter(Boolean) as string[];
+});
+
 // ─── MANDATES ────────────────────────────────────────────
 export const getMandates = cache(async () => {
   const rows = await db.query.mandates.findMany({
