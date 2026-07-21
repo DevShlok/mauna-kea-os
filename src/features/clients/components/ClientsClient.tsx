@@ -8,7 +8,7 @@ import { Search } from "lucide-react";
 import { updateClientAction, deleteMultipleClientsAction } from "@/actions";
 import dynamic from "next/dynamic";
 const ClientImportModal = dynamic(() => import("./ClientImportModal"), { ssr: false });
-import { Upload, Plus } from "lucide-react";
+import { Upload, Plus, Download } from "lucide-react";
 import toast from "react-hot-toast";
 import { Pagination } from "@/components/DataTable/Pagination";
 import { SortableHeader } from "@/components/DataTable/SortableHeader";
@@ -112,6 +112,21 @@ export default function ClientsClient({
     }
   };
 
+  const handleExportSelected = () => {
+    const selected = localClients.filter(c => selectedIds.has(c.id));
+    if (selected.length === 0) return;
+    const headers = ["Company", "Vertical", "Owner", "Status"];
+    const rows = selected.map(c => [c.name, c.vertical || "-", c.owner || "-", c.status || "-"]);
+    const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "clients_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const selectedClients = localClients.filter(c => selectedIds.has(c.id));
   const selectedClientNames = selectedClients.map(c => c.name);
   const attachedMandatesCount = selectedClients.reduce((acc, c) => acc + (c.mandates?.length || 0), 0);
@@ -179,6 +194,10 @@ export default function ClientsClient({
               <b className="text-[#d7a33c]">{selectedIds.size}</b> selected
             </div>
             <div className="ml-auto flex gap-3">
+              <button onClick={handleExportSelected} className="px-3 py-2 bg-emerald-600 text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 flex items-center gap-1.5">
+                <Download className="w-4 h-4" />
+                Export
+              </button>
               <button onClick={() => setIsDeleteDialogOpen(true)} className="px-3 py-2 bg-red-500 text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 flex items-center gap-1.5">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 Delete

@@ -13,6 +13,7 @@ import { SortableHeader } from "@/components/DataTable/SortableHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MultiSelect } from "@/components/ui/MultiSelect";
 import { DualRangeSlider } from "@/components/ui/DualRangeSlider";
+import { Download } from "lucide-react";
 
 export default function CandidatesClient({ 
   candidates, 
@@ -691,6 +692,109 @@ export default function CandidatesClient({
     saveAs(new Blob([buffer]), "Candidates_Export.xlsx");
   };
 
+  const exportSelectedToExcel = async () => {
+    const selected = filtered.filter(c => selectedIds.has(c.id));
+    if (selected.length === 0) return;
+    const ExcelJS = (await import('exceljs')).default;
+    const { saveAs } = await import('file-saver');
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Candidates');
+
+    // Define columns with widths for even spacing
+    worksheet.columns = [
+      { header: 'Candidate ID', key: 'id', width: 20 },
+      { header: 'Name', key: 'name', width: 25 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Mobile', key: 'mobile', width: 20 },
+      { header: 'Location', key: 'location', width: 20 },
+      { header: 'Current Company', key: 'company', width: 25 },
+      { header: 'Current Designation', key: 'designation', width: 25 },
+      { header: 'Total Experience (Years)', key: 'exp', width: 25 },
+      { header: 'Tenure in Current Org (Years)', key: 'tenure', width: 28 },
+      { header: 'CTC (Lakhs)', key: 'ctc', width: 15 },
+      { header: 'Fixed CTC (Lakhs)', key: 'fixedCtc', width: 20 },
+      { header: 'Variable CTC (Lakhs)', key: 'variableCtc', width: 22 },
+      { header: 'Expected CTC (Lakhs)', key: 'expected', width: 22 },
+      { header: 'Notice Period (Days)', key: 'notice', width: 22 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Qualifications', key: 'qual', width: 40 },
+      { header: 'Prior Employers / Exp Tags', key: 'expTags', width: 30 },
+      { header: 'Dream Roles', key: 'dreamRoles', width: 25 },
+      { header: 'Dream Companies', key: 'dreamCos', width: 25 },
+      { header: 'LinkedIn Profile URL', key: 'linkedin', width: 25 },
+      { header: 'Target Company', key: 'targetCompany', width: 25 },
+      { header: 'Notes', key: 'notes', width: 40 },
+      { header: 'Resume/CV (Drive Link)', key: 'cvLink', width: 25 },
+      { header: 'LinkedIn PDF (Drive Link)', key: 'linkedinPdf', width: 28 }
+    ];
+
+    // Style header row: bold and centrally aligned
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    selected.forEach(c => {
+      const qualsStr = c.qual && Array.isArray(c.qual) 
+        ? c.qual.map((q: any) => typeof q === 'string' ? q : `${q.degree || ''} ${q.institute ? `from ${q.institute}` : ''} ${q.year ? `(${q.year})` : ''}`).join('; ')
+        : '';
+
+      const row = worksheet.addRow({
+        id: c.id,
+        name: c.name,
+        email: c.email || '',
+        mobile: c.mobile || '',
+        location: c.location || '',
+        company: c.company || '',
+        designation: c.designation || '',
+        exp: c.exp ?? '',
+        tenure: c.tenure ?? '',
+        ctc: c.ctc ?? '',
+        fixedCtc: c.fixedCtc ?? '',
+        variableCtc: c.variableCtc ?? '',
+        expected: c.expected ?? '',
+        notice: c.notice ?? '',
+        status: c.status || '',
+        qual: qualsStr,
+        expTags: (c.expTags || []).join(', '),
+        dreamRoles: (c.dreamRoles || []).join(', '),
+        dreamCos: (c.dreamCos || []).join(', '),
+        linkedin: c.linkedin || '',
+        targetCompany: c.targetCompany || '',
+        notes: c.notes || '',
+        cvLink: c.cvFileName || '',
+        linkedinPdf: c.linkedinPdf || ''
+      });
+
+      // Align all cells centrally
+      row.eachCell({ includeEmpty: true }, (cell) => {
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      });
+
+      // Format Hyperlinks
+      if (c.linkedin && c.linkedin.startsWith('http')) {
+        row.getCell('linkedin').value = { text: c.name || 'LinkedIn', hyperlink: c.linkedin };
+      }
+      
+      const cvCell = row.getCell('cvLink');
+      if (c.cvFileName && c.cvFileName.startsWith('http')) {
+        cvCell.value = { text: c.name || 'Resume', hyperlink: c.cvFileName };
+      } else if (c.cvFileName) {
+        cvCell.value = 'Yes';
+      }
+
+      const pdfCell = row.getCell('linkedinPdf');
+      if (c.linkedinPdf && c.linkedinPdf.startsWith('http')) {
+        pdfCell.value = { text: c.name || 'LinkedIn PDF', hyperlink: c.linkedinPdf };
+      } else if (c.linkedinPdf) {
+        pdfCell.value = 'Yes';
+      }
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), "Selected_Candidates_Export.xlsx");
+  };
+
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex justify-between items-center mb-6">
@@ -831,6 +935,9 @@ export default function CandidatesClient({
             </button>
             <button onClick={handleBulkFloatSubmit} disabled={isSubmitting} className="px-3 py-2 bg-[#1f9d57] text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 disabled:opacity-50">
               {isSubmitting ? "Floating..." : "➤ Float"}
+            </button>
+            <button onClick={exportSelectedToExcel} disabled={isSubmitting} className="px-3 py-2 bg-emerald-600 text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 disabled:opacity-50 flex items-center gap-1.5">
+              <Download className="w-4 h-4" /> Export
             </button>
             <button onClick={() => setIsDeleteDialogOpen(true)} className="px-3 py-2 bg-red-500 text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 flex items-center gap-1.5">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>

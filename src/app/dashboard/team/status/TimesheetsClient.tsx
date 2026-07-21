@@ -12,6 +12,7 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [teamStatuses, setTeamStatuses] = useState<Record<string, string>>({});
+  const [isExporting, setIsExporting] = useState(false);
 
   // Constants
   const EXPECTED_HOURS = 8; // 8 hours per day expected
@@ -45,6 +46,20 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
       window.removeEventListener('break_status_changed', fetchStatuses);
     };
   }, []);
+
+  const getWorkingDays = (startStr: string, endStr: string) => {
+    let count = 0;
+    const cur = new Date(startStr);
+    const end = new Date(endStr);
+    while (cur <= end) {
+      const day = cur.getDay(); // 0 is Sunday, 6 is Saturday
+      if (day !== 0 && day !== 6) {
+        count++;
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+    return count;
+  };
 
   useEffect(() => {
     if (!selectedUser) return;
@@ -119,7 +134,7 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
     day.overtime = day.activeHours - EXPECTED_HOURS;
   });
 
-  const handleExport = () => {
+  const handleUserExport = () => {
     // Generate CSV
     const headers = ["Date", "First In", "Last Out", "Active Hours", "Break Hours", "Expected Hours", "Overtime/Deficit"];
     const rows = Object.values(timesheetByDate).map(day => [
@@ -145,6 +160,63 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
     document.body.removeChild(link);
   };
 
+  const handleGlobalExport = async () => {
+    try {
+      setIsExporting(true);
+      const res = await fetch('/api/time-logs?report=true');
+      const data = await res.json();
+      if (!data.success) return;
+
+      const { logs: allLogs, leaves: allLeaves, users: allUsers } = data;
+      
+      const reportRows = allUsers.map((u: any) => {
+        // Find logs for this user
+        const userLogs = allLogs.filter((l: any) => l.userId === u.id);
+        const uniqueDays = new Set(userLogs.map((l: any) => l.dateString)).size;
+
+        // Find leaves for this user
+        const userLeaves = allLeaves.filter((l: any) => l.userId === u.id && l.status === "Approved");
+        let wfhDays = 0;
+        let otherLeaveDays = 0;
+
+        userLeaves.forEach((leave: any) => {
+          const days = getWorkingDays(leave.startDate, leave.endDate);
+          if (leave.leaveType === "Work From Home") {
+            wfhDays += days;
+          } else {
+            otherLeaveDays += days;
+          }
+        });
+
+        return [
+          u.name,
+          u.role,
+          uniqueDays.toString(),
+          wfhDays.toString(),
+          otherLeaveDays.toString()
+        ];
+      });
+
+      const headers = ["User Name", "Role", "Days Present (Clocked In)", "WFH Days (Approved)", "Other Leaves (Approved)"];
+      const csvContent = "data:text/csv;charset=utf-8," 
+        + headers.join(",") + "\n" 
+        + reportRows.map((e: any[]) => e.join(",")).join("\n");
+        
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `payroll_report_${new Date().toISOString().substring(0, 7)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="max-w-screen-xl mx-auto pb-10 p-6">
       <div className="mb-6 flex justify-between items-end">
@@ -157,9 +229,15 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
           <h1 className="text-[29px] font-serif font-bold text-[#111]">Team Status</h1>
         </div>
 
-        {selectedUser && Object.keys(timesheetByDate).length > 0 && (
-          <button onClick={handleExport} className="px-4 py-2 bg-[#133255] text-white rounded text-sm font-bold hover:bg-[#0e3178] flex items-center gap-2">
-            <Download className="w-4 h-4" /> Export Payroll Data
+        {selectedUser ? (
+          Object.keys(timesheetByDate).length > 0 && (
+            <button onClick={handleUserExport} className="px-4 py-2 bg-[#133255] text-white rounded text-sm font-bold hover:bg-[#0e3178] flex items-center gap-2">
+              <Download className="w-4 h-4" /> Export Timesheet
+            </button>
+          )
+        ) : (
+          <button disabled={isExporting} onClick={handleGlobalExport} className="px-4 py-2 bg-[#133255] text-white rounded text-sm font-bold hover:bg-[#0e3178] flex items-center gap-2 disabled:opacity-50">
+            <Download className="w-4 h-4" /> {isExporting ? "Generating..." : "Export Payroll Report"}
           </button>
         )}
       </div>

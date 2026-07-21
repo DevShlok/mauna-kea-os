@@ -6,6 +6,9 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { deleteMultipleCandidatesAction } from "@/actions";
 import toast from "react-hot-toast";
 import { Pagination } from "@/components/DataTable/Pagination";
+import { Download, Upload } from "lucide-react";
+import dynamic from "next/dynamic";
+const FloatImportModal = dynamic(() => import("./FloatImportModal"), { ssr: false });
 
 export default function FloatListClient({ 
   paginatedData, 
@@ -88,6 +91,30 @@ export default function FloatListClient({
     }
   };
 
+  const handleExportSelected = () => {
+    const selected = paginatedData.filter(c => selectedIds.has(c.externalId));
+    if (selected.length === 0) return;
+    const headers = ["Name", "Company", "Designation", "Mandate", "Stage", "Score"];
+    const rows = selected.map(c => [
+      c.name || "-", 
+      c.company || "-", 
+      c.role || "-", 
+      (c.mandateRole ? `${c.mandateRole} @ ${c.mandateCompany}` : "-"), 
+      c.stage || "-", 
+      c.score ? `${c.score}/10` : "-"
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "floats_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex justify-between items-center mb-8">
@@ -95,7 +122,17 @@ export default function FloatListClient({
           <div className="text-[14px] text-gray-500 mb-1">Home / Candidates</div>
           <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">Float Database</h1>
         </div>
+        <div className="flex gap-3 items-center">
+          <button 
+            onClick={() => setIsImportModalOpen(true)}
+            className="h-10 px-4 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+          >
+            <Upload className="w-4 h-4" /> Import Floats
+          </button>
+        </div>
       </div>
+      
+      <FloatImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
       
       {/* Filters Bar */}
       <div className="flex flex-wrap gap-3 mb-6 bg-white p-3 border border-gray-200 rounded-xl shadow-sm">
@@ -142,6 +179,9 @@ export default function FloatListClient({
             <b className="text-[#d7a33c]">{selectedIds.size}</b> selected
           </div>
           <div className="ml-auto flex gap-3">
+            <button onClick={handleExportSelected} className="px-3 py-2 bg-emerald-600 text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 flex items-center gap-1.5">
+              <Download className="w-4 h-4" /> Export
+            </button>
             <button onClick={() => setIsDeleteDialogOpen(true)} className="px-3 py-2 bg-red-500 text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 flex items-center gap-1.5">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
               Delete

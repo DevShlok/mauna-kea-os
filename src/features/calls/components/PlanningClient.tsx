@@ -6,7 +6,7 @@ import { createPlanAction, reviewPlanAction } from "@/actions/calls";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
 
-export default function PlanningClient({ plans, availableTargets, isAdmin }: { plans: any[], availableTargets: any[], isAdmin: boolean }) {
+export default function PlanningClient({ plans, availableTargets, isAdmin, user }: { plans: any[], availableTargets: any[], isAdmin: boolean, user?: any }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"Weekly" | "Daily">("Weekly");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,8 +78,71 @@ export default function PlanningClient({ plans, availableTargets, isAdmin }: { p
 
   const filteredPlans = plans.filter(p => p.type === activeTab);
 
+  const firstName = user?.name?.split(" ")[0] || "Consultant";
+  
+  // Calculate today's plan metrics for the banner
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todaysPlan = plans.find(p => p.type === 'Daily' && p.date === todayStr);
+  const plannedIds = todaysPlan?.targetCandIds as string[] || [];
+  
+  // We consider a call "completed" if it has a terminal status or is no longer pending/to call
+  const terminalStatuses = ['Converted', 'Archived', 'Do Not Contact', 'Connected - Not Interested', 'Connected - Follow Up', 'Left Voicemail', 'In Progress'];
+  const completedTargets = availableTargets.filter(t => plannedIds.includes(t.candId) && terminalStatuses.includes(t.status));
+  
+  const totalPlanned = plannedIds.length;
+  const totalCompleted = completedTargets.length;
+  const totalRemaining = Math.max(0, totalPlanned - totalCompleted);
+  const progressPercent = totalPlanned > 0 ? Math.round((totalCompleted / totalPlanned) * 100) : 0;
+
   return (
     <div className="flex flex-col gap-6">
+      {/* Personalized Greeting & Progress Banner */}
+      <div className="bg-gradient-to-r from-[#133255] to-[#1a4fa8] rounded-xl p-6 shadow-sm text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between">
+        <div className="absolute right-0 top-0 w-64 h-full bg-gradient-to-l from-white/10 to-transparent pointer-events-none" />
+        
+        <div className="z-10 mb-6 md:mb-0">
+          <h1 className="text-2xl font-bold font-serif mb-1">
+            Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {firstName}!
+          </h1>
+          <p className="text-white/80 text-sm">
+            Here is your daily planning summary. Keep up the momentum!
+          </p>
+        </div>
+
+        {/* Animated Circular Progress */}
+        <div className="z-10 flex items-center gap-6 bg-white/10 p-4 rounded-xl backdrop-blur-sm border border-white/20">
+          <div className="flex flex-col gap-1 text-right">
+            <span className="text-white/70 text-xs font-bold uppercase tracking-wider">Today's Progress</span>
+            <span className="text-2xl font-bold">{progressPercent}%</span>
+          </div>
+          
+          <div className="relative w-16 h-16 flex items-center justify-center">
+            {/* Background circle */}
+            <svg className="w-16 h-16 transform -rotate-90">
+              <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-white/20" />
+              {/* Animated foreground circle */}
+              <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="6" fill="transparent"
+                strokeDasharray="175"
+                strokeDashoffset={175 - (175 * progressPercent) / 100}
+                strokeLinecap="round"
+                className="text-[#D8B15B] transition-all duration-1000 ease-out"
+              />
+            </svg>
+          </div>
+          
+          <div className="flex flex-col gap-3 pl-4 border-l border-white/20">
+            <div className="flex flex-col">
+              <span className="text-white/70 text-[10px] uppercase tracking-wider font-bold leading-tight">Calls Completed</span>
+              <span className="font-bold text-sm leading-tight text-green-300">{totalCompleted} / {totalPlanned}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-white/70 text-[10px] uppercase tracking-wider font-bold leading-tight">Yet to Call</span>
+              <span className="font-bold text-sm leading-tight text-orange-300">{totalRemaining}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Create Plan Form */}
       <div className="w-full bg-white border border-[#e4e8f0] rounded-[16px] shadow-sm p-6">
         <h2 className="text-xl font-bold text-[#133255] mb-5">Create New Plan</h2>

@@ -7,7 +7,9 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useDataTable } from "@/hooks/useDataTable";
 import { Pagination } from "@/components/DataTable/Pagination";
-
+import { Download, Upload } from "lucide-react";
+import dynamic from "next/dynamic";
+const UserImportModal = dynamic(() => import("./UserImportModal"), { ssr: false });
 
 export default function UsersClient({ initialUsers, clients }: { initialUsers: any[], clients: any[] }) {
   const router = useRouter();
@@ -60,6 +62,28 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
     }
   };
 
+  const handleExportSelected = () => {
+    const selected = users.filter(u => selectedIds.has(u.id));
+    if (selected.length === 0) return;
+    const headers = ["Name", "Email", "Role", "Last Active"];
+    const rows = selected.map(u => [
+      u.name || "-", 
+      u.email || "-", 
+      u.role || "-", 
+      u.lastActive ? new Date(u.lastActive).toLocaleString() : "-"
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "users_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
   const _dt = useDataTable({ data: users, defaultSortKey: "name", defaultSortDir: "asc" });
 
   return (
@@ -80,6 +104,9 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
             <b className="text-[#d7a33c]">{selectedIds.size}</b> selected
           </div>
           <div className="ml-auto flex gap-3">
+            <button onClick={handleExportSelected} className="px-3 py-2 bg-emerald-600 text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 flex items-center gap-1.5">
+              <Download className="w-4 h-4" /> Export
+            </button>
             <button onClick={() => setIsDeleteDialogOpen(true)} className="px-3 py-2 bg-red-500 text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 flex items-center gap-1.5">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
               Delete
@@ -92,13 +119,21 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
       )}
 
       <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-[#D4E0F0] flex justify-end">
+        <div className="p-4 border-b border-[#D4E0F0] flex justify-end gap-3">
+          <button 
+            onClick={() => setIsImportModalOpen(true)}
+            className="h-9 px-4 bg-white border border-gray-200 text-gray-700 rounded text-xs font-bold hover:bg-gray-50 flex items-center gap-1.5"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Import Users
+          </button>
           <button onClick={() => {
             router.push('/dashboard/admin/users/new');
           }} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#0e3178]">
             + Add User
           </button>
         </div>
+        <UserImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[#f9fafc] border-b-2 border-[#D4E0F0]">

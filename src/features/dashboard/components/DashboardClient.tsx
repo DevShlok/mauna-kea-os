@@ -45,7 +45,7 @@ export default function DashboardClient({ mandates, totalCandidates, user }: { m
       <div className="bg-gradient-to-r from-[#133255] to-[#1a4fa8] rounded-xl p-6 shadow-sm text-white relative overflow-hidden">
         <div className="absolute right-0 top-0 w-64 h-full bg-gradient-to-l from-white/10 to-transparent pointer-events-none" />
         <h1 className="text-2xl font-bold font-serif mb-1">
-          Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {user?.name?.split(' ')[0] || 'Consultant'}!
+          Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {user?.platformUser?.name?.split(' ')[0] || 'Consultant'}!
         </h1>
         <p className="text-white/80 text-sm">Here is a summary of your portfolio and active mandates.</p>
       </div>

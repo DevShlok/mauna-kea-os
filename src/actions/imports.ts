@@ -177,3 +177,139 @@ export async function bulkInsertMandatesAction(mappedMandates: any[], clientId: 
   revalidatePath("/dashboard", "layout");
   return { success: true, insertedCount, failedCount: failedRows.length, failedRows };
 }
+
+// ─────────────────────────────────────────────────────────
+// USER IMPORTS
+// ─────────────────────────────────────────────────────────
+
+export async function mapUsersAction(headers: string[], sampleData: string[][]) {
+  if (!headers || !Array.isArray(headers)) throw new Error("Missing or invalid headers");
+
+  const schema = z.object({
+    mapping: z.object({
+      name: z.string().nullable().describe("Header matching User Full Name"),
+      email: z.string().nullable().describe("Header matching User Email Address"),
+      role: z.string().nullable().describe("Header matching Role (admin, consultant, etc)"),
+      status: z.string().nullable().describe("Header matching Status (Active, Inactive)"),
+    })
+  });
+
+  const { object } = await generateObjectWithFallback({
+    schema,
+    prompt: `You are an expert data mapping assistant. Map the provided CSV headers to the standard system fields for Platform Users.
+If a system field does not clearly match any CSV header, return null for that field.
+
+CSV Headers:
+${JSON.stringify(headers, null, 2)}
+
+Sample Data:
+${JSON.stringify(sampleData, null, 2)}`
+  });
+
+  return object;
+}
+
+export async function bulkInsertUsersAction(mappedUsers: any[]) {
+  if (!mappedUsers || !Array.isArray(mappedUsers) || mappedUsers.length === 0) throw new Error("No users provided");
+
+  let insertedCount = 0;
+  let failedRows: string[] = [];
+
+  for (let i = 0; i < mappedUsers.length; i++) {
+    const u = mappedUsers[i];
+    if (!u.email || !u.name) continue;
+
+    try {
+      const uId = "U-" + Math.floor(Math.random() * 9999999).toString().padStart(7, '0');
+      const initials = u.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+      
+      const existing = await db.select().from(platformUsers).where(eq(platformUsers.email, u.email));
+      if (existing.length === 0) {
+        await db.insert(platformUsers).values({
+          id: uId,
+          name: u.name,
+          email: u.email,
+          role: u.role || "consultant",
+          status: u.status || "Active",
+          initials,
+          lastActive: new Date(),
+        });
+        insertedCount++;
+      } else {
+        failedRows.push(`Duplicate Email: ${u.email}`);
+      }
+    } catch (err) {
+      console.error("Failed to insert user row:", u, err);
+      failedRows.push(u.email);
+    }
+  }
+
+  revalidatePath("/dashboard/admin", "layout");
+  return { success: true, insertedCount, failedCount: failedRows.length, failedRows };
+}
+
+// ─────────────────────────────────────────────────────────
+// FLOAT IMPORTS
+// ─────────────────────────────────────────────────────────
+
+export async function mapFloatsAction(headers: string[], sampleData: string[][]) {
+  if (!headers || !Array.isArray(headers)) throw new Error("Missing or invalid headers");
+
+  const schema = z.object({
+    mapping: z.object({
+      name: z.string().nullable().describe("Header matching Candidate Name"),
+      company: z.string().nullable().describe("Header matching Current Company"),
+      role: z.string().nullable().describe("Header matching Current Role"),
+      geography: z.string().nullable().describe("Header matching Location"),
+      ctc: z.string().nullable().describe("Header matching Current CTC"),
+      status: z.string().nullable().describe("Header matching Float Status (e.g. Needs Contact)"),
+    })
+  });
+
+  const { object } = await generateObjectWithFallback({
+    schema,
+    prompt: `You are an expert data mapping assistant. Map the provided CSV headers to the standard system fields for Floats (passive candidates list).
+If a system field does not clearly match any CSV header, return null for that field.
+
+CSV Headers:
+${JSON.stringify(headers, null, 2)}
+
+Sample Data:
+${JSON.stringify(sampleData, null, 2)}`
+  });
+
+  return object;
+}
+
+export async function bulkInsertFloatsAction(mappedFloats: any[]) {
+  if (!mappedFloats || !Array.isArray(mappedFloats) || mappedFloats.length === 0) throw new Error("No floats provided");
+
+  let insertedCount = 0;
+  let failedRows: string[] = [];
+  const floatsModule = await import("@/db/schema");
+
+  for (let i = 0; i < mappedFloats.length; i++) {
+    const f = mappedFloats[i];
+    if (!f.name) continue;
+
+    try {
+      await db.insert(floatsModule.floats).values({
+        candidateName: f.name,
+        company: f.company || "",
+        role: f.role || "",
+        geography: f.geography || "",
+        status: f.status || "Needs Contact",
+        ctc: f.ctc || "",
+        addedBy: "System Import",
+        metadata: f.metadata || {},
+      });
+      insertedCount++;
+    } catch (err) {
+      console.error("Failed to insert float row:", f, err);
+      failedRows.push(f.name);
+    }
+  }
+
+  revalidatePath("/dashboard/float-list", "layout");
+  return { success: true, insertedCount, failedCount: failedRows.length, failedRows };
+}

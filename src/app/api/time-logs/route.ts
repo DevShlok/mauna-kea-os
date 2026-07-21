@@ -18,6 +18,16 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const history = searchParams.get('history');
     const targetUserId = searchParams.get('userId');
+    const report = searchParams.get('report');
+
+    if (report === 'true') {
+      if (platformUser.role !== 'admin') return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      const month = searchParams.get('month') || new Date().toISOString().substring(0, 7); // e.g., "2026-07"
+      const allLogs = await db.select().from(timeLogs).where(sql`${timeLogs.dateString} LIKE ${month + '%'}`);
+      const allLeaves = await db.select().from(leaveRequests).where(sql`${leaveRequests.startDate} LIKE ${month + '%'}`);
+      const allUsers = (await db.select().from(platformUsers)).filter(u => u.role === 'admin' || u.role === 'consultant');
+      return NextResponse.json({ success: true, logs: allLogs, leaves: allLeaves, users: allUsers });
+    }
 
     if (history === 'true') {
       // If admin and targetUserId is provided, fetch for that user. Otherwise fetch for self.

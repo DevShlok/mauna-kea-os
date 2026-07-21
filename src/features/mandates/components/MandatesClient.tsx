@@ -9,6 +9,7 @@ import { STAGE_OPTIONS, INTERNAL_OPTIONS, formatMandateCtc } from "@/lib/helpers
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Pagination } from "@/components/DataTable/Pagination";
 import { SortableHeader } from "@/components/DataTable/SortableHeader";
+import { Download } from "lucide-react";
 
 type Candidate = { id: number; externalId: string; name: string; stage: string | null; score: number | null; hasReport: boolean | null; initials: string | null; mandateId: number; };
 type Mandate = { id: number; company: string; role: string; ctc: string | null; exp: string | null; sectors: string[]; status: string | null; internalStatus: string | null; consultant: string | null; candidates: Candidate[]; };
@@ -112,6 +113,29 @@ export default function MandatesClient({
     }
   };
 
+  const handleExportSelected = () => {
+    const selected = mandates.filter(m => selectedIds.has(m.id));
+    if (selected.length === 0) return;
+    const headers = ["Company", "Role", "CTC", "Experience", "Sectors", "Status", "Internal Status"];
+    const rows = selected.map(m => [
+      m.company || "-", 
+      m.role || "-", 
+      m.ctc || "-", 
+      m.exp || "-", 
+      m.sectors?.join("; ") || "-", 
+      m.status || "-", 
+      m.internalStatus || "-"
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "mandates_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   async function handleStatusChange(id: number, field: "status" | "internalStatus", value: string) {
     setMandates(prev => prev.map(m => m.id === id ? { ...m, [field]: value } : m));
     await updateMandateFieldAction(id, field, value);
@@ -187,6 +211,10 @@ export default function MandatesClient({
             <b className="text-[#d7a33c]">{selectedIds.size}</b> selected
           </div>
           <div className="ml-auto flex gap-3">
+            <button onClick={handleExportSelected} className="px-3 py-2 bg-emerald-600 text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 flex items-center gap-1.5">
+              <Download className="w-4 h-4" />
+              Export
+            </button>
             <button onClick={() => setIsDeleteDialogOpen(true)} className="px-3 py-2 bg-red-500 text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 flex items-center gap-1.5">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
               Delete

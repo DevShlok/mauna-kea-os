@@ -81,8 +81,8 @@ export default function CallsClient({ items, currentDate, user }: { items: any[]
   };
 
   const totalPlanned = filteredItems.length;
-  // If a note exists, or if the status is something other than Pending/To Call, we consider it "Called"
-  const totalCalled = filteredItems.filter(i => (i.notes && i.notes.trim() !== "") || (i.status !== "Pending" && i.status !== "To Call" && i.status !== "")).length;
+  // A call is considered "completed" only if its status has been changed from Pending/To Call
+  const totalCalled = filteredItems.filter(i => i.status !== "Pending" && i.status !== "To Call" && i.status !== "").length;
   const totalRemaining = totalPlanned - totalCalled;
 
   const progressPercent = totalPlanned > 0 ? Math.round((totalCalled / totalPlanned) * 100) : 0;
