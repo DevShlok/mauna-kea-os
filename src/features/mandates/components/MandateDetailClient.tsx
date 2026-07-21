@@ -9,6 +9,7 @@ import { useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { STAGE_OPTIONS, stageLabel, formatMandateCtc } from "@/lib/helpers";
 import { editMandateAction, updateMandateSearchNotesAction, updateMandateCandidateStageAction, deleteMandateAction, sendCandidatesToClientAction } from "@/actions";
+import MandateKanbanBoard from "./MandateKanbanBoard";
 
 const PIPELINE_STAGES = [
   "universe","mapping","longlist","calllist","shortlist","interview","offer-sent","offer-accepted","closed",
@@ -38,6 +39,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<number>>(new Set());
   const [isSendingToClient, setIsSendingToClient] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "board">("list");
 
   async function handleSendToClient() {
     if (selectedCandidateIds.size === 0) return;
@@ -116,7 +118,15 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
         headers: { "Content-Type": "application/json" }
       });
       if (!res.ok) throw new Error("Failed to remove link");
-      window.location.reload();
+      setMandate((prev: any) => ({
+        ...prev,
+        additionalDocsUrl: docType === "docs" ? null : prev.additionalDocsUrl,
+        interviewNotesUrl: docType === "notes" ? null : prev.interviewNotesUrl,
+        interviewNotesText: docType === "notes" ? null : prev.interviewNotesText,
+        jdUrl: docType === "jd" ? null : prev.jdUrl,
+        jdText: docType === "jd" ? null : prev.jdText,
+      }));
+      router.refresh();
     } catch(err: any) {
       toast.error(err.message);
     } finally {
@@ -376,7 +386,21 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
         <div className="p-5 border-b border-gray-100 flex justify-between items-center">
           <h3 className="font-bold text-gray-900 text-base">Candidate Pipeline</h3>
           <div className="flex items-center gap-2">
-            {selectedCandidateIds.size > 0 && (
+            <div className="flex bg-gray-100 rounded-md p-0.5 mr-2">
+              <button 
+                onClick={() => setViewMode("list")} 
+                className={`px-3 py-1.5 text-xs font-bold rounded-sm transition-colors ${viewMode === "list" ? "bg-white text-[#133255] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                List
+              </button>
+              <button 
+                onClick={() => setViewMode("board")} 
+                className={`px-3 py-1.5 text-xs font-bold rounded-sm transition-colors ${viewMode === "board" ? "bg-white text-[#133255] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                Board
+              </button>
+            </div>
+            {selectedCandidateIds.size > 0 && viewMode === "list" && (
               <button 
                 onClick={handleSendToClient}
                 disabled={isSendingToClient}
@@ -388,6 +412,22 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
             <button onClick={handleAddCandidateClick} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">+ Add Candidate</button>
           </div>
         </div>
+        
+        {viewMode === "board" ? (
+          <div className="p-4 bg-gray-50/50">
+            <MandateKanbanBoard 
+              candidates={mandate.candidates} 
+              onDragEnd={async (candId, newStage) => {
+                await updateMandateCandidateStageAction(Number(candId), newStage);
+                setMandate((prev: any) => ({
+                  ...prev,
+                  candidates: prev.candidates.map((c: any) => c.id.toString() === candId ? { ...c, stage: newStage } : c)
+                }));
+                router.refresh();
+              }} 
+            />
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -467,6 +507,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Text Input Modal */}

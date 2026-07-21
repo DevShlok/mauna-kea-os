@@ -12,7 +12,20 @@ export const getMandates = cache(async () => {
   const rows = await db.query.mandates.findMany({
     where: eq(mandates.isDeleted, false),
     orderBy: desc(mandates.id),
-    with: { candidates: true },
+    with: { 
+      candidates: {
+        columns: {
+          id: true,
+          externalId: true,
+          name: true,
+          stage: true,
+          score: true,
+          hasReport: true,
+          initials: true,
+          mandateId: true
+        }
+      } 
+    },
   });
   return rows.map(m => ({
     ...m,

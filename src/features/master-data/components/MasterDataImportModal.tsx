@@ -190,7 +190,6 @@ export default function MasterDataImportModal({ isOpen, onClose, type }: { isOpe
       setImportFileData([]);
       onClose();
       router.refresh();
-      window.location.reload();
     } catch (err) {
       console.error(err);
       toast.error("Error importing data.");

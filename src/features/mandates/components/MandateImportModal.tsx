@@ -147,7 +147,6 @@ export default function MandateImportModal({ isOpen, onClose, clientId, clientNa
       setImportFileData([]);
       onClose();
       router.refresh();
-      window.location.reload();
     } catch (err) {
       console.error(err);
       toast.error("Error importing mandates.");

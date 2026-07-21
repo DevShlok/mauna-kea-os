@@ -358,7 +358,6 @@ export default function CandidatesClient({
         setImportMapping(null);
         setImportFileData([]);
         router.refresh();
-        window.location.reload();
       }
     } catch (err) {
       console.error(err);
@@ -421,7 +420,6 @@ export default function CandidatesClient({
         setImportFileData([]);
         setDuplicateQueue([]);
         router.refresh();
-        window.location.reload();
       } catch (err) {
         toast.error("Error finalizing import");
       } finally {
@@ -447,37 +445,41 @@ export default function CandidatesClient({
   
   // Sync URL State
   useEffect(() => {
-    const url = new URL(window.location.href);
-    if (debouncedSearch) url.searchParams.set('search', debouncedSearch); else url.searchParams.delete('search');
-    
-    if (companiesFilter.length) url.searchParams.set('companies', companiesFilter.join(',')); else url.searchParams.delete('companies');
-    if (designationsFilter.length) url.searchParams.set('designations', designationsFilter.join(',')); else url.searchParams.delete('designations');
-    if (statusFilter.length) url.searchParams.set('statuses', statusFilter.join(',')); else url.searchParams.delete('statuses');
-    if (locationsFilter.length) url.searchParams.set('locations', locationsFilter.join(',')); else url.searchParams.delete('locations');
-    
-    if (expRange.min) url.searchParams.set('minExp', String(expRange.min)); else url.searchParams.delete('minExp');
-    if (expRange.max) url.searchParams.set('maxExp', String(expRange.max)); else url.searchParams.delete('maxExp');
-    
-    if (tenureRange.min) url.searchParams.set('minTenure', String(tenureRange.min)); else url.searchParams.delete('minTenure');
-    if (tenureRange.max) url.searchParams.set('maxTenure', String(tenureRange.max)); else url.searchParams.delete('maxTenure');
-    
-    if (ctcRange.min) url.searchParams.set('minCtc', String(ctcRange.min)); else url.searchParams.delete('minCtc');
-    if (ctcRange.max) url.searchParams.set('maxCtc', String(ctcRange.max)); else url.searchParams.delete('maxCtc');
-    
-    url.searchParams.set('limit', String(pageSize));
-    if (sortKey) url.searchParams.set('sortKey', sortKey);
-    if (sortDir) url.searchParams.set('sortDir', sortDir);
-    
-    // Always go back to page 1 on filter change
-    if (initialParams?.page && Number(initialParams.page) > 1) {
-      // url.searchParams.set('page', '1'); // let's leave it to the user or handle carefully
-    }
-    
-    // Only push if params actually changed
-    const currentSearch = new URLSearchParams(window.location.search).toString();
-    if (url.searchParams.toString() !== currentSearch) {
-      router.push(`/dashboard/candidates?${url.searchParams.toString()}`);
-    }
+    const handler = setTimeout(() => {
+      const url = new URL(window.location.href);
+      if (debouncedSearch) url.searchParams.set('search', debouncedSearch); else url.searchParams.delete('search');
+      
+      if (companiesFilter.length) url.searchParams.set('companies', companiesFilter.join(',')); else url.searchParams.delete('companies');
+      if (designationsFilter.length) url.searchParams.set('designations', designationsFilter.join(',')); else url.searchParams.delete('designations');
+      if (statusFilter.length) url.searchParams.set('statuses', statusFilter.join(',')); else url.searchParams.delete('statuses');
+      if (locationsFilter.length) url.searchParams.set('locations', locationsFilter.join(',')); else url.searchParams.delete('locations');
+      
+      if (expRange.min) url.searchParams.set('minExp', String(expRange.min)); else url.searchParams.delete('minExp');
+      if (expRange.max) url.searchParams.set('maxExp', String(expRange.max)); else url.searchParams.delete('maxExp');
+      
+      if (tenureRange.min) url.searchParams.set('minTenure', String(tenureRange.min)); else url.searchParams.delete('minTenure');
+      if (tenureRange.max) url.searchParams.set('maxTenure', String(tenureRange.max)); else url.searchParams.delete('maxTenure');
+      
+      if (ctcRange.min) url.searchParams.set('minCtc', String(ctcRange.min)); else url.searchParams.delete('minCtc');
+      if (ctcRange.max) url.searchParams.set('maxCtc', String(ctcRange.max)); else url.searchParams.delete('maxCtc');
+      
+      url.searchParams.set('limit', String(pageSize));
+      if (sortKey) url.searchParams.set('sortKey', sortKey);
+      if (sortDir) url.searchParams.set('sortDir', sortDir);
+      
+      // Always go back to page 1 on filter change
+      if (initialParams?.page && Number(initialParams.page) > 1) {
+        // url.searchParams.set('page', '1'); // let's leave it to the user or handle carefully
+      }
+      
+      // Only push if params actually changed
+      const currentSearch = new URLSearchParams(window.location.search).toString();
+      if (url.searchParams.toString() !== currentSearch) {
+        router.push(`/dashboard/candidates?${url.searchParams.toString()}`);
+      }
+    }, 500);
+
+    return () => clearTimeout(handler);
   }, [debouncedSearch, companiesFilter, designationsFilter, statusFilter, locationsFilter, expRange, tenureRange, ctcRange, pageSize, sortKey, sortDir, router]);
 
 
@@ -566,7 +568,7 @@ export default function CandidatesClient({
       const res = await bulkAddToEngagementListAction(Array.from(selectedIds), "BD");
       setSelectedIds(new Set());
       if (res.duplicateCount > 0) {
-        toast.error(`${res.duplicateCount} candidate(s) are already in the BD list.`);
+        toast.success(`${res.duplicateCount} candidate(s) were already in the BD list and moved to Today's view.`);
       }
       if (res.addedCount > 0) {
         toast.success(`Added ${res.addedCount} candidate(s) to BD List successfully!`);
@@ -586,7 +588,7 @@ export default function CandidatesClient({
       const res = await bulkAddToEngagementListAction(Array.from(selectedIds), "Calling");
       setSelectedIds(new Set());
       if (res.duplicateCount > 0) {
-        toast.error(`${res.duplicateCount} candidate(s) are already in the Calling list.`);
+        toast.success(`${res.duplicateCount} candidate(s) were already in the Calling list and moved to Today's view.`);
       }
       if (res.addedCount > 0) {
         toast.success(`Added ${res.addedCount} candidate(s) to Calling List successfully!`);

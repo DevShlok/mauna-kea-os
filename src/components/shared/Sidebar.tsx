@@ -118,7 +118,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
 
   return (
     <div className={`group relative h-screen transition-all duration-300 ease-in-out shrink-0 z-40 ${isCollapsed ? "w-[76px]" : "w-[270px]"}`}>
-      <div className="absolute inset-0 bg-[#0b1f3a] flex flex-col overflow-y-auto overflow-x-hidden text-white border-r border-[#D8B15B]">
+      <div className={`absolute inset-0 bg-[#0b1f3a] flex flex-col overflow-y-auto text-white border-r border-[#D8B15B] ${isCollapsed ? 'overflow-x-visible' : 'overflow-x-hidden'}`}>
         <div className={`flex items-center p-5 pb-4 border-b border-[#D8B15B] hover:bg-white/5 transition-colors ${isCollapsed ? "justify-center" : ""}`}>
           <Link href="/dashboard" className={`flex items-center gap-3 overflow-hidden ${isCollapsed ? "justify-center" : ""}`}>
             <div className="bg-[#D8B15B] text-[#133255] font-serif text-lg font-bold w-10 h-10 flex items-center justify-center rounded shrink-0">MK</div>
@@ -135,7 +135,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
         {categories.filter(cat => cat.visibleTo.includes(userRole)).map((category, idx) => {
           const isHovered = hoveredCategory === category.title;
           const isActive = category.children.some(child => pathname?.startsWith(child.href) && child.href !== "/dashboard");
-          const isExpanded = isHovered;
+          const isExpanded = isHovered || isActive;
           const isHighlighted = isHovered || isActive;
 
           const visibleChildren = category.children.filter(child => child.visibleTo.includes(userRole));
@@ -197,6 +197,30 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                   })}
                   </div>
                 </div>
+                </div>
+              )}
+              
+              {/* Flyout for collapsed state */}
+              {isCollapsed && isHovered && (
+                <div className="absolute left-[76px] ml-2 top-0 mt-2 bg-[#0b1f3a] border border-[#D8B15B]/30 rounded-lg shadow-2xl w-52 py-2 z-50">
+                  <div className="px-4 py-2 font-bold text-[#D8B15B] border-b border-white/10 mb-1 text-[13px] uppercase tracking-wider">{category.title}</div>
+                  <div className="flex flex-col">
+                    {visibleChildren.map((child, childIdx) => {
+                      const isChildActive = pathname === child.href;
+                      return (
+                        <Link
+                          key={childIdx}
+                          href={child.href}
+                          className={`flex items-center gap-2.5 px-4 py-2.5 text-[14px] transition-colors ${
+                            isChildActive ? "bg-white/10 text-white font-medium" : "text-white/60 hover:bg-white/5 hover:text-white"
+                          }`}
+                        >
+                          {child.icon && <child.icon className="w-4 h-4 shrink-0" />}
+                          {child.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>

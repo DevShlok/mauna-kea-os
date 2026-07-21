@@ -4,12 +4,13 @@ import toast from "react-hot-toast";
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import CandidateReportPDF from "@/components/reports/CandidateReportPDF";
+import dynamic from "next/dynamic";
+const CandidateReportPDF = dynamic(() => import("@/components/reports/CandidateReportPDF"), { ssr: false });
+const FormatOne = dynamic(() => import("@/components/reports/FormatOne"), { ssr: false });
+const FormatTwo = dynamic(() => import("@/components/reports/FormatTwo"), { ssr: false });
 import { generateFormatAction } from "@/actions/cv";
 import { updateCandidateStatusAction, saveReportFormatAction, saveReportDraftAction } from "@/actions";
 import { searchCandidatesAction } from "@/actions/search";
-import FormatOne from "@/components/reports/FormatOne";
-import FormatTwo from "@/components/reports/FormatTwo";
 
 interface WorkbenchClientProps {
   initialCandidate: any;

@@ -8,7 +8,8 @@ import { useState } from "react";
 import { Client, Mandate } from "@/db/schema";
 import { ArrowLeft, Building2, User, Briefcase, Calendar, Trash2, Edit, Upload, Plus } from "lucide-react";
 import { updateClientAction, deleteClientAction } from "@/actions";
-import MandateImportModal from "@/features/mandates/components/MandateImportModal";
+import dynamic from "next/dynamic";
+const MandateImportModal = dynamic(() => import("@/features/mandates/components/MandateImportModal"), { ssr: false });
 
 export default function ClientDetailClient({ client, mandates, industries = [], associatedCandidates = [] }: { client: any, mandates: any[], industries?: any[], associatedCandidates?: any[] }) {
   const router = useRouter();

@@ -8,19 +8,31 @@ import { FunnelChart } from "@/components/ui/FunnelChart";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getClosurePercent, getDaysOpen } from "@/lib/helpers";
 
-const FUNNEL_DATA = [
-  { label: "Mapped", count: 42, color: "#4a7ab5" },
-  { label: "Assessed", count: 28, color: "#133255" },
-  { label: "Shortlisted", count: 18, color: "#D8B15B" },
-  { label: "Interviewing", count: 9, color: "#1a4fa8" },
-  { label: "Offered", count: 3, color: "#1A7340" },
-];
-
 type Candidate = { id: number; externalId: string; name: string; company: string | null; role: string | null; stage: string | null; score: number | null; hasReport: boolean | null; initials: string | null; mandateId: number; };
 type Mandate = { id: number; company: string; role: string; status: string | null; consultant: string | null; opened: string | null; candidates: Candidate[]; };
 
-export default function DashboardClient({ mandates }: { mandates: Mandate[] }) {
+export default function DashboardClient({ mandates, totalCandidates, user }: { mandates: Mandate[], totalCandidates: number, user: any }) {
   const router = useRouter();
+
+  const allCands = mandates.flatMap(m => m.candidates);
+
+  const funnelData = [
+    { label: "Mapped", count: 0, color: "#4a7ab5" },
+    { label: "Assessed", count: 0, color: "#133255" },
+    { label: "Shortlisted", count: 0, color: "#D8B15B" },
+    { label: "Interviewing", count: 0, color: "#1a4fa8" },
+    { label: "Offered", count: 0, color: "#1A7340" },
+  ];
+
+  allCands.forEach(c => {
+    if (['universe', 'mapping', 'longlist', 'calllist'].includes(c.stage || '')) funnelData[0].count++;
+    if (c.score || c.hasReport) funnelData[1].count++;
+    if (c.stage === 'shortlist') funnelData[2].count++;
+    if (c.stage === 'interview') funnelData[3].count++;
+    if (['offer-sent', 'offer-accepted', 'closed'].includes(c.stage || '')) funnelData[4].count++;
+  });
+
+  const funnelTotal = funnelData[0].count || 1; // avoid div by zero if mapped is 0
 
   const awaiting = mandates
     .flatMap((m) => m.candidates.filter((c) => c.hasReport && c.stage === "shortlist").map((c) => ({ ...c, mRole: m.role, mCompany: m.company, mId: m.id, consultant: m.consultant })))
@@ -28,11 +40,21 @@ export default function DashboardClient({ mandates }: { mandates: Mandate[] }) {
 
   return (
     <div className="flex flex-col gap-6 max-w-screen-xl mx-auto pb-10">
+      
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-r from-[#133255] to-[#1a4fa8] rounded-xl p-6 shadow-sm text-white relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-64 h-full bg-gradient-to-l from-white/10 to-transparent pointer-events-none" />
+        <h1 className="text-2xl font-bold font-serif mb-1">
+          Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {user?.user_metadata?.full_name?.split(' ')[0] || 'Consultant'}!
+        </h1>
+        <p className="text-white/80 text-sm">Here is a summary of your portfolio and active mandates.</p>
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="Active Mandates" value={mandates.length} trend="Current engagements" icon={<ClipboardList size={18} />} />
-        <StatCard label="Candidates Assessed" value={mandates.flatMap(m => m.candidates).filter(c => c.score).length} trend="With AI scores" icon={<Users size={18} />} />
-        <StatCard label="Reports Pending" value={mandates.flatMap(m => m.candidates).filter(c => !c.hasReport).length} trend="Awaiting report" icon={<FileText size={18} />} warn />
-        <StatCard label="Revenue Forecast" value="2.4Cr" trend="Q2 projection" icon={<IndianRupee size={18} />} gold />
+        <StatCard label="Candidates Assessed" value={allCands.filter(c => c.score || c.hasReport).length} trend="With AI scores" icon={<Users size={18} />} />
+        <StatCard label="Reports Pending" value={allCands.filter(c => !c.hasReport).length} trend="Awaiting report" icon={<FileText size={18} />} warn />
+        <StatCard label="Candidates in DB" value={totalCandidates} trend="Total Talent Pool" icon={<Users size={18} />} gold />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -41,7 +63,7 @@ export default function DashboardClient({ mandates }: { mandates: Mandate[] }) {
             <h2 className="font-bold text-gray-900 text-base">Portfolio Pipeline</h2>
             <p className="text-gray-400 text-xs mt-0.5">Candidate distribution across stages</p>
           </div>
-          <div className="p-5"><FunnelChart data={FUNNEL_DATA} total={42} /></div>
+          <div className="p-5"><FunnelChart data={funnelData} total={funnelTotal} /></div>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">

@@ -1063,6 +1063,10 @@ export async function bulkAddToEngagementListAction(candIds: string[], listType:
       });
       addedCount++;
     } else {
+      // If already in list, move them back to Today's view by resetting nextFollowUp and status
+      await db.update(engagementListItems)
+        .set({ nextFollowUp: null, status: 'Pending' })
+        .where(eq(engagementListItems.id, existing[0].id));
       duplicateCount++;
     }
   }

@@ -149,7 +149,6 @@ export default function ClientImportModal({ isOpen, onClose }: { isOpen: boolean
       setImportFileData([]);
       onClose();
       router.refresh();
-      window.location.reload();
     } catch (err) {
       console.error(err);
       toast.error("Error importing clients.");

@@ -71,24 +71,45 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
     router.refresh();
   };
 
-  let title = "Dashboard";
-  let subtitle = "Welcome back";
+  const getPageInfo = (path: string | null) => {
+    if (!path || path === "/dashboard") return { title: "Dashboard", subtitle: "Welcome back" };
+    
+    const map: Record<string, { title: string, subtitle: string }> = {
+      "/dashboard/clients/new": { title: "Clients", subtitle: "Add Client" },
+      "/dashboard/clients": { title: "Clients", subtitle: "Client Database" },
+      "/dashboard/mandates/new": { title: "Clients", subtitle: "Add Mandate" },
+      "/dashboard/mandates": { title: "Clients", subtitle: "Mandates" },
+      "/dashboard/candidates/new": { title: "Candidates", subtitle: "Add Candidate" },
+      "/dashboard/candidates": { title: "Candidates", subtitle: "Candidate Database" },
+      "/dashboard/calls": { title: "Productivity Tools", subtitle: "Engagement Lists" },
+      "/dashboard/float-list/submissions": { title: "Candidates", subtitle: "Submissions" },
+      "/dashboard/float-list": { title: "Candidates", subtitle: "Float List" },
+      "/dashboard/workbench": { title: "Productivity Tools", subtitle: "AI Workbench" },
+      "/dashboard/frameworks": { title: "Productivity Tools", subtitle: "Frameworks" },
+      "/dashboard/team/status": { title: "Team", subtitle: "Team Status" },
+      "/dashboard/team/leave-approvals": { title: "Team", subtitle: "Leave Approvals" },
+      "/dashboard/team/time-leave": { title: "Team", subtitle: "Time & Leave" },
+      "/dashboard/admin/users/new": { title: "Admin", subtitle: "Add a User" },
+      "/dashboard/admin/users": { title: "Admin", subtitle: "Users" },
+      "/dashboard/admin/master-data": { title: "Admin", subtitle: "Master Data" },
+      "/dashboard/admin/recycle-bin": { title: "Admin", subtitle: "Recycle Bin" },
+    };
 
-  if (pathname?.startsWith("/dashboard/clients/new")) { title = "Clients"; subtitle = "Add Client"; }
-  else if (pathname?.startsWith("/dashboard/clients")) { title = "Clients"; subtitle = "Client Database"; }
-  else if (pathname?.startsWith("/dashboard/mandates/new")) { title = "Clients"; subtitle = "Add Mandate"; }
-  else if (pathname?.startsWith("/dashboard/mandates")) { title = "Clients"; subtitle = "Mandates"; }
-  else if (pathname?.startsWith("/dashboard/candidates/new")) { title = "Candidates"; subtitle = "Add Candidate"; }
-  else if (pathname?.startsWith("/dashboard/candidates")) { title = "Candidates"; subtitle = "Candidate Database"; }
-  else if (pathname?.startsWith("/dashboard/float-list/submissions")) { title = "Candidates"; subtitle = "Submissions"; }
-  else if (pathname?.startsWith("/dashboard/float-list")) { title = "Candidates"; subtitle = "Float List"; }
-  else if (pathname?.startsWith("/dashboard/workbench")) { title = "Productivity Tools"; subtitle = "AI Workbench"; }
-  else if (pathname?.startsWith("/dashboard/frameworks")) { title = "Productivity Tools"; subtitle = "Frameworks"; }
-  else if (pathname?.startsWith("/dashboard/team/status")) { title = "Team"; subtitle = "Team Status"; }
-  else if (pathname?.startsWith("/dashboard/team/leave-approvals")) { title = "Team"; subtitle = "Leave Approvals"; }
-  else if (pathname?.startsWith("/dashboard/team/time-leave")) { title = "Team"; subtitle = "Time & Leave"; }
-  else if (pathname?.startsWith("/dashboard/admin/users/new")) { title = "Admin"; subtitle = "Add a User"; }
-  else if (pathname?.startsWith("/dashboard/admin/users")) { title = "Admin"; subtitle = "Users"; }
+    // Sort by length descending to match most specific route first
+    const match = Object.keys(map).sort((a,b) => b.length - a.length).find(route => path.startsWith(route));
+    return match ? map[match] : { title: "Dashboard", subtitle: "" };
+  };
+
+  const { title, subtitle } = getPageInfo(pathname);
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const q = e.currentTarget.value;
+      if (q.trim()) {
+        router.push(`/dashboard/candidates?search=${encodeURIComponent(q.trim())}`);
+      }
+    }
+  };
 
   return (
     <div className="h-[77px] bg-[#0b1f3a] border-b border-[#133255] flex items-center px-6 gap-4 shrink-0 shadow-sm text-white">
@@ -101,7 +122,8 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
         <input 
           type="text" 
-          placeholder="Search..." 
+          placeholder="Search candidates..." 
+          onKeyDown={handleSearch}
           className="w-[200px] h-[34px] border border-white/20 rounded-full pl-9 pr-3 text-[14px] text-white outline-none transition-all focus:border-white focus:w-[240px] bg-white/10 placeholder-white/50"
         />
       </div>
