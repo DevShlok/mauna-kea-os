@@ -8,7 +8,7 @@ import { FunnelChart } from "@/components/ui/FunnelChart";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getClosurePercent, getDaysOpen } from "@/lib/helpers";
 
-type Candidate = { id: number; externalId: string; name: string; company: string | null; role: string | null; stage: string | null; score: number | null; hasReport: boolean | null; initials: string | null; mandateId: number; };
+type Candidate = { id: number; externalId: string; name: string; stage: string | null; score: number | null; hasReport: boolean | null; initials: string | null; mandateId: number; isSentToClient: boolean | null; };
 type Mandate = { id: number; company: string; role: string; status: string | null; consultant: string | null; opened: string | null; candidates: Candidate[]; };
 
 export default function DashboardClient({ mandates, totalCandidates, user }: { mandates: Mandate[], totalCandidates: number, user: any }) {
