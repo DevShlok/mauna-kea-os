@@ -111,6 +111,25 @@ export async function reviewPlanAction(planId: number) {
   }).where(eq(callPlans.id, planId));
 }
 
+export async function removeFromEngagementListAction(candId: string, listType: "Calling" | "BD") {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email) throw new Error("Unauthorized");
+  
+  const dbUser = await db.select().from(platformUsers).where(eq(platformUsers.email, user.email));
+  if (dbUser.length === 0) throw new Error("User not found");
+  const userId = dbUser[0].id;
+
+  await db.delete(engagementListItems)
+    .where(
+      and(
+        eq(engagementListItems.candId, candId),
+        eq(engagementListItems.userId, userId),
+        eq(engagementListItems.listType, listType)
+      )
+    );
+}
+
 export async function saveInlineNoteAction(data: {
   candId: string;
   listType: "BD" | "Calling";

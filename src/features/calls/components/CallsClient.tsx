@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Phone, Mail, User, Calendar, Loader2, Search } from "lucide-react";
 import CallLogModal from "@/components/shared/CallLogModal";
 import { useRouter } from "next/navigation";
-import { saveInlineNoteAction } from "@/actions/calls";
+import { saveInlineNoteAction, removeFromEngagementListAction } from "@/actions/calls";
+import { EmptyState } from "@/components/ui/EmptyState";
 import toast from "react-hot-toast";
 
 export default function CallsClient({ items, currentDate }: { items: any[], currentDate?: string }) {
@@ -65,6 +66,17 @@ export default function CallsClient({ items, currentDate }: { items: any[], curr
       toast.error("Failed to save note");
     } finally {
       setSavingNoteId(null);
+    }
+  };
+
+  const handleRemove = async (candId: string, listType: "BD" | "Calling") => {
+    if (!confirm("Are you sure you want to remove this candidate from the list?")) return;
+    try {
+      await removeFromEngagementListAction(candId, listType);
+      toast.success("Removed from list");
+      router.refresh();
+    } catch (e) {
+      toast.error("Failed to remove from list");
     }
   };
 
@@ -226,18 +238,26 @@ export default function CallsClient({ items, currentDate }: { items: any[], curr
                     >
                       <User size={16} />
                     </Link>
+                    <button 
+                      onClick={() => handleRemove(item.candId, item.listType as any)}
+                      className="text-red-500 hover:text-red-700 text-[12px] font-semibold underline ml-1"
+                      title="Remove from list"
+                    >
+                      Remove
+                    </button>
                   </div>
                 </td>
               </tr>
             ))}
             {filteredItems.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-5 py-16 text-center text-gray-500 bg-gray-50">
-                  <div className="flex flex-col items-center justify-center">
-                    <Calendar size={32} className="text-gray-300 mb-2" />
-                    <p className="font-semibold">No calls planned for this date.</p>
-                    <p className="text-sm mt-1">Select a different date or add candidates to your plan.</p>
-                  </div>
+                <td colSpan={5} className="p-0 border-none">
+                  <EmptyState 
+                    title="No calls planned" 
+                    description={searchQuery ? "No candidates match your search." : "You have no calls planned for this date. Select a different date or add candidates to your plan."} 
+                    actionLabel={searchQuery ? "Clear Search" : undefined}
+                    onAction={searchQuery ? () => setSearchQuery("") : undefined}
+                  />
                 </td>
               </tr>
             )}

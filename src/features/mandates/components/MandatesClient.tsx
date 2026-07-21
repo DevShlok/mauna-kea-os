@@ -6,6 +6,7 @@ import { updateMandateFieldAction, deleteMultipleMandatesAction } from "@/action
 import toast from "react-hot-toast";
 
 import { STAGE_OPTIONS, INTERNAL_OPTIONS, formatMandateCtc } from "@/lib/helpers";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Pagination } from "@/components/DataTable/Pagination";
 import { SortableHeader } from "@/components/DataTable/SortableHeader";
 
@@ -241,6 +242,26 @@ export default function MandatesClient({
                   </td>
                 </tr>
               ))}
+              {total === 0 && (
+                <tr>
+                  <td colSpan={9} className="p-0 border-none">
+                    <EmptyState 
+                      title="No mandates found" 
+                      description="No mandates match your current filters. Try adjusting them." 
+                      actionLabel="Clear Filters" 
+                      onAction={() => {
+                        setSearch("");
+                        setCompanyFilter("");
+                        setRoleFilter("");
+                        setSectorFilter("");
+                        setStatusFilter("");
+                        setInternalFilter("");
+                        updateURL({ search: "", company: "", role: "", sector: "", status: "", internalStatus: "" });
+                      }}
+                    />
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -10,104 +10,9 @@ import { mapCandidatesAction, checkCandidateDuplicatesAction, finalizeCandidates
 import { useDataTable } from "@/hooks/useDataTable";
 import { Pagination } from "@/components/DataTable/Pagination";
 import { SortableHeader } from "@/components/DataTable/SortableHeader";
-
-const MultiSelect = ({ options, selected, onChange, placeholder }: any) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const toggle = (opt: string) => {
-    if (selected.includes(opt)) onChange(selected.filter((x: string) => x !== opt));
-    else onChange([...selected, opt]);
-  };
-
-  return (
-    <div className="relative w-full" ref={ref}>
-      <div 
-        onClick={() => setOpen(!open)}
-        className="w-full min-h-[42px] border-[1.5px] border-[#e4e8f0] rounded-[10px] px-3 py-2 text-[15px] bg-white cursor-pointer flex justify-between items-center hover:border-[#1d4ed8] transition-colors"
-      >
-        <span className={selected.length === 0 ? "text-[#8a93a3]" : "text-gray-900 truncate pr-4 font-medium"}>
-          {selected.length === 0 ? placeholder : selected.join(", ")}
-        </span>
-        <span className="text-[#8a93a3] text-[12px]">▼</span>
-      </div>
-      {open && (
-        <div className="absolute top-full mt-1 left-0 w-[240px] bg-white border border-[#e4e8f0] rounded-[10px] shadow-xl z-50 max-h-[300px] overflow-y-auto p-1">
-          {options.length === 0 ? (
-            <div className="px-3 py-2 text-[14px] text-gray-500">No options</div>
-          ) : (
-            options.map((opt: string) => (
-              <label key={opt} className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#f4f7fd] rounded-[6px] cursor-pointer text-[15px] text-gray-800 transition-colors">
-                <input type="checkbox" checked={selected.includes(opt)} onChange={() => toggle(opt)} className="w-[15px] h-[15px] accent-[#1d4ed8] cursor-pointer" />
-                <span className="truncate">{opt}</span>
-              </label>
-            ))
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-
-const DualRangeSlider = ({ min, max, step, value, onChange }: any) => {
-  const minVal = value.min === '' ? min : Number(value.min);
-  const maxVal = value.max === '' ? max : Number(value.max);
-
-  const handleMinChange = (e: any) => {
-    const v = Math.min(Number(e.target.value), maxVal);
-    onChange({ ...value, min: v.toString() });
-  };
-
-  const handleMaxChange = (e: any) => {
-    const v = Math.max(Number(e.target.value), minVal);
-    onChange({ ...value, max: v.toString() });
-  };
-
-  const minPercent = ((minVal - min) / (max - min)) * 100;
-  const maxPercent = ((maxVal - min) / (max - min)) * 100;
-
-  return (
-    <div className="relative w-[92%] mx-auto h-[5px] bg-[#e4e8f0] rounded-full mt-5 mb-3">
-      <div 
-        className="absolute h-full bg-[#1d4ed8] rounded-full" 
-        style={{ left: `${minPercent}%`, width: `${maxPercent - minPercent}%` }} 
-      />
-      <input 
-        type="range" 
-        min={min} 
-        max={max} 
-        step={step} 
-        value={minVal} 
-        onChange={handleMinChange}
-        className="absolute w-full h-[5px] opacity-0 cursor-pointer pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto"
-        style={{ zIndex: minVal > max - (max-min)*0.1 ? 5 : 3 }}
-      />
-      <input 
-        type="range" 
-        min={min} 
-        max={max} 
-        step={step} 
-        value={maxVal} 
-        onChange={handleMaxChange}
-        className="absolute w-full h-[5px] opacity-0 cursor-pointer pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto"
-        style={{ zIndex: 4 }}
-      />
-      <div className="absolute top-1/2 -translate-y-1/2 w-[14px] h-[14px] bg-white border-[2.5px] border-[#1d4ed8] rounded-full pointer-events-none shadow-sm" style={{ left: `calc(${minPercent}% - 7px)` }} />
-      <div className="absolute top-1/2 -translate-y-1/2 w-[14px] h-[14px] bg-white border-[2.5px] border-[#1d4ed8] rounded-full pointer-events-none shadow-sm" style={{ left: `calc(${maxPercent}% - 7px)` }} />
-    </div>
-  );
-};
+import { EmptyState } from "@/components/ui/EmptyState";
+import { MultiSelect } from "@/components/ui/MultiSelect";
+import { DualRangeSlider } from "@/components/ui/DualRangeSlider";
 
 export default function CandidatesClient({ 
   candidates, 
@@ -1044,8 +949,13 @@ export default function CandidatesClient({
               ))}
               {total === 0 && (
                 <tr>
-                  <td colSpan={10} className="px-4 py-10 text-center text-[#8a93a3] text-[13.5px]">
-                    No candidates match these filters. <button onClick={clearAllFilters} className="text-[#1d4ed8] font-semibold">Clear filters</button>
+                  <td colSpan={10} className="p-0 border-none">
+                    <EmptyState 
+                      title="No candidates found" 
+                      description="No candidates match these filters. Try adjusting your search criteria." 
+                      actionLabel="Clear Filters" 
+                      onAction={clearAllFilters} 
+                    />
                   </td>
                 </tr>
               )}
