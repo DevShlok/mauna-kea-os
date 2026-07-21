@@ -242,7 +242,7 @@ export default function MandatesClient({
                   </td>
                 </tr>
               ))}
-              {total === 0 && (
+              {totalRows === 0 && (
                 <tr>
                   <td colSpan={9} className="p-0 border-none">
                     <EmptyState 
