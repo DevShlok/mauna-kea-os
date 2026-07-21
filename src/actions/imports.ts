@@ -293,15 +293,15 @@ export async function bulkInsertFloatsAction(mappedFloats: any[]) {
     if (!f.name) continue;
 
     try {
+      const candId = `cand-${Math.random().toString(36).substring(2, 9)}`;
       await db.insert(floatsModule.floats).values({
-        candidateName: f.name,
-        company: f.company || "",
+        id: `float-${Math.random().toString(36).substring(2, 9)}`,
+        candId: candId,
+        candName: f.name,
+        client: f.company || "General",
         role: f.role || "",
-        geography: f.geography || "",
-        status: f.status || "Needs Contact",
-        ctc: f.ctc || "",
-        addedBy: "System Import",
-        metadata: f.metadata || {},
+        status: f.status || "Pending",
+        consultant: "System Import"
       });
       insertedCount++;
     } catch (err) {

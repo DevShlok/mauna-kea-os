@@ -746,7 +746,7 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
                   const comp1 = (form.elements.namedItem("comp1") as HTMLInputElement).value;
                   const comp2 = (form.elements.namedItem("comp2") as HTMLInputElement).value;
                   const comp3 = (form.elements.namedItem("comp3") as HTMLInputElement).value;
-                  const competencies = [];
+                  const competencies: { skill: string; rating: number }[] = [];
                   if (comp1) competencies.push({ skill: comp1, rating: 0 });
                   if (comp2) competencies.push({ skill: comp2, rating: 0 });
                   if (comp3) competencies.push({ skill: comp3, rating: 0 });

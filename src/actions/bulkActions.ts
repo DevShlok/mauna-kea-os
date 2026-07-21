@@ -37,7 +37,7 @@ export async function bulkDeleteUsersAction(ids: string[]) {
   return { success: true };
 }
 
-export async function bulkDeleteFloatsAction(ids: number[]) {
+export async function bulkDeleteFloatsAction(ids: string[]) {
   await requireRole(["admin", "consultant"]);
   if (!ids.length) return { success: true };
   await db.delete(floats).where(inArray(floats.id, ids));

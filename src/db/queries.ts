@@ -82,7 +82,18 @@ export const getMandatesPaginated = cache(async (params: {
 
   let orderByClause = desc(mandates.id);
   if (sortKey) {
-    const col = (mandates as any)[sortKey];
+    const sortMap: Record<string, any> = {
+      id: mandates.id,
+      company: mandates.company,
+      role: mandates.role,
+      status: mandates.status,
+      internalStatus: mandates.internalStatus,
+      opened: mandates.opened,
+      target: mandates.target,
+      consultant: mandates.consultant,
+      createdAt: mandates.createdAt
+    };
+    const col = sortMap[sortKey];
     if (col) {
       orderByClause = sortDir === "asc" ? asc(col) : desc(col);
     }
@@ -94,7 +105,21 @@ export const getMandatesPaginated = cache(async (params: {
   const rows = await db.query.mandates.findMany({
     where: whereClause,
     orderBy: orderByClause,
-    with: { candidates: true },
+    with: { 
+      candidates: {
+        columns: {
+          id: true,
+          externalId: true,
+          name: true,
+          stage: true,
+          score: true,
+          hasReport: true,
+          initials: true,
+          mandateId: true,
+          isSentToClient: true
+        }
+      } 
+    },
     limit: pageSize,
     offset: (page - 1) * pageSize,
   });
@@ -126,7 +151,13 @@ export const getClientsPaginated = cache(async (params: {
 
   let orderByClause = desc(clients.id);
   if (sortKey) {
-    const col = (clients as any)[sortKey];
+    const sortMap: Record<string, any> = {
+      id: clients.id,
+      name: clients.name,
+      vertical: clients.vertical,
+      createdAt: clients.createdAt
+    };
+    const col = sortMap[sortKey];
     if (col) {
       orderByClause = sortDir === "asc" ? asc(col) : desc(col);
     }
@@ -387,7 +418,17 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
   // Determine Order By
   let orderClause = desc(candidates.createdAt);
   if (sortKey) {
-    const col = (candidates as any)[sortKey];
+    const sortMap: Record<string, any> = {
+      id: candidates.id,
+      name: candidates.name,
+      company: candidates.company,
+      designation: candidates.designation,
+      score: candidates.score,
+      status: candidates.status,
+      createdAt: candidates.createdAt,
+      updatedAt: candidates.updatedAt
+    };
+    const col = sortMap[sortKey];
     if (col) {
       orderClause = sortDir === 'asc' ? asc(col) : desc(col);
     }
@@ -448,23 +489,25 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
 export const getCandidateById = cache(async (id: string) => {
   const [cand] = await db.select().from(candidates).where(and(eq(candidates.id, id), eq(candidates.isDeleted, false)));
   if (!cand) return null;
-  const activities = await db.select().from(floatActivities).where(eq(floatActivities.candId, id));
-  
-  // Fetch float submissions
-  const floatSubmissions = await db.select().from(floats).where(and(eq(floats.candId, id), eq(floats.isDeleted, false)));
-  
-  // Fetch mandate submissions
-  const mCands = await db.select({
-    id: mandateCandidates.id,
-    dateShared: mandateCandidates.createdAt,
-    status: mandateCandidates.stage,
-    client: mandates.company,
-    role: mandates.role,
-    consultant: sql<string>`'System'`
-  })
-  .from(mandateCandidates)
-  .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id))
-  .where(and(eq(mandateCandidates.externalId, id), eq(mandates.isDeleted, false)));
+
+  const [activities, floatSubmissions, mCands, followUps, references, files] = await Promise.all([
+    db.select().from(floatActivities).where(eq(floatActivities.candId, id)),
+    db.select().from(floats).where(and(eq(floats.candId, id), eq(floats.isDeleted, false))),
+    db.select({
+      id: mandateCandidates.id,
+      dateShared: mandateCandidates.createdAt,
+      status: mandateCandidates.stage,
+      client: mandates.company,
+      role: mandates.role,
+      consultant: sql<string>`'System'`
+    })
+    .from(mandateCandidates)
+    .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id))
+    .where(and(eq(mandateCandidates.externalId, id), eq(mandates.isDeleted, false))),
+    db.select().from(floatFollowUps).where(eq(floatFollowUps.candId, id)),
+    db.select().from(floatReferences).where(eq(floatReferences.candId, id)),
+    db.select().from(candidateFiles).where(eq(candidateFiles.candId, id))
+  ]);
 
   const submissionsMap = new Map();
 
@@ -504,10 +547,6 @@ export const getCandidateById = cache(async (id: string) => {
   }
 
   const submissions = Array.from(submissionsMap.values());
-
-  const followUps = await db.select().from(floatFollowUps).where(eq(floatFollowUps.candId, id));
-  const references = await db.select().from(floatReferences).where(eq(floatReferences.candId, id));
-  const files = await db.select().from(candidateFiles).where(eq(candidateFiles.candId, id));
   
   return {
     ...cand,
@@ -556,7 +595,6 @@ export const getFrameworks = cache(async () => {
 
   let mCands: { id: number, externalId: string, mandateId: number }[] = [];
   if (candIds.length > 0) {
-    const { inArray, or } = require('drizzle-orm');
     mCands = await db.select({ id: mandateCandidates.id, externalId: mandateCandidates.externalId, mandateId: mandateCandidates.mandateId })
       .from(mandateCandidates); 
       // Note: Kept simple for now to avoid breaking SQL types, but limited impact as it runs on the server.
