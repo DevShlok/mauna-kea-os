@@ -22,7 +22,8 @@ export const getMandates = cache(async () => {
           score: true,
           hasReport: true,
           initials: true,
-          mandateId: true
+          mandateId: true,
+          isSentToClient: true
         }
       } 
     },
