@@ -9,7 +9,7 @@ import { saveInlineNoteAction, removeFromEngagementListAction } from "@/actions/
 import { EmptyState } from "@/components/ui/EmptyState";
 import toast from "react-hot-toast";
 
-export default function CallsClient({ items, currentDate }: { items: any[], currentDate?: string }) {
+export default function CallsClient({ items, currentDate, user }: { items: any[], currentDate?: string, user?: any }) {
   const router = useRouter();
   const [logModalCandId, setLogModalCandId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"All" | "Calling" | "BD">("All");
@@ -85,7 +85,59 @@ export default function CallsClient({ items, currentDate }: { items: any[], curr
   const totalCalled = filteredItems.filter(i => (i.notes && i.notes.trim() !== "") || (i.status !== "Pending" && i.status !== "To Call" && i.status !== "")).length;
   const totalRemaining = totalPlanned - totalCalled;
 
+  const progressPercent = totalPlanned > 0 ? Math.round((totalCalled / totalPlanned) * 100) : 0;
+  
+  const firstName = user?.name?.split(" ")[0] || "Consultant";
+
   return (
+    <div className="flex flex-col gap-6">
+      {/* Personalized Greeting & Progress Banner */}
+      <div className="bg-gradient-to-r from-[#133255] to-[#1a4fa8] rounded-xl p-6 shadow-sm text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between">
+        <div className="absolute right-0 top-0 w-64 h-full bg-gradient-to-l from-white/10 to-transparent pointer-events-none" />
+        
+        <div className="z-10 mb-6 md:mb-0">
+          <h1 className="text-2xl font-bold font-serif mb-1">
+            Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {firstName}!
+          </h1>
+          <p className="text-white/80 text-sm">
+            Here is your engagement summary for {currentDate === "all" ? "all time" : "today"}. Let's hit those goals!
+          </p>
+        </div>
+
+        {/* Animated Circular Progress */}
+        <div className="z-10 flex items-center gap-6 bg-white/10 p-4 rounded-xl backdrop-blur-sm border border-white/20">
+          <div className="flex flex-col gap-1 text-right">
+            <span className="text-white/70 text-xs font-bold uppercase tracking-wider">Goal Achieved</span>
+            <span className="text-2xl font-bold">{progressPercent}%</span>
+          </div>
+          
+          <div className="relative w-16 h-16 flex items-center justify-center">
+            {/* Background circle */}
+            <svg className="w-16 h-16 transform -rotate-90">
+              <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-white/20" />
+              {/* Animated foreground circle */}
+              <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="6" fill="transparent"
+                strokeDasharray="175"
+                strokeDashoffset={175 - (175 * progressPercent) / 100}
+                strokeLinecap="round"
+                className="text-[#D8B15B] transition-all duration-1000 ease-out"
+              />
+            </svg>
+          </div>
+          
+          <div className="flex flex-col gap-3 pl-4 border-l border-white/20">
+            <div className="flex flex-col">
+              <span className="text-white/70 text-[10px] uppercase tracking-wider font-bold leading-tight">Completed</span>
+              <span className="font-bold text-sm leading-tight text-green-300">{totalCalled} / {totalPlanned}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-white/70 text-[10px] uppercase tracking-wider font-bold leading-tight">Remaining</span>
+              <span className="font-bold text-sm leading-tight text-orange-300">{totalRemaining}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
     <div className="bg-white border border-[#e4e8f0] rounded-[16px] overflow-hidden shadow-sm flex flex-col min-h-[600px]">
       
       {/* ── Header: Filters & Progress ── */}
@@ -127,25 +179,7 @@ export default function CallsClient({ items, currentDate }: { items: any[], curr
         </div>
 
         {/* Date Filter & Progress */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-          {/* Progress Tracker */}
-          <div className="flex gap-4 text-sm font-medium">
-            <div className="flex flex-col">
-              <span className="text-gray-400 text-[11px] uppercase tracking-wider font-bold">Planned</span>
-              <span className="text-[#133255] text-lg font-bold leading-tight">{totalPlanned}</span>
-            </div>
-            <div className="w-[1px] bg-gray-200 h-8"></div>
-            <div className="flex flex-col">
-              <span className="text-gray-400 text-[11px] uppercase tracking-wider font-bold">Called</span>
-              <span className="text-green-600 text-lg font-bold leading-tight">{totalCalled}</span>
-            </div>
-            <div className="w-[1px] bg-gray-200 h-8"></div>
-            <div className="flex flex-col">
-              <span className="text-gray-400 text-[11px] uppercase tracking-wider font-bold">Remaining</span>
-              <span className="text-orange-500 text-lg font-bold leading-tight">{totalRemaining}</span>
-            </div>
-          </div>
-
+        <div className="flex flex-col sm:flex-row items-center gap-6">
           {/* Date Picker */}
           <div className="flex flex-col sm:flex-row items-center gap-2">
             <button 
@@ -272,6 +306,7 @@ export default function CallsClient({ items, currentDate }: { items: any[], curr
           onClose={() => setLogModalCandId(null)}
         />
       )}
+    </div>
     </div>
   );
 }

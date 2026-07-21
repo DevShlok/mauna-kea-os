@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { STAGE_OPTIONS, stageLabel, formatMandateCtc } from "@/lib/helpers";
-import { editMandateAction, updateMandateSearchNotesAction, updateMandateCandidateStageAction, deleteMandateAction, sendCandidatesToClientAction } from "@/actions";
+import { editMandateAction, updateMandateSearchNotesAction, updateMandateCandidateStageAction, deleteMandateAction, sendCandidatesToClientAction, saveCandidateAssessmentAction } from "@/actions";
 import MandateKanbanBoard from "./MandateKanbanBoard";
 
 const PIPELINE_STAGES = [
@@ -40,6 +40,8 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<number>>(new Set());
   const [isSendingToClient, setIsSendingToClient] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
+  const [workflowTab, setWorkflowTab] = useState<"universe" | "mapping" | "calllist" | "shortlist">("universe");
+  const [editingAssessment, setEditingAssessment] = useState<number | null>(null);
 
   async function handleSendToClient() {
     if (selectedCandidateIds.size === 0) return;
@@ -413,6 +415,18 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
           </div>
         </div>
         
+          <div className="flex border-b border-gray-100 bg-gray-50/50">
+            {["universe", "mapping", "calllist", "shortlist"].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setWorkflowTab(tab as any)}
+                className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors ${workflowTab === tab ? "border-[#133255] text-[#133255] bg-white" : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"}`}
+              >
+                {tab === "calllist" ? "Call List" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+
         {viewMode === "board" ? (
           <div className="p-4 bg-gray-50/50">
             <MandateKanbanBoard 
@@ -429,83 +443,119 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
           </div>
         ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b-2 border-gray-200">
-                <th className="px-4 py-3 text-left w-10">
+          {(() => {
+            const filteredCands = mandate.candidates.filter((c: any) => c.stage === workflowTab || (!c.stage && workflowTab === "universe"));
+            
+            let sortedCands = [...filteredCands];
+            if (workflowTab === "shortlist") {
+              sortedCands = sortedCands.sort((a, b) => {
+                const rA = a.ranking ?? 999;
+                const rB = b.ranking ?? 999;
+                return rA - rB;
+              });
+            }
+
+            const renderRow = (c: any) => (
+              <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
+                <td className="px-4 py-3">
                   <input 
                     type="checkbox" 
                     className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]"
-                    checked={mandate.candidates.length > 0 && selectedCandidateIds.size === mandate.candidates.length}
+                    checked={selectedCandidateIds.has(c.id)}
                     onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedCandidateIds(new Set(mandate.candidates.map((c: any) => c.id)));
-                      } else {
-                        setSelectedCandidateIds(new Set());
-                      }
+                      const next = new Set(selectedCandidateIds);
+                      if (e.target.checked) next.add(c.id);
+                      else next.delete(c.id);
+                      setSelectedCandidateIds(next);
                     }}
                   />
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Candidate</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Stage</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Score</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Report</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Actions</th>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded bg-[#133255] text-white flex items-center justify-center text-xs font-bold shrink-0">{c.initials}</div>
+                    <div>
+                      <div className="font-semibold text-gray-800">{c.name}</div>
+                      <div className="text-xs text-gray-400">{c.role} - {c.company}</div>
+                      {c.addedBy && <div className="text-[10px] text-gray-400 italic mt-0.5">Added by {c.addedBy}</div>}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <select value={c.stage || ""} onChange={(e) => updateCandidateStage(mandate.id, c.id, e.target.value)} className="border border-gray-200 rounded px-2 py-1 text-xs bg-white outline-none cursor-pointer">
+                    {STAGE_OPTIONS.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
+                  </select>
+                </td>
+                <td className="px-4 py-3">
+                  {c.score ? (
+                    <span className={"px-2 py-0.5 rounded-full text-xs font-bold " + (c.score >= 8 ? "bg-green-100 text-green-800" : c.score >= 6.5 ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-700")}>{c.score}/10</span>
+                  ) : <span className="text-gray-300">-</span>}
+                </td>
+                <td className="px-4 py-3">
+                  {c.hasReport ? (
+                    <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={() => router.push("/dashboard/workbench?candId=" + c.externalId + "&mandateId=" + mandate.id)}>View Report</button>
+                  ) : <span className="text-gray-300 text-xs">No report</span>}
+                </td>
+                {workflowTab === "shortlist" && (
+                  <td className="px-4 py-3">
+                    <button onClick={() => setEditingAssessment(c.id)} className="text-blue-500 hover:underline text-xs font-semibold">
+                      Assess
+                    </button>
+                  </td>
+                )}
+                <td className="px-4 py-3">
+                  <div className="flex gap-2">
+                    <button onClick={() => router.push("/dashboard/candidates/" + c.externalId)} className="text-gray-400 hover:text-[#133255] font-semibold text-xs transition-colors">Profile</button>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {mandate.candidates.length === 0 ? (
-                <tr><td colSpan={5} className="text-center text-gray-400 py-10">No candidates yet</td></tr>
-              ) : mandate.candidates.map((c: any) => (
-                <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <input 
-                      type="checkbox" 
-                      className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]"
-                      checked={selectedCandidateIds.has(c.id)}
-                      onChange={(e) => {
-                        const next = new Set(selectedCandidateIds);
-                        if (e.target.checked) next.add(c.id);
-                        else next.delete(c.id);
-                        setSelectedCandidateIds(next);
-                      }}
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded bg-[#133255] text-white flex items-center justify-center text-xs font-bold shrink-0">{c.initials}</div>
-                      <div>
-                        <div className="font-semibold text-gray-800">{c.name}</div>
-                        <div className="text-xs text-gray-400">{c.role} - {c.company}</div>
-                        {c.addedBy && <div className="text-[10px] text-gray-400 italic mt-0.5">Added by {c.addedBy}</div>}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <select value={c.stage || ""} onChange={(e) => updateCandidateStage(mandate.id, c.id, e.target.value)} className="border border-gray-200 rounded px-2 py-1 text-xs bg-white outline-none cursor-pointer">
-                      {STAGE_OPTIONS.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
-                    </select>
-                  </td>
-                  <td className="px-4 py-3">
-                    {c.score ? (
-                      <span className={"px-2 py-0.5 rounded-full text-xs font-bold " + (c.score >= 8 ? "bg-green-100 text-green-800" : c.score >= 6.5 ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-700")}>{c.score}/10</span>
-                    ) : <span className="text-gray-300">-</span>}
-                  </td>
-                  <td className="px-4 py-3">
-                    {c.hasReport ? (
-                      <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={() => router.push("/dashboard/workbench?candId=" + c.externalId + "&mandateId=" + mandate.id)}>View Report</button>
-                    ) : <span className="text-gray-300 text-xs">No report</span>}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button className="px-2 py-1 border border-gray-200 text-gray-500 rounded text-xs font-bold hover:bg-gray-50">Profile</button>
-                      <button className="px-2 py-1 border border-gray-200 text-gray-500 rounded text-xs font-bold hover:bg-gray-50">Export</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            );
+
+            return (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b-2 border-gray-200">
+                    <th className="px-4 py-3 text-left w-10">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]"
+                        checked={filteredCands.length > 0 && selectedCandidateIds.size === filteredCands.length}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedCandidateIds(new Set(filteredCands.map((c: any) => c.id)));
+                          else setSelectedCandidateIds(new Set());
+                        }}
+                      />
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Candidate</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Stage</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Score</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Report</th>
+                    {workflowTab === "shortlist" && <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Assessment</th>}
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCands.length === 0 ? (
+                    <tr><td colSpan={workflowTab === "shortlist" ? 7 : 6} className="text-center text-gray-400 py-10">No candidates in this stage</td></tr>
+                  ) : workflowTab === "shortlist" ? (
+                    <>
+                      {sortedCands.slice(0, 5).length > 0 && (
+                        <tr className="bg-blue-50/50"><td colSpan={7} className="px-4 py-2 text-xs font-bold text-[#133255] uppercase tracking-wider border-b border-blue-100">🔥 Top 5 Candidates</td></tr>
+                      )}
+                      {sortedCands.slice(0, 5).map(renderRow)}
+                      
+                      {sortedCands.slice(5).length > 0 && (
+                        <tr className="bg-gray-100/50"><td colSpan={7} className="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200 mt-4">📋 Next 5 Candidates</td></tr>
+                      )}
+                      {sortedCands.slice(5).map(renderRow)}
+                    </>
+                  ) : (
+                    sortedCands.map(renderRow)
+                  )}
+                </tbody>
+              </table>
+            );
+          })()}
+
         </div>
         )}
       </div>
@@ -652,6 +702,108 @@ export default function MandateDetailClient({ initialMandate }: { initialMandate
           </div>
         </div>
       )}
+
+      {/* Delete Mandate Modal */}
+      {isDeleting && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-[400px] overflow-hidden p-6 text-center">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Delete Mandate?</h2>
+            <p className="text-sm text-gray-500 mb-6">This action cannot be undone. All candidates and files will be permanently removed.</p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => setIsDeleting(false)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-sm font-bold hover:bg-gray-50">Cancel</button>
+              <button onClick={async () => {
+                try {
+                  await deleteMandateAction(mandate.id);
+                  toast.success("Mandate deleted");
+                  router.push("/dashboard/mandates");
+                } catch(e) {
+                  toast.error("Failed to delete mandate");
+                }
+              }} className="px-4 py-2 bg-red-600 text-white rounded text-sm font-bold hover:bg-red-700">Yes, Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assessment Modal */}
+      {editingAssessment !== null && (() => {
+        const c = mandate.candidates.find((can: any) => can.id === editingAssessment);
+        if (!c) return null;
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl w-[500px] overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="p-4 border-b border-gray-100 font-bold text-gray-900 flex justify-between items-center">
+                <span>Assess {c.name}</span>
+                <button onClick={() => setEditingAssessment(null)} className="text-gray-400 hover:text-gray-600">✕</button>
+              </div>
+              <form 
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = e.target as HTMLFormElement;
+                  const ranking = parseInt((form.elements.namedItem("ranking") as HTMLInputElement).value) || null;
+                  const movementProb = (form.elements.namedItem("movementProb") as HTMLSelectElement).value;
+                  const movementReason = (form.elements.namedItem("movementReason") as HTMLInputElement).value;
+                  const comp1 = (form.elements.namedItem("comp1") as HTMLInputElement).value;
+                  const comp2 = (form.elements.namedItem("comp2") as HTMLInputElement).value;
+                  const comp3 = (form.elements.namedItem("comp3") as HTMLInputElement).value;
+                  const competencies = [];
+                  if (comp1) competencies.push({ skill: comp1, rating: 0 });
+                  if (comp2) competencies.push({ skill: comp2, rating: 0 });
+                  if (comp3) competencies.push({ skill: comp3, rating: 0 });
+
+                  try {
+                    await saveCandidateAssessmentAction(c.id, { ranking: ranking as any, competencies, movementProb, movementReason });
+                    toast.success("Assessment saved");
+                    setMandate((prev: any) => ({
+                      ...prev,
+                      candidates: prev.candidates.map((can: any) => can.id === c.id ? { ...can, ranking, competencies, movementProb, movementReason } : can)
+                    }));
+                    setEditingAssessment(null);
+                  } catch(err) {
+                    toast.error("Failed to save assessment");
+                  }
+                }} 
+                className="p-5 flex flex-col gap-4 overflow-y-auto"
+              >
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Consultant Ranking (1-10)</label>
+                  <input name="ranking" type="number" min="1" max="10" defaultValue={c.ranking || ""} className="w-full p-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]" placeholder="e.g. 1" />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Top 3 Competencies</label>
+                  <div className="flex flex-col gap-2">
+                    <input name="comp1" type="text" defaultValue={c.competencies?.[0]?.skill || ""} className="w-full p-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]" placeholder="Competency 1" />
+                    <input name="comp2" type="text" defaultValue={c.competencies?.[1]?.skill || ""} className="w-full p-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]" placeholder="Competency 2" />
+                    <input name="comp3" type="text" defaultValue={c.competencies?.[2]?.skill || ""} className="w-full p-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]" placeholder="Competency 3" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Movement Probability</label>
+                  <select name="movementProb" defaultValue={c.movementProb || ""} className="w-full p-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]">
+                    <option value="">Select Probability</option>
+                    <option value="80%">80% - Highly Likely</option>
+                    <option value="50%">50% - Neutral</option>
+                    <option value="20%">20% - Unlikely</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Reason for Movement / Blockers</label>
+                  <input name="movementReason" type="text" defaultValue={c.movementReason || ""} className="w-full p-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]" placeholder="e.g. Competing offers, Relocation concerns..." />
+                </div>
+
+                <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
+                  <button type="button" onClick={() => setEditingAssessment(null)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Cancel</button>
+                  <button type="submit" className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Save Assessment</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      })()}
+
     </div>
   );
 }

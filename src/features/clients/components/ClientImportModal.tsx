@@ -129,12 +129,23 @@ export default function ClientImportModal({ isOpen, onClose }: { isOpen: boolean
     try {
       const mappedClients = importFileData.map(row => {
         const cl: any = {};
+        const mappedExcelHeaders = Object.values(importMapping);
+        const metadata: any = {};
+
         Object.keys(importMapping).forEach(dbKey => {
           const excelHeader = importMapping[dbKey];
           if (excelHeader && row[excelHeader] !== undefined) {
             cl[dbKey] = row[excelHeader];
           }
         });
+
+        Object.keys(row).forEach(header => {
+          if (!mappedExcelHeaders.includes(header) && row[header] !== undefined && row[header] !== "") {
+            metadata[header] = row[header];
+          }
+        });
+
+        cl.metadata = metadata;
         return cl;
       });
 

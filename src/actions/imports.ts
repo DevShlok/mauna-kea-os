@@ -63,6 +63,7 @@ export async function bulkInsertClientsAction(mappedClients: any[]) {
         vertical: c.vertical || "",
         owner: c.owner || "System",
         status: "Active",
+        metadata: c.metadata || {},
       });
 
       insertedCount++;
@@ -163,6 +164,7 @@ export async function bulkInsertMandatesAction(mappedMandates: any[], clientId: 
         pocPhone: m.pocPhone || "",
         status: "universe",
         internalStatus: "contractsent",
+        metadata: m.metadata || {},
       });
 
       insertedCount++;

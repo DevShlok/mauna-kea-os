@@ -114,7 +114,7 @@ export default async function CallsPage(props: { searchParams: Promise<{ date?: 
         </div>
       </div>
       
-      <CallsClient items={combinedItems} currentDate={targetDate} />
+      <CallsClient items={combinedItems} currentDate={targetDate} user={dbUser[0]} />
     </div>
   );
 }

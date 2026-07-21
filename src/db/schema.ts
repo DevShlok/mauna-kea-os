@@ -36,6 +36,7 @@ export const mandates = pgTable('mandates', {
   deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
   auditLog: json('audit_log').$type<Record<string, { updatedBy: string, updatedAt: string }>>().default({}),
+  metadata: json('metadata').$type<Record<string, any>>().default({}),
 }, (table) => ({
   companyIdx: index('mandates_company_idx').on(table.company),
   roleIdx: index('mandates_role_idx').on(table.role),
@@ -59,6 +60,10 @@ export const mandateCandidates = pgTable('mandate_candidates', {
   cvText: text('cv_text'),
   createdAt: datetime('created_at').default(sql`now()`),
   addedBy: varchar('added_by', { length: 255 }),
+  ranking: int('ranking'),
+  competencies: json('competencies').$type<{skill: string; rating: number}[]>().default([]),
+  movementProb: varchar('movement_prob', { length: 50 }),
+  movementReason: varchar('movement_reason', { length: 255 }),
 }, (table) => ({
   mandateIdIdx: index('mc_mandate_id_idx').on(table.mandateId),
   externalIdIdx: index('mc_external_id_idx').on(table.externalId),
@@ -293,6 +298,7 @@ export const clients = pgTable('clients', {
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
+  metadata: json('metadata').$type<Record<string, any>>().default({}),
 }, (table) => ({
   nameIdx: index('clients_name_idx').on(table.name),
   statusIdx: index('clients_status_idx').on(table.status),

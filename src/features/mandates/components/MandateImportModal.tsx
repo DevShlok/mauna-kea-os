@@ -127,12 +127,23 @@ export default function MandateImportModal({ isOpen, onClose, clientId, clientNa
     try {
       const mappedMandates = importFileData.map(row => {
         const m: any = {};
+        const mappedExcelHeaders = Object.values(importMapping);
+        const metadata: any = {};
+
         Object.keys(importMapping).forEach(dbKey => {
           const excelHeader = importMapping[dbKey];
           if (excelHeader && row[excelHeader] !== undefined) {
             m[dbKey] = row[excelHeader];
           }
         });
+
+        Object.keys(row).forEach(header => {
+          if (!mappedExcelHeaders.includes(header) && row[header] !== undefined && row[header] !== "") {
+            metadata[header] = row[header];
+          }
+        });
+
+        m.metadata = metadata;
         return m;
       });
 

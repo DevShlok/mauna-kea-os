@@ -18,6 +18,19 @@ import {
   updateClientSchema,
 } from "@/lib/validations";
 
+export async function saveCandidateAssessmentAction(candId: number, data: { ranking?: number; competencies?: {skill: string, rating: number}[]; movementProb?: string; movementReason?: string }) {
+  await requireRole(["admin", "consultant"]);
+  await db.update(mandateCandidates)
+    .set({
+      ranking: data.ranking,
+      competencies: data.competencies,
+      movementProb: data.movementProb,
+      movementReason: data.movementReason,
+    })
+    .where(eq(mandateCandidates.id, candId));
+  revalidatePath("/dashboard", "layout");
+}
+
 export async function getCurrentUserName(): Promise<string> {
   try {
     const supabase = await createClient();
