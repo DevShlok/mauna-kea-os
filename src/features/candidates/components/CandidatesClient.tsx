@@ -311,11 +311,21 @@ export default function CandidatesClient({
     setIsImporting(true);
     try {
       const mappedCandidates = importFileData.map(row => {
-        const cand: any = {};
-        Object.keys(importMapping).forEach(dbKey => {
-          const excelHeader = importMapping[dbKey];
-          if (excelHeader && row[excelHeader] !== undefined) {
-            cand[dbKey] = row[excelHeader];
+        const cand: any = { metadata: {} };
+        const mappedHeaders = Object.values(importMapping);
+        
+        Object.keys(row).forEach(excelHeader => {
+          if (mappedHeaders.includes(excelHeader)) {
+             // It's mapped to a core DB field
+             const dbKey = Object.keys(importMapping).find(k => importMapping[k] === excelHeader);
+             if (dbKey) {
+               cand[dbKey] = row[excelHeader];
+             }
+          } else {
+             // It's an unmapped field, dump into metadata
+             if (row[excelHeader] !== undefined && row[excelHeader] !== null && row[excelHeader] !== "") {
+               cand.metadata[excelHeader] = row[excelHeader];
+             }
           }
         });
         return cand;
@@ -553,9 +563,14 @@ export default function CandidatesClient({
   const handleBulkAddToBdList = async () => {
     setIsSubmitting(true);
     try {
-      await bulkAddToEngagementListAction(Array.from(selectedIds), "BD");
+      const res = await bulkAddToEngagementListAction(Array.from(selectedIds), "BD");
       setSelectedIds(new Set());
-      toast.success("Candidates added to BD List successfully!");
+      if (res.duplicateCount > 0) {
+        toast.error(`${res.duplicateCount} candidate(s) are already in the BD list.`);
+      }
+      if (res.addedCount > 0) {
+        toast.success(`Added ${res.addedCount} candidate(s) to BD List successfully!`);
+      }
       router.refresh();
     } catch (e) {
       console.error(e);
@@ -568,9 +583,14 @@ export default function CandidatesClient({
   const handleBulkAddToCallingList = async () => {
     setIsSubmitting(true);
     try {
-      await bulkAddToEngagementListAction(Array.from(selectedIds), "Calling");
+      const res = await bulkAddToEngagementListAction(Array.from(selectedIds), "Calling");
       setSelectedIds(new Set());
-      toast.success("Candidates added to Calling List successfully!");
+      if (res.duplicateCount > 0) {
+        toast.error(`${res.duplicateCount} candidate(s) are already in the Calling list.`);
+      }
+      if (res.addedCount > 0) {
+        toast.success(`Added ${res.addedCount} candidate(s) to Calling List successfully!`);
+      }
       router.refresh();
     } catch (e) {
       console.error(e);

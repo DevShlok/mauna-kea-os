@@ -1047,6 +1047,9 @@ export async function bulkAddToEngagementListAction(candIds: string[], listType:
   if (dbUser.length === 0) throw new Error("User not found");
   const userId = dbUser[0].id;
 
+  let addedCount = 0;
+  let duplicateCount = 0;
+
   for (const candId of candIds) {
     // Check if already in list
     const existing = await db.select().from(engagementListItems).where(
@@ -1058,7 +1061,11 @@ export async function bulkAddToEngagementListAction(candIds: string[], listType:
         candId,
         listType,
       });
+      addedCount++;
+    } else {
+      duplicateCount++;
     }
   }
   revalidatePath('/dashboard/calls');
+  return { success: true, addedCount, duplicateCount };
 }

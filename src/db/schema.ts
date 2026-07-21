@@ -113,6 +113,7 @@ export const candidates = pgTable('candidates', {
   updatedAt: datetime('updated_at').default(sql`now()`),
   updatedBy: varchar('updated_by', { length: 255 }),
   auditLog: json('audit_log').$type<Record<string, { updatedBy: string, updatedAt: string }>>().default({}),
+  metadata: json('metadata').$type<Record<string, any>>().default({}),
 }, (table) => ({
   nameIdx: index('candidates_name_idx').on(table.name),
   emailIdx: index('candidates_email_idx').on(table.email),

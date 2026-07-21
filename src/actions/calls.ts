@@ -111,3 +111,57 @@ export async function reviewPlanAction(planId: number) {
   }).where(eq(callPlans.id, planId));
 }
 
+export async function saveInlineNoteAction(data: {
+  candId: string;
+  listType: "BD" | "Calling";
+  note: string;
+}) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email) throw new Error("Unauthorized");
+  
+  const dbUser = await db.select().from(platformUsers).where(eq(platformUsers.email, user.email));
+  if (dbUser.length === 0) throw new Error("User not found");
+  const consultantName = dbUser[0].name;
+  const userId = dbUser[0].id;
+
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
+
+  // 1. Insert into floatActivities 
+  await db.insert(floatActivities).values({
+    candId: data.candId,
+    date: dateStr,
+    time: timeStr,
+    consultant: consultantName,
+    note: data.note,
+    type: data.listType === "BD" ? "BD Call" : "Delivery Call",
+  });
+
+  // 2. Update notes in the engagement list without changing status/followUp
+  // Note: if the user doesn't have an item here, we should probably insert it? 
+  // Let's check if it exists first
+  const existing = await db.select().from(engagementListItems).where(
+    and(
+      eq(engagementListItems.candId, data.candId), 
+      eq(engagementListItems.userId, userId),
+      eq(engagementListItems.listType, data.listType)
+    )
+  );
+
+  if (existing.length > 0) {
+    await db.update(engagementListItems)
+      .set({ notes: data.note })
+      .where(eq(engagementListItems.id, existing[0].id));
+  } else {
+    // If they were added via callPlan but not engagement list, create the engagement list item
+    await db.insert(engagementListItems).values({
+      userId,
+      candId: data.candId,
+      listType: data.listType,
+      notes: data.note,
+      status: 'Connected - Follow Up' // Default status when notes are added
+    });
+  }
+}

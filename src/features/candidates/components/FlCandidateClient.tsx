@@ -670,6 +670,23 @@ const statusClass = candidate.status === 'Active' ? 'bg-[#e0f5e9] text-[#137a43]
         />
       </div>
 
+      {candidate.metadata && Object.keys(candidate.metadata).length > 0 && (
+        <div className="bg-white border border-[#D4E0F0] rounded-[10px] p-5 shadow-sm mb-6">
+          <div className="flex justify-between items-center mb-5">
+            <span className="font-serif text-[17px] font-bold text-[#111]">Additional Information</span>
+            <span className="text-[14px] font-bold uppercase tracking-wide text-[#6b7a99] bg-[#f4f7fd] px-2.5 py-1 rounded-md">{Object.keys(candidate.metadata).length} extra fields</span>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {Object.entries(candidate.metadata).map(([key, value]) => (
+              <div key={key} className="bg-[#f8fafc] border border-[#e2e8f0] p-3 rounded-lg">
+                <div className="text-[12px] font-bold uppercase tracking-wide text-[#6b7a99] mb-1">{key}</div>
+                <div className="text-[15px] font-semibold text-[#133255]">{String(value)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {!readOnly && (
         <>
           <div className="bg-white border border-[#D4E0F0] rounded-[10px] p-5 shadow-sm mb-6">

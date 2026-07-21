@@ -150,6 +150,7 @@ export async function finalizeCandidatesImportAction(newCandidates: any[], updat
         qual: c.yearQualified ? [{ degree: "Qualification", year: c.yearQualified }] : [],
         initials,
         status: "Active",
+        metadata: c.metadata || {},
       };
 
       await db.insert(candidates).values(payload);
@@ -197,6 +198,10 @@ export async function finalizeCandidatesImportAction(newCandidates: any[], updat
 
       // Merge notes/tags if selected
       if (fieldsToUpdate.industry && c.industry) updatePayload.notes = c.industry;
+
+      if (c.metadata && Object.keys(c.metadata).length > 0) {
+        updatePayload.metadata = c.metadata;
+      }
 
       updatePayload.updatedAt = new Date();
       updatePayload.updatedBy = updatedBy;
