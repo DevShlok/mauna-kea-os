@@ -40,37 +40,4 @@ export async function searchCandidatesAction(query: string, limit = 50) {
   return results;
 }
 
-export async function searchMandatesAction(query: string, limit = 50) {
-  const { platformUser: pUser, email } = await requireRole(["admin", "consultant", "client"]);
-  if (!query || query.length < 2) return [];
 
-  const searchPattern = `%${query}%`;
-  
-  let conditions = [
-    or(
-      ilike(mandates.company, searchPattern),
-      ilike(mandates.role, searchPattern)
-    )
-  ];
-
-  if (pUser?.role === "client" && pUser.linkedClientId) {
-    const [client] = await db.select().from(clients).where(eq(clients.id, pUser.linkedClientId));
-    if (client) {
-      conditions.push(eq(mandates.company, client.name));
-    } else {
-      return [];
-    }
-  }
-
-  const results = await db.select({
-    id: mandates.id,
-    company: mandates.company,
-    role: mandates.role,
-    status: mandates.status
-  })
-  .from(mandates)
-  .where(and(...conditions))
-  .limit(limit);
-
-  return results;
-}

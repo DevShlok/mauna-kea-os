@@ -69,12 +69,12 @@ export const editMandateSchema = z.object({
 });
 
 // ─── FRAMEWORKS ───────────────────────────────────────────
-export const frameworkCriterionSchema = z.object({
+const frameworkCriterionSchema = z.object({
   name: z.string().min(1),
   weight: z.number().optional().default(10),
 });
 
-export const frameworkCategorySchema = z.object({
+const frameworkCategorySchema = z.object({
   name: z.string().min(1),
   weight: z.number().optional().default(100),
   criteria: z.array(frameworkCriterionSchema).optional().default([]),
