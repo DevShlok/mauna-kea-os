@@ -571,7 +571,8 @@ export async function finalizeFloatImportAction(newFloats: any[], resolvedUpdate
         if (payload.email) updates.email = payload.email;
         if (payload.name) updates.name = payload.name;
         if (payload.company) updates.company = payload.company;
-        
+        if (payload.role || payload.designation) updates.designation = payload.designation || payload.role;
+
         if (Object.keys(updates).length > 0) {
           await db.update(dbSchema.candidates).set(updates).where(eq(dbSchema.candidates.id, update.id));
         }
@@ -587,31 +588,29 @@ export async function finalizeFloatImportAction(newFloats: any[], resolvedUpdate
   for (const f of newFloats) {
     try {
       const masterCandidateId = `CAND-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-      let initials = f.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+      let initials = f.name ? f.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase() : "FL";
 
       await db.insert(dbSchema.candidates).values({
         id: masterCandidateId,
         name: f.name,
         email: f.email || "",
         mobile: f.mobile || "",
-        title: f.role || "", // mapping float role to title
+        designation: f.role || f.designation || "", // mapping float role to designation
         company: f.company || "",
         location: f.location || "",
         linkedin: f.linkedin || "",
-        source: "Import",
-        owner: currentUser.name || "System",
         initials,
-        metadata: f.metadata || {},
         qual: f.qualification ? [f.qualification] : [],
-        yearsOfExp: f.yearsOfExp || 0,
-        tags: []
+        exp: f.yearsOfExp || f.exp || 0,
+        updatedBy: currentUser.name || "System",
+        metadata: f.metadata || { source: "Import" },
       });
 
       await linkToFloat(masterCandidateId, f);
       insertedCount++;
     } catch (err) {
       console.error("Failed to insert float row:", f, err);
-      failedRows.push(f.name);
+      failedRows.push(f.name || "Unknown");
     }
   }
 
@@ -681,7 +680,7 @@ export async function checkPipelineDuplicatesAction(mappedCandidates: any[], man
 
     if (matchedCandidate) {
       // Check if already assigned
-      const isAssigned = existingMandateCandidates.some(mc => mc.candId === matchedCandidate.id);
+      const isAssigned = existingMandateCandidates.some(mc => mc.externalId === matchedCandidate.id);
       
       duplicates.push({
         incomingRecord: c,
@@ -700,20 +699,22 @@ export async function finalizePipelineImportAction(newCandidates: any[], resolve
   let insertedCount = 0;
   let failedRows: string[] = [];
   const dbSchema = await import("@/db/schema");
-  const { or, eq, and, sql } = await import("drizzle-orm");
+  const { eq } = await import("drizzle-orm");
 
   const existingMandateCandidates = await db.select().from(dbSchema.mandateCandidates).where(eq(dbSchema.mandateCandidates.mandateId, mandateId));
 
-  async function linkToMandate(candId: string) {
-    if (!existingMandateCandidates.some(mc => mc.candId === candId)) {
+  async function linkToMandate(candId: string, candObj?: any) {
+    if (!existingMandateCandidates.some(mc => mc.externalId === candId)) {
       await db.insert(dbSchema.mandateCandidates).values({
         mandateId,
-        candId,
+        externalId: candId,
+        name: candObj?.name || "Candidate",
+        company: candObj?.company || "",
+        role: candObj?.designation || candObj?.title || "",
+        stage: "longlist",
         addedBy: currentUser.name || "System",
-        addedAt: sql`now()`,
-        status: "Longlist",
       });
-      existingMandateCandidates.push({ mandateId, candId } as any); // local cache
+      existingMandateCandidates.push({ mandateId, externalId: candId } as any); // local cache
     }
   }
 
@@ -730,12 +731,12 @@ export async function finalizePipelineImportAction(newCandidates: any[], resolve
         if (payload.email) updates.email = payload.email;
         if (payload.name) updates.name = payload.name;
         if (payload.company) updates.company = payload.company;
-        if (payload.title) updates.title = payload.title;
+        if (payload.title || payload.designation) updates.designation = payload.designation || payload.title;
 
         if (Object.keys(updates).length > 0) {
           await db.update(dbSchema.candidates).set(updates).where(eq(dbSchema.candidates.id, update.id));
         }
-        await linkToMandate(update.id);
+        await linkToMandate(update.id, payload);
         insertedCount++;
       }
     } catch (err) {
@@ -747,30 +748,29 @@ export async function finalizePipelineImportAction(newCandidates: any[], resolve
   for (const c of newCandidates) {
     try {
       const masterCandidateId = `CAND-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-      let initials = c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+      let initials = c.name ? c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase() : "CN";
 
       await db.insert(dbSchema.candidates).values({
         id: masterCandidateId,
         name: c.name,
         email: c.email || "",
         mobile: c.mobile || "",
-        title: c.title || "",
+        designation: c.designation || c.title || "",
         company: c.company || "",
         location: c.location || "",
         linkedin: c.linkedin || "",
-        source: "Import",
-        owner: currentUser.name || "System",
         initials,
-        metadata: c.metadata || {},
         qual: c.qualification ? [c.qualification] : [],
-        yearsOfExp: c.yearsOfExp || 0,
-        tags: []
+        exp: c.yearsOfExp || c.exp || 0,
+        updatedBy: currentUser.name || "System",
+        metadata: c.metadata || { source: "Import" },
       });
 
-      await linkToMandate(masterCandidateId);
+      await linkToMandate(masterCandidateId, c);
       insertedCount++;
     } catch (err) {
-      failedRows.push(c.name);
+      console.error("Failed to insert candidate row:", c, err);
+      failedRows.push(c.name || "Unknown");
     }
   }
 
@@ -778,3 +778,4 @@ export async function finalizePipelineImportAction(newCandidates: any[], resolve
   revalidatePath(`/dashboard/mandates/${mandateId}`, "layout");
   return { success: true, insertedCount, failedCount: failedRows.length, failedRows };
 }
+
