@@ -41,40 +41,7 @@ Sample: ${JSON.stringify(sampleData)}`
   return object;
 }
 
-export async function bulkInsertMasterClientsAction(mappedData: any[]) {
-  await requireRole(["admin", "consultant"]);
-  if (!mappedData || mappedData.length === 0) throw new Error("No data provided");
-  
-  // Basic deduplication by companyName to avoid unique constraint errors
-  const toInsert = mappedData.filter(m => m.companyName).map(m => ({
-    companyName: m.companyName,
-    industry: m.industry || "",
-    accountOwner: m.accountOwner || "",
-    hrLeaderName: m.hrLeaderName || "",
-    phone: m.phone || "",
-    designation: m.designation || "",
-    linkedInUrl: m.linkedInUrl || "",
-    sourceUrl: m.sourceUrl || "",
-    sourceType: m.sourceType || "",
-    confidence: m.confidence || "",
-    notes: m.notes || "",
-  }));
 
-  // We can use onConflictDoNothing in drizzle, but it requires table alias or constraints.
-  // For simplicity, we loop and insert, ignoring duplicates.
-  let inserted = 0;
-  for (const row of toInsert) {
-    try {
-      await db.insert(masterClients).values(row);
-      inserted++;
-    } catch (e) {
-      // ignore unique constraint violation
-    }
-  }
-
-  revalidatePath("/dashboard", "layout");
-  return { success: true, count: inserted };
-}
 
 // ─────────────────────────────────────────────────────────
 // MASTER INDUSTRIES
@@ -98,26 +65,7 @@ Sample: ${JSON.stringify(sampleData)}`
   return object;
 }
 
-export async function bulkInsertMasterIndustriesAction(mappedData: any[]) {
-  await requireRole(["admin", "consultant"]);
-  if (!mappedData || mappedData.length === 0) throw new Error("No data provided");
-  
-  let inserted = 0;
-  for (const row of mappedData) {
-    if (!row.sectorName) continue;
-    try {
-      await db.insert(masterIndustries).values({
-        sectorName: row.sectorName,
-        includesConsolidatedFrom: row.includesConsolidatedFrom || "",
-      });
-      inserted++;
-    } catch (e: any) { 
-      console.error("Failed to insert client row:", row, e.message); 
-    }
-  }
-  revalidatePath("/dashboard", "layout");
-  return { success: true, count: inserted };
-}
+
 
 // ─────────────────────────────────────────────────────────
 // MASTER LOCATIONS
@@ -142,27 +90,7 @@ Sample: ${JSON.stringify(sampleData)}`
   return object;
 }
 
-export async function bulkInsertMasterLocationsAction(mappedData: any[]) {
-  await requireRole(["admin", "consultant"]);
-  if (!mappedData || mappedData.length === 0) throw new Error("No data provided");
-  
-  let inserted = 0;
-  for (const row of mappedData) {
-    if (!row.rawEntry || !row.standardizedLocation) continue;
-    try {
-      await db.insert(masterLocations).values({
-        rawEntry: row.rawEntry,
-        standardizedLocation: row.standardizedLocation,
-        mappingAction: row.mappingAction || "",
-      });
-      inserted++;
-    } catch (e: any) { 
-      console.error("Bulk Insert Error:", e.message); 
-    }
-  }
-  revalidatePath("/dashboard", "layout");
-  return { success: true, count: inserted };
-}
+
 
 // ─────────────────────────────────────────────────────────
 // MASTER DATA DUPLICATE RESOLUTION
