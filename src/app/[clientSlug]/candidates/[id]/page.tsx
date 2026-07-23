@@ -22,27 +22,7 @@ export default async function ClientCandidateDetailPage({
   const candidateId = resolvedParams.id;
   let candidate = await getCandidateById(candidateId);
 
-  // Fallback: If candidate is not found by ID (due to mismatched seed/legacy external IDs),
-  // lookup by name from the mandateCandidates table
-  if (!candidate) {
-    const [mc] = await db
-      .select()
-      .from(mandateCandidates)
-      .where(eq(mandateCandidates.externalId, candidateId))
-      .limit(1);
 
-    if (mc?.name) {
-      const allCands = await db
-        .select()
-        .from(candidates)
-        .where(eq(candidates.name, mc.name))
-        .limit(1);
-
-      if (allCands[0]) {
-        candidate = await getCandidateById(allCands[0].id);
-      }
-    }
-  }
 
   if (!candidate) {
     return <div className="p-10 text-center text-gray-400">Candidate not found.</div>;
@@ -72,7 +52,7 @@ export default async function ClientCandidateDetailPage({
     .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id))
     .where(
       and(
-        eq(mandateCandidates.externalId, candidateId),
+        eq(mandateCandidates.candId, candidateId),
         eq(mandates.company, client.name)
       )
     );
@@ -89,7 +69,7 @@ export default async function ClientCandidateDetailPage({
       .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id))
       .where(
         and(
-          eq(mandateCandidates.externalId, candidateId),
+          eq(mandateCandidates.candId, candidateId),
           eq(mandateCandidates.mandateId, mandateIdNum),
           eq(mandates.company, client.name)
         )

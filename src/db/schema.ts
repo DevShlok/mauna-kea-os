@@ -47,17 +47,12 @@ export const mandates = pgTable('mandates', {
 // ─── MANDATE CANDIDATES ──────────────────────────────────
 export const mandateCandidates = pgTable('mandate_candidates', {
   id: serial('id').primaryKey(),
-  externalId: varchar('external_id', { length: 50 }).notNull(),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
   mandateId: int('mandate_id').notNull().references(() => mandates.id),
-  name: varchar('name', { length: 255 }).notNull(),
-  company: varchar('company', { length: 255 }),
-  role: varchar('role', { length: 255 }),
   stage: varchar('stage', { length: 50 }).default('universe'),
   score: float('score'),
   hasReport: boolean('has_report').default(false),
   isSentToClient: boolean('is_sent_to_client').default(false),
-  initials: varchar('initials', { length: 5 }),
-  cvText: text('cv_text'),
   createdAt: datetime('created_at').default(sql`now()`),
   addedBy: varchar('added_by', { length: 255 }),
   ranking: int('ranking'),
@@ -66,7 +61,7 @@ export const mandateCandidates = pgTable('mandate_candidates', {
   movementReason: varchar('movement_reason', { length: 255 }),
 }, (table) => ({
   mandateIdIdx: index('mc_mandate_id_idx').on(table.mandateId),
-  externalIdIdx: index('mc_external_id_idx').on(table.externalId),
+  candIdIdx: index('mc_cand_id_idx').on(table.candId),
   stageIdx: index('mc_stage_idx').on(table.stage),
 }));
 
@@ -161,7 +156,6 @@ export const floatReferences = pgTable('float_references', {
 export const floats = pgTable('floats', {
   id: varchar('id', { length: 50 }).primaryKey(),
   candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
-  candName: varchar('cand_name', { length: 255 }),
   client: varchar('client', { length: 255 }),
   role: varchar('role', { length: 255 }),
   consultant: varchar('consultant', { length: 255 }),
@@ -184,7 +178,6 @@ export const floats = pgTable('floats', {
 export const floatFollowUps = pgTable('float_followups', {
   id: varchar('id', { length: 50 }).primaryKey(),
   candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
-  cand: varchar('cand', { length: 255 }),
   client: varchar('client', { length: 255 }),
   role: varchar('role', { length: 255 }),
   consultant: varchar('consultant', { length: 255 }),
@@ -439,6 +432,14 @@ export const mandateCandidatesRelations = relations(mandateCandidates, ({ one })
     fields: [mandateCandidates.mandateId],
     references: [mandates.id],
   }),
+  candidate: one(candidates, {
+    fields: [mandateCandidates.candId],
+    references: [candidates.id],
+  }),
+}));
+
+export const candidatesRelations = relations(candidates, ({ many }) => ({
+  mandateCandidates: many(mandateCandidates),
 }));
 
 export const frameworksRelations = relations(frameworks, ({ many }) => ({

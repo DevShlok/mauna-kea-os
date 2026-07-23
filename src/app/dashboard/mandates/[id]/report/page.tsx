@@ -22,14 +22,14 @@ export default async function ReportPage({ params, searchParams  }: { params: { 
   const cands = await db.select().from(mandateCandidates).where(inArray(mandateCandidates.id, candIds));
 
   // Fetch Reports for these candidates
-  const externalIds = cands.map(c => c.externalId);
+  const externalIds = cands.map(c => c.candId);
   const reports = externalIds.length > 0 
     ? await db.select().from(candidateReports).where(and(inArray(candidateReports.candidateId, externalIds), eq(candidateReports.status, "Completed")))
     : [];
 
   // Combine data
   const candidatesData = cands.map(c => {
-    const report = reports.find(r => r.candidateId === c.externalId);
+    const report = reports.find(r => r.candidateId === c.candId);
     return {
       ...c,
       reportData: report?.reportData || null,

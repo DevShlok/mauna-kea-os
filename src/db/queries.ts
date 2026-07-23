@@ -23,14 +23,20 @@ export const getMandates = cache(async () => {
       candidates: {
         columns: {
           id: true,
-          externalId: true,
-          name: true,
           stage: true,
           score: true,
           hasReport: true,
-          initials: true,
           mandateId: true,
-          isSentToClient: true
+          isSentToClient: true,
+          candId: true
+        },
+        with: {
+          candidate: {
+            columns: {
+              name: true,
+              initials: true
+            }
+          }
         }
       } 
     },
@@ -38,6 +44,17 @@ export const getMandates = cache(async () => {
   return rows.map(m => ({
     ...m,
     sectors: (m.sectors ?? []) as string[],
+    candidates: m.candidates.map((c: any) => ({
+      id: c.id,
+      stage: c.stage,
+      score: c.score,
+      hasReport: c.hasReport,
+      mandateId: c.mandateId,
+      isSentToClient: c.isSentToClient,
+      externalId: c.candId,
+      name: c.candidate?.name || "Unknown",
+      initials: c.candidate?.initials || "UN"
+    }))
   }));
 });
 
@@ -116,14 +133,20 @@ export const getMandatesPaginated = cache(async (params: {
       candidates: {
         columns: {
           id: true,
-          externalId: true,
-          name: true,
           stage: true,
           score: true,
           hasReport: true,
-          initials: true,
           mandateId: true,
-          isSentToClient: true
+          isSentToClient: true,
+          candId: true
+        },
+        with: {
+          candidate: {
+            columns: {
+              name: true,
+              initials: true
+            }
+          }
         }
       } 
     },
@@ -132,7 +155,21 @@ export const getMandatesPaginated = cache(async (params: {
   });
 
   return {
-    data: rows.map(m => ({ ...m, sectors: (m.sectors ?? []) as string[] })),
+    data: rows.map(m => ({ 
+      ...m, 
+      sectors: (m.sectors ?? []) as string[],
+      candidates: m.candidates.map((c: any) => ({
+        id: c.id,
+        stage: c.stage,
+        score: c.score,
+        hasReport: c.hasReport,
+        mandateId: c.mandateId,
+        isSentToClient: c.isSentToClient,
+        externalId: c.candId,
+        name: c.candidate?.name || "Unknown",
+        initials: c.candidate?.initials || "UN"
+      }))
+    })),
     metadata: { totalCount: count, totalPages, currentPage: page }
   };
 });
@@ -226,41 +263,43 @@ export const getMandateById = cache(async (id: number) => {
 export const getAllMandateCandidates = cache(async () => {
   const cands = await db.select({
     id: mandateCandidates.id,
-    externalId: mandateCandidates.externalId,
-    name: mandateCandidates.name,
-    company: mandateCandidates.company,
-    role: mandateCandidates.role,
+    externalId: mandateCandidates.candId,
+    name: candidates.name,
+    company: candidates.company,
+    role: candidates.designation,
     stage: mandateCandidates.stage,
     score: mandateCandidates.score,
     hasReport: mandateCandidates.hasReport,
-    initials: mandateCandidates.initials,
-    mandateId: mandateCandidates.mandateId,
-    mandateRole: mandates.role,
-    mandateCompany: mandates.company,
-  })
-  .from(mandateCandidates)
-  .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id));
-  return cands;
-});
-
-export const getMandateCandidateByExtId = cache(async (extId: string) => {
-  const [cand] = await db.select({
-    id: mandateCandidates.id,
-    externalId: mandateCandidates.externalId,
-    name: mandateCandidates.name,
-    company: mandateCandidates.company,
-    role: mandateCandidates.role,
-    stage: mandateCandidates.stage,
-    score: mandateCandidates.score,
-    hasReport: mandateCandidates.hasReport,
-    initials: mandateCandidates.initials,
+    initials: candidates.initials,
     mandateId: mandateCandidates.mandateId,
     mandateRole: mandates.role,
     mandateCompany: mandates.company,
   })
   .from(mandateCandidates)
   .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id))
-  .where(eq(mandateCandidates.externalId, extId));
+  .innerJoin(candidates, eq(mandateCandidates.candId, candidates.id));
+  return cands;
+});
+
+export const getMandateCandidateByExtId = cache(async (extId: string) => {
+  const [cand] = await db.select({
+    id: mandateCandidates.id,
+    externalId: mandateCandidates.candId,
+    name: candidates.name,
+    company: candidates.company,
+    role: candidates.designation,
+    stage: mandateCandidates.stage,
+    score: mandateCandidates.score,
+    hasReport: mandateCandidates.hasReport,
+    initials: candidates.initials,
+    mandateId: mandateCandidates.mandateId,
+    mandateRole: mandates.role,
+    mandateCompany: mandates.company,
+  })
+  .from(mandateCandidates)
+  .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id))
+  .innerJoin(candidates, eq(mandateCandidates.candId, candidates.id))
+  .where(eq(mandateCandidates.candId, extId));
   return cand ?? null;
 });
 
@@ -293,14 +332,14 @@ export const getFloatsPaginated = cache(async (params: {
     WITH unified_floats AS (
       SELECT 
         'mc-' || mc.id as "id",
-        mc.external_id as "externalId",
-        mc.name,
-        mc.company,
-        mc.role,
+        mc.cand_id as "externalId",
+        c.name,
+        c.company,
+        c.designation as "role",
         mc.stage,
         mc.score,
         mc.has_report as "hasReport",
-        mc.initials,
+        c.initials,
         m.role as "mandateRole",
         m.company as "mandateCompany",
         m.id as "mandateId",
@@ -308,6 +347,7 @@ export const getFloatsPaginated = cache(async (params: {
         mc.created_at as "createdAt"
       FROM mandate_candidates mc
       INNER JOIN mandates m ON mc.mandate_id = m.id
+      INNER JOIN candidates c ON mc.cand_id = c.id
       WHERE m.is_deleted = false
 
       UNION ALL
@@ -534,7 +574,7 @@ export const getCandidateById = cache(async (id: string) => {
     })
     .from(mandateCandidates)
     .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id))
-    .where(and(eq(mandateCandidates.externalId, id), eq(mandates.isDeleted, false))),
+    .where(and(eq(mandateCandidates.candId, id), eq(mandates.isDeleted, false))),
     db.select().from(floatFollowUps).where(eq(floatFollowUps.candId, id)),
     db.select().from(floatReferences).where(eq(floatReferences.candId, id)),
     db.select().from(candidateFiles).where(eq(candidateFiles.candId, id))
@@ -626,7 +666,7 @@ export const getFrameworks = cache(async () => {
 
   let mCands: { id: number, externalId: string, mandateId: number }[] = [];
   if (candIds.length > 0) {
-    mCands = await db.select({ id: mandateCandidates.id, externalId: mandateCandidates.externalId, mandateId: mandateCandidates.mandateId })
+    mCands = await db.select({ id: mandateCandidates.id, externalId: mandateCandidates.candId, mandateId: mandateCandidates.mandateId })
       .from(mandateCandidates); 
       // Note: Kept simple for now to avoid breaking SQL types, but limited impact as it runs on the server.
       // A better approach is to fix how candidateId is stored in reports.

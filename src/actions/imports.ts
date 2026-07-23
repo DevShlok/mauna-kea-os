@@ -548,7 +548,6 @@ export async function finalizeFloatImportAction(newFloats: any[], resolvedUpdate
       await db.insert(dbSchema.floats).values({
         id: `float-${Math.random().toString(36).substring(2, 9)}`,
         candId: candId,
-        candName: f.name || "Unknown",
         client: f.company || "General",
         role: f.role || "",
         status: f.status || "Pending",
@@ -680,7 +679,7 @@ export async function checkPipelineDuplicatesAction(mappedCandidates: any[], man
 
     if (matchedCandidate) {
       // Check if already assigned
-      const isAssigned = existingMandateCandidates.some(mc => mc.externalId === matchedCandidate.id);
+      const isAssigned = existingMandateCandidates.some(mc => mc.candId === matchedCandidate.id);
       
       duplicates.push({
         incomingRecord: c,
@@ -704,17 +703,14 @@ export async function finalizePipelineImportAction(newCandidates: any[], resolve
   const existingMandateCandidates = await db.select().from(dbSchema.mandateCandidates).where(eq(dbSchema.mandateCandidates.mandateId, mandateId));
 
   async function linkToMandate(candId: string, candObj?: any) {
-    if (!existingMandateCandidates.some(mc => mc.externalId === candId)) {
+    if (!existingMandateCandidates.some(mc => mc.candId === candId)) {
       await db.insert(dbSchema.mandateCandidates).values({
         mandateId,
-        externalId: candId,
-        name: candObj?.name || "Candidate",
-        company: candObj?.company || "",
-        role: candObj?.designation || candObj?.title || "",
+        candId: candId,
         stage: "longlist",
         addedBy: currentUser.name || "System",
       });
-      existingMandateCandidates.push({ mandateId, externalId: candId } as any); // local cache
+      existingMandateCandidates.push({ mandateId, candId: candId } as any); // local cache
     }
   }
 

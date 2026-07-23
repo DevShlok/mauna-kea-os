@@ -286,9 +286,6 @@ export async function addSubmissionAction(data: unknown) {
   await db.insert(floats).values({
     id,
     candId,
-    candName: d.candName,
-    client: d.client,
-    role: d.role,
     consultant: d.consultant || "System",
     dateShared: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
     status: "Shared",
@@ -298,18 +295,14 @@ export async function addSubmissionAction(data: unknown) {
   if (d.mandateId) {
     // Check if they are already in the pipeline to prevent duplicates
     const existing = await db.select().from(mandateCandidates).where(
-      sql`${mandateCandidates.externalId} = ${candId} AND ${mandateCandidates.mandateId} = ${d.mandateId}`
+      sql`${mandateCandidates.candId} = ${candId} AND ${mandateCandidates.mandateId} = ${d.mandateId}`
     );
     if (existing.length === 0) {
       await db.insert(mandateCandidates).values({
-        externalId: candId,
+        candId: candId,
         mandateId: Number(d.mandateId),
-        name: d.candName,
-        company: d.candCompany || "",
         addedBy: await getCurrentUserName(),
-        role: d.role,
         stage: "universe",
-        initials: d.candName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
         isSentToClient: true,
       });
       revalidatePath(`/dashboard/mandates/${d.mandateId}`);
@@ -331,10 +324,7 @@ export async function removeCandidateFromMandateAction(data: { id: number; exter
   // Delete from mandateCandidates
   await db.delete(mandateCandidates).where(eq(mandateCandidates.id, data.id));
 
-  // Delete from floats where candidate, company and role match
-  await db.delete(floats).where(
-    sql`${floats.candId} = ${data.externalId} AND ${floats.client} = ${data.company} AND ${floats.role} = ${data.role}`
-  );
+
 
   revalidatePath(`/dashboard/mandates/${data.mandateId}`);
   revalidatePath("/dashboard/mandates");
@@ -370,7 +360,6 @@ export async function addFollowUpAction(data: unknown) {
   await db.insert(floatFollowUps).values({
     id,
     candId,
-    cand: d.candName,
     client: d.client,
     role: d.role,
     consultant: d.consultant || "System",
@@ -650,7 +639,7 @@ export async function deleteMultipleCandidatesAction(ids: string[]) {
   await requireRole(["admin", "consultant"]);
   if (!ids || ids.length === 0) return;
   revalidatePath("/dashboard", "layout");
-  await db.delete(mandateCandidates).where(inArray(mandateCandidates.externalId, ids));
+  await db.delete(mandateCandidates).where(inArray(mandateCandidates.candId, ids));
   await db.delete(floats).where(inArray(floats.candId, ids));
   await db.delete(floatFollowUps).where(inArray(floatFollowUps.candId, ids));
   await db.delete(floatActivities).where(inArray(floatActivities.candId, ids));
@@ -750,17 +739,13 @@ export async function bulkAssignToMandateAction(data: { mandateId: number; candI
   
   for (const c of cands) {
     const existing = await db.select().from(mandateCandidates).where(
-      sql`${mandateCandidates.externalId} = ${c.id} AND ${mandateCandidates.mandateId} = ${data.mandateId}`
+      sql`${mandateCandidates.candId} = ${c.id} AND ${mandateCandidates.mandateId} = ${data.mandateId}`
     );
     if (existing.length === 0) {
       await db.insert(mandateCandidates).values({
-        externalId: c.id,
+        candId: c.id,
         mandateId: Number(data.mandateId),
-        name: c.name,
-        company: c.company || "",
-        role: data.role,
         stage: "universe",
-        initials: c.initials || c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
         score: c.score || null,
         hasReport: !!c.score,
         isSentToClient: true, // Make visible by default
@@ -773,9 +758,6 @@ export async function bulkAssignToMandateAction(data: { mandateId: number; candI
         await db.insert(floats).values({
           id: subId,
           candId: c.id,
-          candName: c.name,
-          client: mandate.company,
-          role: mandate.role,
           consultant: mandate.consultant || "System",
           dateShared: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
           status: "Shared",
@@ -800,7 +782,6 @@ export async function bulkAddSubmissionAction(data: { candIds: string[]; client:
     await db.insert(floats).values({
       id: subId,
       candId: c.id,
-      candName: c.name,
       client: data.client,
       role: data.role,
       consultant: data.consultant || "System",
@@ -1137,7 +1118,7 @@ export async function copyCandidatesToMandateAction(candidateIds: number[], targ
     const existing = await db.select().from(mandateCandidates).where(
       and(
         eq(mandateCandidates.mandateId, targetMandateId),
-        eq(mandateCandidates.externalId, srcCand.externalId)
+        eq(mandateCandidates.candId, srcCand.candId)
       )
     );
 
@@ -1147,13 +1128,9 @@ export async function copyCandidatesToMandateAction(candidateIds: number[], targ
     }
 
     await db.insert(mandateCandidates).values({
-      externalId: srcCand.externalId,
+      candId: srcCand.candId,
       mandateId: targetMandateId,
-      name: srcCand.name,
-      company: srcCand.company,
-      role: srcCand.role,
       stage: 'universe',
-      initials: srcCand.initials,
       addedBy: addedBy,
     });
     addedCount++;

@@ -33,13 +33,15 @@ export default async function ClientMandateDetailPage({ params }: { params: Prom
   }
 
   // Enrich candidates with profile pics from the master candidates table
-  const externalIds = mandate.candidates.map(c => c.externalId).filter(Boolean);
-  const masterDataMap: Record<string, { profilePic: string | null; location: string | null; exp: number | null; designation: string | null; company: string | null }> = {};
+  const externalIds = mandate.candidates.map(c => c.candId).filter(Boolean);
+  const masterDataMap: Record<string, { name: string; initials: string; profilePic: string | null; location: string | null; exp: number | null; designation: string | null; company: string | null }> = {};
 
   if (externalIds.length > 0) {
     const masterCandidates = await db
       .select({
         id: candidates.id,
+        name: candidates.name,
+        initials: candidates.initials,
         profilePic: candidates.profilePic,
         location: candidates.location,
         exp: candidates.exp,
@@ -51,6 +53,8 @@ export default async function ClientMandateDetailPage({ params }: { params: Prom
 
     for (const mc of masterCandidates) {
       masterDataMap[mc.id] = {
+        name: mc.name || "Unknown",
+        initials: mc.initials || "UN",
         profilePic: mc.profilePic,
         location: mc.location,
         exp: mc.exp,
@@ -63,11 +67,16 @@ export default async function ClientMandateDetailPage({ params }: { params: Prom
   // Merge profile pics and master data into mandate candidates
   const enrichedCandidates = mandate.candidates.map(c => ({
     ...c,
-    profilePic: masterDataMap[c.externalId]?.profilePic || null,
-    location: masterDataMap[c.externalId]?.location || null,
-    exp: masterDataMap[c.externalId]?.exp || null,
-    masterDesignation: masterDataMap[c.externalId]?.designation || null,
-    masterCompany: masterDataMap[c.externalId]?.company || null,
+    externalId: c.candId,
+    name: masterDataMap[c.candId]?.name || "Unknown",
+    initials: masterDataMap[c.candId]?.initials || "UN",
+    company: masterDataMap[c.candId]?.company || null,
+    role: masterDataMap[c.candId]?.designation || null,
+    profilePic: masterDataMap[c.candId]?.profilePic || null,
+    location: masterDataMap[c.candId]?.location || null,
+    exp: masterDataMap[c.candId]?.exp || null,
+    masterDesignation: masterDataMap[c.candId]?.designation || null,
+    masterCompany: masterDataMap[c.candId]?.company || null,
   }));
 
   const enrichedMandate = { ...mandate, candidates: enrichedCandidates };

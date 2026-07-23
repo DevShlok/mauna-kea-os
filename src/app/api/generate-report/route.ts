@@ -28,8 +28,8 @@ export async function POST(req: Request) {
       const numId = Number(candidateId);
       if (!isNaN(numId)) {
         const mc = await db.select().from(mandateCandidates).where(eq(mandateCandidates.id, numId));
-        if (mc.length > 0 && mc[0].externalId) {
-          const flc = await db.select().from(candidates).where(eq(candidates.id, mc[0].externalId));
+        if (mc.length > 0 && mc[0].candId) {
+          const flc = await db.select().from(candidates).where(eq(candidates.id, mc[0].candId));
           if (flc.length > 0) {
             const cand = flc[0];
             if (cand.dreamRoles?.length || cand.dreamCos?.length) {
@@ -276,7 +276,7 @@ EVALUATION PIPELINE INSTRUCTIONS:
           // Update any Mandate Candidate records linked to this Float List ID
           await db.update(mandateCandidates)
             .set({ score: overallScore, hasReport: true })
-            .where(eq(mandateCandidates.externalId, candidateId));
+            .where(eq(mandateCandidates.candId, candidateId));
         } else {
           // If the candidateId represents a Mandate Candidate directly (fallback)
           const parsedStr = String(candidateId || "");
@@ -289,7 +289,7 @@ EVALUATION PIPELINE INSTRUCTIONS:
           } else {
             await db.update(mandateCandidates)
               .set({ score: overallScore, hasReport: true })
-              .where(eq(mandateCandidates.externalId, parsedStr));
+              .where(eq(mandateCandidates.candId, parsedStr));
           }
         }
       })
