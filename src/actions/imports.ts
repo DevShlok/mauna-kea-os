@@ -335,3 +335,118 @@ export async function bulkInsertFloatsAction(mappedFloats: any[]) {
   revalidatePath("/dashboard/float-list", "layout");
   return { success: true, insertedCount, failedCount: failedRows.length, failedRows };
 }
+
+// ─────────────────────────────────────────────────────────
+// CANDIDATE PIPELINE IMPORTS
+// ─────────────────────────────────────────────────────────
+
+export async function mapCandidatesAction(headers: string[], sampleData: string[][]) {
+  if (!headers || !Array.isArray(headers)) throw new Error("Missing or invalid headers");
+
+  const schema = z.object({
+    mapping: z.object({
+      name: z.string().nullable().describe("Header matching Candidate Name"),
+      email: z.string().nullable().describe("Header matching Candidate Email"),
+      mobile: z.string().nullable().describe("Header matching Candidate Mobile / Phone Number"),
+      linkedin: z.string().nullable().describe("Header matching LinkedIn URL"),
+      company: z.string().nullable().describe("Header matching Current Company"),
+      designation: z.string().nullable().describe("Header matching Current Designation / Role"),
+      location: z.string().nullable().describe("Header matching Location"),
+    })
+  });
+
+  const { object } = await generateObjectWithFallback({
+    schema,
+    prompt: `You are an expert data mapping assistant. Map the provided CSV headers to the standard system fields for Candidates.
+If a system field does not clearly match any CSV header, return null for that field.
+
+CSV Headers:
+${JSON.stringify(headers, null, 2)}
+
+Sample Data:
+${JSON.stringify(sampleData, null, 2)}`
+  });
+
+  return object;
+}
+
+export async function bulkInsertMandateCandidatesAction(mappedCandidates: any[], mandateId: number, currentUser: { name: string }) {
+  if (!mappedCandidates || !Array.isArray(mappedCandidates) || mappedCandidates.length === 0) throw new Error("No candidates provided");
+  if (!mandateId) throw new Error("Mandate ID required");
+
+  let insertedCount = 0;
+  let failedRows: string[] = [];
+  const dbSchema = await import("@/db/schema");
+  const { or, eq, and } = await import("drizzle-orm");
+
+  for (let i = 0; i < mappedCandidates.length; i++) {
+    const c = mappedCandidates[i];
+    if (!c.name) continue; // Name is required
+
+    try {
+      // 1. Try to find if candidate exists in master DB
+      // Duplicate heuristic: Email OR LinkedIn OR Phone OR (Name AND Company)
+      const orConditions = [];
+      if (c.email) orConditions.push(eq(dbSchema.candidates.email, c.email));
+      if (c.linkedin) orConditions.push(eq(dbSchema.candidates.linkedin, c.linkedin));
+      if (c.mobile) orConditions.push(eq(dbSchema.candidates.mobile, c.mobile));
+      if (c.name && c.company) orConditions.push(and(eq(dbSchema.candidates.name, c.name), eq(dbSchema.candidates.company, c.company)));
+      
+      let masterCandidateId = null;
+      let initials = c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+      
+      if (orConditions.length > 0) {
+        const existing = await db.select().from(dbSchema.candidates).where(or(...orConditions));
+        if (existing.length > 0) {
+          masterCandidateId = existing[0].id;
+          initials = existing[0].initials || initials;
+        }
+      }
+
+      // 2. Create in master DB if not found
+      if (!masterCandidateId) {
+        masterCandidateId = `CAND-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+        await db.insert(dbSchema.candidates).values({
+          id: masterCandidateId,
+          name: c.name,
+          email: c.email || null,
+          mobile: c.mobile || null,
+          linkedin: c.linkedin || null,
+          company: c.company || null,
+          designation: c.designation || null,
+          location: c.location || null,
+          initials: initials,
+          status: "Active",
+        });
+      }
+
+      // 3. Attach to Mandate Candidates (check if already attached)
+      const existingAttachment = await db.select().from(dbSchema.mandateCandidates)
+        .where(and(eq(dbSchema.mandateCandidates.mandateId, mandateId), eq(dbSchema.mandateCandidates.externalId, masterCandidateId)));
+      
+      if (existingAttachment.length === 0) {
+        await db.insert(dbSchema.mandateCandidates).values({
+          externalId: masterCandidateId,
+          mandateId: mandateId,
+          name: c.name,
+          company: c.company || null,
+          role: c.designation || null,
+          stage: "universe",
+          initials: initials,
+          addedBy: currentUser.name,
+          createdAt: new Date(),
+        });
+        insertedCount++;
+      } else {
+        // Already attached, skip
+        failedRows.push(`${c.name} (Already attached)`);
+      }
+    } catch (err) {
+      console.error("Failed to insert candidate row:", c, err);
+      failedRows.push(c.name);
+    }
+  }
+
+  revalidatePath(`/dashboard/mandates/${mandateId}`, "layout");
+  return { success: true, insertedCount, failedCount: failedRows.length, failedRows };
+}

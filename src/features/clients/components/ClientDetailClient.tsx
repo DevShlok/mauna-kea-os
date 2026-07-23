@@ -72,38 +72,38 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
         </div>
 
         {/* Client Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 mb-8 flex items-start justify-between">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
           <div className="flex gap-6 items-center">
-            <div className="w-20 h-20 bg-blue-50 text-[#133255] rounded-xl flex items-center justify-center border border-blue-100">
+            <div className="w-20 h-20 bg-blue-50 text-[#133255] rounded-xl flex items-center justify-center border border-blue-100 shrink-0">
               <Building2 className="w-10 h-10" />
             </div>
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-serif font-bold text-[#133255]">{client.name}</h1>
-                <span className={`px-2.5 py-1 text-[13px] font-bold rounded-full border ${client.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
+              <div className="flex flex-wrap items-center gap-3 mb-2">
+                <h1 className="text-3xl font-serif font-bold text-[#133255] break-words">{client.name}</h1>
+                <span className={`px-2.5 py-1 text-[13px] font-bold rounded-full border shrink-0 ${client.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
                   {client.status}
                 </span>
               </div>
-              <div className="flex items-center gap-6 text-sm text-gray-500 font-medium">
-                <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {client.accountId || "No Account ID"}</span>
-                <span className="flex items-center gap-1.5"><Building2 className="w-4 h-4" /> {client.vertical || "No Industry"}</span>
-                <span className="flex items-center gap-1.5"><User className="w-4 h-4" /> {client.owner || "No Account owner"}</span>
-                <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {new Date(client.createdAt!).toLocaleDateString()}</span>
+              <div className="flex flex-wrap items-center gap-4 xl:gap-6 text-sm text-gray-500 font-medium">
+                <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4 shrink-0" /> {client.accountId || "No Account ID"}</span>
+                <span className="flex items-center gap-1.5"><Building2 className="w-4 h-4 shrink-0" /> {client.vertical || "No Industry"}</span>
+                <span className="flex items-center gap-1.5"><User className="w-4 h-4 shrink-0" /> {client.owner || "No Account owner"}</span>
+                <span className="flex items-center gap-1.5" suppressHydrationWarning><Calendar className="w-4 h-4 shrink-0" /> {new Date(client.createdAt!).toLocaleDateString()}</span>
               </div>
             </div>
           </div>
           
-          <div className="flex flex-wrap items-center gap-2">
-            <Link href={`/dashboard/mandates/new?company=${encodeURIComponent(client.name)}`} className="h-8 px-3 bg-[#133255] text-white rounded-md text-xs font-bold hover:bg-[#133255]/90 transition-colors flex items-center gap-1.5 shadow-sm">
+          <div className="grid grid-cols-2 gap-2 shrink-0">
+            <Link href={`/dashboard/mandates/new?company=${encodeURIComponent(client.name)}`} className="h-8 px-3 bg-[#133255] text-white rounded-md text-xs font-bold hover:bg-[#133255]/90 transition-colors flex items-center justify-center gap-1.5 shadow-sm">
               <Plus className="w-3.5 h-3.5" /> Add Mandate
             </Link>
-            <button onClick={() => setIsImportModalOpen(true)} className="h-8 px-3 bg-[#D8B15B] rounded-md text-xs font-bold text-[#133255] hover:bg-[#e8c97a] transition-colors flex items-center gap-1.5 shadow-sm">
+            <button onClick={() => setIsImportModalOpen(true)} className="h-8 px-3 bg-[#D8B15B] rounded-md text-xs font-bold text-[#133255] hover:bg-[#e8c97a] transition-colors flex items-center justify-center gap-1.5 shadow-sm">
               <Upload className="w-3.5 h-3.5" /> Import Mandates
             </button>
-            <button onClick={() => setIsEditing(true)} className="h-8 px-3 border border-gray-200 rounded-md text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1.5">
+            <button onClick={() => setIsEditing(true)} className="h-8 px-3 bg-gray-100 border border-gray-200 rounded-md text-xs font-bold text-gray-700 hover:bg-gray-200 transition-colors flex items-center justify-center gap-1.5 shadow-sm">
               <Edit className="w-3.5 h-3.5" /> Edit
             </button>
-            <button onClick={handleDelete} className="h-8 px-3 border border-red-200 bg-red-50 rounded-md text-xs font-bold text-red-600 hover:bg-red-100 transition-colors flex items-center gap-1.5">
+            <button onClick={handleDelete} className="h-8 px-3 border border-red-200 bg-red-50 rounded-md text-xs font-bold text-red-600 hover:bg-red-100 transition-colors flex items-center justify-center gap-1.5">
               <Trash2 className="w-3.5 h-3.5" /> Delete
             </button>
           </div>
@@ -144,27 +144,25 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
                   <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Location</th>
                   <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Consultant</th>
                   <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Opened</th>
-                  <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {displayedMandates.map(m => (
                   <tr key={m.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-[15px] text-gray-900">{m.role}</td>
+                    <td className="px-6 py-4 font-bold text-[15px] text-gray-900">
+                      <Link href={`/dashboard/mandates/${m.id}`} className="text-[#133255] hover:underline">
+                        {m.role}
+                      </Link>
+                    </td>
                     <td className="px-6 py-4 text-[15px] text-gray-600 capitalize">{m.status}</td>
                     <td className="px-6 py-4 text-[15px] text-gray-600">{m.geography || "-"}</td>
                     <td className="px-6 py-4 text-[15px] text-gray-600">{m.consultant || "-"}</td>
                     <td className="px-6 py-4 text-[15px] text-gray-600">{m.opened || "-"}</td>
-                    <td className="px-6 py-4 text-right">
-                      <Link href={`/dashboard/mandates/${m.id}`} className="text-[14px] font-bold text-[#133255] hover:underline">
-                        View Mandate
-                      </Link>
-                    </td>
                   </tr>
                 ))}
                 {displayedMandates.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-500">
+                    <td colSpan={5} className="px-6 py-12 text-center text-sm text-gray-500">
                       No {activeTab} mandates found for {client.name}.
                     </td>
                   </tr>
@@ -181,42 +179,93 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
             <button onClick={() => setIsEditing(true)} className="text-sm font-bold text-[#1d4ed8] hover:underline">Manage Contacts</button>
           </div>
           <div className="p-0">
-            {client.contacts && client.contacts.length > 0 ? (
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/50">
-                    <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Designation</th>
-                    <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Phone</th>
-                    <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider text-right">Profile</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {client.contacts.map((c: any, idx: number) => (
-                    <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-3 font-bold text-[14px] text-gray-900">{c.name}</td>
-                      <td className="px-6 py-3 text-[14px] text-gray-600">{c.designation || "-"}</td>
-                      <td className="px-6 py-3 text-[14px] text-gray-600">{c.number || "-"}</td>
-                      <td className="px-6 py-3 text-[14px] text-gray-600">{c.email || "-"}</td>
-                      <td className="px-6 py-3 text-right">
-                        {c.linkedCandidateId ? (
-                          <Link href={`/dashboard/candidates/${c.linkedCandidateId}`} className="text-[13px] font-bold text-[#1d4ed8] hover:underline flex items-center justify-end gap-1">
-                            <User className="w-3.5 h-3.5" /> View Profile
-                          </Link>
-                        ) : (
-                          <span className="text-[13px] text-gray-400">-</span>
-                        )}
-                      </td>
+            {(() => {
+              const allContacts: any[] = [];
+              (client.contacts || []).forEach((c: any) => {
+                const associatedMandates = mandates.filter((m: any) => 
+                  (c.email && m.pocEmail?.toLowerCase() === c.email.toLowerCase()) || 
+                  (c.name && m.clientPOC?.toLowerCase() === c.name.toLowerCase())
+                ).map((m: any) => ({ id: m.id, role: m.role }));
+                
+                const uniqueMandates = associatedMandates.filter((v: any, i: number, a: any[]) => a.findIndex(t => (t.id === v.id)) === i);
+                
+                allContacts.push({
+                  ...c,
+                  mandates: uniqueMandates
+                });
+              });
+
+              mandates.forEach((m: any) => {
+                if (!m.clientPOC && !m.pocEmail) return;
+                const exists = allContacts.find(c => 
+                  (m.pocEmail && c.email?.toLowerCase() === m.pocEmail.toLowerCase()) || 
+                  (m.clientPOC && c.name?.toLowerCase() === m.clientPOC.toLowerCase())
+                );
+                
+                if (exists) {
+                  if (!exists.mandates.find((em: any) => em.id === m.id)) {
+                    exists.mandates.push({ id: m.id, role: m.role });
+                  }
+                } else {
+                  allContacts.push({
+                    name: m.clientPOC || "-",
+                    designation: "-",
+                    number: m.pocPhone || "-",
+                    email: m.pocEmail || "-",
+                    mandates: [{ id: m.id, role: m.role }]
+                  });
+                }
+              });
+
+              return allContacts.length > 0 ? (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50/50">
+                      <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Designation</th>
+                      <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Phone</th>
+                      <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Email</th>
+                      <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Mandates</th>
+                      <th className="px-6 py-3 text-[12px] font-bold text-gray-400 uppercase tracking-wider text-right">Profile</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div className="px-6 py-8 text-center text-sm text-gray-500">
-                No contacts added yet.
-              </div>
-            )}
+                  </thead>
+                  <tbody>
+                    {allContacts.map((c: any, idx: number) => (
+                      <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-3 font-bold text-[14px] text-gray-900">{c.name}</td>
+                        <td className="px-6 py-3 text-[14px] text-gray-600">{c.designation || "-"}</td>
+                        <td className="px-6 py-3 text-[14px] text-gray-600">{c.number || "-"}</td>
+                        <td className="px-6 py-3 text-[14px] text-gray-600">{c.email || "-"}</td>
+                        <td className="px-6 py-3 text-[14px] text-gray-600">
+                          {c.mandates && c.mandates.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {c.mandates.map((m: any, i: number) => (
+                                <Link href={`/dashboard/mandates/${m.id}`} key={i} className="inline-block bg-blue-50 text-blue-700 hover:bg-blue-100 px-2 py-0.5 rounded text-[11px] font-medium border border-blue-100 whitespace-nowrap transition-colors">
+                                  {m.role}
+                                </Link>
+                              ))}
+                            </div>
+                          ) : <span className="text-gray-300">-</span>}
+                        </td>
+                        <td className="px-6 py-3 text-right">
+                          {c.linkedCandidateId ? (
+                            <Link href={`/dashboard/candidates/${c.linkedCandidateId}`} className="text-[13px] font-bold text-[#1d4ed8] hover:underline flex items-center justify-end gap-1">
+                              <User className="w-3.5 h-3.5" /> View Profile
+                            </Link>
+                          ) : (
+                            <span className="text-[13px] text-gray-400">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="px-6 py-8 text-center text-sm text-gray-500">
+                  No contacts added yet.
+                </div>
+              );
+            })()}
           </div>
         </div>
 

@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/auth";
 import { db } from "@/db";
 import { clients, mandates, masterIndustries, candidates } from "@/db/schema";
-import { eq, asc, or, ilike, sql } from "drizzle-orm";
+import { eq, asc, or, ilike, sql, and } from "drizzle-orm";
 import ClientDetailClient from "@/features/clients/components/ClientDetailClient";
 import { notFound } from "next/navigation";
 
@@ -17,7 +17,12 @@ export default async function ClientDetailPage({ params  }: { params: Promise<{ 
   }
 
   // Fetch mandates for this client by matching the company name
-  const clientMandates = await db.select().from(mandates).where(eq(mandates.company, client.name));
+  const clientMandates = await db.select().from(mandates).where(
+    and(
+      eq(mandates.company, client.name),
+      eq(mandates.isDeleted, false)
+    )
+  );
   
   const hasMandateIn6Months = clientMandates.some(m => {
     if (m.isDeleted) return false;

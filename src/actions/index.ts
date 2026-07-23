@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth";
 
 import { db } from "@/db";
 import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles, clients, clientNotifications, clientRemarks, consultantNotifications, engagementListItems } from "@/db/schema";
-import { eq, sql, inArray } from "drizzle-orm";
+import { eq, sql, inArray, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import {
@@ -1084,5 +1084,55 @@ export async function bulkAddToEngagementListAction(candIds: string[], listType:
     }
   }
   revalidatePath('/dashboard/calls');
+  return { success: true, addedCount, duplicateCount };
+}
+
+export async function getActiveMandatesListAction() {
+  await requireRole(["admin", "consultant"]);
+  return await db.select({
+    id: mandates.id,
+    company: mandates.company,
+    role: mandates.role,
+  }).from(mandates).where(eq(mandates.isDeleted, false)).orderBy(desc(mandates.id));
+}
+
+export async function copyCandidatesToMandateAction(candidateIds: number[], targetMandateId: number, addedBy: string) {
+  await requireRole(["admin", "consultant"]);
+  if (!candidateIds.length || !targetMandateId) return { success: false, message: "Invalid parameters" };
+
+  let addedCount = 0;
+  let duplicateCount = 0;
+
+  for (const cid of candidateIds) {
+    const srcRows = await db.select().from(mandateCandidates).where(eq(mandateCandidates.id, cid));
+    if (srcRows.length === 0) continue;
+    const srcCand = srcRows[0];
+
+    const existing = await db.select().from(mandateCandidates).where(
+      and(
+        eq(mandateCandidates.mandateId, targetMandateId),
+        eq(mandateCandidates.externalId, srcCand.externalId)
+      )
+    );
+
+    if (existing.length > 0) {
+      duplicateCount++;
+      continue;
+    }
+
+    await db.insert(mandateCandidates).values({
+      externalId: srcCand.externalId,
+      mandateId: targetMandateId,
+      name: srcCand.name,
+      company: srcCand.company,
+      role: srcCand.role,
+      stage: 'universe',
+      initials: srcCand.initials,
+      addedBy: addedBy,
+    });
+    addedCount++;
+  }
+
+  revalidatePath("/dashboard", "layout");
   return { success: true, addedCount, duplicateCount };
 }
