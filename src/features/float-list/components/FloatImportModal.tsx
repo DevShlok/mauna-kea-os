@@ -1,6 +1,6 @@
-"use float";
+"use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { X, Upload, Loader2, ArrowRight } from "lucide-react";
 import { mapFloatsAction, checkFloatDuplicatesAction, finalizeFloatImportAction } from "@/actions/imports";
