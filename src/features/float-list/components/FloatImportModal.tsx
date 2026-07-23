@@ -136,7 +136,7 @@ export default function FloatImportModal({ isOpen, onClose }: { isOpen: boolean,
     if (!importMapping || importFileData.length === 0) return;
     setIsImporting(true);
     try {
-      const mappedfloats = importFileData.map(row => {
+      const mappedFloats = importFileData.map(row => {
         const cl: any = {};
         const mappedExcelHeaders = Object.values(importMapping);
         const metadata: any = {};
