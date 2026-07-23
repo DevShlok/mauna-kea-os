@@ -6,7 +6,7 @@ import { X, Upload, Loader2, ArrowRight } from "lucide-react";
 import { mapMandatesAction, bulkInsertMandatesAction } from "@/actions/imports";
 import { useRouter } from "next/navigation";
 
-export default function MandateImportModal({ isOpen, onClose, clientId, clientName }: { isOpen: boolean, onClose: () => void, clientId: string, clientName: string }) {
+export default function MandateImportModal({ isOpen, onClose, clientId, clientName, currentUser }: { isOpen: boolean, onClose: () => void, clientId?: string, clientName?: string, currentUser: { name: string } }) {
   const router = useRouter();
   const [isImporting, setIsImporting] = useState(false);
   const [importMapping, setImportMapping] = useState<any>(null);
@@ -123,6 +123,13 @@ export default function MandateImportModal({ isOpen, onClose, clientId, clientNa
 
   const confirmImport = async () => {
     if (!importMapping || importFileData.length === 0) return;
+    
+    // Global import validation: must map company
+    if (!clientName && !importMapping['company']) {
+      toast.error("Company column must be mapped for a global import. Please re-upload and ensure the company column is identified.");
+      return;
+    }
+
     setIsImporting(true);
     try {
       const mappedMandates = importFileData.map(row => {
@@ -147,7 +154,7 @@ export default function MandateImportModal({ isOpen, onClose, clientId, clientNa
         return m;
       });
 
-      const res = await bulkInsertMandatesAction(mappedMandates, clientId, clientName);
+      const res = await bulkInsertMandatesAction(mappedMandates, currentUser.name, clientId, clientName);
 
       if (res.failedCount && res.failedCount > 0) {
         toast.error(`Imported with errors. Failed to import ${res.failedCount} rows: ${res.failedRows?.join(', ')}`);
@@ -172,7 +179,13 @@ export default function MandateImportModal({ isOpen, onClose, clientId, clientNa
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
           <div>
             <h2 className="text-xl font-bold text-[#133255]">Import Mandates</h2>
-            <p className="text-sm text-gray-500">For client: <span className="font-semibold text-gray-700">{clientName}</span></p>
+            <p className="text-sm text-gray-500">
+              {clientName ? (
+                <>For client: <span className="font-semibold text-gray-700">{clientName}</span></>
+              ) : (
+                "Global Import - will create clients if they don't exist"
+              )}
+            </p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <X className="w-5 h-5 text-gray-500" />

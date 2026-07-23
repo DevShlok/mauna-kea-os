@@ -19,6 +19,7 @@ export default async function ClientsPage({
   const pageSize = typeof params.pageSize === "string" ? parseInt(params.pageSize, 10) : 50;
   const search = typeof params.search === "string" ? params.search : "";
   const verticalFilter = typeof params.vertical === "string" ? params.vertical : "";
+  const statusFilter = typeof params.status === "string" ? params.status : "";
   const sortKey = typeof params.sortKey === "string" ? params.sortKey : "id";
   const sortDir = params.sortDir === "asc" ? "asc" : "desc";
 
@@ -38,6 +39,7 @@ export default async function ClientsPage({
     pageSize,
     search: finalSearch,
     vertical: verticalFilter,
+    status: statusFilter,
     sortKey,
     sortDir,
   });

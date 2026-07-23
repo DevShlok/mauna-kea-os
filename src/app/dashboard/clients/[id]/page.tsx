@@ -8,7 +8,7 @@ import { notFound } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 export default async function ClientDetailPage({ params  }: { params: Promise<{ id: string }> }) {
-  await requireRole(["admin", "consultant"]);;
+  const { platformUser } = await requireRole(["admin", "consultant"]);
   const resolvedParams = await params;
   const [client] = await db.select().from(clients).where(eq(clients.id, resolvedParams.id));
   
@@ -18,6 +18,15 @@ export default async function ClientDetailPage({ params  }: { params: Promise<{ 
 
   // Fetch mandates for this client by matching the company name
   const clientMandates = await db.select().from(mandates).where(eq(mandates.company, client.name));
+  
+  const hasMandateIn6Months = clientMandates.some(m => {
+    if (m.isDeleted) return false;
+    const mandateDate = new Date(m.createdAt!);
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    return mandateDate >= sixMonthsAgo;
+  });
+  client.status = hasMandateIn6Months ? "Active" : "Inactive";
   
   const industries = await db.select().from(masterIndustries).orderBy(asc(masterIndustries.id));
 
@@ -29,5 +38,5 @@ export default async function ClientDetailPage({ params  }: { params: Promise<{ 
     )
   ).limit(50);
 
-  return <ClientDetailClient client={client} mandates={clientMandates} industries={industries} associatedCandidates={associatedCandidates} />;
+  return <ClientDetailClient client={client} mandates={clientMandates} industries={industries} associatedCandidates={associatedCandidates} currentUser={platformUser!} />;
 }

@@ -141,10 +141,11 @@ export const getClientsPaginated = cache(async (params: {
   pageSize: number;
   search?: string;
   vertical?: string;
+  status?: string;
   sortKey?: string;
   sortDir?: "asc" | "desc";
 }) => {
-  const { page, pageSize, search, vertical, sortKey, sortDir } = params;
+  const { page, pageSize, search, vertical, status, sortKey, sortDir } = params;
 
   const conditions = [eq(clients.isDeleted, false)];
 
@@ -152,6 +153,19 @@ export const getClientsPaginated = cache(async (params: {
     conditions.push(ilike(clients.name, `%${search}%`));
   }
   if (vertical) conditions.push(eq(clients.vertical, vertical));
+
+  const hasMandateIn6Months = sql`EXISTS (
+    SELECT 1 FROM ${mandates}
+    WHERE ${mandates.company} = ${clients.name}
+    AND ${mandates.createdAt} >= NOW() - INTERVAL '6 months'
+    AND ${mandates.isDeleted} = false
+  )`;
+
+  if (status === 'Active') {
+    conditions.push(hasMandateIn6Months);
+  } else if (status === 'Inactive') {
+    conditions.push(sql`NOT ${hasMandateIn6Months}`);
+  }
 
   const whereClause = and(...conditions);
 
@@ -172,7 +186,17 @@ export const getClientsPaginated = cache(async (params: {
   const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(clients).where(whereClause);
   const totalPages = Math.ceil(count / pageSize) || 1;
 
-  const rows = await db.select()
+  const statusSql = sql<string>`
+    CASE 
+      WHEN ${hasMandateIn6Months} THEN 'Active'
+      ELSE 'Inactive'
+    END
+  `.as('status');
+
+  const rows = await db.select({
+    ...getTableColumns(clients),
+    status: statusSql
+  })
     .from(clients)
     .where(whereClause)
     .orderBy(orderByClause)

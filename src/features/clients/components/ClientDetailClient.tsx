@@ -11,7 +11,7 @@ import { updateClientAction, deleteClientAction } from "@/actions";
 import dynamic from "next/dynamic";
 const MandateImportModal = dynamic(() => import("@/features/mandates/components/MandateImportModal"), { ssr: false });
 
-export default function ClientDetailClient({ client, mandates, industries = [], associatedCandidates = [] }: { client: any, mandates: any[], industries?: any[], associatedCandidates?: any[] }) {
+export default function ClientDetailClient({ client, mandates, industries = [], associatedCandidates = [], currentUser }: { client: any, mandates: any[], industries?: any[], associatedCandidates?: any[], currentUser: { name: string } }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
   const [isEditing, setIsEditing] = useState(false);
@@ -112,8 +112,9 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
         <MandateImportModal 
           isOpen={isImportModalOpen} 
           onClose={() => setIsImportModalOpen(false)} 
-          clientId={client.id}
-          clientName={client.name}
+          clientId={client.id} 
+          clientName={client.name} 
+          currentUser={currentUser}
         />
 
         {/* Mandates Tabs */}
@@ -296,14 +297,6 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Account owner</label>
                   <input value={form.owner} onChange={e => setForm({...form, owner: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Status</label>
-                  <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]">
-                    <option value="Active">Active</option>
-                    <option value="Prospect">Prospect</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
                 </div>
                 </div>
                 

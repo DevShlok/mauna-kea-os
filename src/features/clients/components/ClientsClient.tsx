@@ -166,7 +166,6 @@ export default function ClientsClient({
           <option value="All status">All statuses</option>
           <option value="Active">Active</option>
           <option value="Inactive">Inactive</option>
-          <option value="Lead">Lead</option>
         </select>
 
           <button 
@@ -243,19 +242,12 @@ export default function ClientsClient({
                       </div>
                     </td>
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                    <select
-                      value={c.status || "Active"}
-                      onChange={(e) => handleStatusChange(c.id, e.target.value)}
-                      className={`px-2 py-1 text-[13px] font-bold rounded outline-none border cursor-pointer ${
-                        c.status === 'Active' ? 'bg-green-100 text-green-700 border-green-200' :
-                        c.status === 'Prospect' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                        'bg-yellow-100 text-yellow-700 border-yellow-200'
-                      }`}
-                    >
-                      <option value="Active" className="bg-white text-gray-900">Active</option>
-                      <option value="Prospect" className="bg-white text-gray-900">Prospect</option>
-                      <option value="Inactive" className="bg-white text-gray-900">Inactive</option>
-                    </select>
+                    <span className={`px-2.5 py-1 text-[12px] font-bold rounded-full border ${
+                      c.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' :
+                      'bg-gray-50 text-gray-600 border-gray-200'
+                    }`}>
+                      {c.status || "Inactive"}
+                    </span>
                   </td>
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-2">

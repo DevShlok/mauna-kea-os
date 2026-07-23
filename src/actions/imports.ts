@@ -136,7 +136,7 @@ ${JSON.stringify(sampleData, null, 2)}`
   return object;
 }
 
-export async function bulkInsertMandatesAction(mappedMandates: any[], clientId: string, clientName: string) {
+export async function bulkInsertMandatesAction(mappedMandates: any[], currentUserName: string, clientId?: string, clientName?: string) {
   if (!mappedMandates || !Array.isArray(mappedMandates) || mappedMandates.length === 0) {
     throw new Error("No mandates provided");
   }
@@ -148,9 +148,31 @@ export async function bulkInsertMandatesAction(mappedMandates: any[], clientId: 
     const m = mappedMandates[i];
     
     try {
-      // We enforce that they belong to the specified client
-      const companyName = clientName || m.company || "Unknown Company";
+      // We enforce that they belong to the specified client, or the one from the file
+      let companyName = clientName || m.company;
+      if (!companyName) {
+        throw new Error("Company name missing for row");
+      }
       
+      if (!clientId) {
+        // Look for the client by name (case-insensitive)
+        const [existing] = await db.select().from(clients).where(sql`LOWER(${clients.name}) = LOWER(${companyName})`).limit(1);
+        if (!existing) {
+          // Auto-create client
+          const newClientId = ("CLI-" + Date.now().toString() + "-" + i).substring(0, 50);
+          await db.insert(clients).values({
+            id: newClientId,
+            name: companyName,
+            vertical: "",
+            owner: currentUserName || "System",
+            status: "Active",
+            metadata: {},
+          });
+        } else {
+          companyName = existing.name; // normalize to DB name
+        }
+      }
+
       if (!m.role) continue;
 
       await db.insert(mandates).values({

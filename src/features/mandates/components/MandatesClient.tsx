@@ -4,6 +4,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { updateMandateFieldAction, deleteMultipleMandatesAction } from "@/actions";
 import toast from "react-hot-toast";
+import dynamic from "next/dynamic";
+const MandateImportModal = dynamic(() => import("./MandateImportModal"), { ssr: false });
+import { Upload } from "lucide-react";
 
 import { STAGE_OPTIONS, INTERNAL_OPTIONS, formatMandateCtc } from "@/lib/helpers";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -19,13 +22,15 @@ export default function MandatesClient({
   metadata,
   uniqueCompanies,
   uniqueRoles,
-  uniqueSectors 
+  uniqueSectors,
+  currentUser
 }: { 
   initialMandates: Mandate[];
   metadata: { totalCount: number; totalPages: number; currentPage: number };
   uniqueCompanies: string[];
   uniqueRoles: string[];
   uniqueSectors: string[];
+  currentUser: { name: string };
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -38,6 +43,7 @@ export default function MandatesClient({
   }, [initialMandates]);
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [companyFilter, setCompanyFilter] = useState(searchParams.get("company") || "");
   const [roleFilter, setRoleFilter] = useState(searchParams.get("role") || "");
   const [sectorFilter, setSectorFilter] = useState(searchParams.get("sector") || "");
@@ -149,10 +155,24 @@ export default function MandatesClient({
           <div className="text-[14px] text-gray-500 mb-1">Home / Mandates</div>
           <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">All Mandates</h1>
         </div>
-        <Link href="/dashboard/mandates/new" className="px-5 py-2.5 bg-[#D8B15B] text-[#133255] rounded-lg text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors inline-block mb-1">
-          + Add New Mandate
-        </Link>
+        <div className="flex items-center gap-2 mb-1">
+          <button 
+            onClick={() => setIsImportModalOpen(true)}
+            className="h-10 px-4 rounded-lg bg-white border border-gray-200 text-gray-700 text-[13px] font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Import
+          </button>
+          <Link href="/dashboard/mandates/new" className="px-5 py-2.5 h-10 flex items-center bg-[#D8B15B] text-[#133255] rounded-lg text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors">
+            + Add New Mandate
+          </Link>
+        </div>
       </div>
+      <MandateImportModal 
+        isOpen={isImportModalOpen} 
+        onClose={() => setIsImportModalOpen(false)} 
+        currentUser={currentUser}
+      />
       <div className="flex flex-wrap gap-3 mb-6 bg-white p-3 border border-gray-200 rounded-xl shadow-sm">
         <input 
           type="text" 
@@ -253,7 +273,11 @@ export default function MandatesClient({
                   <td className="px-4 py-3 text-gray-500 text-xs">{formatMandateCtc(m.ctc)}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{m.exp}</td>
                   <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">{m.sectors.map(s => <span key={s} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">{s}</span>)}</div>
+                    <div className="flex flex-wrap gap-1">
+                      {Array.from(new Set(m.sectors)).map((s, i) => (
+                        <span key={`${s}-${i}`} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">{s}</span>
+                      ))}
+                    </div>
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                     <select value={m.status || ""} onChange={e => handleStatusChange(m.id, "status", e.target.value)} className="border border-gray-200 rounded px-2 py-1 text-xs bg-white outline-none cursor-pointer">

@@ -35,15 +35,15 @@ export default async function MandatesPage({
   // Pre-fetch unique values for dropdowns using highly optimized DISTINCT database queries.
   // This prevents memory leaks and OOM crashes by offloading aggregation to Postgres.
   const companyRows = await db.selectDistinct({ company: mandates.company }).from(mandates).where(eq(mandates.isDeleted, false));
-  const uniqueCompanies = companyRows.map(r => r.company).filter(Boolean).sort();
+  const uniqueCompanies = Array.from(new Set(companyRows.map(r => r.company?.trim()).filter(Boolean))).sort();
 
   const roleRows = await db.selectDistinct({ role: mandates.role }).from(mandates).where(eq(mandates.isDeleted, false));
-  const uniqueRoles = roleRows.map(r => r.role).filter(Boolean).sort();
+  const uniqueRoles = Array.from(new Set(roleRows.map(r => r.role?.trim()).filter(Boolean))).sort();
 
   // Extract unique sectors from JSON array directly in SQL
   const sectorsResult = await db.execute(sql`SELECT DISTINCT json_array_elements_text(sectors) as sector FROM mandates WHERE is_deleted = false AND sectors IS NOT NULL AND json_typeof(sectors) = 'array'`);
   const sectorRows = Array.isArray(sectorsResult) ? sectorsResult : ((sectorsResult as any).rows || []);
-  const uniqueSectors = sectorRows.map((r: any) => r.sector as string).filter(Boolean).sort();
+  const uniqueSectors = Array.from(new Set(sectorRows.map((r: any) => (r.sector as string)?.trim()).filter(Boolean))).sort();
 
   const { data, metadata } = await getMandatesPaginated({
     page,
@@ -65,6 +65,7 @@ export default async function MandatesPage({
       uniqueCompanies={uniqueCompanies}
       uniqueRoles={uniqueRoles}
       uniqueSectors={uniqueSectors}
+      currentUser={pUser!}
     />
   );
 }
