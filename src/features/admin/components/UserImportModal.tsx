@@ -386,7 +386,7 @@ export default function UserImportModal({ isOpen, onClose }: { isOpen: boolean, 
               <div>
                 <h4 className="text-[11px] uppercase tracking-wider font-bold text-[#8a93a3] mb-3">Incoming Record (Import)</h4>
                 <div className="bg-[#f8fafc] border border-[#e4e8f0] rounded-[12px] overflow-hidden">
-                  {Object.entries(duplicateQueue[currentDuplicateIndex].incomingRecord).map(([k, v], i) => v && (
+                  {Object.entries(duplicateQueue[currentDuplicateIndex].incomingRecord).map(([k, v], i) => v ? (
                     <div key={k} className={`px-4 py-3 text-[14px] flex justify-between items-center ${i !== 0 ? 'border-t border-[#e4e8f0]' : ''}`}>
                       <div className="flex items-center gap-3">
                         <input 
@@ -399,7 +399,7 @@ export default function UserImportModal({ isOpen, onClose }: { isOpen: boolean, 
                       </div>
                       <span className="text-gray-900 font-semibold max-w-[150px] truncate" title={String(v)}>{String(v)}</span>
                     </div>
-                  ))}
+                  ) : null)}
                 </div>
               </div>
 
