@@ -241,12 +241,12 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
               <div className="col-span-1 md:col-span-1">
                 <label className="block text-xs font-bold text-gray-600 mb-1.5">Consultant in Charge <span className="text-red-500">*</span></label>
                 <select required value={form.consultant} onChange={(e) => setForm({...form, consultant: e.target.value})} className={inp + " bg-white"}>
-                  <option value={currentUser}>{currentUser}</option>
-                  {consultants.filter(c => c !== currentUser).map(c => (
-                    <option key={c} value={c}>{c}</option>
+                  <option key="current-user" value={currentUser}>{currentUser}</option>
+                  {consultants.filter(c => c !== currentUser).map((c, i) => (
+                    <option key={`consultant-${i}`} value={c}>{c}</option>
                   ))}
                   {/* Fallback if user doesn't exist in consultants array */}
-                  {!consultants.includes(currentUser) && currentUser !== "System" && <option value="System">System</option>}
+                  {!consultants.includes(currentUser) && currentUser !== "System" && <option key="system-fallback" value="System">System</option>}
                 </select>
               </div>
             )}
@@ -319,7 +319,7 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
                 <select value={form.frameworkId} onChange={(e) => setForm({...form, frameworkId: e.target.value})} className={inp + " bg-white"}>
                   <option value="">None (Optional)</option>
                   {frameworks.map(f => (
-                    <option key={f.id} value={f.id}>{f.name}</option>
+                    <option key={`fw-${f.id}`} value={f.id}>{f.name}</option>
                   ))}
                 </select>
               </div>

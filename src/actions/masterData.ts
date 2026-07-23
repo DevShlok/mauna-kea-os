@@ -146,9 +146,6 @@ export async function bulkInsertMasterLocationsAction(mappedData: any[]) {
   await requireRole(["admin", "consultant"]);
   if (!mappedData || mappedData.length === 0) throw new Error("No data provided");
   
-  // const fs = require('fs');
-  // fs.appendFileSync('import-debug.log', "Bulk Insert Locations Received Rows: " + mappedData.length + "\\n");
-  
   let inserted = 0;
   for (const row of mappedData) {
     if (!row.rawEntry || !row.standardizedLocation) continue;
@@ -161,11 +158,148 @@ export async function bulkInsertMasterLocationsAction(mappedData: any[]) {
       inserted++;
     } catch (e: any) { 
       console.error("Bulk Insert Error:", e.message); 
-      // fs.appendFileSync('import-debug.log', "Insert Error for row " + JSON.stringify(row) + ": " + e.message + "\n");
     }
   }
   revalidatePath("/dashboard", "layout");
   return { success: true, count: inserted };
+}
+
+// ─────────────────────────────────────────────────────────
+// MASTER DATA DUPLICATE RESOLUTION
+// ─────────────────────────────────────────────────────────
+
+export async function checkMasterDataDuplicatesAction(
+  mappedData: any[],
+  type: "clients" | "industries" | "locations"
+) {
+  await requireRole(["admin", "consultant"]);
+  const { eq } = await import("drizzle-orm");
+  const duplicates = [];
+  const newRecords = [];
+
+  for (const item of mappedData) {
+    let existingRecord = null;
+
+    if (type === "clients") {
+      if (!item.companyName) continue;
+      // Exact string match on companyName
+      const existing = await db.select().from(masterClients).where(eq(masterClients.companyName, item.companyName));
+      if (existing.length > 0) existingRecord = existing[0];
+    } else if (type === "industries") {
+      if (!item.sectorName) continue;
+      const existing = await db.select().from(masterIndustries).where(eq(masterIndustries.sectorName, item.sectorName));
+      if (existing.length > 0) existingRecord = existing[0];
+    } else if (type === "locations") {
+      if (!item.rawEntry || !item.standardizedLocation) continue;
+      const existing = await db.select().from(masterLocations).where(eq(masterLocations.rawEntry, item.rawEntry));
+      if (existing.length > 0) existingRecord = existing[0];
+    }
+
+    if (existingRecord) {
+      duplicates.push({
+        incomingRecord: item,
+        existingRecord,
+        reason: `A record with the same name already exists in master data.`
+      });
+    } else {
+      newRecords.push(item);
+    }
+  }
+
+  return { duplicates, newRecords };
+}
+
+export async function finalizeMasterDataImportAction(
+  newRecords: any[],
+  resolvedUpdates: any[],
+  type: "clients" | "industries" | "locations"
+) {
+  await requireRole(["admin", "consultant"]);
+  const { eq } = await import("drizzle-orm");
+  let insertedCount = 0;
+  let failedRows: string[] = [];
+
+  // 1. Process Resolved Updates (Overwrite existing)
+  for (const update of resolvedUpdates) {
+    try {
+      if (update.action === 'replace' || update.action === 'update') {
+        const payload = update.data;
+
+        if (type === "clients") {
+          const updates: any = {};
+          if (payload.industry !== undefined) updates.industry = payload.industry;
+          if (payload.accountOwner !== undefined) updates.accountOwner = payload.accountOwner;
+          if (payload.hrLeaderName !== undefined) updates.hrLeaderName = payload.hrLeaderName;
+          if (payload.phone !== undefined) updates.phone = payload.phone;
+          if (payload.designation !== undefined) updates.designation = payload.designation;
+          if (payload.linkedInUrl !== undefined) updates.linkedInUrl = payload.linkedInUrl;
+          if (payload.sourceUrl !== undefined) updates.sourceUrl = payload.sourceUrl;
+          if (payload.sourceType !== undefined) updates.sourceType = payload.sourceType;
+          if (payload.confidence !== undefined) updates.confidence = payload.confidence;
+          if (payload.notes !== undefined) updates.notes = payload.notes;
+          if (Object.keys(updates).length > 0) {
+            await db.update(masterClients).set(updates).where(eq(masterClients.id, update.id));
+          }
+        } else if (type === "industries") {
+          const updates: any = {};
+          if (payload.includesConsolidatedFrom !== undefined) updates.includesConsolidatedFrom = payload.includesConsolidatedFrom;
+          if (Object.keys(updates).length > 0) {
+            await db.update(masterIndustries).set(updates).where(eq(masterIndustries.id, update.id));
+          }
+        } else if (type === "locations") {
+          const updates: any = {};
+          if (payload.standardizedLocation !== undefined) updates.standardizedLocation = payload.standardizedLocation;
+          if (payload.mappingAction !== undefined) updates.mappingAction = payload.mappingAction;
+          if (Object.keys(updates).length > 0) {
+            await db.update(masterLocations).set(updates).where(eq(masterLocations.id, update.id));
+          }
+        }
+
+        insertedCount++;
+      }
+    } catch (err) {
+      failedRows.push(update.existing?.companyName || update.existing?.sectorName || update.existing?.rawEntry || 'Unknown');
+    }
+  }
+
+  // 2. Insert new records
+  for (const item of newRecords) {
+    try {
+      if (type === "clients") {
+        await db.insert(masterClients).values({
+          companyName: item.companyName,
+          industry: item.industry || "",
+          accountOwner: item.accountOwner || "",
+          hrLeaderName: item.hrLeaderName || "",
+          phone: item.phone || "",
+          designation: item.designation || "",
+          linkedInUrl: item.linkedInUrl || "",
+          sourceUrl: item.sourceUrl || "",
+          sourceType: item.sourceType || "",
+          confidence: item.confidence || "",
+          notes: item.notes || "",
+        });
+      } else if (type === "industries") {
+        await db.insert(masterIndustries).values({
+          sectorName: item.sectorName,
+          includesConsolidatedFrom: item.includesConsolidatedFrom || "",
+        });
+      } else if (type === "locations") {
+        await db.insert(masterLocations).values({
+          rawEntry: item.rawEntry,
+          standardizedLocation: item.standardizedLocation,
+          mappingAction: item.mappingAction || "",
+        });
+      }
+      insertedCount++;
+    } catch (err: any) {
+      console.error("Insert error:", err.message);
+      failedRows.push(item.companyName || item.sectorName || item.rawEntry || 'Unknown');
+    }
+  }
+
+  revalidatePath("/dashboard", "layout");
+  return { success: true, insertedCount, failedCount: failedRows.length, failedRows };
 }
 
 // ─────────────────────────────────────────────────────────

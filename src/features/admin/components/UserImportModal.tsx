@@ -1,9 +1,9 @@
-"use user";
+"use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { X, Upload, Loader2, ArrowRight } from "lucide-react";
-import { mapUsersAction, bulkInsertUsersAction } from "@/actions/imports";
+import { mapUsersAction, checkUserDuplicatesAction, finalizeUserImportAction } from "@/actions/imports";
 import { useRouter } from "next/navigation";
 
 export default function UserImportModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
@@ -12,6 +12,15 @@ export default function UserImportModal({ isOpen, onClose }: { isOpen: boolean, 
   const [importMapping, setImportMapping] = useState<any>(null);
   const [importFileData, setImportFileData] = useState<any[]>([]);
   const [importHeaders, setImportHeaders] = useState<string[]>([]);
+  const importLockRef = useRef(false);
+
+  // Duplicate Resolution State
+  const [isResolvingDuplicates, setIsResolvingDuplicates] = useState(false);
+  const [duplicateQueue, setDuplicateQueue] = useState<any[]>([]);
+  const [newUsersQueue, setNewUsersQueue] = useState<any[]>([]);
+  const [currentDuplicateIndex, setCurrentDuplicateIndex] = useState(0);
+  const [resolvedUpdates, setResolvedUpdates] = useState<any[]>([]);
+  const [fieldSelections, setFieldSelections] = useState<Record<string, boolean>>({});
 
   if (!isOpen) return null;
 
@@ -31,8 +40,6 @@ export default function UserImportModal({ isOpen, onClose }: { isOpen: boolean, 
       const isCsv = file.name.toLowerCase().endsWith('.csv');
       
       if (isCsv) {
-        // Fallback for CSV if needed, but exceljs can also read CSV, however for simplicity we just load it via text here.
-        // Actually exceljs workbook.csv.load works well too.
         await workbook.csv.read(new (window as any).ReadableStream({
             start(controller: any) {
                 controller.enqueue(new Uint8Array(arrayBuffer));
@@ -47,7 +54,7 @@ export default function UserImportModal({ isOpen, onClose }: { isOpen: boolean, 
       if (!worksheet) throw new Error("No worksheet found");
 
       const rows: any[] = [];
-      worksheet.eachRow((row, rowNumber) => {
+      worksheet.eachRow((row) => {
         const rowData: any[] = [];
         row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           let val: any = cell.value;
@@ -124,55 +131,141 @@ export default function UserImportModal({ isOpen, onClose }: { isOpen: boolean, 
   };
 
   const confirmImport = async () => {
+    if (importLockRef.current) return;
     if (!importMapping || importFileData.length === 0) return;
+    importLockRef.current = true;
     setIsImporting(true);
-    try {
-      const mappedusers = importFileData.map(row => {
-        const cl: any = {};
-        const mappedExcelHeaders = Object.values(importMapping);
-        const metadata: any = {};
 
+    // Email is required
+    if (!importMapping['email']) {
+      toast.error("Email column must be mapped.");
+      setIsImporting(false);
+      importLockRef.current = false;
+      return;
+    }
+
+    try {
+      const mappedUsers = importFileData.map(row => {
+        const u: any = {};
         Object.keys(importMapping).forEach(dbKey => {
           const excelHeader = importMapping[dbKey];
           if (excelHeader && row[excelHeader] !== undefined) {
-            cl[dbKey] = row[excelHeader];
+            u[dbKey] = row[excelHeader];
           }
         });
-
-        Object.keys(row).forEach(header => {
-          if (!mappedExcelHeaders.includes(header) && row[header] !== undefined && row[header] !== "") {
-            metadata[header] = row[header];
-          }
-        });
-
-        cl.metadata = metadata;
-        return cl;
+        return u;
       });
 
-      const res = await bulkInsertUsersAction(mappedusers);
+      const { duplicates, newUsers } = await checkUserDuplicatesAction(mappedUsers);
 
-      if (res.failedCount && res.failedCount > 0) {
-        toast.error(`Imported with errors. Failed to import ${res.failedCount} rows: ${res.failedRows?.join(', ')}`);
+      if (duplicates && duplicates.length > 0) {
+        setDuplicateQueue(duplicates);
+        setNewUsersQueue(newUsers || []);
+        setCurrentDuplicateIndex(0);
+        setResolvedUpdates([]);
+        setIsResolvingDuplicates(true);
+
+        const initSelections: any = {};
+        const first = duplicates[0].incomingRecord;
+        Object.keys(first).forEach(k => {
+          if (first[k]) initSelections[k] = true;
+        });
+        setFieldSelections(initSelections);
+        setImportMapping(null);
       } else {
-        toast.success("Successfully imported users!");
+        const res = await finalizeUserImportAction(newUsers || [], []);
+        if (!res.success) throw new Error("Failed to process import");
+        if (res.failedCount && res.failedCount > 0) {
+          toast.error(`Imported with errors. Failed: ${res.failedRows?.join(', ')}`);
+        } else {
+          toast.success("Successfully imported users!");
+        }
+        setImportMapping(null);
+        setImportFileData([]);
+        setDuplicateQueue([]);
+        onClose();
+        router.refresh();
       }
-      setImportMapping(null);
-      setImportFileData([]);
-      onClose();
-      router.refresh();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Error importing users.");
+      toast.error(err.message || "Error importing users");
     } finally {
       setIsImporting(false);
+      importLockRef.current = false;
+    }
+  };
+
+  const handleNextDuplicate = async (action: 'replace' | 'keep' | 'update' | 'new') => {
+    const currentDuplicate = duplicateQueue[currentDuplicateIndex];
+    const updatedList = [...resolvedUpdates];
+    const newList = [...newUsersQueue];
+
+    if (action === 'replace') {
+      updatedList.push({
+        action: 'replace',
+        id: currentDuplicate.existingRecord.id,
+        existing: currentDuplicate.existingRecord,
+        data: currentDuplicate.incomingRecord
+      });
+    } else if (action === 'update') {
+      const partialUpdate: any = {};
+      Object.keys(fieldSelections).forEach(k => {
+        if (fieldSelections[k]) partialUpdate[k] = currentDuplicate.incomingRecord[k];
+      });
+      updatedList.push({
+        action: 'update',
+        id: currentDuplicate.existingRecord.id,
+        existing: currentDuplicate.existingRecord,
+        data: partialUpdate
+      });
+    } else if (action === 'new') {
+      // Import as a new user even if email exists (rare, but supported)
+      newList.push(currentDuplicate.incomingRecord);
+    }
+    // if 'keep', do nothing
+
+    setResolvedUpdates(updatedList);
+    setNewUsersQueue(newList);
+
+    if (currentDuplicateIndex < duplicateQueue.length - 1) {
+      const nextIdx = currentDuplicateIndex + 1;
+      setCurrentDuplicateIndex(nextIdx);
+      const nextInc = duplicateQueue[nextIdx].incomingRecord;
+      const nextSelections: any = {};
+      Object.keys(nextInc).forEach(k => {
+        if (nextInc[k]) nextSelections[k] = true;
+      });
+      setFieldSelections(nextSelections);
+    } else {
+      setIsResolvingDuplicates(false);
+      setIsImporting(true);
+      try {
+        const res = await finalizeUserImportAction(newList, updatedList);
+        if (!res.success) throw new Error("Failed to finalize import");
+        if (res.failedCount && res.failedCount > 0) {
+          toast.error(`Imported with errors. Failed: ${res.failedRows?.join(', ')}`);
+        } else {
+          toast.success("Successfully imported users!");
+        }
+        setImportMapping(null);
+        setImportFileData([]);
+        setDuplicateQueue([]);
+        onClose();
+        router.refresh();
+      } catch (err) {
+        toast.error("Error finalizing import");
+      } finally {
+        setIsImporting(false);
+      }
     }
   };
 
   return (
+    <>
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
-          <h2 className="text-xl font-bold text-[#133255]">Import users</h2>
+          <h2 className="text-xl font-bold text-[#133255]">Import Users</h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -262,7 +355,7 @@ export default function UserImportModal({ isOpen, onClose }: { isOpen: boolean, 
                   className="px-5 py-2.5 rounded-md bg-[#D8B15B] text-[#133255] font-bold hover:bg-[#e8c97a] transition-colors text-sm flex items-center gap-2"
                 >
                   {isImporting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Import {importFileData.length} users
+                  Import {importFileData.length} Users
                 </button>
               </div>
             </div>
@@ -270,5 +363,87 @@ export default function UserImportModal({ isOpen, onClose }: { isOpen: boolean, 
         </div>
       </div>
     </div>
+
+    {isResolvingDuplicates && duplicateQueue.length > 0 && (
+      <div className="fixed inset-0 bg-[#0d162e]/50 backdrop-blur-sm z-50 flex items-center justify-center p-5">
+        <div className="bg-white rounded-[20px] shadow-[0_30px_80px_rgba(0,0,0,0.3)] w-full max-w-[800px] flex flex-col max-h-[90vh]">
+          <div className="px-6 py-5 border-b border-[#e4e8f0] flex justify-between items-center bg-[#f8fafc] rounded-t-[20px]">
+            <div>
+              <h3 className="font-serif text-[21px] font-bold text-gray-900">Resolve Duplicate Users</h3>
+              <p className="text-sm text-[#5a6679] mt-1">
+                User {currentDuplicateIndex + 1} of {duplicateQueue.length}
+              </p>
+            </div>
+            <button onClick={() => { setIsResolvingDuplicates(false); setIsImporting(false); onClose(); }} className="text-[#8a93a3] text-xl hover:text-gray-900">✕</button>
+          </div>
+          
+          <div className="p-6 overflow-y-auto flex-1">
+            <div className="bg-[#fff9e6] border border-[#fdebb4] text-[#b7791f] px-4 py-3 rounded-[10px] mb-6 text-[14px]">
+              <strong>Conflict:</strong> {duplicateQueue[currentDuplicateIndex].reason}
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <h4 className="text-[11px] uppercase tracking-wider font-bold text-[#8a93a3] mb-3">Incoming Record (Import)</h4>
+                <div className="bg-[#f8fafc] border border-[#e4e8f0] rounded-[12px] overflow-hidden">
+                  {Object.entries(duplicateQueue[currentDuplicateIndex].incomingRecord).map(([k, v], i) => v && (
+                    <div key={k} className={`px-4 py-3 text-[14px] flex justify-between items-center ${i !== 0 ? 'border-t border-[#e4e8f0]' : ''}`}>
+                      <div className="flex items-center gap-3">
+                        <input 
+                          type="checkbox" 
+                          checked={!!fieldSelections[k]}
+                          onChange={(e) => setFieldSelections({...fieldSelections, [k]: e.target.checked})}
+                          className="w-4 h-4 text-[#133255] border-gray-300 rounded focus:ring-[#133255]"
+                        />
+                        <span className="font-medium text-[#5a6679] capitalize">{k.replace(/([A-Z])/g, ' $1')}</span>
+                      </div>
+                      <span className="text-gray-900 font-semibold max-w-[150px] truncate" title={String(v)}>{String(v)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-[11px] uppercase tracking-wider font-bold text-[#8a93a3] mb-3">Existing Record (Database)</h4>
+                <div className="bg-white border border-[#e4e8f0] rounded-[12px] overflow-hidden">
+                  {Object.entries(duplicateQueue[currentDuplicateIndex].existingRecord).map(([k, v], i) => (
+                    k !== 'id' && k !== 'createdAt' && k !== 'updatedAt' && v ? (
+                      <div key={k} className={`px-4 py-3 text-[14px] flex justify-between items-center ${i !== 0 ? 'border-t border-[#e4e8f0]' : ''}`}>
+                        <span className="font-medium text-[#5a6679] capitalize">{k.replace(/([A-Z])/g, ' $1')}</span>
+                        <span className="text-gray-900 max-w-[150px] truncate" title={String(v)}>{String(v)}</span>
+                      </div>
+                    ) : null
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-6 py-5 border-t border-[#e4e8f0] bg-[#f8fafc] flex justify-between items-center rounded-b-[20px]">
+            <button 
+              onClick={() => handleNextDuplicate('keep')}
+              className="text-[#5a6679] font-medium text-[14px] hover:text-gray-900"
+            >
+              Skip (Keep Existing)
+            </button>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => handleNextDuplicate('replace')}
+                className="px-4 py-2 bg-[#fdf2d6] text-[#b7791f] border border-[#f0dcae] rounded-[9px] text-[14px] font-bold hover:bg-[#faeac1]"
+              >
+                Overwrite Existing
+              </button>
+              <button 
+                onClick={() => handleNextDuplicate('update')}
+                className="px-4 py-2 bg-[#133255] text-white rounded-[9px] text-[14px] font-bold hover:bg-[#1a4473]"
+              >
+                Merge Selected Fields
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

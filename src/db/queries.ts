@@ -10,7 +10,8 @@ import {
 // ─── PLATFORM USERS ──────────────────────────────────────
 export const getConsultants = cache(async () => {
   const users = await db.select({ name: platformUsers.name }).from(platformUsers).where(inArray(platformUsers.role, ["admin", "consultant"]));
-  return users.map(u => u.name).filter(Boolean) as string[];
+  const uniqueNames = Array.from(new Set(users.map(u => u.name).filter(Boolean)));
+  return uniqueNames as string[];
 });
 
 // ─── MANDATES ────────────────────────────────────────────

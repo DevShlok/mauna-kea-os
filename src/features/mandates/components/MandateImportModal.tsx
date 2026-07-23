@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { X, Upload, Loader2, ArrowRight } from "lucide-react";
-import { mapMandatesAction, bulkInsertMandatesAction } from "@/actions/imports";
+import { mapMandatesAction, checkMandateDuplicatesAction, finalizeMandatesImportAction } from "@/actions/imports";
 import { useRouter } from "next/navigation";
 
 export default function MandateImportModal({ isOpen, onClose, clientId, clientName, currentUser }: { isOpen: boolean, onClose: () => void, clientId?: string, clientName?: string, currentUser: { name: string } }) {
@@ -13,7 +13,15 @@ export default function MandateImportModal({ isOpen, onClose, clientId, clientNa
   const [importFileData, setImportFileData] = useState<any[]>([]);
   const [importHeaders, setImportHeaders] = useState<string[]>([]);
 
-  if (!isOpen) return null;
+  const importLockRef = useRef(false);
+  const [duplicateQueue, setDuplicateQueue] = useState<any[]>([]);
+  const [newMandatesQueue, setNewMandatesQueue] = useState<any[]>([]);
+  const [resolvedUpdates, setResolvedUpdates] = useState<any[]>([]);
+  const [currentDuplicateIndex, setCurrentDuplicateIndex] = useState(0);
+  const [isResolvingDuplicates, setIsResolvingDuplicates] = useState(false);
+  const [fieldSelections, setFieldSelections] = useState<Record<string, boolean>>({});
+
+  if (!isOpen && !isResolvingDuplicates) return null;
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -122,20 +130,20 @@ export default function MandateImportModal({ isOpen, onClose, clientId, clientNa
   };
 
   const confirmImport = async () => {
+    if (importLockRef.current) return;
     if (!importMapping || importFileData.length === 0) return;
     
-    // Global import validation: must map company
     if (!clientName && !importMapping['company']) {
       toast.error("Company column must be mapped for a global import. Please re-upload and ensure the company column is identified.");
       return;
     }
 
+    importLockRef.current = true;
     setIsImporting(true);
     try {
       const mappedMandates = importFileData.map(row => {
-        const m: any = {};
+        const m: any = { metadata: {} };
         const mappedExcelHeaders = Object.values(importMapping);
-        const metadata: any = {};
 
         Object.keys(importMapping).forEach(dbKey => {
           const excelHeader = importMapping[dbKey];
@@ -146,34 +154,118 @@ export default function MandateImportModal({ isOpen, onClose, clientId, clientNa
 
         Object.keys(row).forEach(header => {
           if (!mappedExcelHeaders.includes(header) && row[header] !== undefined && row[header] !== "") {
-            metadata[header] = row[header];
+            m.metadata[header] = row[header];
           }
         });
-
-        m.metadata = metadata;
         return m;
       });
 
-      const res = await bulkInsertMandatesAction(mappedMandates, currentUser.name, clientId, clientName);
+      const { duplicates, newMandates } = await checkMandateDuplicatesAction(mappedMandates, clientId, clientName);
 
-      if (res.failedCount && res.failedCount > 0) {
-        toast.error(`Imported with errors. Failed to import ${res.failedCount} rows: ${res.failedRows?.join(', ')}`);
+      if (duplicates && duplicates.length > 0) {
+        setDuplicateQueue(duplicates);
+        setNewMandatesQueue(newMandates || []);
+        setCurrentDuplicateIndex(0);
+        setResolvedUpdates([]);
+        setIsResolvingDuplicates(true);
+        
+        const initSelections: any = {};
+        const first = duplicates[0].incomingRecord;
+        Object.keys(first).forEach(k => {
+          if (first[k]) initSelections[k] = true;
+        });
+        setFieldSelections(initSelections);
+        setImportMapping(null);
       } else {
-        toast.success("Successfully imported mandates!");
+        const res = await finalizeMandatesImportAction(newMandates || [], [], currentUser.name, clientId, clientName);
+        if (!res.success) throw new Error("Failed to process import");
+        if (res.failedCount && res.failedCount > 0) {
+          toast.error(`Imported with errors. Failed to import ${res.failedCount} rows: ${res.failedRows?.join(', ')}`);
+        } else {
+          toast.success("Successfully imported mandates!");
+        }
+        setImportMapping(null);
+        setImportFileData([]);
+        onClose();
+        router.refresh();
       }
-      setImportMapping(null);
-      setImportFileData([]);
-      onClose();
-      router.refresh();
     } catch (err) {
       console.error(err);
       toast.error("Error importing mandates.");
     } finally {
       setIsImporting(false);
+      importLockRef.current = false;
+    }
+  };
+
+  const handleNextDuplicate = async (action: 'replace' | 'keep' | 'update' | 'new') => {
+    const currentDuplicate = duplicateQueue[currentDuplicateIndex];
+    const updatedList = [...resolvedUpdates];
+    const newList = [...newMandatesQueue];
+
+    if (action === 'replace') {
+      const fullUpdate: any = {};
+      Object.keys(currentDuplicate.incomingRecord).forEach(k => fullUpdate[k] = true);
+      updatedList.push({
+        action: 'replace',
+        id: currentDuplicate.existingRecord.id,
+        existing: currentDuplicate.existingRecord,
+        data: currentDuplicate.incomingRecord
+      });
+    } else if (action === 'update') {
+      const partialUpdate: any = {};
+      Object.keys(fieldSelections).forEach(k => {
+        if (fieldSelections[k]) partialUpdate[k] = currentDuplicate.incomingRecord[k];
+      });
+      updatedList.push({
+        action: 'update',
+        id: currentDuplicate.existingRecord.id,
+        existing: currentDuplicate.existingRecord,
+        data: partialUpdate
+      });
+    } else if (action === 'new') {
+      newList.push(currentDuplicate.incomingRecord);
+    }
+
+    setResolvedUpdates(updatedList);
+    setNewMandatesQueue(newList);
+
+    if (currentDuplicateIndex < duplicateQueue.length - 1) {
+      const nextIdx = currentDuplicateIndex + 1;
+      setCurrentDuplicateIndex(nextIdx);
+      const nextInc = duplicateQueue[nextIdx].incomingRecord;
+      const nextSelections: any = {};
+      Object.keys(nextInc).forEach(k => {
+        if (nextInc[k]) nextSelections[k] = true;
+      });
+      setFieldSelections(nextSelections);
+    } else {
+      setIsResolvingDuplicates(false);
+      setIsImporting(true);
+      try {
+        const res = await finalizeMandatesImportAction(newList, updatedList, currentUser.name, clientId, clientName);
+        if (!res.success) throw new Error("Failed to finalize import");
+        if (res.failedCount && res.failedCount > 0) {
+          toast.error(`Imported with errors. Failed to import ${res.failedCount} rows: ${res.failedRows?.join(', ')}`);
+        } else {
+          toast.success("Successfully imported mandates!");
+        }
+        setImportMapping(null);
+        setImportFileData([]);
+        setDuplicateQueue([]);
+        onClose();
+        router.refresh();
+      } catch (err) {
+        toast.error("Error finalizing import");
+      } finally {
+        setIsImporting(false);
+      }
     }
   };
 
   return (
+    <>
+    {!isResolvingDuplicates && (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
@@ -284,5 +376,101 @@ export default function MandateImportModal({ isOpen, onClose, clientId, clientNa
         </div>
       </div>
     </div>
+    )}
+    
+    {isResolvingDuplicates && duplicateQueue.length > 0 && (
+      <div className="fixed inset-0 bg-[#0d162e]/50 backdrop-blur-sm z-50 flex items-center justify-center p-5">
+        <div className="bg-white rounded-[20px] shadow-[0_30px_80px_rgba(0,0,0,0.3)] w-full max-w-[800px] flex flex-col max-h-[90vh]">
+          <div className="px-6 py-5 border-b border-[#e4e8f0] flex justify-between items-center bg-[#f8fafc] rounded-t-[20px]">
+            <div>
+              <h3 className="font-serif text-[21px] font-bold text-gray-900">Resolve Duplicates</h3>
+              <p className="text-sm text-[#5a6679] mt-1">
+                Mandate {currentDuplicateIndex + 1} of {duplicateQueue.length}
+              </p>
+            </div>
+            <button onClick={() => { setIsResolvingDuplicates(false); setIsImporting(false); onClose(); }} className="text-[#8a93a3] text-xl hover:text-gray-900">✕</button>
+          </div>
+          
+          <div className="p-6 overflow-y-auto flex-1">
+            <div className="bg-[#fff9e6] border border-[#fdebb4] text-[#b7791f] px-4 py-3 rounded-[10px] mb-6 text-[14px]">
+              <b>Duplicate Match:</b> {duplicateQueue[currentDuplicateIndex]?.reason}
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              {/* Existing */}
+              <div className="border border-[#e4e8f0] rounded-[12px] p-5">
+                <div className="text-[12px] font-bold text-[#8a93a3] uppercase tracking-wider mb-4 border-b border-[#e4e8f0] pb-2">Existing Mandate (Database)</div>
+                <div className="space-y-4">
+                  {Object.entries(duplicateQueue[currentDuplicateIndex]?.existingRecord || {}).map(([k, v]) => {
+                    if (!v || typeof v === 'object' || k === 'id' || k === 'createdAt' || k === 'updatedAt') return null;
+                    return (
+                      <div key={k}>
+                        <div className="text-[12px] text-[#8a93a3] capitalize">{k.replace(/([A-Z])/g, ' $1').trim()}</div>
+                        <div className="font-semibold text-gray-900 text-[14px]">{String(v)}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Incoming */}
+              <div className="border border-[#1d4ed8] rounded-[12px] p-5 bg-[#f8faff]">
+                <div className="text-[12px] font-bold text-[#1d4ed8] uppercase tracking-wider mb-4 border-b border-[#cfd6e4] pb-2 flex justify-between">
+                  <span>Incoming Mandate (Excel)</span>
+                  <span>Select to merge</span>
+                </div>
+                <div className="space-y-4">
+                  {Object.entries(duplicateQueue[currentDuplicateIndex]?.incomingRecord || {}).map(([k, v]) => {
+                    if (!v || typeof v === 'object') return null;
+                    return (
+                      <label key={k} className="flex items-start justify-between cursor-pointer group">
+                        <div>
+                          <div className="text-[12px] text-[#5a6679] capitalize group-hover:text-[#1d4ed8] transition-colors">{k.replace(/([A-Z])/g, ' $1').trim()}</div>
+                          <div className="font-semibold text-[#133255] text-[14px]">{String(v)}</div>
+                        </div>
+                        <input 
+                          type="checkbox" 
+                          checked={fieldSelections[k] || false}
+                          onChange={(e) => setFieldSelections({...fieldSelections, [k]: e.target.checked})}
+                          className="w-4 h-4 mt-1 accent-[#1d4ed8]" 
+                        />
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-6 py-4 border-t border-[#e4e8f0] bg-gray-50 flex flex-wrap gap-3 justify-end rounded-b-[20px]">
+            <button 
+              onClick={() => handleNextDuplicate('keep')}
+              className="px-4 py-2 bg-white border border-[#e4e8f0] text-gray-900 rounded-[9px] text-[14px] font-bold hover:bg-gray-50"
+            >
+              Skip (Keep Existing)
+            </button>
+            <button 
+              onClick={() => handleNextDuplicate('new')}
+              className="px-4 py-2 bg-white border border-[#e4e8f0] text-gray-900 rounded-[9px] text-[14px] font-bold hover:bg-gray-50"
+            >
+              Import as New
+            </button>
+            <button 
+              onClick={() => handleNextDuplicate('replace')}
+              className="px-4 py-2 bg-[#fdf2d6] text-[#b7791f] border border-[#f0dcae] rounded-[9px] text-[14px] font-bold hover:bg-[#faeac1]"
+            >
+              Overwrite Existing
+            </button>
+            <button 
+              onClick={() => handleNextDuplicate('update')}
+              className="px-4 py-2 bg-[#133255] text-white rounded-[9px] text-[14px] font-bold hover:bg-[#1a4473]"
+            >
+              Merge Selected Fields
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
