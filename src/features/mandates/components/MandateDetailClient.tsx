@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { STAGE_OPTIONS, stageLabel, formatMandateCtc } from "@/lib/helpers";
-import { editMandateAction, updateMandateSearchNotesAction, updateMandateCandidateStageAction, deleteMandateAction, sendCandidatesToClientAction, saveCandidateAssessmentAction } from "@/actions";
+import { editMandateAction, updateMandateSearchNotesAction, updateMandateCandidateStageAction, deleteMandateAction, sendCandidatesToClientAction, saveCandidateAssessmentAction, bulkMovePipelineCandidatesAction, bulkDeletePipelineCandidatesAction } from "@/actions";
 import MandateKanbanBoard from "./MandateKanbanBoard";
 import { Search, ArrowUpDown, Upload } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -46,7 +46,10 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<number>>(new Set());
   const [isSendingToClient, setIsSendingToClient] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
-  const [workflowTab, setWorkflowTab] = useState<"universe" | "mapping" | "calllist" | "shortlist">("universe");
+  const [workflowTab, setWorkflowTab] = useState<"universe" | "mapping" | "longlist" | "calllist" | "shortlist" | "interview" | "offer-sent" | "offer-accepted" | "closed">("universe");
+  const [isBulkMoving, setIsBulkMoving] = useState(false);
+  const [bulkTargetStage, setBulkTargetStage] = useState("");
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState<number | null>(null);
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -184,11 +187,58 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
   }
 
   async function updateCandidateStage(mandateId: number, candId: number, stage: string) {
+    // Optimistic update
     setMandate((prev: any) => ({
       ...prev,
       candidates: prev.candidates.map((c: any) => c.id === candId ? { ...c, stage } : c)
     }));
     await updateMandateCandidateStageAction(candId, stage, mandateId);
+  }
+
+  async function handleBulkMove() {
+    if (!bulkTargetStage || selectedCandidateIds.size === 0) return;
+    const ids = Array.from(selectedCandidateIds);
+    setIsBulkMoving(true);
+    // Optimistic update
+    setMandate((prev: any) => ({
+      ...prev,
+      candidates: prev.candidates.map((c: any) => ids.includes(c.id) ? { ...c, stage: bulkTargetStage } : c)
+    }));
+    setSelectedCandidateIds(new Set());
+    setBulkTargetStage("");
+    await bulkMovePipelineCandidatesAction(ids, bulkTargetStage, mandate.id);
+    setIsBulkMoving(false);
+    router.refresh();
+  }
+
+  async function handleBulkDelete() {
+    if (selectedCandidateIds.size === 0) return;
+    const ids = Array.from(selectedCandidateIds);
+    const confirmed = window.confirm(`Remove ${ids.length} candidate(s) from this pipeline? They will NOT be deleted from the system.`);
+    if (!confirmed) return;
+    setIsBulkDeleting(true);
+    // Optimistic remove
+    setMandate((prev: any) => ({
+      ...prev,
+      candidates: prev.candidates.filter((c: any) => !ids.includes(c.id))
+    }));
+    setSelectedCandidateIds(new Set());
+    await bulkDeletePipelineCandidatesAction(ids, mandate.id);
+    setIsBulkDeleting(false);
+    router.refresh();
+  }
+
+  async function handleSingleDelete(candId: number) {
+    const confirmed = window.confirm("Remove this candidate from the pipeline?");
+    if (!confirmed) return;
+    // Optimistic remove
+    setMandate((prev: any) => ({
+      ...prev,
+      candidates: prev.candidates.filter((c: any) => c.id !== candId)
+    }));
+    setSelectedCandidateIds(prev => { const n = new Set(prev); n.delete(candId); return n; });
+    await bulkDeletePipelineCandidatesAction([candId], mandate.id);
+    router.refresh();
   }
 
   // Replaced manual add with Float List redirect
@@ -469,17 +519,88 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
           onSuccess={() => setSelectedCandidateIds(new Set())}
         />
         
-          <div className="flex border-b border-gray-100 bg-gray-50/50">
-            {["universe", "mapping", "calllist", "shortlist"].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setWorkflowTab(tab as any)}
-                className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors ${workflowTab === tab ? "border-[#133255] text-[#133255] bg-white" : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"}`}
-              >
-                {tab === "calllist" ? "Call List" : tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
+          {/* Stage Tabs — all 9 stages */}
+          <div className="flex border-b border-gray-100 bg-gray-50/50 overflow-x-auto scrollbar-none">
+            {[
+              { value: "universe", label: "Universe" },
+              { value: "mapping", label: "Mapping" },
+              { value: "longlist", label: "Long List" },
+              { value: "calllist", label: "Call List" },
+              { value: "shortlist", label: "Shortlist" },
+              { value: "interview", label: "Interview" },
+              { value: "offer-sent", label: "Offer Sent" },
+              { value: "offer-accepted", label: "Offer Accepted" },
+              { value: "closed", label: "Closed" },
+            ].map(({ value, label }) => {
+              const count = mandate.candidates.filter((c: any) => c.stage === value || (!c.stage && value === "universe")).length;
+              return (
+                <button
+                  key={value}
+                  onClick={() => { setWorkflowTab(value as any); setSelectedCandidateIds(new Set()); }}
+                  className={`px-5 py-3 text-xs font-bold border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                    workflowTab === value
+                      ? "border-[#133255] text-[#133255] bg-white"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  {label}
+                  {count > 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                      workflowTab === value ? "bg-[#133255] text-white" : "bg-gray-200 text-gray-600"
+                    }`}>{count}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
+
+          {/* Bulk action bar — visible when candidates are selected */}
+          {selectedCandidateIds.size > 0 && viewMode === "list" && (
+            <div className="flex items-center gap-3 px-4 py-2.5 bg-[#f0f4ff] border-b border-[#d0d9f0]">
+              <span className="text-xs font-bold text-[#133255]">{selectedCandidateIds.size} selected</span>
+              <div className="flex items-center gap-2 ml-2">
+                <select
+                  value={bulkTargetStage}
+                  onChange={e => setBulkTargetStage(e.target.value)}
+                  className="h-8 px-2 border border-gray-300 rounded text-xs bg-white outline-none focus:border-[#133255]"
+                >
+                  <option value="">Move to stage…</option>
+                  {[
+                    { value: "universe", label: "Universe" },
+                    { value: "mapping", label: "Mapping" },
+                    { value: "longlist", label: "Long List" },
+                    { value: "calllist", label: "Call List" },
+                    { value: "shortlist", label: "Shortlist" },
+                    { value: "interview", label: "Interview" },
+                    { value: "offer-sent", label: "Offer Sent" },
+                    { value: "offer-accepted", label: "Offer Accepted" },
+                    { value: "closed", label: "Closed" },
+                  ].map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+                <button
+                  onClick={handleBulkMove}
+                  disabled={!bulkTargetStage || isBulkMoving}
+                  className="h-8 px-3 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#1a4473] disabled:opacity-40 transition-colors"
+                >
+                  {isBulkMoving ? "Moving…" : "Move"}
+                </button>
+              </div>
+              <div className="w-px h-5 bg-gray-300 mx-1" />
+              <button
+                onClick={handleBulkDelete}
+                disabled={isBulkDeleting}
+                className="h-8 px-3 bg-red-50 text-red-600 border border-red-200 rounded text-xs font-bold hover:bg-red-100 disabled:opacity-40 transition-colors"
+              >
+                {isBulkDeleting ? "Removing…" : `Remove ${selectedCandidateIds.size} from Pipeline`}
+              </button>
+              <button
+                onClick={() => setSelectedCandidateIds(new Set())}
+                className="ml-auto text-xs text-gray-400 hover:text-gray-600"
+              >
+                Clear selection
+              </button>
+            </div>
+          )}
 
         {viewMode === "board" ? (
           <div className="p-4 bg-gray-50/50">
@@ -528,10 +649,10 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
             }
 
             const renderRow = (c: any) => (
-              <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
+              <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50 group">
                 <td className="px-4 py-3">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]"
                     checked={selectedCandidateIds.has(c.id)}
                     onChange={(e) => {
@@ -562,7 +683,11 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <select value={c.stage || ""} onChange={(e) => updateCandidateStage(mandate.id, c.id, e.target.value)} className="border border-gray-200 rounded px-2 py-1 text-xs bg-white outline-none cursor-pointer">
+                  <select
+                    value={c.stage || ""}
+                    onChange={(e) => updateCandidateStage(mandate.id, c.id, e.target.value)}
+                    className="border border-gray-200 rounded px-2 py-1 text-xs bg-white outline-none cursor-pointer"
+                  >
                     {STAGE_OPTIONS.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
                   </select>
                 </td>
@@ -583,6 +708,16 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                     </button>
                   </td>
                 )}
+                <td className="px-3 py-3">
+                  {/* Per-row delete — shows on hover */}
+                  <button
+                    onClick={() => handleSingleDelete(c.id)}
+                    title="Remove from pipeline"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded hover:bg-red-50 text-gray-300 hover:text-red-500"
+                  >
+                    ×
+                  </button>
+                </td>
               </tr>
             );
 
@@ -591,10 +726,10 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                 <thead>
                   <tr className="bg-gray-50 border-b-2 border-gray-200">
                     <th className="px-4 py-3 text-left w-10">
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]"
-                        checked={filteredCands.length > 0 && selectedCandidateIds.size === filteredCands.length}
+                        checked={filteredCands.length > 0 && filteredCands.every((c: any) => selectedCandidateIds.has(c.id))}
                         onChange={(e) => {
                           if (e.target.checked) setSelectedCandidateIds(new Set(filteredCands.map((c: any) => c.id)));
                           else setSelectedCandidateIds(new Set());
@@ -604,9 +739,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                     <th onClick={() => handleSort('name')} className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
                       Candidate <ArrowUpDown className="w-3 h-3 inline-block ml-1" />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">
-                      Sourced By
-                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Sourced By</th>
                     <th onClick={() => handleSort('stage')} className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
                       Stage <ArrowUpDown className="w-3 h-3 inline-block ml-1" />
                     </th>
@@ -615,6 +748,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Report</th>
                     {workflowTab === "shortlist" && <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Assessment</th>}
+                    <th className="px-3 py-3 w-8" />
                   </tr>
                 </thead>
                 <tbody>

@@ -452,6 +452,32 @@ export async function updateMandateCandidateStageAction(candId: number, stage: s
   revalidatePath(`/dashboard/mandates/${mandateId}`);
 }
 
+/**
+ * Bulk-updates the pipeline stage for multiple mandate candidates.
+ * @param candIds - Array of mandate_candidates.id values
+ * @param stage - Target stage string
+ * @param mandateId - Parent mandate ID (used for revalidation)
+ */
+export async function bulkMovePipelineCandidatesAction(candIds: number[], stage: string, mandateId: number) {
+  await requireRole(["admin", "consultant"]);
+  if (!candIds.length) return;
+  await db.update(mandateCandidates).set({ stage }).where(inArray(mandateCandidates.id, candIds));
+  revalidatePath(`/dashboard/mandates/${mandateId}`);
+}
+
+/**
+ * Removes multiple candidates from the pipeline (deletes mandate_candidates rows).
+ * Does NOT delete the candidate from the global candidates table.
+ * @param candIds - Array of mandate_candidates.id values
+ * @param mandateId - Parent mandate ID (used for revalidation)
+ */
+export async function bulkDeletePipelineCandidatesAction(candIds: number[], mandateId: number) {
+  await requireRole(["admin", "consultant"]);
+  if (!candIds.length) return;
+  await db.delete(mandateCandidates).where(inArray(mandateCandidates.id, candIds));
+  revalidatePath(`/dashboard/mandates/${mandateId}`);
+}
+
 export async function updateMandateSearchNotesAction(id: number, text: string) {
   await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
