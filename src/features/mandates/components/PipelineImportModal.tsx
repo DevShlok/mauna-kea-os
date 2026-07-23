@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { X, Upload, Loader2, ArrowRight } from "lucide-react";
 import { mapCandidatesAction, bulkInsertMandateCandidatesAction } from "@/actions/imports";
@@ -12,6 +12,7 @@ export default function PipelineImportModal({ isOpen, onClose, mandateId, mandat
   const [importMapping, setImportMapping] = useState<any>(null);
   const [importFileData, setImportFileData] = useState<any[]>([]);
   const [importHeaders, setImportHeaders] = useState<string[]>([]);
+  const importLockRef = useRef(false);
 
   if (!isOpen) return null;
 
@@ -93,21 +94,28 @@ export default function PipelineImportModal({ isOpen, onClose, mandateId, mandat
         throw new Error("Failed to map candidates: AI returned empty response.");
       }
       
+      const expectedKeys = [
+        "name", "email", "mobile", "linkedin", "company", "designation", "location", "qualification"
+      ];
+      
       const sanitizedMapping: any = {};
+      expectedKeys.forEach(k => sanitizedMapping[k] = null);
       const validHeaders = headers.filter((h: string) => h);
       
-      Object.keys(data.mapping).forEach(key => {
+      Object.keys(data.mapping || {}).forEach(key => {
+        if (!expectedKeys.includes(key)) return;
+        
         const aiValue = (data.mapping as any)[key];
-        if (!aiValue) {
-          sanitizedMapping[key] = null;
-          return;
-        }
+        if (!aiValue) return;
         
         let matchedHeader = validHeaders.find((h: string) => h === aiValue);
         if (!matchedHeader) {
           matchedHeader = validHeaders.find((h: string) => h.toLowerCase() === String(aiValue).toLowerCase());
         }
-        sanitizedMapping[key] = matchedHeader || null;
+        
+        if (matchedHeader) {
+          sanitizedMapping[key] = matchedHeader;
+        }
       });
       
       setImportMapping(sanitizedMapping);
@@ -122,15 +130,19 @@ export default function PipelineImportModal({ isOpen, onClose, mandateId, mandat
   };
 
   const confirmImport = async () => {
+    if (importLockRef.current) return;
     if (!importMapping || importFileData.length === 0) return;
+    importLockRef.current = true;
+    setIsImporting(true);
     
     // Validation: must map name
     if (!importMapping['name']) {
       toast.error("Candidate Name column must be mapped.");
+      setIsImporting(false);
+      importLockRef.current = false;
       return;
     }
 
-    setIsImporting(true);
     try {
       const mappedCandidates = importFileData.map(row => {
         const c: any = {};
@@ -154,11 +166,12 @@ export default function PipelineImportModal({ isOpen, onClose, mandateId, mandat
       setImportFileData([]);
       onClose();
       router.refresh();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Error importing candidates.");
+      toast.error(err.message || "Error importing candidates");
     } finally {
       setIsImporting(false);
+      importLockRef.current = false;
     }
   };
 

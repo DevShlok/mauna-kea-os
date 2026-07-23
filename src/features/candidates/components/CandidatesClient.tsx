@@ -51,6 +51,7 @@ export default function CandidatesClient({
   const [importMapping, setImportMapping] = useState<any>(null);
   const [importFileData, setImportFileData] = useState<any[]>([]);
   const [importHeaders, setImportHeaders] = useState<string[]>([]);
+  const importLockRef = useRef(false);
   // Duplicate Resolution States
   const [isResolvingDuplicates, setIsResolvingDuplicates] = useState(false);
   const [duplicateQueue, setDuplicateQueue] = useState<any[]>([]);
@@ -179,16 +180,23 @@ export default function CandidatesClient({
         throw new Error("Failed to map candidates: AI returned empty response.");
       }
       
-      // AI sometimes returns slightly different casing. Match it exactly to the real headers.
+      // Define all possible fields we expect to map, so they ALWAYS appear on the LHS
+      const expectedKeys = [
+        "name", "designation", "company", "phone", "email", "linkedin",
+        "previousCompany", "location", "industry", "ctc", "totalExperience",
+        "qualification", "yearQualified"
+      ];
+      
       const sanitizedMapping: any = {};
+      expectedKeys.forEach(k => sanitizedMapping[k] = null);
+      
       const validHeaders = headers.filter((h: string) => h);
       
-      Object.keys(data.mapping).forEach(key => {
+      Object.keys(data.mapping || {}).forEach(key => {
+        if (!expectedKeys.includes(key)) return; // Ignore hallucinated keys
+        
         const aiValue = (data.mapping as any)[key];
-        if (!aiValue) {
-          sanitizedMapping[key] = null;
-          return;
-        }
+        if (!aiValue) return;
         
         // Find exact match first
         let matchedHeader = validHeaders.find((h: string) => h === aiValue);
@@ -198,7 +206,9 @@ export default function CandidatesClient({
           matchedHeader = validHeaders.find((h: string) => h.toLowerCase() === String(aiValue).toLowerCase());
         }
         
-        sanitizedMapping[key] = matchedHeader || null;
+        if (matchedHeader) {
+          sanitizedMapping[key] = matchedHeader;
+        }
       });
       
       setImportMapping(sanitizedMapping);
@@ -212,8 +222,10 @@ export default function CandidatesClient({
     }
   };
 
-    const confirmImport = async () => {
+  const confirmImport = async () => {
+    if (importLockRef.current) return;
     if (!importMapping || importFileData.length === 0) return;
+    importLockRef.current = true;
     setIsImporting(true);
     try {
       const mappedCandidates = importFileData.map(row => {
@@ -252,6 +264,7 @@ export default function CandidatesClient({
           if (first[k]) initSelections[k] = true;
         });
         setFieldSelections(initSelections);
+        setImportMapping(null); // Close the mapping modal to show duplicate queue
       } else {
         // No duplicates, proceed directly
         const res = await finalizeCandidatesImportAction(newCandidates || [], []);
@@ -270,6 +283,7 @@ export default function CandidatesClient({
       toast.error("Error importing candidates.");
     } finally {
       setIsImporting(false);
+      importLockRef.current = false;
     }
   };
 
@@ -1208,6 +1222,100 @@ export default function CandidatesClient({
         </div>
       )}
 
+      {/* Duplicate Resolution Modal */}
+      {isResolvingDuplicates && duplicateQueue.length > 0 && (
+        <div className="fixed inset-0 bg-[#0d162e]/50 backdrop-blur-sm z-50 flex items-center justify-center p-5">
+          <div className="bg-white rounded-[20px] shadow-[0_30px_80px_rgba(0,0,0,0.3)] w-full max-w-[800px] flex flex-col max-h-[90vh]">
+            <div className="px-6 py-5 border-b border-[#e4e8f0] flex justify-between items-center bg-[#f8fafc] rounded-t-[20px]">
+              <div>
+                <h3 className="font-serif text-[21px] font-bold text-gray-900">Resolve Duplicates</h3>
+                <p className="text-sm text-[#5a6679] mt-1">
+                  Candidate {currentDuplicateIndex + 1} of {duplicateQueue.length}
+                </p>
+              </div>
+              <button onClick={() => { setIsResolvingDuplicates(false); setIsImporting(false); }} className="text-[#8a93a3] text-xl hover:text-gray-900">✕</button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="bg-[#fff9e6] border border-[#fdebb4] text-[#b7791f] px-4 py-3 rounded-[10px] mb-6 text-[14px]">
+                <b>Duplicate Match:</b> {duplicateQueue[currentDuplicateIndex]?.reason}
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                {/* Existing Candidate */}
+                <div className="border border-[#e4e8f0] rounded-[12px] p-5">
+                  <div className="text-[12px] font-bold text-[#8a93a3] uppercase tracking-wider mb-4 border-b border-[#e4e8f0] pb-2">Existing Candidate (Database)</div>
+                  <div className="space-y-4">
+                    {Object.entries(duplicateQueue[currentDuplicateIndex]?.existingCandidate || {}).map(([k, v]) => {
+                      if (!v || typeof v === 'object' || k === 'id' || k === 'createdAt' || k === 'updatedAt') return null;
+                      return (
+                        <div key={k}>
+                          <div className="text-[12px] text-[#8a93a3] capitalize">{k.replace(/([A-Z])/g, ' $1').trim()}</div>
+                          <div className="font-semibold text-gray-900 text-[14px]">{String(v)}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Incoming Candidate */}
+                <div className="border border-[#1d4ed8] rounded-[12px] p-5 bg-[#f8faff]">
+                  <div className="text-[12px] font-bold text-[#1d4ed8] uppercase tracking-wider mb-4 border-b border-[#cfd6e4] pb-2 flex justify-between">
+                    <span>Incoming Candidate (Excel)</span>
+                    <span>Select to merge</span>
+                  </div>
+                  <div className="space-y-4">
+                    {Object.entries(duplicateQueue[currentDuplicateIndex]?.incomingCandidate || {}).map(([k, v]) => {
+                      if (!v || typeof v === 'object') return null;
+                      return (
+                        <label key={k} className="flex items-start justify-between cursor-pointer group">
+                          <div>
+                            <div className="text-[12px] text-[#5a6679] capitalize group-hover:text-[#1d4ed8] transition-colors">{k.replace(/([A-Z])/g, ' $1').trim()}</div>
+                            <div className="font-semibold text-[#133255] text-[14px]">{String(v)}</div>
+                          </div>
+                          <input 
+                            type="checkbox" 
+                            checked={fieldSelections[k] || false}
+                            onChange={(e) => setFieldSelections({...fieldSelections, [k]: e.target.checked})}
+                            className="w-4 h-4 mt-1 accent-[#1d4ed8]" 
+                          />
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-[#e4e8f0] bg-gray-50 flex flex-wrap gap-3 justify-end rounded-b-[20px]">
+              <button 
+                onClick={() => handleNextDuplicate('keep')}
+                className="px-4 py-2 bg-white border border-[#e4e8f0] text-gray-900 rounded-[9px] text-[14px] font-bold hover:bg-gray-50"
+              >
+                Skip (Keep Existing)
+              </button>
+              <button 
+                onClick={() => handleNextDuplicate('new')}
+                className="px-4 py-2 bg-white border border-[#e4e8f0] text-gray-900 rounded-[9px] text-[14px] font-bold hover:bg-gray-50"
+              >
+                Import as New
+              </button>
+              <button 
+                onClick={() => handleNextDuplicate('replace')}
+                className="px-4 py-2 bg-[#fdf2d6] text-[#b7791f] border border-[#f0dcae] rounded-[9px] text-[14px] font-bold hover:bg-[#faeac1]"
+              >
+                Overwrite Existing
+              </button>
+              <button 
+                onClick={() => handleNextDuplicate('update')}
+                className="px-4 py-2 bg-[#133255] text-white rounded-[9px] text-[14px] font-bold hover:bg-[#1a4473]"
+              >
+                Merge Selected Fields
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

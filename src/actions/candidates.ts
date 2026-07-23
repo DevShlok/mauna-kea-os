@@ -21,11 +21,13 @@ export async function mapCandidatesAction(headers: string[], sampleData: string[
       company: z.string().nullable().describe("Header matching Current Company"),
       phone: z.string().nullable().describe("Header matching Phone/Mobile number"),
       email: z.string().nullable().describe("Header matching Email address"),
+      linkedin: z.string().nullable().describe("Header matching LinkedIn URL"),
       previousCompany: z.string().nullable().describe("Header matching Previous Company"),
       location: z.string().nullable().describe("Header matching Location"),
       industry: z.string().nullable().describe("Header matching Industry"),
       ctc: z.string().nullable().describe("Header matching CTC or Salary"),
       totalExperience: z.string().nullable().describe("Header matching Total Experience in Years"),
+      qualification: z.string().nullable().describe("Header matching Qualification or Degree"),
       yearQualified: z.string().nullable().describe("Header matching Year Qualified or Graduation Year"),
     })
   });
@@ -147,7 +149,8 @@ export async function finalizeCandidatesImportAction(newCandidates: any[], updat
         ctc: safeParseInt(c.ctc),
         notes: c.industry ? `Industry: ${c.industry}` : "",
         expTags: c.previousCompany ? [c.previousCompany] : [],
-        qual: c.yearQualified ? [{ degree: "Qualification", year: c.yearQualified }] : [],
+        qual: c.qualification ? [{ degree: c.qualification }] : (c.yearQualified ? [{ degree: "Qualification", year: c.yearQualified }] : []),
+        linkedin: c.linkedin || null,
         initials,
         status: "Active",
         metadata: c.metadata || {},
@@ -195,6 +198,8 @@ export async function finalizeCandidatesImportAction(newCandidates: any[], updat
       if (fieldsToUpdate.designation && c.designation) updatePayload.designation = c.designation;
       if (fieldsToUpdate.totalExperience && c.totalExperience) updatePayload.exp = safeParseInt(c.totalExperience);
       if (fieldsToUpdate.ctc && c.ctc) updatePayload.ctc = safeParseInt(c.ctc);
+      if (fieldsToUpdate.qualification && c.qualification) updatePayload.qual = [{ degree: c.qualification }];
+      if (fieldsToUpdate.linkedin && c.linkedin) updatePayload.linkedin = c.linkedin;
 
       // Merge notes/tags if selected
       if (fieldsToUpdate.industry && c.industry) updatePayload.notes = c.industry;

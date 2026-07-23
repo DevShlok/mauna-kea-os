@@ -352,6 +352,7 @@ export async function mapCandidatesAction(headers: string[], sampleData: string[
       company: z.string().nullable().describe("Header matching Current Company"),
       designation: z.string().nullable().describe("Header matching Current Designation / Role"),
       location: z.string().nullable().describe("Header matching Location"),
+      qualification: z.string().nullable().describe("Header matching Qualification or Education"),
     })
   });
 
@@ -400,6 +401,18 @@ export async function bulkInsertMandateCandidatesAction(mappedCandidates: any[],
         if (existing.length > 0) {
           masterCandidateId = existing[0].id;
           initials = existing[0].initials || initials;
+          
+          // Update missing fields on existing candidate
+          const updates: any = {};
+          if (c.linkedin && !existing[0].linkedin) updates.linkedin = c.linkedin;
+          if (c.qualification && (!existing[0].qual || existing[0].qual.length === 0)) updates.qual = [c.qualification];
+          if (c.mobile && !existing[0].mobile) updates.mobile = c.mobile;
+          if (c.location && !existing[0].location) updates.location = c.location;
+          if (c.email && !existing[0].email) updates.email = c.email;
+          
+          if (Object.keys(updates).length > 0) {
+            await db.update(dbSchema.candidates).set(updates).where(eq(dbSchema.candidates.id, masterCandidateId));
+          }
         }
       }
 
@@ -415,6 +428,7 @@ export async function bulkInsertMandateCandidatesAction(mappedCandidates: any[],
           company: c.company || null,
           designation: c.designation || null,
           location: c.location || null,
+          qual: c.qualification ? [c.qualification] : [],
           initials: initials,
           status: "Active",
         });

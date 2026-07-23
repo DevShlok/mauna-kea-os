@@ -29,7 +29,7 @@ export default async function MandatesPage({
   if (email && pUser?.role === "client" && pUser.linkedClientId) {
     const [client] = await db.select().from(clients).where(eq(clients.id, pUser.linkedClientId));
     if (client) forcedCompany = client.name;
-    else return <MandatesClient initialMandates={[]} metadata={{ totalCount: 0, totalPages: 1, currentPage: 1 }} uniqueCompanies={[]} uniqueRoles={[]} uniqueSectors={[]} />;
+    else return <MandatesClient initialMandates={[]} metadata={{ totalCount: 0, totalPages: 1, currentPage: 1 }} uniqueCompanies={[]} uniqueRoles={[]} uniqueSectors={[]} currentUser={pUser!} />;
   }
 
   // Pre-fetch unique values for dropdowns using highly optimized DISTINCT database queries.
@@ -43,7 +43,7 @@ export default async function MandatesPage({
   // Extract unique sectors from JSON array directly in SQL
   const sectorsResult = await db.execute(sql`SELECT DISTINCT json_array_elements_text(sectors) as sector FROM mandates WHERE is_deleted = false AND sectors IS NOT NULL AND json_typeof(sectors) = 'array'`);
   const sectorRows = Array.isArray(sectorsResult) ? sectorsResult : ((sectorsResult as any).rows || []);
-  const uniqueSectors = Array.from(new Set(sectorRows.map((r: any) => (r.sector as string)?.trim()).filter(Boolean))).sort();
+  const uniqueSectors = Array.from(new Set(sectorRows.map((r: any) => (r.sector as string)?.trim()).filter(Boolean))).sort() as string[];
 
   const { data, metadata } = await getMandatesPaginated({
     page,
