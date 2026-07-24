@@ -250,12 +250,47 @@ export const getClientsPaginated = cache(async (params: {
 export const getMandateById = cache(async (id: number) => {
   const mandate = await db.query.mandates.findFirst({
     where: and(eq(mandates.id, id), eq(mandates.isDeleted, false)),
-    with: { candidates: true },
+    with: { 
+      candidates: {
+        columns: {
+          id: true,
+          stage: true,
+          score: true,
+          hasReport: true,
+          mandateId: true,
+          isSentToClient: true,
+          candId: true
+        },
+        with: {
+          candidate: {
+            columns: {
+              name: true,
+              initials: true,
+              company: true,
+              designation: true
+            }
+          }
+        }
+      } 
+    },
   });
   if (!mandate) return null;
   return {
     ...mandate,
     sectors: (mandate.sectors ?? []) as string[],
+    candidates: mandate.candidates.map((c: any) => ({
+      id: c.id,
+      stage: c.stage,
+      score: c.score,
+      hasReport: c.hasReport,
+      mandateId: c.mandateId,
+      isSentToClient: c.isSentToClient,
+      externalId: c.candId,
+      name: c.candidate?.name || "Unknown",
+      initials: c.candidate?.initials || "UN",
+      company: c.candidate?.company || null,
+      role: c.candidate?.designation || null,
+    }))
   };
 });
 
