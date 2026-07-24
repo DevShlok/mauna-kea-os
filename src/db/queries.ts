@@ -489,7 +489,10 @@ interface CandidateQueryParams {
 export const getCandidatesPaginated = cache(async (params: CandidateQueryParams) => {
   const { page = 1, limit = 20, search, companies, designations, statuses, locations, minExp, maxExp, minTenure, maxTenure, minCtc, maxCtc, sortKey, sortDir } = params;
   
-  const conditions: any[] = [eq(candidates.isDeleted, false)];
+  const conditions: any[] = [
+    eq(candidates.isDeleted, false),
+    sql`COALESCE(metadata->>'isPlaceholder', 'false') != 'true'`
+  ];
   
   if (search) {
     const searchPattern = `%${search}%`;

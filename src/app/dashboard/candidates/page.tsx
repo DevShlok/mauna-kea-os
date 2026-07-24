@@ -3,6 +3,9 @@ import { getCandidatesPaginated, getMandatesLight } from "@/db/queries";
 import CandidatesClient from "@/features/candidates/components/CandidatesClient";
 import { redirect } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function CandidatesPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const { platformUser: pUser, email } = await requireRole(["admin", "consultant"]);
 
