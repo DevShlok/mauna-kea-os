@@ -4,9 +4,11 @@ import { generateObjectWithFallback } from "@/lib/gemini-fallback";
 import { z } from "zod";
 import { db } from "@/db";
 import { createClient } from "@/utils/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { platformUsers } from "@/db/schema";
 import { candidates, candidateFiles, clients } from "@/db/schema";
 import { revalidatePath } from "next/cache";
+import { inngest } from "@/lib/inngest/client";
 import crypto from "crypto";
 
 export async function mapCandidatesAction(headers: string[], sampleData: string[][]) {
@@ -29,6 +31,7 @@ export async function mapCandidatesAction(headers: string[], sampleData: string[
       totalExperience: z.string().nullable().describe("Header matching Total Experience in Years"),
       qualification: z.string().nullable().describe("Header matching Qualification or Degree"),
       yearQualified: z.string().nullable().describe("Header matching Year Qualified or Graduation Year"),
+      cvLink: z.string().nullable().describe("Header matching Google Drive Link or Resume URL"),
     })
   });
 
@@ -159,6 +162,14 @@ export async function finalizeCandidatesImportAction(newCandidates: any[], updat
       await db.insert(candidates).values(payload);
       insertedCount++;
 
+      // Dispatch Inngest event if cvLink is provided
+      if (c.cvLink) {
+        await inngest.send({
+          name: "cv.process_gdrive_link",
+          data: { candidateId: newId, gdriveUrl: c.cvLink }
+        });
+      }
+
       if (c.files && Array.isArray(c.files)) {
         for (const file of c.files) {
           try {
@@ -207,13 +218,24 @@ export async function finalizeCandidatesImportAction(newCandidates: any[], updat
       if (c.metadata && Object.keys(c.metadata).length > 0) {
         updatePayload.metadata = c.metadata;
       }
-
-      updatePayload.updatedAt = new Date();
-      updatePayload.updatedBy = updatedBy;
       
-      if (Object.keys(updatePayload).length > 2) { // 2 because updatedAt and updatedBy are always added
-        await db.update(candidates).set(updatePayload).where(eq(candidates.id, existingId));
+      if (Object.keys(updatePayload).length > 0) {
+        updatePayload.updatedAt = new Date();
+        updatePayload.updatedBy = updatedBy;
+
+        await db.update(candidates)
+          .set(updatePayload)
+          .where(eq(candidates.id, existingId));
+
         updatedCount++;
+      }
+      
+      // Dispatch Inngest event if cvLink is provided for an existing candidate
+      if (c.cvLink) {
+        await inngest.send({
+          name: "cv.process_gdrive_link",
+          data: { candidateId: existingId, gdriveUrl: c.cvLink }
+        });
       }
 
       if (c.files && Array.isArray(c.files)) {
@@ -263,6 +285,45 @@ export async function convertToClientContactAction(candId: string, clientId: str
   revalidatePath(`/dashboard/clients/${clientId}`);
   revalidatePath(`/dashboard/candidates/${candId}`);
   return { success: true };
+}
+
+export async function uploadAndDispatchDirectEvent(formData: FormData) {
+  try {
+    const file = formData.get("file") as File;
+    if (!file) throw new Error("No file provided");
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const uniqueName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { error: uploadError } = await supabase.storage
+      .from('candidate-cvs')
+      .upload(uniqueName, buffer, {
+        contentType: 'application/pdf',
+        upsert: false
+      });
+      
+    if (uploadError) {
+      throw new Error(`Supabase upload failed: ${uploadError.message}`);
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('candidate-cvs')
+      .getPublicUrl(uniqueName);
+
+    await inngest.send({
+      name: "cv.process_direct_upload",
+      data: { publicUrl: publicUrlData.publicUrl, fileName: file.name }
+    });
+    
+    return { success: true };
+  } catch (err: any) {
+    throw new Error(`Upload failed: ${err.message}`);
+  }
 }
 
 export async function updatePastCompaniesAction(candId: string, pastCompanies: string[]) {
