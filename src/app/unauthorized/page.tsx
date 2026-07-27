@@ -13,10 +13,7 @@ export default function UnauthorizedPage() {
         
         <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Access Denied</h1>
         
-        <p className="text-gray-500 text-[14px] leading-relaxed">
-          Your email address is not registered as an authorized user on the Mauna Kea platform. 
-          If you believe this is an error, please contact your administrator to whitelist your account.
-        </p>
+        
         
         <div className="pt-4">
           <Link href="/sign-in" className="inline-block px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-black transition-colors">
