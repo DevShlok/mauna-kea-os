@@ -414,6 +414,9 @@ export default function CandidatesClient({
   const [isFloatModalOpen, setIsFloatModalOpen] = useState(false);
   const [floatForm, setFloatForm] = useState({ client: "", role: "", consultant: "", status: "Shared" });
   
+  const [isSubModalOpen, setIsSubModalOpen] = useState(false);
+  const [subForm, setSubForm] = useState({ client: "", role: "", consultant: "", mandateId: "" });
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
@@ -440,7 +443,7 @@ export default function CandidatesClient({
         candIds: Array.from(selectedIds),
         client: "General",
         role: "N/A",
-        consultant: "Sahil Bhatia",
+        consultant: "System",
         status: "Shared",
       });
       setSelectedIds(new Set());
@@ -448,7 +451,42 @@ export default function CandidatesClient({
       router.refresh();
     } catch (e) {
       console.error(e);
-      toast.error("Failed to float candidates.");
+      toast.error("Failed to add candidates to Float List");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBulkSubmitToClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subForm.client || !subForm.role) {
+      toast.error("Client and Role are required");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await bulkAddSubmissionAction({
+        candIds: Array.from(selectedIds),
+        client: subForm.client,
+        role: subForm.role,
+        consultant: subForm.consultant || "System",
+      });
+      // Also assign to mandate if one was selected
+      if (subForm.mandateId) {
+        await bulkAssignToMandateAction({
+          mandateId: Number(subForm.mandateId),
+          candIds: Array.from(selectedIds),
+          role: subForm.role,
+        });
+      }
+      setSelectedIds(new Set());
+      setIsSubModalOpen(false);
+      setSubForm({ client: "", role: "", consultant: "", mandateId: "" });
+      toast.success("Candidates submitted successfully!");
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to submit candidates");
     } finally {
       setIsSubmitting(false);
     }
@@ -952,6 +990,9 @@ export default function CandidatesClient({
             <button onClick={handleBulkAddToCallingList} disabled={isSubmitting} className="px-3 py-2 bg-[#0ea5e9] text-white rounded-[9px] text-[15px] font-bold shadow-md hover:bg-[#0284c7] disabled:opacity-50">
               ＋ Add to Calling List
             </button>
+            <button onClick={() => setIsSubModalOpen(true)} disabled={isSubmitting} className="px-3 py-2 bg-[#D8B15B] text-[#133255] rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 disabled:opacity-50">
+              Submit to Client
+            </button>
             <button onClick={handleBulkFloatSubmit} disabled={isSubmitting} className="px-3 py-2 bg-[#1f9d57] text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 disabled:opacity-50">
               {isSubmitting ? "Floating..." : "➤ Float"}
             </button>
@@ -965,6 +1006,55 @@ export default function CandidatesClient({
             <button onClick={() => setSelectedIds(new Set())} className="text-[#a9b7da] font-semibold text-[15px] hover:text-white px-2">
               Clear
             </button>
+          </div>
+        </div>
+      )}
+
+      {isSubModalOpen && (
+        <div className="fixed inset-0 bg-[#111]/50 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-[10px] shadow-lg w-[400px] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[19px] font-bold text-[#111] flex justify-between items-center">
+              Submit to Client
+              <button onClick={() => setIsSubModalOpen(false)} className="text-[#6b7a99] hover:text-[#111]">✕</button>
+            </div>
+            <form onSubmit={handleBulkSubmitToClient} className="p-5 flex flex-col gap-4">
+              <div>
+                <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Submit to active mandate?</label>
+                <select
+                  value={subForm.mandateId}
+                  onChange={e => {
+                    const mId = e.target.value;
+                    const mandate = mandates.find((m: any) => m.id.toString() === mId);
+                    if (mandate) {
+                      setSubForm({...subForm, mandateId: mId, client: mandate.company, role: mandate.role});
+                    } else {
+                      setSubForm({...subForm, mandateId: "", client: "", role: ""});
+                    }
+                  }}
+                  className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]"
+                >
+                  <option value="">-- No, manual entry --</option>
+                  {mandates.map((m: any) => (
+                    <option key={m.id} value={m.id}>{m.company} - {m.role}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Client Company <span className="text-red-500">*</span></label>
+                <input required value={subForm.client} readOnly={!!subForm.mandateId} onChange={e=>setSubForm({...subForm, client: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none focus:border-[#133255] disabled:bg-gray-50" placeholder="E.g. HDFC Bank" />
+              </div>
+              <div>
+                <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Role <span className="text-red-500">*</span></label>
+                <input required value={subForm.role} readOnly={!!subForm.mandateId} onChange={e=>setSubForm({...subForm, role: e.target.value})} className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none focus:border-[#133255] disabled:bg-gray-50" placeholder="E.g. Chief Financial Officer" />
+              </div>
+
+              <div className="flex gap-2.5 justify-end mt-2">
+                <button type="button" onClick={() => setIsSubModalOpen(false)} className="px-4 py-2 rounded-md text-[15px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all">Cancel</button>
+                <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md text-[15px] font-semibold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a] transition-all">
+                  {isSubmitting ? "Submitting..." : "Submit Candidates"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { addSubmissionAction, addReferenceAction, deleteFloatListEntryAction, logCandidateActivityAction, toggleActivityPinAction, resolveClientRemarkAction } from "@/actions";
+import { addSubmissionAction, addReferenceAction, deleteFloatListEntryAction, logCandidateActivityAction, toggleActivityPinAction, resolveClientRemarkAction, bulkAddSubmissionAction, bulkAssignToMandateAction, bulkAddToEngagementListAction } from "@/actions";
 import { convertToClientContactAction, updatePastCompaniesAction } from "@/actions/candidates";
 import { createClient } from "@/utils/supabase/client";
 import { Pin } from "lucide-react";
@@ -84,6 +84,188 @@ export default function FlCandidateClient({ candidate, mandates = [], userRole =
   const [isSubmittingRef, setIsSubmittingRef] = useState(false);
   const [submittingNotes, setSubmittingNotes] = useState<{ [key: number]: boolean }>({});
   const [localRemarks, setLocalRemarks] = useState<any[]>(clientRemarks);
+
+  const [isMandateModalOpen, setIsMandateModalOpen] = useState(false);
+  const [mandateIdToAssign, setMandateIdToAssign] = useState("");
+
+  const handleAddToMandate = async () => {
+    if (!mandateIdToAssign) {
+      toast.error("Please select a mandate.");
+      return;
+    }
+    const mandate = mandates.find((m: any) => m.id.toString() === mandateIdToAssign);
+    if (!mandate) return;
+
+    setIsSubmitting(true);
+    try {
+      await bulkAssignToMandateAction({
+        mandateId: Number(mandateIdToAssign),
+        candIds: [candidate.id],
+        role: mandate.role,
+      });
+      setIsMandateModalOpen(false);
+      setMandateIdToAssign("");
+      toast.success("Candidate added to mandate successfully!");
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to assign candidate.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAddToBdList = async () => {
+    setIsSubmitting(true);
+    try {
+      const res = await bulkAddToEngagementListAction([candidate.id], "BD");
+      if (res.duplicateCount > 0) {
+        toast.success(`Candidate was already in the BD list and moved to Today's view.`);
+      }
+      if (res.addedCount > 0) {
+        toast.success(`Added candidate to BD List successfully!`);
+      }
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to add to BD List.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAddToCallingList = async () => {
+    setIsSubmitting(true);
+    try {
+      const res = await bulkAddToEngagementListAction([candidate.id], "Calling");
+      if (res.duplicateCount > 0) {
+        toast.success(`Candidate was already in the Calling list and moved to Today's view.`);
+      }
+      if (res.addedCount > 0) {
+        toast.success(`Added candidate to Calling List successfully!`);
+      }
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to add to Calling List.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleFloatSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      await bulkAddSubmissionAction({
+        candIds: [candidate.id],
+        client: "General",
+        role: "N/A",
+        consultant: user?.fullName || "System",
+        status: "Shared",
+      });
+      toast.success("Candidate added to Float List successfully!");
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to add candidate to Float List");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const exportCandidate = async () => {
+    const ExcelJS = (await import('exceljs')).default;
+    const { saveAs } = await import('file-saver');
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Candidate');
+
+    worksheet.columns = [
+      { header: 'Candidate ID', key: 'id', width: 20 },
+      { header: 'Name', key: 'name', width: 25 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Mobile', key: 'mobile', width: 20 },
+      { header: 'Location', key: 'location', width: 20 },
+      { header: 'Current Company', key: 'company', width: 25 },
+      { header: 'Current Designation', key: 'designation', width: 25 },
+      { header: 'Total Experience (Years)', key: 'exp', width: 25 },
+      { header: 'Tenure in Current Org (Years)', key: 'tenure', width: 28 },
+      { header: 'CTC (Lakhs)', key: 'ctc', width: 15 },
+      { header: 'Fixed CTC (Lakhs)', key: 'fixedCtc', width: 20 },
+      { header: 'Variable CTC (Lakhs)', key: 'variableCtc', width: 22 },
+      { header: 'Expected CTC (Lakhs)', key: 'expected', width: 22 },
+      { header: 'Notice Period (Days)', key: 'notice', width: 22 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Qualifications', key: 'qual', width: 40 },
+      { header: 'Prior Employers / Exp Tags', key: 'expTags', width: 30 },
+      { header: 'Dream Roles', key: 'dreamRoles', width: 25 },
+      { header: 'Dream Companies', key: 'dreamCos', width: 25 },
+      { header: 'LinkedIn Profile URL', key: 'linkedin', width: 25 },
+      { header: 'Target Company', key: 'targetCompany', width: 25 },
+      { header: 'Notes', key: 'notes', width: 40 },
+      { header: 'Resume/CV (Drive Link)', key: 'cvLink', width: 25 },
+      { header: 'LinkedIn PDF (Drive Link)', key: 'linkedinPdf', width: 28 }
+    ];
+
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    const c = candidate;
+    const qualsStr = c.qual && Array.isArray(c.qual) 
+      ? c.qual.map((q: any) => typeof q === 'string' ? q : `${q.degree || ''} ${q.institute ? `from ${q.institute}` : ''} ${q.year ? `(${q.year})` : ''}`).join('; ')
+      : '';
+
+    const row = worksheet.addRow({
+      id: c.id,
+      name: c.name,
+      email: c.email || '',
+      mobile: c.mobile || '',
+      location: c.location || '',
+      company: c.company || '',
+      designation: c.designation || '',
+      exp: c.exp ?? '',
+      tenure: c.tenure ?? '',
+      ctc: c.ctc ?? '',
+      fixedCtc: c.fixedCtc ?? '',
+      variableCtc: c.variableCtc ?? '',
+      expected: c.expected ?? '',
+      notice: c.notice ?? '',
+      status: c.status || '',
+      qual: qualsStr,
+      expTags: (c.expTags || []).join(', '),
+      dreamRoles: (c.dreamRoles || []).join(', '),
+      dreamCos: (c.dreamCos || []).join(', '),
+      linkedin: c.linkedin || '',
+      targetCompany: c.targetCompany || '',
+      notes: c.notes || '',
+      cvLink: c.cvFileName || '',
+      linkedinPdf: c.linkedinPdf || ''
+    });
+
+    row.eachCell({ includeEmpty: true }, (cell) => {
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    });
+
+    if (c.linkedin && c.linkedin.startsWith('http')) {
+      row.getCell('linkedin').value = { text: c.name || 'LinkedIn', hyperlink: c.linkedin };
+    }
+    const cvCell = row.getCell('cvLink');
+    if (c.cvFileName && c.cvFileName.startsWith('http')) {
+      cvCell.value = { text: c.name || 'Resume', hyperlink: c.cvFileName };
+    } else if (c.cvFileName) {
+      cvCell.value = 'Yes';
+    }
+    const pdfCell = row.getCell('linkedinPdf');
+    if (c.linkedinPdf && c.linkedinPdf.startsWith('http')) {
+      pdfCell.value = { text: c.name || 'LinkedIn PDF', hyperlink: c.linkedinPdf };
+    } else if (c.linkedinPdf) {
+      pdfCell.value = 'Yes';
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `${candidate.name || 'Candidate'}_Export.xlsx`);
+  };
 
   const handleResolveRemark = async (id: number, status: string) => {
     setSubmittingNotes({ ...submittingNotes, [id]: true });
@@ -483,19 +665,39 @@ const statusClass = candidate.status === 'Active' ? 'bg-[#e0f5e9] text-[#137a43]
             </div>
           </div>
 
-          <div className="flex gap-2 mt-2">
-            <Link href="/dashboard/candidates" className="px-3 py-1.5 rounded-md text-[14px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">← Back</Link>
-            <button onClick={() => setIsSubModalOpen(true)} className="px-3 py-1.5 rounded-md text-[14px] font-semibold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a] transition-all">Submit to Client</button>
-            <button className="px-3 py-1.5 rounded-md text-[14px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">Export</button>
-            <button onClick={() => setIsClientContactModalOpen(true)} className="px-3 py-1.5 rounded-md text-[14px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">Convert to Client Contact</button>
-            <div className="flex-1"></div>
-            <Link href={`/dashboard/candidates/${candidate.id}/edit`} className="px-3 py-1.5 rounded-md text-[14px] font-semibold text-[#133255] bg-[#DCE5F4] hover:bg-[#c5d3ec] transition-all border border-[#bacce6]">Edit Profile</Link>
+          <div className="flex gap-2 mt-2 flex-wrap items-center">
+            <Link href="/dashboard/candidates" className="px-3 py-1.5 rounded-[9px] text-[14px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">← Back</Link>
+            
+            <button onClick={() => setIsMandateModalOpen(true)} className="px-3 py-1.5 bg-[#d7a33c] text-[#23304f] rounded-[9px] text-[14px] font-bold shadow-sm hover:brightness-105">
+              ＋ Add to Mandate
+            </button>
+            <button onClick={handleAddToBdList} disabled={isSubmitting} className="px-3 py-1.5 bg-[#1d4ed8] text-white rounded-[9px] text-[14px] font-bold shadow-sm hover:bg-[#1e40af] disabled:opacity-50">
+              ＋ Add to BD List
+            </button>
+            <button onClick={handleAddToCallingList} disabled={isSubmitting} className="px-3 py-1.5 bg-[#0ea5e9] text-white rounded-[9px] text-[14px] font-bold shadow-sm hover:bg-[#0284c7] disabled:opacity-50">
+              ＋ Add to Calling List
+            </button>
+            <button onClick={() => setIsSubModalOpen(true)} disabled={isSubmitting} className="px-3 py-1.5 bg-[#D8B15B] text-[#133255] rounded-[9px] text-[14px] font-bold shadow-sm hover:brightness-105 disabled:opacity-50">
+              Submit to Client
+            </button>
+            <button onClick={handleFloatSubmit} disabled={isSubmitting} className="px-3 py-1.5 bg-[#1f9d57] text-white rounded-[9px] text-[14px] font-bold shadow-sm hover:brightness-105 disabled:opacity-50">
+              {isSubmitting ? "Floating..." : "➤ Float"}
+            </button>
+            <button onClick={exportCandidate} disabled={isSubmitting} className="px-3 py-1.5 bg-emerald-600 text-white rounded-[9px] text-[14px] font-bold shadow-sm hover:brightness-105 disabled:opacity-50 flex items-center gap-1.5">
+               Export
+            </button>
+
+            <button onClick={() => setIsClientContactModalOpen(true)} className="px-3 py-1.5 rounded-[9px] text-[14px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all border border-[#D4E0F0]">Convert to Client</button>
+            
+            <div className="flex-1 min-w-[20px]"></div>
+            
+            <Link href={`/dashboard/candidates/${candidate.id}/edit`} className="px-3 py-1.5 rounded-[9px] text-[14px] font-semibold text-[#133255] bg-[#DCE5F4] hover:bg-[#c5d3ec] transition-all border border-[#bacce6]">Edit Profile</Link>
             <button 
               onClick={handleDeleteCandidate} 
               disabled={isDeleting}
-              className="px-3 py-1.5 rounded-md text-[14px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-all border border-red-200"
+              className="px-3 py-1.5 rounded-[9px] text-[14px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-all border border-red-200"
             >
-              {isDeleting ? "Deleting..." : "Delete Candidate"}
+              {isDeleting ? "Deleting..." : "Delete"}
             </button>
           </div>
         </div>
