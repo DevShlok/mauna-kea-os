@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { Topbar } from "@/components/shared/Topbar";
 import { requireRole } from "@/lib/auth";
@@ -15,15 +16,17 @@ export default async function DashboardLayout({
   const linkedClientId = platformUser?.linkedClientId || undefined;
   const linkedCandidateId = platformUser?.linkedCandidateId || undefined;
 
-  // Update lastActive synchronously to prevent connection pool exhaustion in Next.js 15
+  // Update lastActive asynchronously using Next.js after() to prevent blocking
   if (platformUser?.id) {
-    try {
-      await db.update(platformUsers)
-        .set({ lastActive: new Date() })
-        .where(eq(platformUsers.id, platformUser.id));
-    } catch(e) {
-      console.error("Failed to update lastActive", e);
-    }
+    after(async () => {
+      try {
+        await db.update(platformUsers)
+          .set({ lastActive: new Date() })
+          .where(eq(platformUsers.id, platformUser.id));
+      } catch(e) {
+        console.error("Failed to update lastActive", e);
+      }
+    });
   }
 
   return (

@@ -673,8 +673,33 @@ export const getCandidateById = cache(async (id: string) => {
 
 // ─── FLOATS (SUBMISSIONS) ────────────────────────────────
 export const getFloats = cache(async () => {
-  const rows = await db.select().from(floats).where(eq(floats.isDeleted, false)).orderBy(desc(floats.dateShared));
-  return rows.map(s => ({ ...s, via: (s.via ?? []) as string[] }));
+  const rows = await db.select({
+    id: floats.id,
+    candId: floats.candId,
+    candName: candidates.name,
+    client: floats.client,
+    role: floats.role,
+    candCompany: candidates.company,
+    candRole: candidates.designation,
+    consultant: floats.consultant,
+    dateShared: floats.dateShared,
+    via: floats.via,
+    followUp: floats.followUp,
+    status: floats.status,
+    response: floats.response
+  })
+  .from(floats)
+  .leftJoin(candidates, eq(floats.candId, candidates.id))
+  .where(eq(floats.isDeleted, false))
+  .orderBy(desc(floats.createdAt));
+
+  return rows.map(s => ({ 
+    ...s, 
+    candName: s.candName || "Unknown Candidate", 
+    client: s.client || s.candCompany || "Unknown Client",
+    role: s.role || s.candRole || "Unknown Role",
+    via: (s.via ?? []) as string[] 
+  }));
 });
 
 // ─── FOLLOW-UPS ──────────────────────────────────────────

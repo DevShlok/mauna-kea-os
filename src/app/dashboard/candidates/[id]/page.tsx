@@ -25,10 +25,12 @@ export default async function FlCandidateProfilePage({ params }: { params: Promi
     }
   }
 
-  const candidate = await getCandidateById(id);
-  const mandates = await getMandates();
-  const remarks = await db.select().from(clientRemarks).where(eq(clientRemarks.candId, id)).orderBy(asc(clientRemarks.createdAt));
-  const allClientsList = await db.select().from(clients).orderBy(asc(clients.name));
+  const [candidate, mandates, remarks, allClientsList] = await Promise.all([
+    getCandidateById(id),
+    getMandates(),
+    db.select().from(clientRemarks).where(eq(clientRemarks.candId, id)).orderBy(asc(clientRemarks.createdAt)),
+    db.select().from(clients).orderBy(asc(clients.name))
+  ]);
 
   if (!candidate) {
     return <div className="p-10 text-center text-gray-400">Candidate not found.</div>;

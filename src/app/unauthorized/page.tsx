@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Lock } from "lucide-react";
 
+export const dynamic = "force-static";
+
 export default function UnauthorizedPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">

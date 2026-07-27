@@ -14,12 +14,16 @@ type PageProps = {
 };
 
 export default async function ClientMandatesPage(props: PageProps) {
-  const searchParams = await props.searchParams;
-  const { clientSlug } = await props.params;
-  const { platformUser } = await requireRole(["client"]);
+  const [searchParams, { clientSlug }, { platformUser }, allMandates] = await Promise.all([
+    props.searchParams,
+    props.params,
+    requireRole(["client"]),
+    getMandates()
+  ]);
+  
   const tab = searchParams.tab || "dashboard";
 
-  let filteredMandates = await getMandates();
+  let filteredMandates = allMandates;
   let clientName = "Client";
 
   if (platformUser?.linkedClientId) {

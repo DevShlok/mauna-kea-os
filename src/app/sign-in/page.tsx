@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
@@ -57,15 +58,21 @@ export default function SignInPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-[#040d1a] via-[#0a1f3d] to-[#071428]" />
         
         {/* MK Circular Logo background */}
-        <div 
-          className="absolute inset-0 opacity-20"
-          style={{ backgroundImage: "url('/login-bg-removebg.png')", backgroundSize: '55%', backgroundPosition: '40% center', backgroundRepeat: 'no-repeat' }}
-        />
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <Image 
+            src="/login-bg-removebg.png" 
+            alt="Logo background" 
+            fill 
+            sizes="100vw"
+            style={{ objectFit: 'contain', objectPosition: '40% center', transform: 'scale(0.55)' }} 
+            priority 
+          />
+        </div>
 
         {/* Animated aurora glow */}
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full opacity-[0.08] blur-[120px] animate-pulse"
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full opacity-[0.08] blur-[120px] animate-pulse will-change-transform"
           style={{ background: 'radial-gradient(circle, #4a9eff, transparent 70%)', animationDuration: '8s' }} />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full opacity-[0.06] blur-[100px] animate-pulse"
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full opacity-[0.06] blur-[100px] animate-pulse will-change-transform"
           style={{ background: 'radial-gradient(circle, #2dd4bf, transparent 70%)', animationDuration: '12s' }} />
         
         {/* Subtle particle dots */}
@@ -84,8 +91,8 @@ export default function SignInPage() {
         {/* Top: Logo area */}
         <div>
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-12 h-12 rounded-xl overflow-hidden shadow-lg shadow-white/5 border border-white/10">
-              <img src="/login-bg.jpg" alt="MK" className="w-full h-full object-cover" />
+            <div className="w-12 h-12 rounded-xl overflow-hidden shadow-lg shadow-white/5 border border-white/10 relative">
+              <Image src="/login-bg.jpg" alt="MK" fill sizes="48px" className="object-cover" priority />
             </div>
             <div>
               <h1 className="font-serif text-[22px] tracking-[0.2em] font-bold text-white/95">MAUNA KEA</h1>
@@ -136,8 +143,8 @@ export default function SignInPage() {
           
           {/* Mobile logo - only shows on small screens */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-10">
-            <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/10">
-              <img src="/login-bg.jpg" alt="MK" className="w-full h-full object-cover" />
+            <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/10 relative">
+              <Image src="/login-bg.jpg" alt="MK" fill sizes="40px" className="object-cover" priority />
             </div>
             <div>
               <h1 className="font-serif text-[18px] tracking-[0.2em] font-bold text-white/90">MAUNA KEA</h1>

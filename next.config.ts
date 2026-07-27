@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+
   serverExternalPackages: ["pdf-parse-new"],
   async redirects() {
     return [
@@ -15,6 +16,15 @@ const nextConfig: NextConfig = {
         permanent: true,
       }
     ];
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
   },
 };
 

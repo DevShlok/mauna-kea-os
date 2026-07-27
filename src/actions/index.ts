@@ -286,6 +286,8 @@ export async function addSubmissionAction(data: unknown) {
   await db.insert(floats).values({
     id,
     candId,
+    client: d.client,
+    role: d.role,
     consultant: d.consultant || "System",
     dateShared: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
     status: "Shared",
