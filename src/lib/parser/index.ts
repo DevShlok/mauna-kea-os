@@ -36,12 +36,14 @@ export async function extractEntitiesFromText(text: string) {
       prompt: `Extract entities from this CV:\n\n${text.substring(0, 15000)}`
     });
 
+    const data = object as any;
+    
     return {
-      primaryEmail: object.primaryEmail || null,
-      primaryPhone: object.primaryPhone || null,
-      names: object.names || [],
-      companies: object.companies || [],
-      places: object.places || [],
+      primaryEmail: data?.primaryEmail || null,
+      primaryPhone: data?.primaryPhone || null,
+      names: data?.names || [],
+      companies: data?.companies || [],
+      places: data?.places || [],
       rawText: text
     };
   } catch (error) {

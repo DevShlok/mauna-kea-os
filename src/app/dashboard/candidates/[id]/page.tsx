@@ -36,3 +36,4 @@ export default async function FlCandidateProfilePage({ params }: { params: Promi
 
   return <FlCandidateClient candidate={candidate} mandates={mandates} userRole={userRole} readOnly={readOnly} clientRemarks={remarks} allClients={allClientsList} />;
 }
+// Triggering HMR rebuild

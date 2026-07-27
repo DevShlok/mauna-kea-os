@@ -104,7 +104,7 @@ export const candidateUpsertSchema = z.object({
   esops: z.union([z.string(), z.number()]).optional().nullable(),
   esopVesting: z.any().optional().nullable(),
   status: z.string().optional().nullable(),
-  qual: z.array(z.string()).optional().default([]),
+  qual: z.array(z.any()).optional().default([]),
   dreamRoles: z.array(z.string()).optional().default([]),
   dreamCos: z.array(z.string()).optional().default([]),
   expTags: z.array(z.string()).optional().default([]),

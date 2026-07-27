@@ -55,3 +55,4 @@ export default async function CandidatesPage(props: { searchParams: Promise<{ [k
     initialParams={{ page, limit, search, companies, designations, statuses, locations, minExp, maxExp, minTenure, maxTenure, minCtc, maxCtc, sortKey, sortDir }}
   />;
 }
+// Triggering HMR rebuild
