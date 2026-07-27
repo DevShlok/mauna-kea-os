@@ -1,11 +1,13 @@
 import { db } from './index';
-import { eq, sql, getTableColumns, desc, and, ilike, or, inArray, gte, lte, asc } from 'drizzle-orm';
+import { eq, sql, getTableColumns, desc, and, ilike, or, inArray, gte, lte, asc, isNull } from 'drizzle-orm';
 import { cache } from 'react';
 import {
   mandates, mandateCandidates, candidates, floats, floatReferences,
   floatFollowUps, floatActivities, frameworks, frameworkCategories,
-  frameworkCriteria, platformUsers, candidateReports, candidateFiles, clients
+  frameworkCriteria, platformUsers, candidateReports, candidateFiles, clients,
+  userPreferences
 } from './schema';
+
 
 // ─── PLATFORM USERS ──────────────────────────────────────
 export const getConsultants = cache(async () => {
@@ -151,7 +153,7 @@ export const getMandatesPaginated = cache(async (params: {
       } 
     },
     limit: pageSize,
-    offset: (page - 1) * pageSize,
+    offset: (Math.max(1, page) - 1) * pageSize,
   });
 
   return {
@@ -239,7 +241,7 @@ export const getClientsPaginated = cache(async (params: {
     .where(whereClause)
     .orderBy(orderByClause)
     .limit(pageSize)
-    .offset((page - 1) * pageSize);
+    .offset((Math.max(1, page) - 1) * pageSize);
 
   return {
     data: rows,
@@ -543,13 +545,14 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
     }
   }
 
+  const validPage = Math.max(1, page);
   // Fetch paginated data
   const rows = await db.select(safeCols)
     .from(candidates)
     .where(whereClause)
     .orderBy(orderClause)
     .limit(limit)
-    .offset((page - 1) * limit);
+    .offset((validPage - 1) * limit);
     
   // Fetch total count for pagination
   const [{ count }] = await db.select({ count: sql<number>`count(*)` })
@@ -564,8 +567,11 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
       array_agg(DISTINCT designation) FILTER (WHERE designation IS NOT NULL) as designations,
       array_agg(DISTINCT status) FILTER (WHERE status IS NOT NULL) as statuses,
       array_agg(DISTINCT location) FILTER (WHERE location IS NOT NULL) as locations,
+      MIN(exp) as min_exp,
       MAX(exp) as max_exp,
+      MIN(tenure) as min_tenure,
       MAX(tenure) as max_tenure,
+      MIN(ctc) as min_ctc,
       MAX(ctc) as max_ctc
     FROM candidates
     WHERE is_deleted = false
@@ -587,9 +593,12 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
       designations: (meta.designations || []).sort(),
       statuses: (meta.statuses || []).sort(),
       locations: (meta.locations || []).sort(),
-      maxExp: Math.max(10, Math.ceil(Number(meta.max_exp || 0))),
-      maxTenure: Math.max(5, Math.ceil(Number(meta.max_tenure || 0))),
-      maxCtc: Math.max(50, Math.ceil(Number(meta.max_ctc || 0) / 10) * 10),
+      minExp: Math.floor(Number(meta.min_exp || 0)),
+      maxExp: Math.max(1, Math.ceil(Number(meta.max_exp || 0))),
+      minTenure: Math.floor(Number(meta.min_tenure || 0)),
+      maxTenure: Math.max(1, Math.ceil(Number(meta.max_tenure || 0))),
+      minCtc: Math.floor(Number(meta.min_ctc || 0)),
+      maxCtc: Math.max(10, Math.ceil(Number(meta.max_ctc || 0) / 10) * 10),
     }
   };
 });
@@ -799,3 +808,26 @@ export const getAnalyticsData = cache(async () => {
     flTotal: Number(flCount?.count ?? 0),
   };
 });
+
+// ─── USER PREFERENCES ────────────────────────────────────
+/**
+ * Fetches a preference for a given user.
+ * Priority: own saved pref → admin org default → null
+ */
+export async function getUserPreference(userId: string, prefKey: string): Promise<Record<string, any> | null> {
+  const rows = await db
+    .select()
+    .from(userPreferences)
+    .where(
+      and(
+        or(
+          eq(userPreferences.userId, userId),
+          isNull(userPreferences.userId)
+        ),
+        eq(userPreferences.prefKey, prefKey)
+      )
+    )
+    .orderBy(desc(sql`(user_id IS NOT NULL)`))
+    .limit(1);
+  return (rows[0]?.prefValue as Record<string, any>) ?? null;
+}

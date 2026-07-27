@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { candidates } from "@/db/schema";
 import * as XLSX from "xlsx";
+import { formatCtcValue } from "@/lib/helpers";
 
 export async function GET() {
   try {
@@ -19,8 +20,8 @@ export async function GET() {
       c.designation || "",
       c.location || "",
       c.exp || "",
-      c.ctc ? `${c.currency || 'INR'} ${c.ctc}L` : "",
-      c.expected ? `${c.currency || 'INR'} ${c.expected}L` : "",
+      c.ctc ? formatCtcValue(c.ctc, c.currency) : "",
+      c.expected ? formatCtcValue(c.expected, c.currency) : "",
       c.notice || "",
       c.status || "",
       ((c.qual as any[]) || []).map(q => typeof q === 'string' ? q : `${q.degree}${q.institute ? ` - ${q.institute}` : ''}${q.year ? ` (${q.year})` : ''}`).join("; "),

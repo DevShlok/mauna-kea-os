@@ -1,4 +1,4 @@
-import { pgTable, integer as int, varchar, text, doublePrecision as float, boolean, timestamp as datetime, json, text as mediumtext, date, serial, index } from 'drizzle-orm/pg-core';
+import { pgTable, integer as int, varchar, text, doublePrecision as float, boolean, timestamp as datetime, json, text as mediumtext, date, serial, index, unique } from 'drizzle-orm/pg-core';
 import { sql, relations } from 'drizzle-orm';
 
 // ─── MANDATES ────────────────────────────────────────────
@@ -502,3 +502,22 @@ export const callPlans = pgTable('call_plans', {
 
 export type EngagementListItem = typeof engagementListItems.$inferSelect;
 export type CallPlan = typeof callPlans.$inferSelect;
+
+// ─── USER PREFERENCES ────────────────────────────────────
+// Stores per-user layout/column preferences (cross-device)
+// userId = NULL means admin-published org-wide default
+export const userPreferences = pgTable('user_preferences', {
+  id:        serial('id').primaryKey(),
+  userId:    varchar('user_id', { length: 50 }).references(() => platformUsers.id, { onDelete: 'cascade' }),
+  prefKey:   varchar('pref_key', { length: 100 }).notNull(),
+  // 'candidateListCols' | 'candidateWidgetLayout'
+  prefValue: json('pref_value').$type<Record<string, any>>().notNull().default({}),
+  isDefault: boolean('is_default').default(false),
+  updatedAt: datetime('updated_at').default(sql`now()`),
+}, (t) => ({
+  userIdx: index('up_user_id_idx').on(t.userId),
+  keyIdx:  index('up_pref_key_idx').on(t.prefKey),
+  unq: unique('up_unique_user_pref').on(t.userId, t.prefKey),
+}));
+
+export type UserPreference = typeof userPreferences.$inferSelect;

@@ -2,7 +2,8 @@
 import { requireRole } from "@/lib/auth";
 
 import { db } from "@/db";
-import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles, clients, clientNotifications, clientRemarks, consultantNotifications, engagementListItems } from "@/db/schema";
+import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles, clients, clientNotifications, clientRemarks, consultantNotifications, engagementListItems, userPreferences } from "@/db/schema";
+
 import { eq, sql, inArray, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
@@ -1140,4 +1141,53 @@ export async function copyCandidatesToMandateAction(candidateIds: number[], targ
 
   revalidatePath("/dashboard", "layout");
   return { success: true, addedCount, duplicateCount };
+}
+
+// ─── USER PREFERENCES ────────────────────────────────────
+import { getUserPreference } from "@/db/queries";
+import { isNull } from "drizzle-orm";
+
+/**
+ * Get a preference for the current user.
+ * Fallback chain: own saved pref → org admin default → null
+ */
+export async function getUserPreferenceAction(prefKey: string) {
+  const { platformUser } = await requireRole(["admin", "consultant", "candidate", "client"]);
+  return getUserPreference(platformUser.id, prefKey);
+}
+
+/**
+ * Upsert a preference for the current user.
+ */
+export async function saveUserPreferenceAction(prefKey: string, prefValue: Record<string, any>) {
+  const { platformUser } = await requireRole(["admin", "consultant", "candidate", "client"]);
+  await db
+    .insert(userPreferences)
+    .values({ userId: platformUser.id, prefKey, prefValue })
+    .onConflictDoUpdate({
+      target: [userPreferences.userId, userPreferences.prefKey],
+      set: { prefValue, updatedAt: new Date() },
+    } as any);
+}
+
+/**
+ * Admin-only: publish a layout/column config as the org-wide default.
+ * New users who have no saved preference will inherit this.
+ */
+export async function publishOrgDefaultAction(prefKey: string, prefValue: Record<string, any>) {
+  await requireRole(["admin"]);
+  // Delete existing org default for this key, then insert fresh
+  await db
+    .delete(userPreferences)
+    .where(and(isNull(userPreferences.userId), eq(userPreferences.prefKey, prefKey)));
+  await db
+    .insert(userPreferences)
+    .values({ userId: null, prefKey, prefValue, isDefault: true });
+}
+
+export async function searchCandidatesAction(query: string) {
+  await requireRole(["admin", "consultant"]);
+  const { getCandidatesPaginated } = await import("@/db/queries");
+  const result = await getCandidatesPaginated({ page: 1, limit: 5, search: query, sortKey: "name", sortDir: "asc" });
+  return result;
 }

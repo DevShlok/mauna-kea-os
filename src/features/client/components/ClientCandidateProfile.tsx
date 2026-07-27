@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { formatCtcValue } from "@/lib/helpers";
 import {
   ArrowLeft,
   Share2,
@@ -60,15 +61,6 @@ function CircularScore({ score, label }: { score: number; label: string }) {
   );
 }
 
-// ─── Rupee Formatting Helper ─────────────────────────────
-function formatLakhsToRupees(lakhs: number | null): string {
-  if (lakhs == null || lakhs === 0) return "—";
-  if (lakhs >= 100) {
-    const cr = lakhs / 100;
-    return `₹${Number.isInteger(cr) ? cr : cr.toFixed(2)} Cr`;
-  }
-  return `₹${lakhs} Lacs`;
-}
 
 // ─── Mandate CTC Budget Parser ───────────────────────────
 function parseMandateCtc(ctcStr: string | null) {
@@ -171,7 +163,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
     } : null,
     candidate?.ctc ? {
       label: "Compensation Band",
-      value: `${formatLakhsToRupees(totalCtcWithEsops)} / Annum`,
+      value: `${formatCtcValue(totalCtcWithEsops, candidate.currency)} / Annum`,
       icon: DollarSign,
     } : null,
     location !== "N/A" ? { label: "Geography", value: location, icon: MapPin } : null,
@@ -345,7 +337,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
             </div>
             <div>
               <span className="text-gray-400 block font-medium">Current CTC</span>
-              <span className="font-bold text-[#0b1f3a] mt-0.5 block">{formatLakhsToRupees(candidate.ctc)}</span>
+              <span className="font-bold text-[#0b1f3a] mt-0.5 block">{formatCtcValue(candidate.ctc, candidate.currency)}</span>
             </div>
             {/* Prior Companies and Roles (full width) */}
             <div className="col-span-2">
@@ -506,20 +498,20 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pb-5 border-b border-gray-100">
                 <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1.5">Current CTC</div>
-                  <div className="text-[15px] font-bold text-indigo-600">{formatLakhsToRupees(totalCtcWithEsops)}</div>
+                  <div className="text-[15px] font-bold text-indigo-600">{formatCtcValue(totalCtcWithEsops, candidate.currency)}</div>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Fixed (Base)</div>
-                  <div className="text-[15px] font-bold text-[#0b1f3a]">{formatLakhsToRupees(candidate.fixedCtc)}</div>
+                  <div className="text-[15px] font-bold text-[#0b1f3a]">{formatCtcValue(candidate.fixedCtc, candidate.currency)}</div>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Variable</div>
-                  <div className="text-[15px] font-bold text-[#0b1f3a]">{formatLakhsToRupees(candidate.variableCtc)}</div>
+                  <div className="text-[15px] font-bold text-[#0b1f3a]">{formatCtcValue(candidate.variableCtc, candidate.currency)}</div>
                 </div>
                 {candidate.expected ? (
                   <div className="bg-gray-50 rounded-lg p-3">
                     <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Expected CTC</div>
-                    <div className="text-[15px] font-bold text-[#0b1f3a]">{formatLakhsToRupees(candidate.expected)}</div>
+                    <div className="text-[15px] font-bold text-[#0b1f3a]">{formatCtcValue(candidate.expected, candidate.currency)}</div>
                   </div>
                 ) : <div />}
               </div>
@@ -533,7 +525,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
                       <div className="text-[10px] font-bold uppercase tracking-wider text-amber-500 mb-1.5">Total ESOPs</div>
-                      <div className="text-[15px] font-bold text-amber-700">{formatLakhsToRupees(candidate.esops)}</div>
+                      <div className="text-[15px] font-bold text-amber-700">{formatCtcValue(candidate.esops, candidate.currency)}</div>
                     </div>
                     
                     {candidate.esopVesting && candidate.esopVesting.years > 0 && candidate.esopVesting.distribution.map((pct: number, idx: number) => {
@@ -544,7 +536,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
                             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Year {idx + 1}</span>
                             <span className="text-[9px] font-semibold text-amber-400 bg-amber-100/50 px-1.5 py-0.5 rounded">{pct}%</span>
                           </div>
-                          <div className="text-[15px] font-bold text-amber-700">{formatLakhsToRupees(amountInLakhs)}</div>
+                          <div className="text-[15px] font-bold text-amber-700">{formatCtcValue(amountInLakhs, candidate.currency)}</div>
                         </div>
                       );
                     })}
@@ -559,7 +551,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-[12px] font-bold text-[#0b1f3a]">Market Benchmarking</span>
                     <div className="flex items-center gap-4 text-[10px] text-gray-400 flex-wrap justify-end">
-                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-emerald-400/40 rounded inline-block" /> Market Range ({formatLakhsToRupees(benchMin)} - {formatLakhsToRupees(benchMax)})</span>
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-emerald-400/40 rounded inline-block" /> Market Range ({formatCtcValue(benchMin, candidate.currency)} - {formatCtcValue(benchMax, candidate.currency)})</span>
                       <span className="flex items-center gap-1.5"><span className="w-1.5 h-3.5 rounded-full bg-violet-600 inline-block" /> Current</span>
                       {expectedCTC > 0 && <span className="flex items-center gap-1.5"><span className="w-1.5 h-3.5 rounded-full bg-amber-500 inline-block" /> Expected</span>}
                     </div>
@@ -574,7 +566,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
                     {totalCtcWithEsops > 0 && (
                       <div className="absolute top-1/2 w-1.5 h-7 bg-violet-600 border border-white rounded-full -translate-y-1/2 shadow-sm z-10" style={{ left: `calc(${getPosPct(totalCtcWithEsops)}% - 3px)` }} title="Current CTC">
                         <div className="absolute -top-7 left-1/2 -translate-x-1/2 text-[10px] font-bold text-violet-600 whitespace-nowrap bg-white px-1.5 py-0.5 rounded shadow-sm border border-violet-100">
-                          {formatLakhsToRupees(totalCtcWithEsops)}
+                          {formatCtcValue(totalCtcWithEsops, candidate.currency)}
                         </div>
                       </div>
                     )}
@@ -583,7 +575,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
                     {expectedCTC > 0 && (
                       <div className="absolute top-1/2 w-1.5 h-7 bg-amber-500 border border-white rounded-full -translate-y-1/2 shadow-sm z-10" style={{ left: `calc(${getPosPct(expectedCTC)}% - 3px)` }} title="Expected CTC">
                         <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-[10px] font-bold text-amber-600 whitespace-nowrap bg-white px-1.5 py-0.5 rounded shadow-sm border border-amber-100">
-                          {formatLakhsToRupees(expectedCTC)}
+                          {formatCtcValue(expectedCTC, candidate.currency)}
                         </div>
                       </div>
                     )}

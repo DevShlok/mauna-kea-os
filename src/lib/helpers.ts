@@ -65,3 +65,20 @@ export function formatMandateCtc(ctcStr: string | null) {
     return num + 'L';
   });
 }
+
+export function formatCtcValue(val: number | null | undefined, currencyCode: string | null = "INR"): string {
+  if (val == null || val === 0) return "—";
+  
+  const cur = currencyCode || "INR";
+  let formatted = "";
+  if (val >= 100) {
+    const cr = val / 100;
+    const crStr = Number.isInteger(cr) ? cr.toString() : parseFloat(cr.toFixed(2)).toString();
+    formatted = `${crStr} Cr`;
+  } else {
+    const lStr = Number.isInteger(val) ? val.toString() : parseFloat(val.toFixed(2)).toString();
+    formatted = `${lStr} Lacs`;
+  }
+
+  return `${cur} ${formatted}`;
+}
