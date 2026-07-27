@@ -16,21 +16,18 @@ export interface WidgetState {
 }
 
 const DEFAULT_LAYOUT: WidgetState[] = [
-  { id: "hero-identity",  x: 0, y: 0,  w: 12, h: 4, minW: 6, minH: 3, collapsed: false },
-  { id: "hero-status",    x: 0, y: 4,  w: 6,  h: 2, minW: 4, minH: 2, collapsed: false },
-  { id: "hero-contact",   x: 6, y: 4,  w: 6,  h: 2, minW: 4, minH: 2, collapsed: false },
-  { id: "hero-quals",     x: 0, y: 6,  w: 6,  h: 3, minW: 4, minH: 2, collapsed: false },
-  { id: "hero-location",  x: 6, y: 6,  w: 6,  h: 3, minW: 4, minH: 2, collapsed: false },
-  { id: "compensation",   x: 0, y: 9,  w: 6,  h: 4, minW: 4, minH: 3, collapsed: false },
-  { id: "past-companies", x: 6, y: 9,  w: 6,  h: 4, minW: 4, minH: 3, collapsed: false },
-  { id: "dream-jobs",     x: 0, y: 13, w: 6,  h: 3, minW: 4, minH: 2, collapsed: false },
-  { id: "cv-files",       x: 6, y: 13, w: 6,  h: 3, minW: 4, minH: 2, collapsed: false },
-  { id: "assessment",     x: 0, y: 16, w: 6,  h: 4, minW: 4, minH: 3, collapsed: false },
-  { id: "references",     x: 6, y: 16, w: 6,  h: 4, minW: 4, minH: 3, collapsed: false },
-  { id: "extra-fields",   x: 0, y: 20, w: 6,  h: 3, minW: 4, minH: 2, collapsed: false },
-  { id: "submissions",    x: 0, y: 23, w: 12, h: 6, minW: 6, minH: 4, collapsed: false },
-  { id: "mandates",       x: 0, y: 29, w: 12, h: 5, minW: 6, minH: 4, collapsed: false },
-  { id: "activity-log",   x: 0, y: 34, w: 12, h: 5, minW: 6, minH: 4, collapsed: false },
+  { id: "hero-identity",  x: 0, y: 0,  w: 12, h: 5, minW: 8, minH: 4, collapsed: false },
+  { id: "hero-status",    x: 0, y: 5,  w: 6,  h: 3, minW: 4, minH: 2, collapsed: false },
+  { id: "compensation",   x: 6, y: 5,  w: 6,  h: 3, minW: 4, minH: 3, collapsed: false },
+  { id: "past-companies", x: 0, y: 8,  w: 6,  h: 3, minW: 4, minH: 2, collapsed: false },
+  { id: "dream-jobs",     x: 6, y: 8,  w: 6,  h: 3, minW: 4, minH: 2, collapsed: false },
+  { id: "cv-files",       x: 0, y: 11, w: 6,  h: 4, minW: 4, minH: 3, collapsed: false },
+  { id: "assessment",     x: 6, y: 11, w: 6,  h: 4, minW: 4, minH: 3, collapsed: false },
+  { id: "references",     x: 0, y: 15, w: 6,  h: 4, minW: 4, minH: 3, collapsed: false },
+  { id: "extra-fields",   x: 6, y: 15, w: 6,  h: 3, minW: 4, minH: 2, collapsed: false },
+  { id: "submissions",    x: 0, y: 19, w: 12, h: 6, minW: 6, minH: 4, collapsed: false },
+  { id: "mandates",       x: 0, y: 25, w: 12, h: 5, minW: 6, minH: 4, collapsed: false },
+  { id: "activity-log",   x: 0, y: 30, w: 12, h: 5, minW: 6, minH: 4, collapsed: false },
 ];
 
 function mergeLayoutWithDefaults(saved: Record<string, any>): WidgetState[] {
@@ -61,18 +58,24 @@ export function useWidgetLayout(userRole?: string) {
   useEffect(() => {
     getUserPreferenceAction("candidateWidgetLayout")
       .then((saved) => {
-        if (saved) setWidgets(mergeLayoutWithDefaults(saved));
+        if (saved) {
+          setWidgets(mergeLayoutWithDefaults(saved));
+          if (saved.isLocked !== undefined) setIsLocked(saved.isLocked);
+        }
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
   }, []);
 
-  const scheduleSave = useCallback((ws: WidgetState[]) => {
+  const scheduleSave = useCallback((ws: WidgetState[], locked?: boolean) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      saveUserPreferenceAction("candidateWidgetLayout", { widgets: ws }).catch(console.error);
+      saveUserPreferenceAction("candidateWidgetLayout", { 
+        widgets: ws,
+        isLocked: locked !== undefined ? locked : isLocked
+      }).catch(console.error);
     }, 1200);
-  }, []);
+  }, [isLocked]);
 
   const onLayoutChange = useCallback((newLayout: any[]) => {
     if (isLocked) return;
@@ -109,18 +112,24 @@ export function useWidgetLayout(userRole?: string) {
 
   const resetLayout = useCallback(() => {
     setWidgets(DEFAULT_LAYOUT);
-    saveUserPreferenceAction("candidateWidgetLayout", { widgets: DEFAULT_LAYOUT }).catch(console.error);
-  }, []);
+    saveUserPreferenceAction("candidateWidgetLayout", { widgets: DEFAULT_LAYOUT, isLocked }).catch(console.error);
+  }, [isLocked]);
 
   const publishAsOrgDefault = useCallback(async () => {
-    await publishOrgDefaultAction("candidateWidgetLayout", { widgets });
-  }, [widgets]);
+    await publishOrgDefaultAction("candidateWidgetLayout", { widgets, isLocked });
+  }, [widgets, isLocked]);
+
+  const toggleLocked = useCallback(() => {
+    const nextLocked = !isLocked;
+    setIsLocked(nextLocked);
+    saveUserPreferenceAction("candidateWidgetLayout", { widgets, isLocked: nextLocked }).catch(console.error);
+  }, [widgets, isLocked]);
 
   return {
     widgets,
     isLoading,
     isLocked,
-    setIsLocked,
+    setIsLocked: toggleLocked,
     onLayoutChange,
     toggleCollapse,
     resetLayout,

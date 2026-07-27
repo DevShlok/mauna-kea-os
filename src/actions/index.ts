@@ -317,6 +317,17 @@ export async function addSubmissionAction(data: unknown) {
   revalidatePath("/dashboard/float-list/submissions");
   revalidatePath("/dashboard/float-list/database");
   revalidatePath("/dashboard/float-list/" + candId);
+
+  // Append the client company to the candidate's targetCompanies list
+  if (candId && d.client) {
+    try {
+      const { appendTargetCompanyOnSubmissionAction } = await import("./candidates");
+      await appendTargetCompanyOnSubmissionAction(candId, d.client);
+    } catch (e) {
+      console.warn("Failed to append target company:", e);
+    }
+  }
+
   return { id, candId };
 }
 

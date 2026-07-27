@@ -331,3 +331,34 @@ export async function updatePastCompaniesAction(candId: string, pastCompanies: s
   revalidatePath(`/dashboard/candidates/${candId}`);
   return { success: true };
 }
+
+/**
+ * Update the list of target companies for a candidate.
+ * Also appends to the list when submitting to a new client (called from addSubmissionAction).
+ */
+export async function updateCandidateTargetCompaniesAction(candId: string, targetCompanies: string[]) {
+  const updatedBy = await getCurrentUserName();
+  const now = new Date().toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  
+  const [cand] = await db.select({ auditLog: candidates.auditLog }).from(candidates).where(eq(candidates.id, candId));
+  const existingAudit = (cand?.auditLog as Record<string, any>) || {};
+
+  await db.update(candidates).set({
+    targetCompanies,
+    auditLog: { ...existingAudit, targetCompanies: { updatedBy, updatedAt: now } }
+  }).where(eq(candidates.id, candId));
+
+  revalidatePath(`/dashboard/candidates/${candId}`);
+  return { success: true };
+}
+
+/**
+ * Append a single client company to the candidate's targetCompanies list (called on submission).
+ */
+export async function appendTargetCompanyOnSubmissionAction(candId: string, clientCompany: string) {
+  const [cand] = await db.select({ targetCompanies: candidates.targetCompanies }).from(candidates).where(eq(candidates.id, candId));
+  const existing: string[] = (cand?.targetCompanies as string[]) || [];
+  if (!existing.includes(clientCompany)) {
+    await updateCandidateTargetCompaniesAction(candId, [...existing, clientCompany]);
+  }
+}

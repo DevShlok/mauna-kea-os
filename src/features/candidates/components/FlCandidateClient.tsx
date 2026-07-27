@@ -15,10 +15,11 @@ import {
   bulkAssignToMandateAction, 
   bulkAddToEngagementListAction 
 } from "@/actions";
-import { convertToClientContactAction, updatePastCompaniesAction } from "@/actions/candidates";
+import { convertToClientContactAction, updatePastCompaniesAction, updateCandidateTargetCompaniesAction } from "@/actions/candidates";
+import { removeFromEngagementListAction } from "@/actions/calls";
 import { formatCtcValue } from "@/lib/helpers";
 import { createClient } from "@/utils/supabase/client";
-import { Pin, Download, User, FileText, CheckSquare, Target, Briefcase, IndianRupee, MapPin, Building2, Brain, Link as LinkIcon, Edit, Trash2, ArrowLeft, Plus } from "lucide-react";
+import { Pin, Download, User, FileText, CheckSquare, Target, Briefcase, IndianRupee, MapPin, Building2, Brain, Link as LinkIcon, Edit, Trash2, ArrowLeft, Plus, Check } from "lucide-react";
 
 import { useWidgetLayout } from "@/hooks/useWidgetLayout";
 import { WidgetCard } from "@/components/ui/WidgetCard";
@@ -53,14 +54,16 @@ export default function FlCandidateClient({
   userRole = "consultant", 
   readOnly = false, 
   clientRemarks = [], 
-  allClients = [] 
+  allClients = [],
+  initialEngagementLists = []
 }: { 
   candidate: any; 
   mandates?: any[]; 
   userRole?: string; 
   readOnly?: boolean; 
   clientRemarks?: any[]; 
-  allClients?: any[] 
+  allClients?: any[];
+  initialEngagementLists?: string[];
 }) {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -151,6 +154,57 @@ export default function FlCandidateClient({
   const [localPastCompanies, setLocalPastCompanies] = useState<string[]>(candidate.pastCompanies || []);
   const [isUpdatingPastCompanies, setIsUpdatingPastCompanies] = useState(false);
 
+  // Target Companies state
+  const [localTargetCompanies, setLocalTargetCompanies] = useState<string[]>(
+    candidate.targetCompanies?.length > 0
+      ? candidate.targetCompanies
+      : candidate.targetCompany
+      ? [candidate.targetCompany]
+      : []
+  );
+  const [targetCompanyInput, setTargetCompanyInput] = useState("");
+  const [isUpdatingTargetCompanies, setIsUpdatingTargetCompanies] = useState(false);
+
+  const handleAddTargetCompany = async (company: string) => {
+    if (!company.trim() || localTargetCompanies.includes(company.trim())) return;
+    const updated = [...localTargetCompanies, company.trim()];
+    setLocalTargetCompanies(updated);
+    setTargetCompanyInput("");
+    setIsUpdatingTargetCompanies(true);
+    try {
+      await updateCandidateTargetCompaniesAction(candidate.id, updated);
+      toast.success("Target company added!");
+    } catch (e) {
+      toast.error("Failed to update target companies");
+      setLocalTargetCompanies(localTargetCompanies);
+    }
+    setIsUpdatingTargetCompanies(false);
+  };
+
+  const handleRemoveTargetCompany = async (company: string) => {
+    const updated = localTargetCompanies.filter(c => c !== company);
+    setLocalTargetCompanies(updated);
+    setIsUpdatingTargetCompanies(true);
+    try {
+      await updateCandidateTargetCompaniesAction(candidate.id, updated);
+      toast.success("Removed from target companies");
+    } catch (e) {
+      toast.error("Failed to update");
+      setLocalTargetCompanies(localTargetCompanies);
+    }
+    setIsUpdatingTargetCompanies(false);
+  };
+
+  const [inBdList, setInBdList] = useState(initialEngagementLists?.includes("BD") || false);
+  const [inCallingList, setInCallingList] = useState(initialEngagementLists?.includes("Calling") || false);
+  const [inFloatList, setInFloatList] = useState(false);
+
+  useEffect(() => {
+    const existingStr = localStorage.getItem("fl_pending_cands") || "[]";
+    const existing = JSON.parse(existingStr);
+    setInFloatList(existing.includes(candidate?.id));
+  }, [candidate?.id]);
+
   useEffect(() => {
     setLocalActivities(candidate?.activities || []);
   }, [candidate?.activities]);
@@ -177,12 +231,19 @@ export default function FlCandidateClient({
   const handleAddToBdList = async () => {
     setIsSubmitting(true);
     try {
-      const res = await bulkAddToEngagementListAction([candidate.id], "BD");
-      if (res.duplicateCount > 0) toast.success(`Candidate moved to Today's view.`);
-      if (res.addedCount > 0) toast.success(`Added candidate to BD List!`);
+      if (inBdList) {
+        await removeFromEngagementListAction(candidate.id, "BD");
+        setInBdList(false);
+        toast.success("Removed from BD List");
+      } else {
+        const res = await bulkAddToEngagementListAction([candidate.id], "BD");
+        if (res.duplicateCount > 0) toast.success(`Candidate moved to Today's view.`);
+        if (res.addedCount > 0) toast.success(`Added candidate to BD List!`);
+        setInBdList(true);
+      }
       router.refresh();
     } catch (e) {
-      toast.error("Failed to add to BD List.");
+      toast.error("Failed to update BD List.");
     } finally {
       setIsSubmitting(false);
     }
@@ -191,12 +252,19 @@ export default function FlCandidateClient({
   const handleAddToCallingList = async () => {
     setIsSubmitting(true);
     try {
-      const res = await bulkAddToEngagementListAction([candidate.id], "Calling");
-      if (res.duplicateCount > 0) toast.success(`Candidate moved to Today's view.`);
-      if (res.addedCount > 0) toast.success(`Added candidate to Calling List!`);
+      if (inCallingList) {
+        await removeFromEngagementListAction(candidate.id, "Calling");
+        setInCallingList(false);
+        toast.success("Removed from Calling List");
+      } else {
+        const res = await bulkAddToEngagementListAction([candidate.id], "Calling");
+        if (res.duplicateCount > 0) toast.success(`Candidate moved to Today's view.`);
+        if (res.addedCount > 0) toast.success(`Added candidate to Calling List!`);
+        setInCallingList(true);
+      }
       router.refresh();
     } catch (e) {
-      toast.error("Failed to add to Calling List.");
+      toast.error("Failed to update Calling List.");
     } finally {
       setIsSubmitting(false);
     }
@@ -206,15 +274,22 @@ export default function FlCandidateClient({
     setIsSubmitting(true);
     try {
       const existingStr = localStorage.getItem("fl_pending_cands") || "[]";
-      const existing = JSON.parse(existingStr);
-      if (!existing.includes(candidate.id)) {
-        existing.push(candidate.id);
+      let existing = JSON.parse(existingStr);
+      if (inFloatList) {
+        existing = existing.filter((id: string) => id !== candidate.id);
         localStorage.setItem("fl_pending_cands", JSON.stringify(existing));
+        setInFloatList(false);
+        toast.success("Removed from Float List");
+      } else {
+        if (!existing.includes(candidate.id)) {
+          existing.push(candidate.id);
+          localStorage.setItem("fl_pending_cands", JSON.stringify(existing));
+        }
+        setInFloatList(true);
+        toast.success("Candidate added to float list.");
       }
-      toast.success("Added to floating batch.");
-      router.push("/dashboard/float-list");
     } catch (e) {
-      toast.error("Error generating float link");
+      toast.error("Failed to update float list.");
     } finally {
       setIsSubmitting(false);
     }
@@ -339,6 +414,25 @@ export default function FlCandidateClient({
     }
   };
 
+  const handleUploadProfilePic = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("candId", candidate.id);
+    const toastId = toast.loading("Uploading image...");
+    try {
+      const res = await fetch("/api/upload-profile-pic", { method: "POST", body: formData });
+      if (res.ok) {
+        toast.success("Profile image updated!", { id: toastId });
+        router.refresh();
+      } else toast.error(`Upload failed`, { id: toastId });
+    } catch (err: any) {
+      toast.error(`Error uploading image`, { id: toastId });
+    }
+    e.target.value = '';
+  };
+
   const handleUploadCV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -430,20 +524,103 @@ export default function FlCandidateClient({
     switch (id) {
       case "hero-identity":
         return (
-          <div className="flex flex-col md:flex-row items-start gap-5">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center font-serif text-[25px] bg-[#D8B15B] text-[#133255] flex-shrink-0">
-              {candidate.initials}
-            </div>
-            <div className="flex-1">
-              <div className="font-serif text-[23px] font-bold text-[#111] mb-1">{candidate.name}</div>
-              <div className="text-[15px] font-semibold text-[#133255] mb-2">{candidate.designation} · {candidate.company}</div>
-              <div className="flex gap-2 items-center flex-wrap mb-4">
-                <span className={`px-2.5 py-1 rounded-[4px] text-[13px] font-bold tracking-wide uppercase border ${candidate.status === 'Active' ? 'bg-[#e0f5e9] text-[#137a43] border-[#137a43]' : candidate.status === 'Passive' ? 'bg-[#fef4e6] text-[#b36b00] border-[#b36b00]' : 'bg-[#fae6e6] text-[#c92a2a] border-[#c92a2a]'}`}>{candidate.status}</span>
-                {candidate.score && <span className="text-[14px] font-bold text-[#b7791f]">Score: {candidate.score}/10</span>}
-                <span className="text-[14px] text-[#6b7a99]">Notice: {candidate.notice} days</span>
-                {candidate.exp && <span className="text-[14px] text-[#6b7a99]">💼 {candidate.exp} yrs</span>}
-                {candidate.dob && <span className="text-[14px] text-[#6b7a99]">Age: {calculateAge(candidate.dob)} yrs</span>}
-                {candidate.hometown && <span className="text-[14px] text-[#6b7a99]">Hometown: {candidate.hometown}</span>}
+          <div className="flex flex-col h-full gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Left Column: Contact & Actions */}
+              <div className="flex flex-col gap-3">
+                <div className="flex gap-4 items-start">
+                  <div className="flex flex-col items-center gap-1.5 pt-1">
+                    {candidate.profilePic ? (
+                      <img src={candidate.profilePic} alt={candidate.name} className="w-16 h-16 rounded-full object-cover border border-[#e4e8f0]" />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full flex items-center justify-center font-serif text-[25px] bg-[#D8B15B] text-[#133255] flex-shrink-0">
+                        {candidate.initials}
+                      </div>
+                    )}
+                    {!readOnly && (
+                      <label className="text-[10px] font-bold text-[#1d4ed8] cursor-pointer hover:underline text-center leading-tight">
+                        Upload<br/>Image
+                        <input type="file" accept="image/*" className="hidden" onChange={handleUploadProfilePic} />
+                      </label>
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-serif text-[22px] font-bold text-[#111] mb-0.5 leading-tight">{candidate.name}</div>
+                    <div className="text-[13px] text-[#6b7a99] flex items-center gap-1 mb-2">
+                      <MapPin size={13} className="text-[#133255]" /> {candidate.location || "Location not provided"}
+                    </div>
+                    <div className="flex gap-1.5 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded-[4px] text-[11px] font-bold tracking-wide uppercase border ${candidate.status === 'Active' ? 'bg-[#e0f5e9] text-[#137a43] border-[#137a43]' : candidate.status === 'Passive' ? 'bg-[#fef4e6] text-[#b36b00] border-[#b36b00]' : 'bg-[#fae6e6] text-[#c92a2a] border-[#c92a2a]'}`}>{candidate.status}</span>
+                      {candidate.score && <span className="text-[11px] font-bold text-[#b7791f] border border-[#b7791f] px-2 py-0.5 rounded-[4px]">Score: {candidate.score}/10</span>}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-2 space-y-1.5">
+                  <div className="text-[13px]"><span className="text-[#6b7a99] font-bold mr-1">Email:</span> <span className="text-[#111] font-medium">{candidate.email || "-"}</span></div>
+                  <div className="text-[13px]"><span className="text-[#6b7a99] font-bold mr-1">Phone:</span> <span className="text-[#111] font-medium">{candidate.mobile || "-"}</span></div>
+                  {candidate.linkedin && (
+                    <div className="pt-2">
+                      <a href={candidate.linkedin} target="_blank" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f0f5fa] text-[#0a66c2] border border-[#d6e4ff] rounded-[6px] text-[12px] font-bold hover:bg-[#e0edff] transition-all">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452z" /></svg>
+                        LinkedIn Profile
+                      </a>
+                    </div>
+                  )}
+                  {!readOnly && (
+                    <button onClick={() => setIsClientContactModalOpen(true)} className="px-3 py-1.5 mt-2 text-[12px] font-semibold text-[#133255] bg-[#DCE5F4] hover:bg-[#c5d3ec] rounded-lg transition-all border border-[#bacce6] w-fit">
+                      Convert to Client Contact
+                    </button>
+                  )}
+                </div>
+                {candidate.auditLog?.['contact'] && (
+                  <div className="text-[10px] text-[#8a93a3] mt-2 italic">
+                    Last updated on {candidate.auditLog['contact'].updatedAt} by {candidate.auditLog['contact'].updatedBy}
+                  </div>
+                )}
+              </div>
+
+              {/* Middle Column: Experience */}
+              <div className="flex flex-col gap-3 md:border-l border-[#e4e8f0] md:pl-6">
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#6b7a99] mb-1">Current Role</div>
+                  <div className="font-semibold text-[15px] text-[#133255] leading-snug">{candidate.designation || "-"}</div>
+                  <div className="text-[13px] text-[#111] mt-0.5">{candidate.company || "-"}</div>
+                </div>
+                <div className="mt-2">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#6b7a99] mb-2">Previous Experience</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {localPastCompanies.length > 0 ? localPastCompanies.map(pc => (
+                      <span key={pc} className="px-2 py-1 bg-[#f8fafc] border border-[#e4e8f0] rounded text-[12px] font-medium text-[#475569]">{pc}</span>
+                    )) : <span className="text-[12px] text-[#6b7a99]">No previous companies</span>}
+                  </div>
+                </div>
+                <div className="mt-3 text-[12px] text-[#6b7a99] bg-[#f8fafc] p-2 rounded-lg border border-[#e4e8f0]">
+                  <span className="font-bold text-[#475569]">Total Exp:</span> {candidate.exp || "-"} yrs &nbsp;&nbsp;&middot;&nbsp;&nbsp; <span className="font-bold text-[#475569]">Notice:</span> {candidate.notice || "-"} days
+                </div>
+                {candidate.auditLog?.['experience'] && (
+                  <div className="text-[10px] text-[#8a93a3] mt-auto pt-2 italic">
+                    Last updated on {candidate.auditLog['experience'].updatedAt} by {candidate.auditLog['experience'].updatedBy}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Education */}
+              <div className="flex flex-col gap-3 md:border-l border-[#e4e8f0] md:pl-6">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#6b7a99] mb-1">Education & Qualifications</div>
+                <div className="flex flex-col gap-2 overflow-y-auto custom-scrollbar max-h-[220px] pr-2">
+                  {candidate.qual?.length > 0 ? candidate.qual.map((q: any, idx: number) => {
+                    if (typeof q === 'string') {
+                      return <div key={idx} className="p-2.5 bg-[#f8fafc] border border-[#e4e8f0] rounded-[8px] text-[12px] font-medium text-[#475569]">{q}</div>;
+                    }
+                    return (
+                      <div key={idx} className="p-2.5 bg-[#f8fafc] border border-[#e4e8f0] rounded-[8px] text-[12px]">
+                        <div className="font-bold text-[#111]">{q.degree}</div>
+                        {(q.institute || q.year) && <div className="text-[#6b7a99] mt-1 text-[11px]">{q.institute}{q.institute && q.year ? ' · ' : ''}{q.year}</div>}
+                      </div>
+                    );
+                  }) : <span className="text-[12px] text-[#6b7a99]">No qualifications added.</span>}
+                </div>
               </div>
             </div>
           </div>
@@ -452,67 +629,60 @@ export default function FlCandidateClient({
       case "hero-status":
         return (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-[14px]"><span className="font-bold text-[#6b7a99] block mb-1">Target Company</span> <span className="font-medium text-[#111]">{candidate.targetCompany || 'Not specified'}</span></div>
-              <div className="text-[14px]"><span className="font-bold text-[#6b7a99] block mb-1">LinkedIn</span> {candidate.linkedin ? <a href={candidate.linkedin} target="_blank" className="text-[#1d4ed8] underline font-medium break-all">View Profile</a> : 'Not provided'}</div>
+            <div>
+              <span className="font-bold text-[#6b7a99] block mb-2 text-[12px] uppercase tracking-wider">Target Companies</span>
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {localTargetCompanies.map((tc, i) => (
+                  <span key={i} className="px-2.5 py-1 bg-[#fef5e6] border border-[#fdebb4] text-[#b36b00] rounded-[6px] text-[12px] font-bold flex items-center gap-1 group">
+                    {tc}
+                    {!readOnly && (
+                      <button
+                        onClick={() => handleRemoveTargetCompany(tc)}
+                        disabled={isUpdatingTargetCompanies}
+                        className="ml-0.5 text-[#b36b00] opacity-40 group-hover:opacity-100 hover:text-red-600 transition-opacity text-[10px] font-bold"
+                        title="Remove"
+                      >✕</button>
+                    )}
+                  </span>
+                ))}
+                {localTargetCompanies.length === 0 && (
+                  <span className="text-[13px] text-[#94a3b8]">No target companies set</span>
+                )}
+              </div>
+              {!readOnly && (
+                <form
+                  onSubmit={(e) => { e.preventDefault(); handleAddTargetCompany(targetCompanyInput); }}
+                  className="flex gap-2"
+                >
+                  <input
+                    value={targetCompanyInput}
+                    onChange={e => setTargetCompanyInput(e.target.value)}
+                    placeholder="Add target company…"
+                    className="flex-1 h-9 border border-[#e4e8f0] rounded-xl px-3 text-[13px] outline-none focus:border-[#1d4ed8] bg-[#fafbfd]"
+                    disabled={isUpdatingTargetCompanies}
+                  />
+                  <button
+                    type="submit"
+                    disabled={isUpdatingTargetCompanies || !targetCompanyInput.trim()}
+                    className="px-3 py-1.5 bg-[#133255] text-white rounded-xl text-[12px] font-bold hover:bg-[#1e40af] transition-colors disabled:opacity-50"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </form>
+              )}
             </div>
+
             {candidate.notes && (
               <div className="p-3 bg-[#fff9ed] border border-[#f5e1b5] rounded-md text-[14px] text-[#444]">
                 <span className="font-bold text-[#b38a36] block mb-1">Additional Notes</span>
                 <p className="italic">"{candidate.notes}"</p>
               </div>
             )}
-          </div>
-        );
-
-      case "hero-contact":
-        return (
-          <div className="space-y-4">
-            <div>
-              <span className="text-[12px] font-bold text-[#6b7a99] uppercase tracking-wide">Email Address</span>
-              <div className="font-medium text-[15px] text-[#111]">{candidate.email || "Not provided"}</div>
-            </div>
-            <div>
-              <span className="text-[12px] font-bold text-[#6b7a99] uppercase tracking-wide">Phone Number</span>
-              <div className="font-medium text-[15px] text-[#111]">{candidate.mobile || "Not provided"}</div>
-            </div>
-            {!readOnly && (
-              <button onClick={() => setIsClientContactModalOpen(true)} className="px-4 py-2 mt-2 w-full rounded-[9px] text-[13px] font-semibold text-[#133255] bg-[#DCE5F4] hover:bg-[#c5d3ec] transition-all border border-[#bacce6]">
-                Convert to Client Contact
-              </button>
+            {candidate.auditLog?.['notes'] && (
+              <div className="text-[10px] text-[#8a93a3] italic">
+                Last updated on {candidate.auditLog['notes'].updatedAt} by {candidate.auditLog['notes'].updatedBy}
+              </div>
             )}
-          </div>
-        );
-
-      case "hero-quals":
-        return (
-          <div className="flex flex-col gap-2">
-            {candidate.qual?.map((q: any, idx: number) => {
-              if (typeof q === 'string') {
-                return <span key={idx} className="px-3 py-1.5 bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[6px] text-[13px] font-bold break-words">{q}</span>;
-              }
-              return (
-                <div key={idx} className="px-3 py-2 bg-[#f0f4f8] text-[#4a5568] border border-[#d1d5db] rounded-[6px] text-[13px]">
-                  <div className="font-bold text-[#111]">{q.degree}</div>
-                  {(q.institute || q.year) && <div className="text-[#6b7a99] mt-0.5">{q.institute}{q.institute && q.year ? ' · ' : ''}{q.year}</div>}
-                </div>
-              );
-            })}
-            {(!candidate.qual || candidate.qual.length === 0) && <span className="text-[14px] text-[#6b7a99]">No qualifications added.</span>}
-          </div>
-        );
-
-      case "hero-location":
-        return (
-          <div className="flex flex-col gap-4">
-            <div>
-              <span className="text-[12px] font-bold text-[#6b7a99] uppercase tracking-wide">Current Location</span>
-              <div className="font-medium text-[16px] text-[#111] mt-1 flex items-center gap-2"><MapPin size={16} className="text-[#133255]" /> {candidate.location || "Not provided"}</div>
-            </div>
-            <div>
-              <span className="text-[12px] font-bold text-[#6b7a99] uppercase tracking-wide">Relocation Preference</span>
-              <div className="font-medium text-[15px] text-[#111] mt-1">{candidate.metadata?.['Relocation'] || candidate.relocation || "Open"}</div>
-            </div>
           </div>
         );
 
@@ -550,6 +720,11 @@ export default function FlCandidateClient({
                 </div>
               </div>
             )}
+            {candidate.auditLog?.['ctc'] && (
+              <div className="text-[10px] text-[#8a93a3] mt-2 italic">
+                Last updated on {candidate.auditLog['ctc'].updatedAt} by {candidate.auditLog['ctc'].updatedBy}
+              </div>
+            )}
           </div>
         );
 
@@ -575,25 +750,36 @@ export default function FlCandidateClient({
 
       case "dream-jobs":
         return (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <div className="text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Dream Roles</div>
-              <div className="flex flex-wrap gap-1.5">
-                {candidate.dreamRoles?.map((r: string) => (
-                  <span key={r} className="px-2.5 py-1 bg-[#f0f5ff] text-[#1d4ed8] border border-[#d6e4ff] rounded-[6px] text-[12px] font-bold">{r}</span>
-                ))}
-                {(!candidate.dreamRoles || candidate.dreamRoles.length === 0) && <span className="text-[13px] text-[#94a3b8]">None added</span>}
+          <div className="flex flex-col h-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 flex-1">
+              <div>
+                <div className="text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Dream Roles</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {candidate.dreamRoles?.map((r: string) => (
+                    <span key={r} className="px-2.5 py-1 bg-[#f0f5ff] text-[#1d4ed8] border border-[#d6e4ff] rounded-[6px] text-[12px] font-bold">{r}</span>
+                  ))}
+                  {(!candidate.dreamRoles || candidate.dreamRoles.length === 0) && <span className="text-[13px] text-[#94a3b8]">None added</span>}
+                </div>
+              </div>
+              <div>
+                <div className="text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Dream Companies</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {candidate.dreamCos?.map((c: string) => (
+                    <span key={c} className="px-2.5 py-1 bg-[#fef5e6] text-[#b36b00] border border-[#fdebb4] rounded-[6px] text-[12px] font-bold">{c}</span>
+                  ))}
+                  {(!candidate.dreamCos || candidate.dreamCos.length === 0) && <span className="text-[13px] text-[#94a3b8]">None added</span>}
+                </div>
+              </div>
+              <div className="sm:col-span-2">
+                <div className="text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Relocation Preference</div>
+                <div className="font-medium text-[14px] text-[#111]">{candidate.metadata?.['Relocation'] || candidate.relocation || "Open"}</div>
               </div>
             </div>
-            <div>
-              <div className="text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Dream Companies</div>
-              <div className="flex flex-wrap gap-1.5">
-                {candidate.dreamCos?.map((c: string) => (
-                  <span key={c} className="px-2.5 py-1 bg-[#fef5e6] text-[#b36b00] border border-[#fdebb4] rounded-[6px] text-[12px] font-bold">{c}</span>
-                ))}
-                {(!candidate.dreamCos || candidate.dreamCos.length === 0) && <span className="text-[13px] text-[#94a3b8]">None added</span>}
+            {candidate.auditLog?.['preferences'] && (
+              <div className="text-[10px] text-[#8a93a3] mt-3 italic">
+                Last updated on {candidate.auditLog['preferences'].updatedAt} by {candidate.auditLog['preferences'].updatedBy}
               </div>
-            </div>
+            )}
           </div>
         );
 
@@ -872,9 +1058,6 @@ export default function FlCandidateClient({
     switch(id) {
       case "hero-identity": return { title: "Identity & Core Info", icon: "👤" };
       case "hero-status": return { title: "Status & Notes", icon: "🎯" };
-      case "hero-contact": return { title: "Contact", icon: "📞" };
-      case "hero-quals": return { title: "Education", icon: "🎓" };
-      case "hero-location": return { title: "Location", icon: "📍" };
       case "compensation": return { title: "Compensation", icon: "💰" };
       case "past-companies": return { title: "Past Companies", icon: "🏢" };
       case "dream-jobs": return { title: "Preferences", icon: "⭐" };
@@ -892,60 +1075,88 @@ export default function FlCandidateClient({
   return (
     <div className="bg-[#f0f3f8] min-h-screen pb-20">
       {/* ── Sticky Header Action Bar ──────────────────────────── */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-[#D4E0F0] shadow-sm mb-6 px-6 py-4">
-        <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard/candidates" className="w-10 h-10 rounded-full flex items-center justify-center bg-[#f0f5ff] text-[#1d4ed8] hover:bg-[#e0edff] transition-colors">
-              <ArrowLeft size={18} />
+      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-[#D4E0F0] shadow-sm mb-6 px-6 py-3">
+        <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-3">
+          {/* Left: back + breadcrumb + name */}
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard/candidates" className="w-9 h-9 rounded-full flex items-center justify-center bg-[#f0f5ff] text-[#1d4ed8] hover:bg-[#e0edff] transition-colors flex-shrink-0">
+              <ArrowLeft size={17} />
             </Link>
             <div>
-              <div className="text-[11px] font-bold tracking-wide uppercase text-[#6b7a99] flex gap-1"><Link href="/dashboard" className="hover:text-[#111]">Home</Link> / <Link href="/dashboard/candidates" className="hover:text-[#111]">Candidates</Link> / <span className="text-[#133255] truncate max-w-[150px] inline-block align-bottom">{candidate.name}</span></div>
-              <h1 className="text-[22px] font-serif font-bold text-[#111]">{candidate.name}</h1>
+              <div className="text-[10px] font-bold tracking-wide uppercase text-[#6b7a99] flex gap-1">
+                <Link href="/dashboard" className="hover:text-[#111]">Home</Link> /
+                <Link href="/dashboard/candidates" className="hover:text-[#111]">Candidates</Link> /
+                <span className="text-[#133255] truncate max-w-[120px] inline-block align-bottom">{candidate.name}</span>
+              </div>
+              <h1 className="text-[20px] font-serif font-bold text-[#111] leading-tight">{candidate.name}</h1>
             </div>
           </div>
 
+          {/* Right: action buttons */}
           {!readOnly && (
-            <div className="flex flex-wrap items-center gap-2.5">
-              <button onClick={() => setIsMandateModalOpen(true)} className="px-4 py-2 bg-[#fdf2d6] text-[#b7791f] border border-[#f0dcae] rounded-xl text-[13px] font-bold shadow-sm hover:bg-[#faeac1] transition-colors">＋ Add to Mandate</button>
-              <button onClick={handleAddToBdList} disabled={isSubmitting} className="px-4 py-2 bg-[#f0f5ff] text-[#1d4ed8] border border-[#d6e4ff] rounded-xl text-[13px] font-bold shadow-sm hover:bg-[#e0edff] transition-colors">BD List</button>
-              <button onClick={handleAddToCallingList} disabled={isSubmitting} className="px-4 py-2 bg-[#e0f2fe] text-[#0ea5e9] border border-[#bae6fd] rounded-xl text-[13px] font-bold shadow-sm hover:bg-[#ccebff] transition-colors">Call List</button>
-              <button onClick={() => setIsSubModalOpen(true)} disabled={isSubmitting} className="px-5 py-2 bg-[#133255] text-white rounded-xl text-[13px] font-bold shadow-sm hover:bg-[#1e40af] transition-colors">Submit ➤</button>
-              <button onClick={handleFloatSubmit} disabled={isSubmitting} className="px-5 py-2 bg-[#10b981] text-white rounded-xl text-[13px] font-bold shadow-sm hover:bg-[#059669] transition-colors">Float</button>
-              <div className="w-[1px] h-6 bg-[#e4e8f0] mx-1"></div>
-              <button onClick={exportCandidate} disabled={isSubmitting} className="px-3 py-2 bg-white text-[#475569] border border-[#e4e8f0] rounded-xl hover:bg-[#f8fafc] transition-colors" title="Export to Excel"><Download size={16} /></button>
-              <Link href={`/dashboard/candidates/${candidate.id}/edit`} className="px-3 py-2 bg-white text-[#475569] border border-[#e4e8f0] rounded-xl hover:bg-[#f8fafc] transition-colors" title="Edit Profile"><Edit size={16} /></Link>
-              <button onClick={handleDeleteCandidate} disabled={isDeleting} className="px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors" title="Delete Candidate"><Trash2 size={16} /></button>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Primary engagement actions */}
+              <div className="flex flex-wrap gap-1.5">
+                <button onClick={() => setIsMandateModalOpen(true)} className="px-3 py-1.5 bg-[#133255] text-white rounded-lg text-[12px] font-bold shadow-sm hover:bg-[#0f2844] transition-colors whitespace-nowrap">Add to Mandate</button>
+                <button onClick={() => setIsSubModalOpen(true)} className="px-3 py-1.5 bg-[#D8B15B] text-[#133255] rounded-lg text-[12px] font-bold shadow-sm hover:bg-[#e8c97a] transition-colors whitespace-nowrap">Send to Client</button>
+                <button
+                  onClick={handleFloatSubmit}
+                  className={`px-3 py-1.5 rounded-lg text-[12px] font-bold shadow-sm flex items-center gap-1 transition-all whitespace-nowrap ${inFloatList ? 'bg-[#059669] text-white' : 'bg-[#ecfdf5] text-[#059669] border border-[#a7f3d0] hover:bg-[#d1fae5]'}`}
+                >
+                  Float {inFloatList && <Check size={12} />}
+                </button>
+                <button
+                  onClick={handleAddToCallingList}
+                  className={`px-3 py-1.5 rounded-lg text-[12px] font-bold shadow-sm flex items-center gap-1 transition-all whitespace-nowrap ${inCallingList ? 'bg-[#0ea5e9] text-white' : 'bg-[#f0f5ff] text-[#1d4ed8] border border-[#d6e4ff] hover:bg-[#e0edff]'}`}
+                >
+                  Call List {inCallingList && <Check size={12} />}
+                </button>
+                <button
+                  onClick={handleAddToBdList}
+                  className={`px-3 py-1.5 rounded-lg text-[12px] font-bold shadow-sm flex items-center gap-1 transition-all whitespace-nowrap ${inBdList ? 'bg-[#1d4ed8] text-white' : 'bg-[#f0f5ff] text-[#1d4ed8] border border-[#d6e4ff] hover:bg-[#e0edff]'}`}
+                >
+                  BD List {inBdList && <Check size={12} />}
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div className="w-px h-5 bg-[#e4e8f0] mx-0.5" />
+
+              {/* Layout toggle */}
+              <button
+                onClick={() => setIsLocked()}
+                className={`px-3 py-1.5 rounded-lg text-[12px] font-bold shadow-sm flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                  isLocked ? 'bg-white text-[#475569] border border-[#e4e8f0] hover:bg-gray-50' : 'bg-[#10b981] text-white hover:bg-[#059669]'
+                }`}
+              >
+                <Edit size={12} />
+                {isLocked ? 'Edit Layout' : 'Save Layout'}
+              </button>
+
+              {/* Divider */}
+              <div className="w-px h-5 bg-[#e4e8f0] mx-0.5" />
+
+              {/* Utility icons */}
+              <button onClick={exportCandidate} disabled={isSubmitting} className="w-8 h-8 flex items-center justify-center bg-white text-[#475569] border border-[#e4e8f0] rounded-lg hover:bg-[#f8fafc] transition-colors shadow-sm" title="Export to Excel"><Download size={15} /></button>
+              <Link href={`/dashboard/candidates/${candidate.id}/edit`} className="w-8 h-8 flex items-center justify-center bg-white text-[#475569] border border-[#e4e8f0] rounded-lg hover:bg-[#f8fafc] transition-colors shadow-sm" title="Edit Profile"><Edit size={15} /></Link>
+              <button onClick={handleDeleteCandidate} disabled={isDeleting} className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors shadow-sm" title="Delete Candidate"><Trash2 size={15} /></button>
             </div>
           )}
         </div>
       </div>
 
       <div className="max-w-[1400px] mx-auto px-6">
-        {/* Admin Layout Controls */}
-        {isAdmin && (
-          <div className="mb-5 p-4 bg-[#f8fafc] border border-[#e4e8f0] rounded-2xl flex justify-between items-center shadow-sm">
-            <div>
-              <h3 className="text-[14px] font-bold text-[#111]">Admin Layout Manager</h3>
-              <p className="text-[12px] text-[#6b7a99]">Drag widgets to reorder. Toggle sizes. Publish to set the default layout for the entire organization.</p>
-            </div>
-            <div className="flex gap-2.5">
-              <button onClick={() => setIsLocked(!isLocked)} className={`px-4 py-2 rounded-xl text-[13px] font-bold border transition-colors ${isLocked ? 'bg-[#f0f5ff] text-[#1d4ed8] border-[#d6e4ff]' : 'bg-white text-[#475569] border-[#e4e8f0]'}`}>{isLocked ? "Unlock Grid" : "Lock Grid"}</button>
-              <button onClick={resetLayout} className="px-4 py-2 rounded-xl text-[13px] font-bold bg-white text-[#475569] border border-[#e4e8f0] hover:bg-gray-50">Reset</button>
-              <button onClick={publishAsOrgDefault} className="px-4 py-2 rounded-xl text-[13px] font-bold bg-[#D8B15B] text-[#133255] hover:bg-[#e8c97a]">Publish to Org</button>
-            </div>
-          </div>
-        )}
-
         {/* ── Widget Grid ────────────────────────────────────── */}
         <ResponsiveGridLayout
           className="layout"
-          layouts={{ lg: widgets.map(w => ({ ...w, i: w.id })) }}
+          layouts={{ lg: widgets.map(w => ({ ...w, i: w.id, isDraggable: !isLocked, isResizable: !isLocked, resizeHandles: isLocked ? [] : ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne'] })) }}
           breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
           cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
           rowHeight={80}
           onLayoutChange={onLayoutChange}
           isDraggable={!isLocked}
           isResizable={!isLocked}
+          resizeHandles={isLocked ? [] : ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
           draggableHandle=".draggable-handle"
           margin={[20, 20]}
           useCSSTransforms={true}

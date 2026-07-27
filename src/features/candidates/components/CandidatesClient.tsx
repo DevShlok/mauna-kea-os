@@ -456,7 +456,7 @@ export default function CandidatesClient({
   };
 
   return (
-    <div className="max-w-screen-xl mx-auto px-4 pb-10 pt-6">
+    <div className="w-full max-w-[1600px] mx-auto px-6 pb-10 pt-6">
       <ColumnCustomizerPanel
         isOpen={isCustomizerOpen}
         onClose={() => setIsCustomizerOpen(false)}

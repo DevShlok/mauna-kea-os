@@ -1,8 +1,8 @@
 import { requireRole } from "@/lib/auth";
 import { getCandidateById, getMandates, getUserByEmail } from "@/db/queries";
 import { db } from "@/db";
-import { clientRemarks, clients } from "@/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { clientRemarks, clients, engagementListItems } from "@/db/schema";
+import { eq, asc, and } from "drizzle-orm";
 import FlCandidateClient from "@/features/candidates/components/FlCandidateClient";
 import { redirect } from "next/navigation";
 
@@ -25,17 +25,25 @@ export default async function FlCandidateProfilePage({ params }: { params: Promi
     }
   }
 
-  const [candidate, mandates, remarks, allClientsList] = await Promise.all([
+  const [candidate, mandates, remarks, allClientsList, userLists] = await Promise.all([
     getCandidateById(id),
     getMandates(),
     db.select().from(clientRemarks).where(eq(clientRemarks.candId, id)).orderBy(asc(clientRemarks.createdAt)),
-    db.select().from(clients).orderBy(asc(clients.name))
+    db.select().from(clients).orderBy(asc(clients.name)),
+    pUser ? db.select().from(engagementListItems).where(
+      and(
+        eq(engagementListItems.candId, id),
+        eq(engagementListItems.userId, pUser.id)
+      )
+    ) : Promise.resolve([])
   ]);
 
   if (!candidate) {
     return <div className="p-10 text-center text-gray-400">Candidate not found.</div>;
   }
 
-  return <FlCandidateClient candidate={candidate} mandates={mandates} userRole={userRole} readOnly={readOnly} clientRemarks={remarks} allClients={allClientsList} />;
+  const initialEngagementLists = userLists.map((l: any) => l.listType);
+
+  return <FlCandidateClient candidate={candidate} mandates={mandates} userRole={userRole} readOnly={readOnly} clientRemarks={remarks} allClients={allClientsList} initialEngagementLists={initialEngagementLists} />;
 }
 // Triggering HMR rebuild

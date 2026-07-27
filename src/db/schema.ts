@@ -93,6 +93,7 @@ export const candidates = pgTable('candidates', {
   linkedin: varchar('linkedin', { length: 500 }),
   linkedinPdf: varchar('linkedin_pdf', { length: 500 }),
   targetCompany: varchar('target_company', { length: 255 }),
+  targetCompanies: json('target_companies').$type<string[]>().default([]),
   currency: varchar('currency', { length: 20 }).default('INR'),
   cvFileName: varchar('cv_file_name', { length: 255 }),
   notes: text('notes'),
