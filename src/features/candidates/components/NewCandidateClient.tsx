@@ -7,7 +7,7 @@ const AuditText = ({ field, data }: { field: string, data: any }) => {
   const log = data?.auditLog?.[field];
   if (!log) return null;
   return (
-    <div className="text-[10px] text-gray-400 italic mt-0.5 leading-tight">
+    <div suppressHydrationWarning className="text-[10px] text-gray-400 italic mt-0.5 leading-tight">
       Last updated by {log.updatedBy} on {new Date(log.updatedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
     </div>
   );
@@ -24,26 +24,27 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
   const router = useRouter();
   const isEdit = !!initialData;
   const [form, setForm] = useState({ 
-    name: initialData?.name || "", 
-    company: initialData?.company || "", 
-    designation: initialData?.designation || "", 
-    email: initialData?.email || "", 
-    mobile: initialData?.mobile || "", 
-    location: initialData?.location || "", 
-    exp: initialData?.exp || "", 
-    ctc: initialData?.ctc || "", 
-    fixedCtc: initialData?.fixedCtc || "",
-    variableCtc: initialData?.variableCtc || "",
-    esops: initialData?.esops || "",
-    expected: initialData?.expected || "", 
-    tenure: initialData?.tenure || "", 
+    name: initialData?.name ?? "", 
+    company: initialData?.company ?? "", 
+    designation: initialData?.designation ?? "", 
+    email: initialData?.email ?? "", 
+    mobile: initialData?.mobile ?? "", 
+    location: initialData?.location ?? "", 
+    exp: initialData?.exp ?? "", 
+    ctc: initialData?.ctc ?? "", 
+    fixedCtc: initialData?.fixedCtc ?? "",
+    variableCtc: initialData?.variableCtc ?? "",
+    esops: initialData?.esops ?? "",
+    expected: initialData?.expected ?? "", 
+    tenure: initialData?.tenure ?? "", 
     notice: initialData?.notice !== null && initialData?.notice !== undefined ? String(initialData?.notice) : "90", 
-    status: initialData?.status || "Active", 
-    linkedin: initialData?.linkedin || "",
-    targetCompany: initialData?.targetCompany || "", 
-    currency: initialData?.currency || "INR", 
-    cvFileName: initialData?.cvFileName || "", 
-    notes: initialData?.notes || "",
+    status: initialData?.status ?? "Active", 
+    linkedin: initialData?.linkedin ?? "",
+    targetCompany: initialData?.targetCompany ?? "", 
+    currency: initialData?.currency ?? "INR", 
+    currentCompanyStartDate: initialData?.currentCompanyStartDate ?? "",
+    cvFileName: initialData?.cvFileName ?? "", 
+    notes: initialData?.notes ?? "",
     dob: initialData?.dob ? new Date(initialData.dob).toISOString().split('T')[0] : "",
     hometown: initialData?.hometown || "",
     relocationStatus: initialData?.relocationStatus || "Open to relocation",
@@ -53,6 +54,34 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
     initialData?.stability || { current: "", previous: "" }
   );
   const [relocationPrefs, setRelocationPrefs] = useState<string[]>(initialData?.relocationPrefs || []);
+  const [priorExperiences, setPriorExperiences] = useState<any[]>(initialData?.priorExperiences || []);
+  const [newPriorExperience, setNewPriorExperience] = useState({ company: "", designation: "", startDate: "", endDate: "" });
+  
+  const calculateTenureText = (startDateStr: string, endDateStr?: string) => {
+    if (!startDateStr) return "";
+    const start = new Date(startDateStr);
+    const end = endDateStr ? new Date(endDateStr) : new Date();
+    let months = (end.getFullYear() - start.getFullYear()) * 12;
+    months -= start.getMonth();
+    months += end.getMonth();
+    if (months <= 0) return "0 months";
+    const y = Math.floor(months / 12);
+    const m = months % 12;
+    if (y === 0) return `${m} month${m !== 1 ? 's' : ''}`;
+    if (m === 0) return `${y} year${y !== 1 ? 's' : ''}`;
+    return `${y} year${y !== 1 ? 's' : ''}, ${m} month${m !== 1 ? 's' : ''}`;
+  };
+
+  const calculateTenureDecimal = (startDateStr: string, endDateStr?: string) => {
+    if (!startDateStr) return null;
+    const start = new Date(startDateStr);
+    const end = endDateStr ? new Date(endDateStr) : new Date();
+    let months = (end.getFullYear() - start.getFullYear()) * 12;
+    months -= start.getMonth();
+    months += end.getMonth();
+    if (months <= 0) return 0;
+    return parseFloat((months / 12).toFixed(1));
+  };
   
   const [quals, setQuals] = useState<any[]>(() => {
     return (initialData?.qual || []).map((q: any) => {
@@ -195,6 +224,16 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
     setNewQual({ degree: "", institute: "", year: "" });
   };
 
+  const handleAddPriorExperience = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    if (!newPriorExperience.company) {
+      toast.error("Please enter the company name.");
+      return;
+    }
+    setPriorExperiences([...priorExperiences, newPriorExperience]);
+    setNewPriorExperience({ company: "", designation: "", startDate: "", endDate: "" });
+  };
+
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string[]>>, tags: string[]) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -235,7 +274,8 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
         mobile: form.mobile,
         location: form.location,
         exp: form.exp ? Number(form.exp) : null,
-        tenure: form.tenure ? Number(form.tenure) : null,
+        tenure: form.currentCompanyStartDate ? calculateTenureDecimal(form.currentCompanyStartDate) : (form.tenure ? Number(form.tenure) : null),
+        currentCompanyStartDate: form.currentCompanyStartDate || null,
         ctc: form.ctc ? Number(form.ctc) : null,
         fixedCtc: form.fixedCtc ? Number(form.fixedCtc) : null,
         variableCtc: form.variableCtc ? Number(form.variableCtc) : null,
@@ -258,7 +298,8 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
         hometown: form.hometown,
         stability,
         relocationStatus: form.relocationStatus,
-        relocationPrefs
+        relocationPrefs,
+        priorExperiences
       };
 
       let candId = initialData?.id;
@@ -475,7 +516,17 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
                 <input type="number" value={form.exp} onChange={e=>setForm({...form, exp:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" min="0" />
                 <AuditText field="exp" data={initialData} />
               </div>
-
+              <div>
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Start Date (MM/YYYY)</label>
+                <input type="month" value={form.currentCompanyStartDate} onChange={e=>setForm({...form, currentCompanyStartDate:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" />
+                <AuditText field="currentCompanyStartDate" data={initialData} />
+              </div>
+              <div>
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Tenure (Calculated)</label>
+                <div className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 py-2 text-[15px] font-medium text-[#133255] bg-gray-50 flex items-center">
+                  {calculateTenureText(form.currentCompanyStartDate) || (form.tenure ? `${form.tenure} years` : "—")}
+                </div>
+              </div>
             </div>
 
             {/* Compensation & Status */}
@@ -520,12 +571,12 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Current Company Tenure <span className="text-gray-400 lowercase font-normal">(Stability)</span></label>
-                <input value={stability.current} onChange={e => setStability({...stability, current: e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. 5+ years" />
+                <input value={stability?.current ?? ""} onChange={e => setStability({...stability, current: e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. 5+ years" />
                 <AuditText field="stability" data={initialData} />
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Previous Company Tenure <span className="text-gray-400 lowercase font-normal">(Stability)</span></label>
-                <input value={stability.previous} onChange={e => setStability({...stability, previous: e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. 4+ years" />
+                <input value={stability?.previous ?? ""} onChange={e => setStability({...stability, previous: e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. 4+ years" />
                 <AuditText field="stability" data={initialData} />
               </div>
               {!readOnly && (
@@ -613,9 +664,38 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
               ))}
             </div>
 
-            {/* Experience Tags */}
+            {/* Prior Experiences */}
             <div className="border-t border-[#f0f0f0] pt-5 mb-3">
               <div className="text-[13px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Prior Experience</div>
+            </div>
+            <div className="grid grid-cols-[1.5fr_1.5fr_1fr_1fr_auto] gap-3 mb-4">
+              <input type="text" value={newPriorExperience.company} onChange={e=>setNewPriorExperience({...newPriorExperience, company: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Company" />
+              <input type="text" value={newPriorExperience.designation} onChange={e=>setNewPriorExperience({...newPriorExperience, designation: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[14px] outline-none bg-white focus:border-[#133255]" placeholder="Designation" />
+              <input type="month" value={newPriorExperience.startDate} onChange={e=>setNewPriorExperience({...newPriorExperience, startDate: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-2 text-[14px] outline-none bg-white focus:border-[#133255]" title="Start Date" />
+              <input type="month" value={newPriorExperience.endDate} onChange={e=>setNewPriorExperience({...newPriorExperience, endDate: e.target.value})} className="h-9 border-[1.5px] border-[#D4E0F0] rounded-md px-2 text-[14px] outline-none bg-white focus:border-[#133255]" title="End Date" />
+              <button onClick={handleAddPriorExperience} type="button" className="h-9 px-3 rounded-md text-[14px] font-semibold text-[#133255] bg-[#DCE5F4] hover:bg-[#c5d3ec] transition-all border border-[#bacce6] whitespace-nowrap">Add</button>
+            </div>
+            <div className="flex flex-col gap-2 mb-6">
+              {priorExperiences.map((pe, idx) => (
+                <div key={idx} className="flex justify-between items-center bg-[#f8fafc] border border-[#e2e8f0] px-4 py-2.5 rounded-lg">
+                  <div>
+                    <span className="font-bold text-[#111]">{pe.company}</span>
+                    <span className="text-[#6b7a99] text-[15px]"> · {pe.designation}</span>
+                    {(pe.startDate || pe.endDate) && (
+                      <span className="text-gray-500 text-[13px] ml-2 block sm:inline">
+                        ({pe.startDate || '?'} to {pe.endDate || '?'}) — {calculateTenureText(pe.startDate, pe.endDate)}
+                      </span>
+                    )}
+                  </div>
+                  <span className="cursor-pointer font-bold text-red-400 hover:text-red-600 px-2" onClick={() => setPriorExperiences(priorExperiences.filter((_, i) => i !== idx))}>×</span>
+                </div>
+              ))}
+              {priorExperiences.length > 0 && <AuditText field="priorExperiences" data={initialData} />}
+            </div>
+
+            {/* Experience Tags */}
+            <div className="border-t border-[#f0f0f0] pt-5 mb-3">
+              <div className="text-[13px] font-bold uppercase tracking-wider text-[#9ca8be] mb-3">Experience Tags</div>
             </div>
             <p className="text-[14px] text-[#6b7a99] mb-2.5">Add each experience as &quot;Title - Company&quot;</p>
             <div className="min-h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md p-1.5 bg-white cursor-text flex flex-wrap gap-1.5 items-center focus-within:border-[#133255] transition-colors mb-6">

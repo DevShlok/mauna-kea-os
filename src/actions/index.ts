@@ -262,6 +262,9 @@ export async function addFloatListEntryAction(data: unknown) {
     stability: d.stability || null,
     relocationStatus: d.relocationStatus || null,
     relocationPrefs: d.relocationPrefs || null,
+    pastCompanies: d.pastCompanies || [],
+    priorExperiences: d.priorExperiences || [],
+    currentCompanyStartDate: d.currentCompanyStartDate || null,
   });
   revalidatePath("/dashboard/float-list/database");
   return id;
@@ -679,19 +682,46 @@ export async function editFloatListEntryAction(id: string, data: unknown) {
     const updatedBy = await getCurrentUserName();
     const ts = new Date().toISOString();
 
-    if (existing[0].company !== d.company) auditLog["company"] = { updatedBy, updatedAt: ts };
-    if (existing[0].designation !== d.designation) auditLog["designation"] = { updatedBy, updatedAt: ts };
-    if (existing[0].exp !== (d.exp ? Number(d.exp) : null)) auditLog["exp"] = { updatedBy, updatedAt: ts };
-    if (existing[0].ctc !== (d.ctc ? Number(d.ctc) : null)) auditLog["ctc"] = { updatedBy, updatedAt: ts };
-    if (existing[0].fixedCtc !== (d.fixedCtc ? Number(d.fixedCtc) : null)) auditLog["fixedCtc"] = { updatedBy, updatedAt: ts };
-    if (existing[0].variableCtc !== (d.variableCtc ? Number(d.variableCtc) : null)) auditLog["variableCtc"] = { updatedBy, updatedAt: ts };
-    if (existing[0].expected !== (d.expected ? Number(d.expected) : null)) auditLog["expected"] = { updatedBy, updatedAt: ts };
-    if (existing[0].esops !== (d.esops ? Number(d.esops) : null)) auditLog["esops"] = { updatedBy, updatedAt: ts };
-    if (existing[0].notice !== (d.notice ? Number(d.notice) : null)) auditLog["notice"] = { updatedBy, updatedAt: ts };
-    if (JSON.stringify(existing[0].stability) !== JSON.stringify(d.stability || null)) auditLog["stability"] = { updatedBy, updatedAt: ts };
-    if (existing[0].status !== (d.status || "Active")) auditLog["status"] = { updatedBy, updatedAt: ts };
-    if (existing[0].cvFileName !== (d.cvFileName || null)) auditLog["cvFileName"] = { updatedBy, updatedAt: ts };
-    if (existing[0].notes !== (d.notes || null)) auditLog["notes"] = { updatedBy, updatedAt: ts };
+    const checkField = (fieldKey: keyof typeof existing[0], newValue: any) => {
+      const oldValue = existing[0][fieldKey];
+      if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+        auditLog[fieldKey as string] = { updatedBy, updatedAt: ts };
+      }
+    };
+
+    checkField("name", candidateName);
+    checkField("company", d.company || null);
+    checkField("designation", d.designation || null);
+    checkField("email", d.email || null);
+    checkField("mobile", d.mobile || null);
+    checkField("location", d.location || null);
+    checkField("exp", d.exp ? Number(d.exp) : null);
+    checkField("tenure", d.tenure ? Number(d.tenure) : null);
+    checkField("ctc", d.ctc ? Number(d.ctc) : null);
+    checkField("fixedCtc", d.fixedCtc ? Number(d.fixedCtc) : null);
+    checkField("variableCtc", d.variableCtc ? Number(d.variableCtc) : null);
+    checkField("expected", d.expected ? Number(d.expected) : null);
+    checkField("notice", d.notice ? Number(d.notice) : null);
+    checkField("status", d.status || "Active");
+    checkField("qual", d.qual || []);
+    checkField("dreamRoles", d.dreamRoles || []);
+    checkField("dreamCos", d.dreamCos || []);
+    checkField("expTags", d.expTags || []);
+    checkField("pastCompanies", d.pastCompanies || []);
+    checkField("priorExperiences", d.priorExperiences || []);
+    checkField("currentCompanyStartDate", d.currentCompanyStartDate || null);
+    checkField("linkedin", d.linkedin || null);
+    checkField("targetCompany", d.targetCompany || null);
+    checkField("currency", d.currency || "INR");
+    checkField("cvFileName", d.cvFileName || null);
+    checkField("notes", d.notes || null);
+    checkField("esops", d.esops ? Number(d.esops) : null);
+    checkField("esopVesting", d.esopVesting || null);
+    checkField("dob", d.dob || null);
+    checkField("hometown", d.hometown || null);
+    checkField("stability", d.stability || null);
+    checkField("relocationStatus", d.relocationStatus || null);
+    checkField("relocationPrefs", d.relocationPrefs || null);
 
     delete auditLog["Professional Details"];
     delete auditLog["Compensation"];
@@ -719,6 +749,9 @@ export async function editFloatListEntryAction(id: string, data: unknown) {
     dreamRoles: d.dreamRoles || [],
     dreamCos: d.dreamCos || [],
     expTags: d.expTags || [],
+    pastCompanies: d.pastCompanies || [],
+    priorExperiences: d.priorExperiences || [],
+    currentCompanyStartDate: d.currentCompanyStartDate || null,
     linkedin: d.linkedin || null,
     targetCompany: d.targetCompany || null,
     currency: d.currency || "INR",

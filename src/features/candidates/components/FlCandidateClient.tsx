@@ -19,7 +19,7 @@ import { convertToClientContactAction, updatePastCompaniesAction, updateCandidat
 import { removeFromEngagementListAction } from "@/actions/calls";
 import { formatCtcValue } from "@/lib/helpers";
 import { createClient } from "@/utils/supabase/client";
-import { Pin, Download, User, FileText, CheckSquare, Target, Briefcase, IndianRupee, MapPin, Building2, Brain, Link as LinkIcon, Edit, Trash2, ArrowLeft, Plus, Check } from "lucide-react";
+import { Pin, Download, User, FileText, CheckSquare, Target, Briefcase, IndianRupee, MapPin, Building2, Brain, Link as LinkIcon, Edit, Trash2, ArrowLeft, Plus, Check, Send, Rocket, PhoneCall } from "lucide-react";
 
 import { useWidgetLayout } from "@/hooks/useWidgetLayout";
 import { WidgetCard } from "@/components/ui/WidgetCard";
@@ -77,7 +77,8 @@ export default function FlCandidateClient({
     toggleCollapse,
     resetLayout,
     publishAsOrgDefault,
-    isAdmin
+    isAdmin,
+    isLoading
   } = useWidgetLayout(userRole);
 
   useEffect(() => {
@@ -518,6 +519,21 @@ export default function FlCandidateClient({
     return age;
   };
 
+  const calculateTenureText = (startDateStr?: string | null, endDateStr?: string | null) => {
+    if (!startDateStr) return "";
+    const start = new Date(startDateStr);
+    const end = endDateStr ? new Date(endDateStr) : new Date();
+    let months = (end.getFullYear() - start.getFullYear()) * 12;
+    months -= start.getMonth();
+    months += end.getMonth();
+    if (months <= 0) return "0 months";
+    const y = Math.floor(months / 12);
+    const m = months % 12;
+    if (y === 0) return `${m} month${m !== 1 ? 's' : ''}`;
+    if (m === 0) return `${y} year${y !== 1 ? 's' : ''}`;
+    return `${y} year${y !== 1 ? 's' : ''}, ${m} month${m !== 1 ? 's' : ''}`;
+  };
+
   // ─── Widget Renderers ───────────────────────────────────
 
   const renderWidgetBody = (id: string) => {
@@ -586,14 +602,16 @@ export default function FlCandidateClient({
                   <div className="text-[11px] font-bold uppercase tracking-wider text-[#6b7a99] mb-1">Current Role</div>
                   <div className="font-semibold text-[15px] text-[#133255] leading-snug">{candidate.designation || "-"}</div>
                   <div className="text-[13px] text-[#111] mt-0.5">{candidate.company || "-"}</div>
-                </div>
-                <div className="mt-2">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#6b7a99] mb-2">Previous Experience</div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {localPastCompanies.length > 0 ? localPastCompanies.map(pc => (
-                      <span key={pc} className="px-2 py-1 bg-[#f8fafc] border border-[#e4e8f0] rounded text-[12px] font-medium text-[#475569]">{pc}</span>
-                    )) : <span className="text-[12px] text-[#6b7a99]">No previous companies</span>}
-                  </div>
+                  {candidate.currentCompanyStartDate && (
+                    <div className="text-[12px] text-[#6b7a99] mt-1 italic">
+                      {candidate.currentCompanyStartDate} to Present ({calculateTenureText(candidate.currentCompanyStartDate)})
+                    </div>
+                  )}
+                  {!candidate.currentCompanyStartDate && candidate.tenure && (
+                    <div className="text-[12px] text-[#6b7a99] mt-1 italic">
+                      Tenure: {candidate.tenure} years
+                    </div>
+                  )}
                 </div>
                 <div className="mt-3 text-[12px] text-[#6b7a99] bg-[#f8fafc] p-2 rounded-lg border border-[#e4e8f0]">
                   <span className="font-bold text-[#475569]">Total Exp:</span> {candidate.exp || "-"} yrs &nbsp;&nbsp;&middot;&nbsp;&nbsp; <span className="font-bold text-[#475569]">Notice:</span> {candidate.notice || "-"} days
@@ -729,21 +747,57 @@ export default function FlCandidateClient({
         );
 
       case "past-companies":
+        const hasPastCos = localPastCompanies.length > 0;
+        const hasPriorExp = candidate.priorExperiences && candidate.priorExperiences.length > 0;
         return (
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              {localPastCompanies.length > 0 ? localPastCompanies.map(pc => (
-                <span key={pc} className="px-2.5 py-1.5 bg-[#f0f4f8] border border-[#d1d5db] rounded-[6px] text-[13px] font-bold text-[#4a5568] flex items-center gap-1.5">
-                  <Building2 size={14} className="text-[#94a3b8]" /> {pc}
-                </span>
-              )) : (
-                <span className="text-[13px] text-[#6b7a99]">No past companies tracked.</span>
-              )}
-            </div>
+            {hasPriorExp && (
+              <div className="border border-[#e4e8f0] rounded-xl overflow-hidden">
+                <table className="w-full text-left text-[13px]">
+                  <thead className="bg-[#fafbfd] text-[#6b7a99] border-b border-[#e4e8f0]">
+                    <tr>
+                      <th className="px-4 py-2 font-bold uppercase tracking-wider">Company</th>
+                      <th className="px-4 py-2 font-bold uppercase tracking-wider">Role</th>
+                      <th className="px-4 py-2 font-bold uppercase tracking-wider">Timeline</th>
+                      <th className="px-4 py-2 font-bold uppercase tracking-wider text-right">Duration</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e4e8f0] bg-white">
+                    {candidate.priorExperiences.map((pe: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-[#f8fafc] transition-colors">
+                        <td className="px-4 py-2.5 font-bold text-[#111]">{pe.company}</td>
+                        <td className="px-4 py-2.5 text-[#4a5568]">{pe.designation || "-"}</td>
+                        <td className="px-4 py-2.5 text-[#6b7a99] whitespace-nowrap">
+                          {pe.startDate || '?'} – {pe.endDate || '?'}
+                        </td>
+                        <td className="px-4 py-2.5 text-[#4a5568] text-right font-medium whitespace-nowrap">
+                          {calculateTenureText(pe.startDate, pe.endDate) || pe.tenure || "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {hasPastCos && (
+              <div className="flex flex-col gap-2 mt-2">
+                <span className="text-[12px] font-bold uppercase tracking-wider text-[#6b7a99]">Other Past Companies</span>
+                <div className="flex flex-wrap gap-2">
+                  {localPastCompanies.map(pc => (
+                    <span key={pc} className="px-2.5 py-1.5 bg-[#f0f4f8] border border-[#d1d5db] rounded-[6px] text-[13px] font-bold text-[#4a5568] flex items-center gap-1.5">
+                      <Building2 size={14} className="text-[#94a3b8]" /> {pc}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {!hasPastCos && !hasPriorExp && (
+              <span className="text-[13px] text-[#6b7a99]">No prior experiences tracked.</span>
+            )}
             {!readOnly && (
-              <button onClick={() => setIsPastCompanyModalOpen(true)} className="text-[13px] font-bold text-[#1d4ed8] hover:underline flex items-center gap-1">
-                <Edit size={12} /> Edit Past Companies
-              </button>
+              <Link href={`/dashboard/candidates/${candidate.id}/edit`} className="text-[13px] font-bold text-[#1d4ed8] hover:underline flex items-center gap-1 inline-flex mt-2">
+                <Edit size={12} /> Edit Prior Experiences
+              </Link>
             )}
           </div>
         );
@@ -1096,58 +1150,69 @@ export default function FlCandidateClient({
           {!readOnly && (
             <div className="flex flex-wrap items-center gap-2">
               {/* Primary engagement actions */}
-              <div className="flex flex-wrap gap-1.5">
-                <button onClick={() => setIsMandateModalOpen(true)} className="px-3 py-1.5 bg-[#133255] text-white rounded-lg text-[12px] font-bold shadow-sm hover:bg-[#0f2844] transition-colors whitespace-nowrap">Add to Mandate</button>
-                <button onClick={() => setIsSubModalOpen(true)} className="px-3 py-1.5 bg-[#D8B15B] text-[#133255] rounded-lg text-[12px] font-bold shadow-sm hover:bg-[#e8c97a] transition-colors whitespace-nowrap">Send to Client</button>
+              <div className="flex flex-wrap gap-1.5 items-center">
+                {/* Layout toggle */}
+                <button
+                  onClick={() => setIsLocked()}
+                  className={`px-3 py-1.5 rounded-lg text-[12px] font-bold shadow-sm flex items-center gap-1.5 active:scale-95 transition-colors whitespace-nowrap ${
+                    isLocked ? 'bg-white text-[#475569] border border-[#e4e8f0] hover:bg-gray-50' : 'bg-[#10b981] text-white hover:bg-[#059669]'
+                  }`}
+                >
+                  <Edit size={12} />
+                  {isLocked ? 'Edit Layout' : 'Save Layout'}
+                </button>
+                <div className="w-px h-5 bg-[#e4e8f0] mx-0.5" />
+                <button onClick={() => setIsMandateModalOpen(true)} className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(79,70,229,0.3)] whitespace-nowrap">
+                  <Briefcase size={14} className="opacity-80 group-hover:opacity-100" />
+                  Add to Mandate
+                </button>
+                <button onClick={() => setIsSubModalOpen(true)} className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-[#0E2150] bg-[#D8B15B] hover:bg-[#f0c870] active:scale-95 transition-all shadow-[0_0_10px_rgba(216,177,91,0.2)] hover:shadow-[0_0_15px_rgba(216,177,91,0.4)] whitespace-nowrap">
+                  <Send size={13} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  Send to Client
+                </button>
                 <button
                   onClick={handleFloatSubmit}
-                  className={`px-3 py-1.5 rounded-lg text-[12px] font-bold shadow-sm flex items-center gap-1 transition-all whitespace-nowrap ${inFloatList ? 'bg-[#059669] text-white' : 'bg-[#ecfdf5] text-[#059669] border border-[#a7f3d0] hover:bg-[#d1fae5]'}`}
+                  className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold active:scale-95 transition-all whitespace-nowrap shadow-sm ${inFloatList ? 'bg-[#059669] text-white shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-[#10b981] hover:bg-[#0ea876] text-white hover:shadow-[0_0_15px_rgba(16,185,129,0.4)]'}`}
                 >
-                  Float {inFloatList && <Check size={12} />}
+                  {inFloatList ? <Check size={14} /> : <Rocket size={13} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />}
+                  Float
                 </button>
                 <button
                   onClick={handleAddToCallingList}
-                  className={`px-3 py-1.5 rounded-lg text-[12px] font-bold shadow-sm flex items-center gap-1 transition-all whitespace-nowrap ${inCallingList ? 'bg-[#0ea5e9] text-white' : 'bg-[#f0f5ff] text-[#1d4ed8] border border-[#d6e4ff] hover:bg-[#e0edff]'}`}
+                  className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold active:scale-95 transition-all whitespace-nowrap shadow-sm ${inCallingList ? 'bg-pink-700 text-white shadow-[0_0_10px_rgba(219,39,119,0.4)]' : 'bg-pink-600 hover:bg-pink-500 text-white hover:shadow-[0_0_10px_rgba(219,39,119,0.3)]'}`}
                 >
-                  Call List {inCallingList && <Check size={12} />}
+                  {inCallingList ? <Check size={14} /> : <PhoneCall size={14} className="opacity-80 group-hover:opacity-100" />}
+                  Call List
                 </button>
                 <button
                   onClick={handleAddToBdList}
-                  className={`px-3 py-1.5 rounded-lg text-[12px] font-bold shadow-sm flex items-center gap-1 transition-all whitespace-nowrap ${inBdList ? 'bg-[#1d4ed8] text-white' : 'bg-[#f0f5ff] text-[#1d4ed8] border border-[#d6e4ff] hover:bg-[#e0edff]'}`}
+                  className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold active:scale-95 transition-all whitespace-nowrap shadow-sm ${inBdList ? 'bg-cyan-700 text-white shadow-[0_0_10px_rgba(8,145,178,0.4)]' : 'bg-cyan-600 hover:bg-cyan-500 text-white hover:shadow-[0_0_10px_rgba(8,145,178,0.3)]'}`}
                 >
-                  BD List {inBdList && <Check size={12} />}
+                  {inBdList ? <Check size={14} /> : <Target size={14} className="opacity-80 group-hover:opacity-100" />}
+                  BD List
                 </button>
               </div>
 
               {/* Divider */}
               <div className="w-px h-5 bg-[#e4e8f0] mx-0.5" />
 
-              {/* Layout toggle */}
-              <button
-                onClick={() => setIsLocked()}
-                className={`px-3 py-1.5 rounded-lg text-[12px] font-bold shadow-sm flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                  isLocked ? 'bg-white text-[#475569] border border-[#e4e8f0] hover:bg-gray-50' : 'bg-[#10b981] text-white hover:bg-[#059669]'
-                }`}
-              >
-                <Edit size={12} />
-                {isLocked ? 'Edit Layout' : 'Save Layout'}
-              </button>
-
-              {/* Divider */}
-              <div className="w-px h-5 bg-[#e4e8f0] mx-0.5" />
-
               {/* Utility icons */}
-              <button onClick={exportCandidate} disabled={isSubmitting} className="w-8 h-8 flex items-center justify-center bg-white text-[#475569] border border-[#e4e8f0] rounded-lg hover:bg-[#f8fafc] transition-colors shadow-sm" title="Export to Excel"><Download size={15} /></button>
-              <Link href={`/dashboard/candidates/${candidate.id}/edit`} className="w-8 h-8 flex items-center justify-center bg-white text-[#475569] border border-[#e4e8f0] rounded-lg hover:bg-[#f8fafc] transition-colors shadow-sm" title="Edit Profile"><Edit size={15} /></Link>
-              <button onClick={handleDeleteCandidate} disabled={isDeleting} className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors shadow-sm" title="Delete Candidate"><Trash2 size={15} /></button>
+              <button onClick={exportCandidate} disabled={isSubmitting} className="group w-8 h-8 flex items-center justify-center bg-white text-[#475569] border border-[#e4e8f0] rounded-lg hover:bg-gray-100 hover:text-[#111] active:scale-95 transition-all shadow-sm" title="Export to Excel"><Download size={14} className="group-hover:-translate-y-0.5 transition-transform" /></button>
+              <Link href={`/dashboard/candidates/${candidate.id}/edit`} className="group w-8 h-8 flex items-center justify-center bg-white text-[#475569] border border-[#e4e8f0] rounded-lg hover:bg-gray-100 hover:text-[#111] active:scale-95 transition-all shadow-sm" title="Edit Profile"><Edit size={14} /></Link>
+              <button onClick={handleDeleteCandidate} disabled={isDeleting} className="group w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-500 hover:text-white active:scale-95 transition-all shadow-sm" title="Delete Candidate"><Trash2 size={14} /></button>
             </div>
           )}
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-6">
+      <div className="max-w-[1400px] mx-auto px-6 min-h-[500px]">
         {/* ── Widget Grid ────────────────────────────────────── */}
-        <ResponsiveGridLayout
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64 text-[#94a3b8] font-medium animate-pulse">
+            Loading layout...
+          </div>
+        ) : (
+          <ResponsiveGridLayout
           className="layout"
           layouts={{ lg: widgets.map(w => ({ ...w, i: w.id, isDraggable: !isLocked, isResizable: !isLocked, resizeHandles: isLocked ? [] : ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne'] })) }}
           breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
@@ -1180,6 +1245,7 @@ export default function FlCandidateClient({
             );
           })}
         </ResponsiveGridLayout>
+        )}
       </div>
 
       {/* ── Modals (Retained from original) ───────────────── */}

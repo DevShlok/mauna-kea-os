@@ -26,6 +26,11 @@ import {
   Trash2,
   CheckCircle2,
   Upload,
+  Briefcase,
+  Target,
+  PhoneCall,
+  Send,
+  Rocket,
 } from "lucide-react";
 
 // New Components & Hooks
@@ -705,27 +710,39 @@ export default function CandidatesClient({
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-1 px-2 overflow-x-auto custom-scrollbar no-scrollbar flex-1">
-              <button className="px-3 py-1.5 rounded-xl text-[12.5px] font-bold text-white hover:bg-white/10 transition-colors whitespace-nowrap flex-shrink-0">
-                ＋ Add to Mandate
+            <div className="flex items-center gap-1.5 px-2 overflow-x-auto custom-scrollbar no-scrollbar flex-1">
+              <button className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(79,70,229,0.3)] whitespace-nowrap flex-shrink-0">
+                <Briefcase size={14} className="opacity-80 group-hover:opacity-100" />
+                Add to Mandate
               </button>
-              <button className="px-3 py-1.5 rounded-xl text-[12.5px] font-bold text-white hover:bg-white/10 transition-colors whitespace-nowrap flex-shrink-0">
-                ＋ Add to BD List
+              <button className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white bg-cyan-600 hover:bg-cyan-500 active:scale-95 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(8,145,178,0.3)] whitespace-nowrap flex-shrink-0">
+                <Target size={14} className="opacity-80 group-hover:opacity-100" />
+                Add to BD List
               </button>
-              <button className="px-3 py-1.5 rounded-xl text-[12.5px] font-bold text-white hover:bg-white/10 transition-colors whitespace-nowrap flex-shrink-0">
-                ＋ Add to Calling List
+              <button className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white bg-pink-600 hover:bg-pink-500 active:scale-95 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(219,39,119,0.3)] whitespace-nowrap flex-shrink-0">
+                <PhoneCall size={14} className="opacity-80 group-hover:opacity-100" />
+                Add to Calling List
               </button>
-              <button className="px-3 py-1.5 rounded-xl text-[12.5px] font-bold text-[#133255] bg-[#D8B15B] hover:bg-[#e8c97a] transition-colors shadow-sm whitespace-nowrap flex-shrink-0">
+              
+              <div className="w-[1px] h-4 bg-white/20 mx-1 flex-shrink-0"></div>
+
+              <button className="group flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold text-[#0E2150] bg-[#D8B15B] hover:bg-[#f0c870] active:scale-95 transition-all shadow-[0_0_10px_rgba(216,177,91,0.2)] hover:shadow-[0_0_15px_rgba(216,177,91,0.4)] whitespace-nowrap flex-shrink-0">
+                <Send size={13} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 Submit to Client
               </button>
-              <button className="px-3 py-1.5 rounded-xl text-[12.5px] font-bold text-white bg-[#10b981] hover:bg-[#059669] transition-colors shadow-sm whitespace-nowrap ml-1 flex-shrink-0">
-                ➤ Float
+              <button className="group flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold text-white bg-[#10b981] hover:bg-[#0ea876] active:scale-95 transition-all shadow-[0_0_10px_rgba(16,185,129,0.2)] hover:shadow-[0_0_15px_rgba(16,185,129,0.4)] whitespace-nowrap flex-shrink-0">
+                <Rocket size={13} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                Float
               </button>
+
               <div className="w-[1px] h-4 bg-white/20 mx-1 flex-shrink-0"></div>
-              <button onClick={exportSelectedToExcel} className="px-3 py-1.5 rounded-xl text-[12.5px] font-bold text-white hover:bg-white/10 transition-colors whitespace-nowrap flex-shrink-0">
+
+              <button onClick={exportSelectedToExcel} className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white/80 hover:text-white hover:bg-white/10 active:scale-95 transition-all whitespace-nowrap flex-shrink-0">
+                <Download size={14} className="opacity-70 group-hover:opacity-100 group-hover:-translate-y-0.5 transition-transform" />
                 Export
               </button>
-              <button className="px-3 py-1.5 rounded-xl text-[12.5px] font-bold text-[#fca5a5] hover:bg-red-500/20 transition-colors whitespace-nowrap flex-shrink-0">
+              <button className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-[#fca5a5] hover:text-red-400 hover:bg-red-500/10 active:scale-95 transition-all whitespace-nowrap flex-shrink-0">
+                <Trash2 size={14} className="opacity-70 group-hover:opacity-100" />
                 Delete
               </button>
             </div>

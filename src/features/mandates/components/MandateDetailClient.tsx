@@ -24,7 +24,7 @@ const AuditText = ({ field, data }: { field: string, data: any }) => {
   const log = data?.auditLog?.[field];
   if (!log) return null;
   return (
-    <div className="text-[10px] text-gray-400 italic mt-0.5 leading-tight">
+    <div suppressHydrationWarning className="text-[10px] text-gray-400 italic mt-0.5 leading-tight">
       Last updated by {log.updatedBy} on {new Date(log.updatedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
     </div>
   );
