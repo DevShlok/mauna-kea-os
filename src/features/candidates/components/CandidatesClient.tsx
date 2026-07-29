@@ -497,13 +497,8 @@ export default function CandidatesClient({
               href="/dashboard/candidates/bulk-import"
               className="h-10 px-4 bg-white border border-[#e4e8f0] text-[#475569] rounded-xl text-[13.5px] font-semibold hover:bg-[#f8fafc] hover:border-[#cfd6e4] hover:text-[#111] transition-all flex items-center gap-2 shadow-sm"
             >
-              <Download size={15} className="rotate-180" /> Import Candidates
-            </Link>
-            <button
-              className="h-10 px-4 bg-white border border-[#e4e8f0] text-[#475569] rounded-xl text-[13.5px] font-semibold hover:bg-[#f8fafc] hover:border-[#cfd6e4] hover:text-[#111] transition-all flex items-center gap-2 shadow-sm"
-            >
               <Upload size={15} /> Import CVs
-            </button>
+            </Link>
             <Link
               href="/dashboard/candidates/new"
               className="h-10 px-5 bg-[#D8B15B] text-[#133255] rounded-xl text-[13.5px] font-bold hover:bg-[#e8c97a] hover:shadow-md transition-all flex items-center gap-2 shadow-sm"
