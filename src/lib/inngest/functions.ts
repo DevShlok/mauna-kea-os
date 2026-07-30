@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { db } from "@/db";
 import { candidates, candidateFiles } from "@/db/schema";
 import { eq, or, and } from "drizzle-orm";
-import { extractTextFromPdf, extractEntitiesFromText } from "../parser";
+import { extractTextFromFile, extractEntitiesFromText } from "../parser";
 import { evaluateCandidateMatch } from "@/utils/fuzzy-match";
 
 const supabase = createClient(
@@ -54,8 +54,8 @@ export const processGdriveCv = inngest.createFunction(
       
     const publicUrl = publicUrlData.publicUrl;
     
-    // Step 3: Parse CV Text
-    const extractedText = await extractTextFromPdf(buffer);
+    // Step 3: Parse CV Text (GDrive links are always PDFs)
+    const extractedText = await extractTextFromFile(buffer, "application/pdf");
     const parsedData = await extractEntitiesFromText(extractedText);
     
     // Step 4: Fuzzy Match & DB Assignment
@@ -153,9 +153,9 @@ export const processDirectUploadCv = inngest.createFunction(
   { id: "process-direct-upload-cv", name: "Process Direct CV Upload" },
   { event: "cv.process_direct_upload" },
   async ({ event, step }) => {
-    const { publicUrl, fileName } = event.data;
+    const { publicUrl, fileName, fileType } = event.data;
     
-    // Step 1: Download the PDF from the public URL
+    // Step 1: Download the file from the public URL
     const response = await fetch(publicUrl);
     if (!response.ok) {
       throw new Error(`Failed to fetch CV from Supabase: ${response.statusText}`);
@@ -163,8 +163,9 @@ export const processDirectUploadCv = inngest.createFunction(
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
-    // Step 2: Parse CV Text
-    const extractedText = await extractTextFromPdf(buffer);
+    // Step 2: Extract text — routes to PDF/Word/OCR based on MIME type
+    const resolvedType = fileType || "application/pdf";
+    const extractedText = await extractTextFromFile(buffer, resolvedType);
     const parsedData = await extractEntitiesFromText(extractedText);
     
     // Step 3: Fuzzy Match

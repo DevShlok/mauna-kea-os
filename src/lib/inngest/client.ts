@@ -11,6 +11,7 @@ type Events = {
     data: {
       publicUrl: string;
       fileName: string;
+      fileType: string; // MIME type, e.g. "application/pdf", "image/jpeg"
     };
   };
 };

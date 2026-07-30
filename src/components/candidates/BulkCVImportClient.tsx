@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { UploadCloud, CheckCircle2, AlertCircle, Loader2, FileText, X, PlayCircle } from "lucide-react";
+import { UploadCloud, CheckCircle2, AlertCircle, Loader2, FileText, FileImage, File, X, PlayCircle } from "lucide-react";
 import { uploadAndDispatchDirectEvent } from "@/actions/candidates";
 
 type UploadStatus = "pending" | "uploading" | "processing" | "success" | "error";
@@ -15,25 +15,51 @@ interface FileState {
   error?: string;
 }
 
+// Maps a MIME type to a display label
+function fileTypeLabel(mimeType: string): string {
+  if (mimeType === "application/pdf") return "PDF";
+  if (
+    mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    mimeType === "application/msword"
+  )
+    return "Word";
+  if (mimeType.startsWith("image/")) return "Image";
+  return "File";
+}
+
+// Maps a MIME type to the right Lucide icon component
+function FileTypeIcon({ mimeType, className }: { mimeType: string; className?: string }) {
+  if (mimeType.startsWith("image/")) return <FileImage size={18} className={className} />;
+  if (mimeType === "application/pdf" || mimeType.includes("word"))
+    return <FileText size={18} className={className} />;
+  return <File size={18} className={className} />;
+}
+
 export default function BulkCVImportClient() {
   const [files, setFiles] = useState<FileState[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newFiles = acceptedFiles.map(file => ({
+    const newFiles = acceptedFiles.map((file) => ({
       id: Math.random().toString(36).substring(7),
       file,
       status: "pending" as UploadStatus,
       progress: 0,
     }));
-    setFiles(prev => [...prev, ...newFiles]);
+    setFiles((prev) => [...prev, ...newFiles]);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'application/pdf': ['.pdf']
-    }
+      "application/pdf": [".pdf"],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+      "application/msword": [".doc"],
+      "image/jpeg": [".jpg", ".jpeg"],
+      "image/png": [".png"],
+      "image/webp": [".webp"],
+      "image/tiff": [".tiff", ".tif"],
+    },
   });
 
   const removeFile = (id: string) => {
@@ -122,8 +148,12 @@ export default function BulkCVImportClient() {
           <div>
             <p className="text-[16px] font-bold text-[#133255]">Drag &amp; drop CV files here</p>
             <p className="text-[13.5px] text-[#6b7a99] mt-1.5">
-              or <span className="text-[#1d4ed8] underline underline-offset-2 font-semibold">click to browse</span> — only PDF files are accepted
+              or <span className="text-[#1d4ed8] underline underline-offset-2 font-semibold">click to browse</span>
             </p>
+            <p className="text-[12px] text-[#9ca8be] mt-2">
+              Supported: <span className="font-semibold">PDF</span> · <span className="font-semibold">Word (.docx/.doc)</span> · <span className="font-semibold">Images (.jpg, .png, .webp)</span>
+            </p>
+            <p className="text-[11.5px] text-[#b0bcc8] mt-0.5">Images are processed via Gemini Vision OCR</p>
           </div>
         )}
       </div>
@@ -184,13 +214,19 @@ export default function BulkCVImportClient() {
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
                     file.status === "success" ? "bg-[#e0f5e9]" : file.status === "error" ? "bg-[#fae6e6]" : "bg-[#DCE5F4]"
                   }`}>
-                    <FileText className={`w-4.5 h-4.5 ${
-                      file.status === "success" ? "text-[#137a43]" : file.status === "error" ? "text-[#c92a2a]" : "text-[#133255]"
-                    }`} size={18} />
+                    <FileTypeIcon
+                      mimeType={file.file.type}
+                      className={file.status === "success" ? "text-[#137a43]" : file.status === "error" ? "text-[#c92a2a]" : "text-[#133255]"}
+                    />
                   </div>
                   <div className="overflow-hidden">
                     <p className="text-[13.5px] font-semibold text-[#111] truncate">{file.file.name}</p>
-                    <p className="text-[12px] text-[#6b7a99]">{(file.file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <p className="text-[12px] text-[#6b7a99]">
+                      {fileTypeLabel(file.file.type)} · {(file.file.size / 1024 / 1024).toFixed(2)} MB
+                      {file.file.type.startsWith("image/") && (
+                        <span className="ml-1.5 text-[11px] font-semibold text-[#7c3aed] bg-[#f3f0ff] px-1.5 py-0.5 rounded-full">OCR</span>
+                      )}
+                    </p>
                   </div>
                 </div>
 

@@ -292,8 +292,22 @@ export async function uploadAndDispatchDirectEvent(formData: FormData) {
     const file = formData.get("file") as File;
     if (!file) throw new Error("No file provided");
 
+    // Determine the file's MIME type. Fall back to extension sniffing if browser didn't set it.
+    let fileType = file.type || "";
+    const nameLower = file.name.toLowerCase();
+    if (!fileType) {
+      if (nameLower.endsWith(".pdf")) fileType = "application/pdf";
+      else if (nameLower.endsWith(".docx")) fileType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+      else if (nameLower.endsWith(".doc")) fileType = "application/msword";
+      else if (nameLower.endsWith(".jpg") || nameLower.endsWith(".jpeg")) fileType = "image/jpeg";
+      else if (nameLower.endsWith(".png")) fileType = "image/png";
+      else if (nameLower.endsWith(".webp")) fileType = "image/webp";
+      else if (nameLower.endsWith(".tiff") || nameLower.endsWith(".tif")) fileType = "image/tiff";
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer());
-    const uniqueName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+    const uniqueName = `${Date.now()}-${safeName}`;
 
     const supabase = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -301,25 +315,29 @@ export async function uploadAndDispatchDirectEvent(formData: FormData) {
     );
 
     const { error: uploadError } = await supabase.storage
-      .from('candidate-cvs')
+      .from("candidate-cvs")
       .upload(uniqueName, buffer, {
-        contentType: 'application/pdf',
-        upsert: false
+        contentType: fileType || "application/octet-stream",
+        upsert: false,
       });
-      
+
     if (uploadError) {
       throw new Error(`Supabase upload failed: ${uploadError.message}`);
     }
 
     const { data: publicUrlData } = supabase.storage
-      .from('candidate-cvs')
+      .from("candidate-cvs")
       .getPublicUrl(uniqueName);
 
     await inngest.send({
       name: "cv.process_direct_upload",
-      data: { publicUrl: publicUrlData.publicUrl, fileName: file.name }
+      data: {
+        publicUrl: publicUrlData.publicUrl,
+        fileName: file.name,
+        fileType,
+      },
     });
-    
+
     return { success: true };
   } catch (err: any) {
     throw new Error(`Upload failed: ${err.message}`);

@@ -37,7 +37,8 @@ export default function BulkImportPage() {
           <div>
             <p className="text-[13.5px] font-bold text-[#133255]">How it works</p>
             <p className="text-[13px] text-[#3a4f70] mt-0.5">
-              Drop one or more PDF CVs below. Each file is uploaded, parsed automatically, and a candidate profile is created or updated in the database. Only <strong>.pdf</strong> files are supported.
+              Drop one or more files below. Each is uploaded, text is extracted automatically, and a candidate profile is created or updated in the database.
+              Supports <strong>PDFs</strong>, <strong>Word documents</strong> (.docx / .doc), and <strong>images</strong> (.jpg, .png, .webp) — images are processed with Gemini Vision OCR.
             </p>
           </div>
         </div>
