@@ -302,8 +302,51 @@ export default function FlCandidateClient({
     const { saveAs } = await import('file-saver');
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Candidate');
-    worksheet.columns = [{ header: 'Name', key: 'name', width: 25 }, { header: 'Current Company', key: 'company', width: 25 }];
-    worksheet.addRow({ name: candidate.name, company: candidate.company });
+    
+    worksheet.columns = [
+      { header: 'Name', key: 'name', width: 25 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Phone', key: 'mobile', width: 15 },
+      { header: 'Location', key: 'location', width: 20 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Current Designation', key: 'designation', width: 25 },
+      { header: 'Current Company', key: 'company', width: 25 },
+      { header: 'Total Experience (Yrs)', key: 'exp', width: 20 },
+      { header: 'Notice Period (Days)', key: 'notice', width: 20 },
+      { header: 'Current Fixed CTC', key: 'fixedCtc', width: 20 },
+      { header: 'Current Variable CTC', key: 'variableCtc', width: 20 },
+      { header: 'Total CTC', key: 'ctc', width: 15 },
+      { header: 'Expected CTC', key: 'expected', width: 20 },
+      { header: 'Target Companies', key: 'targetCos', width: 30 },
+      { header: 'Past Companies', key: 'pastCos', width: 30 },
+      { header: 'LinkedIn URL', key: 'linkedin', width: 35 },
+      { header: 'Additional Notes', key: 'notes', width: 40 }
+    ];
+    
+    // Header styling
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E5F0' } };
+
+    worksheet.addRow({
+      name: candidate.name || "",
+      email: candidate.email || "",
+      mobile: candidate.mobile || "",
+      location: candidate.location || "",
+      status: candidate.status || "",
+      designation: candidate.designation || "",
+      company: candidate.company || "",
+      exp: candidate.exp || "",
+      notice: candidate.notice || "",
+      fixedCtc: formatCtcValue(candidate.fixedCtc, candidate.currency),
+      variableCtc: formatCtcValue(candidate.variableCtc, candidate.currency),
+      ctc: formatCtcValue(candidate.ctc, candidate.currency),
+      expected: formatCtcValue(candidate.expected, candidate.currency),
+      targetCos: Array.isArray(candidate.targetCompanies) ? candidate.targetCompanies.join(", ") : (candidate.targetCompany || ""),
+      pastCos: Array.isArray(candidate.pastCompanies) ? candidate.pastCompanies.join(", ") : "",
+      linkedin: candidate.linkedin || "",
+      notes: candidate.notes || ""
+    });
+    
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(new Blob([buffer]), `${candidate.name || 'Candidate'}_Export.xlsx`);
   };

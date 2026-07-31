@@ -1229,9 +1229,3 @@ export async function publishOrgDefaultAction(prefKey: string, prefValue: Record
     .values({ userId: null, prefKey, prefValue, isDefault: true });
 }
 
-export async function searchCandidatesAction(query: string) {
-  await requireRole(["admin", "consultant"]);
-  const { getCandidatesPaginated } = await import("@/db/queries");
-  const result = await getCandidatesPaginated({ page: 1, limit: 5, search: query, sortKey: "name", sortDir: "asc" });
-  return result;
-}

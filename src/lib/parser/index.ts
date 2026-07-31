@@ -7,19 +7,19 @@ import { google } from "@ai-sdk/google";
 import { z } from "zod";
 
 // ─── Supported MIME Types ─────────────────────────────────────────────────────
-export const SUPPORTED_PDF_TYPES = ["application/pdf"];
-export const SUPPORTED_WORD_TYPES = [
+const SUPPORTED_PDF_TYPES = ["application/pdf"];
+const SUPPORTED_WORD_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
   "application/msword", // .doc
 ];
-export const SUPPORTED_IMAGE_TYPES = [
+const SUPPORTED_IMAGE_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/tiff",
   "image/gif",
 ];
-export const ALL_SUPPORTED_TYPES = [
+const ALL_SUPPORTED_TYPES = [
   ...SUPPORTED_PDF_TYPES,
   ...SUPPORTED_WORD_TYPES,
   ...SUPPORTED_IMAGE_TYPES,
@@ -30,7 +30,7 @@ export const ALL_SUPPORTED_TYPES = [
 /**
  * Extracts raw text from a PDF buffer using pdf-parse-new.
  */
-export async function extractTextFromPdf(pdfBuffer: Buffer): Promise<string> {
+async function extractTextFromPdf(pdfBuffer: Buffer): Promise<string> {
   try {
     const data = await pdfParse(pdfBuffer);
     return data.text || "";
@@ -43,7 +43,7 @@ export async function extractTextFromPdf(pdfBuffer: Buffer): Promise<string> {
 /**
  * Extracts raw text from a Word document (.docx or .doc) buffer using mammoth.
  */
-export async function extractTextFromWord(buffer: Buffer): Promise<string> {
+async function extractTextFromWord(buffer: Buffer): Promise<string> {
   try {
     const result = await mammoth.extractRawText({ buffer });
     return result.value || "";
@@ -57,7 +57,7 @@ export async function extractTextFromWord(buffer: Buffer): Promise<string> {
  * Extracts text from an image buffer using Gemini Vision (OCR).
  * Sends the image directly as base64 to the Gemini model.
  */
-export async function extractTextFromImage(
+async function extractTextFromImage(
   buffer: Buffer,
   mimeType: string
 ): Promise<string> {

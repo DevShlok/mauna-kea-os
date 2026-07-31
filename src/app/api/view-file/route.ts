@@ -9,21 +9,21 @@ export async function GET(request: Request) {
   }
 
   try {
-    const decodedUrl = decodeURIComponent(fileUrl).trim();
+    const targetUrl = fileUrl.trim();
 
-    if (!decodedUrl.startsWith("http://") && !decodedUrl.startsWith("https://")) {
+    if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
       return NextResponse.json({ error: "Invalid URL protocol" }, { status: 400 });
     }
 
-    const res = await fetch(decodedUrl);
+    const res = await fetch(targetUrl);
     if (!res.ok) {
-      return NextResponse.redirect(decodedUrl);
+      return NextResponse.redirect(targetUrl);
     }
 
     const contentType = res.headers.get("content-type") || "application/pdf";
     const arrayBuffer = await res.arrayBuffer();
 
-    const filename = decodedUrl.split("/").pop()?.split("?")[0] || "document.pdf";
+    const filename = targetUrl.split("/").pop()?.split("?")[0] || "document.pdf";
 
     return new NextResponse(arrayBuffer, {
       status: 200,
@@ -35,6 +35,6 @@ export async function GET(request: Request) {
     });
   } catch (error: any) {
     console.error("View file proxy error:", error);
-    return NextResponse.redirect(decodeURIComponent(fileUrl));
+    return NextResponse.redirect(fileUrl);
   }
 }

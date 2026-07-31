@@ -819,68 +819,62 @@ export default function CandidatesClient({
         </>
       )}
 
-      {/* ── Bulk Action Bar ──────────────── */}
+      {/* ── Sleek Bulk Action Pill ──────────────── */}
       {selectedIds.size > 0 && (
-        <div className="mb-5 animate-in zoom-in-95 fade-in slide-in-from-top-4 duration-200 ease-out z-20 relative">
-          <div className="bg-[#0E2150]/95 backdrop-blur-md border border-white/10 shadow-[0_12px_40px_rgba(19,50,85,0.4)] rounded-2xl flex items-center p-1.5 w-full">
+        <div className="mb-5 flex justify-center animate-in zoom-in-95 fade-in slide-in-from-top-4 duration-200 ease-out z-20 relative">
+          <div className="bg-[#0f172a] text-white shadow-xl rounded-full flex items-center p-1.5 border border-white/10 w-max">
+            
             {/* Selected Count */}
-            <div className="px-4 py-2 flex items-center gap-2 border-r border-white/10 flex-shrink-0">
-              <CheckCircle2 size={16} className="text-[#D8B15B]" />
-              <span className="text-[14px] font-bold text-white">
-                <span className="text-[#D8B15B] mr-1">{selectedIds.size}</span>
-                selected
-              </span>
+            <div className="px-4 py-1.5 flex items-center gap-2 border-r border-white/10 flex-shrink-0">
+               <span className="bg-[#38bdf8]/20 text-[#38bdf8] text-xs font-bold px-2 py-0.5 rounded-full">{selectedIds.size}</span>
+               <span className="text-[13px] font-medium text-white/80">selected</span>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-1.5 px-2 overflow-x-auto custom-scrollbar no-scrollbar flex-1">
-              <button onClick={() => setShowMandateModal(true)} className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(79,70,229,0.3)] whitespace-nowrap flex-shrink-0">
-                <Briefcase size={14} className="opacity-80 group-hover:opacity-100" />
-                Add to Mandate
-              </button>
-              <button onClick={() => handleBulkAddToEngagement("BD")} className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white bg-cyan-600 hover:bg-cyan-500 active:scale-95 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(8,145,178,0.3)] whitespace-nowrap flex-shrink-0">
-                <Target size={14} className="opacity-80 group-hover:opacity-100" />
-                Add to BD List
-              </button>
-              <button onClick={() => handleBulkAddToEngagement("Calling")} className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white bg-pink-600 hover:bg-pink-500 active:scale-95 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(219,39,119,0.3)] whitespace-nowrap flex-shrink-0">
-                <PhoneCall size={14} className="opacity-80 group-hover:opacity-100" />
-                Add to Calling List
-              </button>
-              
-              <div className="w-[1px] h-4 bg-white/20 mx-1 flex-shrink-0"></div>
+            <div className="flex items-center gap-1 px-2 flex-shrink-0">
+               <button onClick={() => setShowMandateModal(true)} className="group hover:bg-white/10 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 text-white/90">
+                 <Briefcase size={14} className="text-indigo-400 group-hover:-translate-y-0.5 transition-transform" />
+                 Mandate
+               </button>
+               <button onClick={() => handleBulkAddToEngagement("BD")} className="group hover:bg-white/10 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 text-white/90">
+                 <Target size={14} className="text-cyan-400 group-hover:-translate-y-0.5 transition-transform" />
+                 BD List
+               </button>
+               <button onClick={() => handleBulkAddToEngagement("Calling")} className="group hover:bg-white/10 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 text-white/90">
+                 <PhoneCall size={14} className="text-pink-400 group-hover:-translate-y-0.5 transition-transform" />
+                 Calling List
+               </button>
+               
+               <div className="w-[1px] h-4 bg-white/10 mx-1"></div>
 
-              <button onClick={() => setShowSubmissionModal(true)} className="group flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold text-[#0E2150] bg-[#D8B15B] hover:bg-[#f0c870] active:scale-95 transition-all shadow-[0_0_10px_rgba(216,177,91,0.2)] hover:shadow-[0_0_15px_rgba(216,177,91,0.4)] whitespace-nowrap flex-shrink-0">
-                <Send size={13} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                Submit to Client
-              </button>
-              <button onClick={() => setShowSubmissionModal(true)} className="group flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold text-white bg-[#10b981] hover:bg-[#0ea876] active:scale-95 transition-all shadow-[0_0_10px_rgba(16,185,129,0.2)] hover:shadow-[0_0_15px_rgba(16,185,129,0.4)] whitespace-nowrap flex-shrink-0">
-                <Rocket size={13} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                Float
-              </button>
+               <button onClick={() => setShowSubmissionModal(true)} className="group hover:bg-white/10 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 text-white/90">
+                 <Send size={14} className="text-amber-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                 Submit
+               </button>
+               <button onClick={() => setShowSubmissionModal(true)} className="group hover:bg-white/10 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 text-white/90">
+                 <Rocket size={14} className="text-emerald-400 group-hover:-translate-y-0.5 transition-transform" />
+                 Float
+               </button>
 
-              <div className="w-[1px] h-4 bg-white/20 mx-1 flex-shrink-0"></div>
+               <div className="w-[1px] h-4 bg-white/10 mx-1"></div>
 
-              <button onClick={exportSelectedToExcel} className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white/80 hover:text-white hover:bg-white/10 active:scale-95 transition-all whitespace-nowrap flex-shrink-0">
-                <Download size={14} className="opacity-70 group-hover:opacity-100 group-hover:-translate-y-0.5 transition-transform" />
-                Export
-              </button>
-              <button onClick={handleBulkDelete} className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-[#fca5a5] hover:text-red-400 hover:bg-red-500/10 active:scale-95 transition-all whitespace-nowrap flex-shrink-0">
-                <Trash2 size={14} className="opacity-70 group-hover:opacity-100" />
-                Delete
-              </button>
-
+               <button onClick={exportSelectedToExcel} className="group hover:bg-white/10 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 text-white/90">
+                 <Download size={14} className="text-blue-400 group-hover:-translate-y-0.5 transition-transform" />
+                 Export
+               </button>
+               <button onClick={handleBulkDelete} className="group hover:bg-red-500/20 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 text-red-400">
+                 <Trash2 size={14} className="group-hover:-translate-y-0.5 transition-transform" />
+                 Delete
+               </button>
             </div>
 
-            {/* Delete / Clear */}
-            <div className="flex items-center gap-1 pl-2 ml-1 border-l border-white/10 flex-shrink-0">
-              <button
-                onClick={() => setSelectedIds(new Set())}
-                className="p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-colors"
-                title="Clear selection"
-              >
-                <X size={16} />
-              </button>
+            {/* Clear Selection */}
+            <div className="border-l border-white/10 pl-1 pr-1 flex-shrink-0">
+               <button onClick={() => setSelectedIds(new Set())} className="p-1.5 hover:bg-white/10 rounded-full text-white/50 hover:text-white transition-colors" title="Clear selection">
+                 <X size={16} />
+               </button>
             </div>
+
           </div>
         </div>
       )}

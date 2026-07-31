@@ -4,7 +4,7 @@ import { getUserPreferenceAction, saveUserPreferenceAction, publishOrgDefaultAct
 
 // ─── Types ────────────────────────────────────────────────
 
-export interface WidgetState {
+interface WidgetState {
   id: string;
   x: number;
   y: number;
