@@ -1,21 +1,26 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { candidates } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const id = searchParams.get('id');
+  const rawId = searchParams.get('id');
 
-  if (!id) {
+  if (!rawId) {
     return NextResponse.json({ error: "Missing candidate ID" }, { status: 400 });
   }
+
+  const id = decodeURIComponent(rawId).trim();
+  const possibleIds = [id];
+  if (id.startsWith("CAND-")) possibleIds.push(id.replace("CAND-", ""));
+  else possibleIds.push(`CAND-${id}`);
 
   try {
     const data = await db.select({
       cvText: candidates.cvText,
       profilePic: candidates.profilePic
-    }).from(candidates).where(eq(candidates.id, id));
+    }).from(candidates).where(inArray(candidates.id, possibleIds));
 
     if (data.length === 0) {
       return NextResponse.json({ error: "Candidate not found" }, { status: 404 });

@@ -492,16 +492,22 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
   const { page = 1, limit = 20, search, companies, designations, statuses, locations, minExp, maxExp, minTenure, maxTenure, minCtc, maxCtc, sortKey, sortDir } = params;
   
   const conditions: any[] = [
-    eq(candidates.isDeleted, false),
+    sql`COALESCE(${candidates.isDeleted}, false) = false`,
     sql`COALESCE(metadata->>'isPlaceholder', 'false') != 'true'`
   ];
   
-  if (search) {
-    const searchPattern = `%${search}%`;
+  if (search && search.trim()) {
+    const searchPattern = `%${search.trim()}%`;
     conditions.push(or(
+      ilike(candidates.id, searchPattern),
       ilike(candidates.name, searchPattern),
       ilike(candidates.company, searchPattern),
-      ilike(candidates.designation, searchPattern)
+      ilike(candidates.designation, searchPattern),
+      ilike(candidates.email, searchPattern),
+      ilike(candidates.mobile, searchPattern),
+      ilike(candidates.location, searchPattern),
+      ilike(candidates.notes, searchPattern),
+      ilike(candidates.cvText, searchPattern)
     ));
   }
   
@@ -536,6 +542,15 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
       designation: candidates.designation,
       score: candidates.score,
       status: candidates.status,
+      location: candidates.location,
+      exp: candidates.exp,
+      tenure: candidates.tenure,
+      ctc: candidates.ctc,
+      fixedCtc: candidates.fixedCtc,
+      variableCtc: candidates.variableCtc,
+      expected: candidates.expected,
+      esops: candidates.esops,
+      notice: candidates.notice,
       createdAt: candidates.createdAt,
       updatedAt: candidates.updatedAt
     };
@@ -572,9 +587,13 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
       MIN(tenure) as min_tenure,
       MAX(tenure) as max_tenure,
       MIN(ctc) as min_ctc,
-      MAX(ctc) as max_ctc
+      MAX(ctc) as max_ctc,
+      COUNT(*) FILTER (WHERE status = 'Active') as active_count,
+      COUNT(*) FILTER (WHERE status = 'Passive') as passive_count,
+      COUNT(*) FILTER (WHERE status = 'Placed') as placed_count,
+      AVG(ctc) as avg_ctc
     FROM candidates
-    WHERE is_deleted = false
+    WHERE is_deleted = false AND COALESCE(metadata->>'isPlaceholder', 'false') != 'true'
   `);
   
   const meta = uniqueMetadata[0] as any;
@@ -599,14 +618,36 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
       maxTenure: Math.max(1, Math.ceil(Number(meta.max_tenure || 0))),
       minCtc: Math.floor(Number(meta.min_ctc || 0)),
       maxCtc: Math.max(10, Math.ceil(Number(meta.max_ctc || 0) / 10) * 10),
+      statusesCount: {
+        Active: Number(meta.active_count || 0),
+        Passive: Number(meta.passive_count || 0),
+        Placed: Number(meta.placed_count || 0),
+      },
+      avgCtc: meta.avg_ctc ? Number(Number(meta.avg_ctc).toFixed(1)) : 0,
     }
   };
 });
 
 
 export const getCandidateById = cache(async (id: string) => {
-  const [cand] = await db.select().from(candidates).where(and(eq(candidates.id, id), eq(candidates.isDeleted, false)));
+  const decodedId = decodeURIComponent(id || "").trim();
+  if (!decodedId) return null;
+
+  const possibleIds = [decodedId];
+  if (decodedId.startsWith("CAND-")) {
+    possibleIds.push(decodedId.replace("CAND-", ""));
+  } else {
+    possibleIds.push(`CAND-${decodedId}`);
+  }
+
+  const [cand] = await db.select().from(candidates).where(
+    and(
+      inArray(candidates.id, possibleIds),
+      sql`COALESCE(${candidates.isDeleted}, false) = false`
+    )
+  );
   if (!cand) return null;
+  const actualId = cand.id;
 
   const [activities, floatSubmissions, mCands, followUps, references, files] = await Promise.all([
     db.select().from(floatActivities).where(eq(floatActivities.candId, id)),

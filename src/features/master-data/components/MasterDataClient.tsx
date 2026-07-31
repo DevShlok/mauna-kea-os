@@ -6,6 +6,7 @@ import { Upload, Database, Building2, MapPin, Briefcase, Plus, Edit2, Trash2 } f
 import MasterDataImportModal from "./MasterDataImportModal";
 import MasterDataEditModal from "./MasterDataEditModal";
 import toast from "react-hot-toast";
+import { confirmDialog } from "@/components/ConfirmDialog";
 import { 
   deleteMasterClientAction, deleteMasterIndustryAction, deleteMasterLocationAction,
   bulkDeleteMasterClientsAction, bulkDeleteMasterIndustriesAction, bulkDeleteMasterLocationsAction
@@ -44,7 +45,8 @@ export default function MasterDataClient({
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this entry?")) return;
+    const ok = await confirmDialog("Are you sure you want to delete this entry?");
+    if (!ok) return;
     try {
       if (activeTab === "clients") await deleteMasterClientAction(id);
       else if (activeTab === "industries") await deleteMasterIndustryAction(id);
@@ -69,7 +71,8 @@ export default function MasterDataClient({
   };
 
   const handleBulkDelete = async () => {
-    if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} entries?`)) return;
+    const ok = await confirmDialog(`Are you sure you want to delete ${selectedIds.length} entries?`);
+    if (!ok) return;
     setIsBulkDeleting(true);
     try {
       if (activeTab === "clients") await bulkDeleteMasterClientsAction(selectedIds);

@@ -214,7 +214,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
   async function handleBulkDelete() {
     if (selectedCandidateIds.size === 0) return;
     const ids = Array.from(selectedCandidateIds);
-    const confirmed = window.confirm(`Remove ${ids.length} candidate(s) from this pipeline? They will NOT be deleted from the system.`);
+    const confirmed = await confirmDialog(`Remove ${ids.length} candidate(s) from this pipeline? They will NOT be deleted from the system.`);
     if (!confirmed) return;
     setIsBulkDeleting(true);
     // Optimistic remove
@@ -229,7 +229,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
   }
 
   async function handleSingleDelete(candId: number) {
-    const confirmed = window.confirm("Remove this candidate from the pipeline?");
+    const confirmed = await confirmDialog("Remove this candidate from the pipeline?");
     if (!confirmed) return;
     // Optimistic remove
     setMandate((prev: any) => ({

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { saveInlineNoteAction, removeFromEngagementListAction } from "@/actions/calls";
 import { EmptyState } from "@/components/ui/EmptyState";
 import toast from "react-hot-toast";
+import { confirmDialog } from "@/components/ConfirmDialog";
 
 export default function CallsClient({ items, currentDate, user }: { items: any[], currentDate?: string, user?: any }) {
   const router = useRouter();
@@ -70,7 +71,8 @@ export default function CallsClient({ items, currentDate, user }: { items: any[]
   };
 
   const handleRemove = async (candId: string, listType: "BD" | "Calling") => {
-    if (!confirm("Are you sure you want to remove this candidate from the list?")) return;
+    const ok = await confirmDialog("Are you sure you want to remove this candidate from the list?");
+    if (!ok) return;
     try {
       await removeFromEngagementListAction(candId, listType);
       toast.success("Removed from list");

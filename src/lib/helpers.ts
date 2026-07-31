@@ -82,3 +82,40 @@ export function formatCtcValue(val: number | null | undefined, currencyCode: str
 
   return `${cur} ${formatted}`;
 }
+
+export function getCleanLinkedInUrl(val: string | null | undefined, candidateName?: string): string {
+  const str = (val || "").trim();
+
+  if (str) {
+    if (str.includes("google.com/search") || str.includes("google.co.in/search")) {
+      try {
+        const urlObj = new URL(str.startsWith("http") ? str : `https://${str}`);
+        const q = urlObj.searchParams.get("q") || candidateName || "";
+        const cleanQ = q.replace(/\b(linkedin|profile)\b/gi, "").trim();
+        return `https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(cleanQ || q)}`;
+      } catch (e) {
+        // fallthrough
+      }
+    }
+
+    if (str.includes("linkedin.com")) {
+      return str.startsWith("http") ? str : `https://${str}`;
+    }
+
+    if (str.startsWith("http://") || str.startsWith("https://")) {
+      return str;
+    }
+
+    if (!str.includes(" ") && !str.includes("/")) {
+      return `https://www.linkedin.com/in/${str.replace(/^@/, '')}`;
+    }
+
+    return `https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(str)}`;
+  }
+
+  if (candidateName && candidateName.trim()) {
+    return `https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(candidateName.trim())}`;
+  }
+
+  return "https://www.linkedin.com";
+}

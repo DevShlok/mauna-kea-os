@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { restoreEntityAction, hardDeleteEntityAction } from "@/actions";
 import toast from "react-hot-toast";
+import { confirmDialog } from "@/components/ConfirmDialog";
 import { useDataTable } from "@/hooks/useDataTable";
 import { Pagination } from "@/components/DataTable/Pagination";
 
@@ -65,7 +66,8 @@ export default function RecycleBinClient({ items }: { items: any[] }) {
   };
 
   const handleHardDelete = async () => {
-    if (!confirm("Are you sure you want to permanently delete these items? This action cannot be undone.")) return;
+    const ok = await confirmDialog("Are you sure you want to permanently delete these items? This action cannot be undone.");
+    if (!ok) return;
     setIsSubmitting(true);
     try {
       const groups = getGroupedSelected();

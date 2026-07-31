@@ -17,7 +17,7 @@ import {
 } from "@/actions";
 import { convertToClientContactAction, updatePastCompaniesAction, updateCandidateTargetCompaniesAction } from "@/actions/candidates";
 import { removeFromEngagementListAction } from "@/actions/calls";
-import { formatCtcValue } from "@/lib/helpers";
+import { formatCtcValue, getCleanLinkedInUrl } from "@/lib/helpers";
 import { createClient } from "@/utils/supabase/client";
 import { Pin, Download, User, FileText, CheckSquare, Target, Briefcase, IndianRupee, MapPin, Building2, Brain, Link as LinkIcon, Edit, Trash2, ArrowLeft, Plus, Check, Send, Rocket, PhoneCall } from "lucide-react";
 
@@ -577,7 +577,7 @@ export default function FlCandidateClient({
                   <div className="text-[13px]"><span className="text-[#6b7a99] font-bold mr-1">Phone:</span> <span className="text-[#111] font-medium">{candidate.mobile || "-"}</span></div>
                   {candidate.linkedin && (
                     <div className="pt-2">
-                      <a href={candidate.linkedin} target="_blank" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f0f5fa] text-[#0a66c2] border border-[#d6e4ff] rounded-[6px] text-[12px] font-bold hover:bg-[#e0edff] transition-all">
+                      <a href={getCleanLinkedInUrl(candidate.linkedin, candidate.name)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f0f5fa] text-[#0a66c2] border border-[#d6e4ff] rounded-[6px] text-[12px] font-bold hover:bg-[#e0edff] transition-all">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452z" /></svg>
                         LinkedIn Profile
                       </a>
@@ -873,7 +873,7 @@ export default function FlCandidateClient({
                         <td className="px-4 py-2.5 font-medium text-[#111] whitespace-nowrap">{file.fileType}</td>
                         <td className="px-4 py-2.5 text-[#6b7a99] whitespace-nowrap">{new Date(file.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }).replace(/ /g, '-')}</td>
                         <td className="px-4 py-2.5">
-                          <a href={file.fileUrl} target="_blank" rel="noreferrer" className="text-[#1d4ed8] font-medium hover:underline break-all">
+                          <a href={file.fileUrl?.startsWith("http") ? `/api/view-file?url=${encodeURIComponent(file.fileUrl)}` : file.fileUrl} target="_blank" rel="noreferrer" className="text-[#1d4ed8] font-medium hover:underline break-all">
                             {file.fileName}
                           </a>
                         </td>

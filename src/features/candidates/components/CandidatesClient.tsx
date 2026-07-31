@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
+import { confirmDialog } from "@/components/ConfirmDialog";
 import {
   bulkAddSubmissionAction,
   bulkAssignToMandateAction,
@@ -10,7 +11,7 @@ import {
   deleteMultipleCandidatesAction,
   bulkAddToEngagementListAction,
 } from "@/actions";
-import { getDaysOpen, formatCtcValue } from "@/lib/helpers";
+import { getDaysOpen, formatCtcValue, getCleanLinkedInUrl } from "@/lib/helpers";
 import { Pagination } from "@/components/DataTable/Pagination";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MultiSelect } from "@/components/ui/MultiSelect";
@@ -98,6 +99,13 @@ export default function CandidatesClient({
 
   // Status Popover state
   const [statusPopoverId, setStatusPopoverId] = useState<string | null>(null);
+
+  // Modals state
+  const [showMandateModal, setShowMandateModal] = useState(false);
+  const [selectedMandateId, setSelectedMandateId] = useState<number | "">("");
+
+  const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+  const [submissionData, setSubmissionData] = useState({ client: "", role: "", consultant: "", status: "Shared" });
 
   // Debounce search
   useEffect(() => {
@@ -241,17 +249,142 @@ export default function CandidatesClient({
     }
   };
 
+  const handleBulkAddToMandate = async () => {
+    if (!selectedMandateId) {
+      toast.error("Please select a mandate");
+      return;
+    }
+    const mandate = mandates?.find((m: any) => Number(m.id) === Number(selectedMandateId));
+    setIsSubmitting(true);
+    try {
+      await bulkAssignToMandateAction({
+        mandateId: Number(selectedMandateId),
+        candIds: Array.from(selectedIds),
+        role: mandate?.role || "Candidate",
+      });
+      toast.success(`Assigned ${selectedIds.size} candidate(s) to mandate.`);
+      setShowMandateModal(false);
+      setSelectedMandateId("");
+      setSelectedIds(new Set());
+      router.refresh();
+    } catch (e) {
+      toast.error("Failed to assign to mandate");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBulkAddToEngagement = async (listType: "Calling" | "BD") => {
+    setIsSubmitting(true);
+    try {
+      await bulkAddToEngagementListAction(Array.from(selectedIds), listType);
+      toast.success(`Added ${selectedIds.size} candidate(s) to ${listType} list.`);
+      setSelectedIds(new Set());
+      router.refresh();
+    } catch (e) {
+      toast.error(`Failed to add to ${listType} list`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBulkAddSubmission = async () => {
+    if (!submissionData.client || !submissionData.role) {
+      toast.error("Please enter Client Name and Role");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await bulkAddSubmissionAction({
+        candIds: Array.from(selectedIds),
+        client: submissionData.client,
+        role: submissionData.role,
+        consultant: submissionData.consultant || "System",
+        status: submissionData.status,
+      });
+      toast.success(`Submitted ${selectedIds.size} candidate(s).`);
+      setShowSubmissionModal(false);
+      setSubmissionData({ client: "", role: "", consultant: "", status: "Shared" });
+      setSelectedIds(new Set());
+      router.refresh();
+    } catch (e) {
+      toast.error("Failed to submit candidates");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const ok = await confirmDialog(`Are you sure you want to delete ${selectedIds.size} selected candidate(s)? This action cannot be undone.`);
+    if (!ok) return;
+    setIsSubmitting(true);
+    try {
+      await deleteMultipleCandidatesAction(Array.from(selectedIds));
+      toast.success(`Deleted ${selectedIds.size} candidate(s).`);
+      setSelectedIds(new Set());
+      router.refresh();
+    } catch (e) {
+      toast.error("Failed to delete candidates");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const exportSelectedToExcel = async () => {
-    toast.success("Export started...");
-    // Mock export to prevent build break
+    try {
+      toast.loading("Exporting candidates...", { id: "export" });
+      const ExcelJS = (await import("exceljs")).default;
+      const { saveAs } = await import("file-saver");
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Candidates");
+
+      worksheet.columns = [
+        { header: "Name", key: "name", width: 25 },
+        { header: "Email", key: "email", width: 28 },
+        { header: "Mobile", key: "mobile", width: 16 },
+        { header: "Company", key: "company", width: 22 },
+        { header: "Designation", key: "designation", width: 22 },
+        { header: "Status", key: "status", width: 14 },
+        { header: "Location", key: "location", width: 18 },
+        { header: "Experience (yrs)", key: "exp", width: 16 },
+        { header: "CTC", key: "ctc", width: 14 },
+        { header: "Tenure (yrs)", key: "tenure", width: 14 },
+      ];
+
+      const targets = selectedIds.size > 0 
+        ? candidates.filter(c => selectedIds.has(c.id))
+        : candidates;
+
+      targets.forEach(c => {
+        worksheet.addRow({
+          name: c.name || "",
+          email: c.email || "",
+          mobile: c.mobile || "",
+          company: c.company || "",
+          designation: c.designation || "",
+          status: c.status || "Active",
+          location: c.location || "",
+          exp: c.exp ?? "",
+          ctc: c.ctc ? formatCtcValue(c.ctc, c.currency) : "",
+          tenure: c.tenure ?? "",
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      saveAs(new Blob([buffer]), `Candidates_Export_${new Date().toISOString().split("T")[0]}.xlsx`);
+      toast.success(`Exported ${targets.length} candidate(s)`, { id: "export" });
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to export candidates", { id: "export" });
+    }
   };
 
   // KPIs (client-side derived)
   const stats = {
-    active: metadata?.statusesCount?.["Active"] || 142, // Dummy fallback if not in metadata
-    passive: metadata?.statusesCount?.["Passive"] || 38,
-    placed: metadata?.statusesCount?.["Placed"] || 12,
-    avgCtc: metadata?.avgCtc || 18.4,
+    active: metadata?.statusesCount?.["Active"] ?? 0,
+    passive: metadata?.statusesCount?.["Passive"] ?? 0,
+    placed: metadata?.statusesCount?.["Placed"] ?? 0,
+    avgCtc: metadata?.avgCtc ?? 0,
   };
 
   // ─── Renderers ──────────────────────────────────────────
@@ -369,13 +502,7 @@ export default function CandidatesClient({
         if (isUrl || col.key === "linkedin" || col.key === "cvFileName") {
           let href = val;
           if (col.key === "linkedin") {
-            if (val.startsWith("http")) {
-              href = val;
-            } else if (val.includes("linkedin.com")) {
-              href = `https://${val}`;
-            } else {
-              href = `https://www.linkedin.com/in/${val.replace(/^@/, '')}`;
-            }
+            href = getCleanLinkedInUrl(val, c.name);
           } else {
             href = val.startsWith("http") ? val : `https://${val}`;
           }
@@ -396,9 +523,10 @@ export default function CandidatesClient({
             );
           }
           if (col.key === "cvFileName") {
+            const inlineUrl = href.startsWith("http") ? `/api/view-file?url=${encodeURIComponent(href)}` : href;
             return (
               <a
-                href={val}
+                href={inlineUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
@@ -706,26 +834,26 @@ export default function CandidatesClient({
 
             {/* Actions */}
             <div className="flex items-center gap-1.5 px-2 overflow-x-auto custom-scrollbar no-scrollbar flex-1">
-              <button className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(79,70,229,0.3)] whitespace-nowrap flex-shrink-0">
+              <button onClick={() => setShowMandateModal(true)} className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(79,70,229,0.3)] whitespace-nowrap flex-shrink-0">
                 <Briefcase size={14} className="opacity-80 group-hover:opacity-100" />
                 Add to Mandate
               </button>
-              <button className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white bg-cyan-600 hover:bg-cyan-500 active:scale-95 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(8,145,178,0.3)] whitespace-nowrap flex-shrink-0">
+              <button onClick={() => handleBulkAddToEngagement("BD")} className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white bg-cyan-600 hover:bg-cyan-500 active:scale-95 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(8,145,178,0.3)] whitespace-nowrap flex-shrink-0">
                 <Target size={14} className="opacity-80 group-hover:opacity-100" />
                 Add to BD List
               </button>
-              <button className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white bg-pink-600 hover:bg-pink-500 active:scale-95 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(219,39,119,0.3)] whitespace-nowrap flex-shrink-0">
+              <button onClick={() => handleBulkAddToEngagement("Calling")} className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white bg-pink-600 hover:bg-pink-500 active:scale-95 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(219,39,119,0.3)] whitespace-nowrap flex-shrink-0">
                 <PhoneCall size={14} className="opacity-80 group-hover:opacity-100" />
                 Add to Calling List
               </button>
               
               <div className="w-[1px] h-4 bg-white/20 mx-1 flex-shrink-0"></div>
 
-              <button className="group flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold text-[#0E2150] bg-[#D8B15B] hover:bg-[#f0c870] active:scale-95 transition-all shadow-[0_0_10px_rgba(216,177,91,0.2)] hover:shadow-[0_0_15px_rgba(216,177,91,0.4)] whitespace-nowrap flex-shrink-0">
+              <button onClick={() => setShowSubmissionModal(true)} className="group flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold text-[#0E2150] bg-[#D8B15B] hover:bg-[#f0c870] active:scale-95 transition-all shadow-[0_0_10px_rgba(216,177,91,0.2)] hover:shadow-[0_0_15px_rgba(216,177,91,0.4)] whitespace-nowrap flex-shrink-0">
                 <Send size={13} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 Submit to Client
               </button>
-              <button className="group flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold text-white bg-[#10b981] hover:bg-[#0ea876] active:scale-95 transition-all shadow-[0_0_10px_rgba(16,185,129,0.2)] hover:shadow-[0_0_15px_rgba(16,185,129,0.4)] whitespace-nowrap flex-shrink-0">
+              <button onClick={() => setShowSubmissionModal(true)} className="group flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold text-white bg-[#10b981] hover:bg-[#0ea876] active:scale-95 transition-all shadow-[0_0_10px_rgba(16,185,129,0.2)] hover:shadow-[0_0_15px_rgba(16,185,129,0.4)] whitespace-nowrap flex-shrink-0">
                 <Rocket size={13} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 Float
               </button>
@@ -736,10 +864,11 @@ export default function CandidatesClient({
                 <Download size={14} className="opacity-70 group-hover:opacity-100 group-hover:-translate-y-0.5 transition-transform" />
                 Export
               </button>
-              <button className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-[#fca5a5] hover:text-red-400 hover:bg-red-500/10 active:scale-95 transition-all whitespace-nowrap flex-shrink-0">
+              <button onClick={handleBulkDelete} className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-[#fca5a5] hover:text-red-400 hover:bg-red-500/10 active:scale-95 transition-all whitespace-nowrap flex-shrink-0">
                 <Trash2 size={14} className="opacity-70 group-hover:opacity-100" />
                 Delete
               </button>
+
             </div>
 
             {/* Delete / Clear */}
@@ -886,6 +1015,94 @@ export default function CandidatesClient({
           />
         )}
       </div>
+      {/* ── Add to Mandate Modal ────────────────────────────── */}
+      {showMandateModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-[#e4e8f0]">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-[#133255]">Assign to Mandate</h3>
+              <button onClick={() => setShowMandateModal(false)} className="p-1 text-[#6b7a99] hover:text-[#111]"><X size={18} /></button>
+            </div>
+            <p className="text-sm text-[#6b7a99] mb-4">
+              Select a mandate to assign <span className="font-bold text-[#133255]">{selectedIds.size}</span> candidate(s).
+            </p>
+            <div className="mb-5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#6b7a99] mb-2">Mandate</label>
+              <select
+                value={selectedMandateId}
+                onChange={(e) => setSelectedMandateId(e.target.value ? Number(e.target.value) : "")}
+                className="w-full h-10 px-3 border border-[#e4e8f0] rounded-xl text-sm outline-none focus:border-[#133255] bg-white text-[#111]"
+              >
+                <option value="">Select Mandate...</option>
+                {mandates?.map((m: any) => (
+                  <option key={m.id} value={m.id}>
+                    {m.company || "Internal"} - {m.role} (#{m.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setShowMandateModal(false)} className="px-4 py-2 border border-[#e4e8f0] rounded-xl text-sm font-semibold hover:bg-gray-50 text-[#111]">Cancel</button>
+              <button onClick={handleBulkAddToMandate} disabled={isSubmitting || !selectedMandateId} className="px-5 py-2 bg-[#133255] text-white rounded-xl text-sm font-bold hover:bg-[#0e243f] disabled:opacity-50">
+                {isSubmitting ? "Assigning..." : "Assign Candidates"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Submit / Float Modal ────────────────────────────── */}
+      {showSubmissionModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-[#e4e8f0]">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-[#133255]">Submit / Float Candidates</h3>
+              <button onClick={() => setShowSubmissionModal(false)} className="p-1 text-[#6b7a99] hover:text-[#111]"><X size={18} /></button>
+            </div>
+            <p className="text-sm text-[#6b7a99] mb-4">
+              Submit <span className="font-bold text-[#133255]">{selectedIds.size}</span> candidate(s) to a client.
+            </p>
+            <div className="space-y-4 mb-5">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#6b7a99] mb-1">Client Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Acme Corp"
+                  value={submissionData.client}
+                  onChange={(e) => setSubmissionData({ ...submissionData, client: e.target.value })}
+                  className="w-full h-10 px-3 border border-[#e4e8f0] rounded-xl text-sm outline-none focus:border-[#133255] text-[#111]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#6b7a99] mb-1">Target Role</label>
+                <input
+                  type="text"
+                  placeholder="e.g. VP of Product"
+                  value={submissionData.role}
+                  onChange={(e) => setSubmissionData({ ...submissionData, role: e.target.value })}
+                  className="w-full h-10 px-3 border border-[#e4e8f0] rounded-xl text-sm outline-none focus:border-[#133255] text-[#111]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#6b7a99] mb-1">Consultant Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. John Doe"
+                  value={submissionData.consultant}
+                  onChange={(e) => setSubmissionData({ ...submissionData, consultant: e.target.value })}
+                  className="w-full h-10 px-3 border border-[#e4e8f0] rounded-xl text-sm outline-none focus:border-[#133255] text-[#111]"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setShowSubmissionModal(false)} className="px-4 py-2 border border-[#e4e8f0] rounded-xl text-sm font-semibold hover:bg-gray-50 text-[#111]">Cancel</button>
+              <button onClick={handleBulkAddSubmission} disabled={isSubmitting || !submissionData.client || !submissionData.role} className="px-5 py-2 bg-[#D8B15B] text-[#133255] rounded-xl text-sm font-bold hover:bg-[#e8c97a] disabled:opacity-50">
+                {isSubmitting ? "Submitting..." : "Submit Candidates"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
