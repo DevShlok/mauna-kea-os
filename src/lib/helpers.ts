@@ -7,6 +7,7 @@ export const STAGE_LABELS: Record<string, string> = {
   calllist: 'Call List',
   shortlist: 'Shortlist',
   interview: 'Interview',
+  'client-shortlisted': 'Candidate Shortlisted',
   'offer-sent': 'Offer Sent',
   'offer-accepted': 'Offer Accepted',
   closed: 'Closed',
@@ -43,6 +44,7 @@ export function getClosurePercent(status: string) {
   if (status === 'offer-accepted') return 90;
   if (status === 'offer-sent') return 80;
   if (status === 'interview') return 65;
+  if (status === 'client-shortlisted') return 55;
   if (status === 'shortlist') return 45;
   if (status === 'calllist') return 35;
   if (status === 'longlist') return 25;

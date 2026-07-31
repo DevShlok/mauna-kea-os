@@ -7,6 +7,7 @@ const STAGE_COLORS: Record<string, string> = {
   calllist: 'bg-amber-100 text-amber-800',
   shortlist: 'bg-blue-100 text-[#133255]',
   interview: 'bg-emerald-100 text-emerald-800',
+  'client-shortlisted': 'bg-emerald-100 text-emerald-800',
   'offer-sent': 'bg-indigo-100 text-indigo-800',
   'offer-accepted': 'bg-teal-100 text-teal-800',
   closed: 'bg-red-100 text-red-800',

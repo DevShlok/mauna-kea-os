@@ -663,16 +663,16 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
       <div className="sticky bottom-0 w-full z-40 bg-[#f4f6fb]/90 backdrop-blur-sm border-t border-gray-200 py-4 px-5 print:hidden mt-10">
         <div className="max-w-4xl mx-auto flex gap-3">
           <button
-            onClick={() => handleStageChange("interviewed")}
+            onClick={() => handleStageChange("client-shortlisted")}
             disabled={isUpdating}
             className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl text-[14px] font-bold border transition-all duration-200 ${
-              currentStage === "interviewed"
+              currentStage === "client-shortlisted"
                 ? "bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-600/25"
                 : "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
             }`}
           >
             <Check className="w-5 h-5 stroke-[3]" />
-            Select for Interaction
+            Shortlist Candidate
           </button>
 
           <button

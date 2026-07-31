@@ -107,7 +107,7 @@ const FILTER_STAGES = [
   { key: "all", label: "All Candidates" },
   { key: "identified", label: "Identified" },
   { key: "screening", label: "Screening" },
-  { key: "interviewed", label: "Interviewed" },
+  { key: "client-shortlisted", label: "Shortlisted" },
   { key: "offered", label: "Offered" },
   { key: "hired", label: "Hired" },
 ] as const;
@@ -238,7 +238,8 @@ export default function ClientMandateDetail({ mandate, clientSlug }: Props) {
               const isSelected = selectedIds.has(candidate.id);
               const gradient = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length];
               const initials = candidate.initials || candidate.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
-              const stageLabel = candidate.stage ? candidate.stage.charAt(0).toUpperCase() + candidate.stage.slice(1) : "Universe";
+              const stageMap: Record<string, string> = { "client-shortlisted": "Shortlisted" };
+              const stageLabel = candidate.stage ? (stageMap[candidate.stage] || candidate.stage.charAt(0).toUpperCase() + candidate.stage.slice(1)) : "Universe";
 
               return (
                 <div

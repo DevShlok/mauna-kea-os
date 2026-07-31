@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { Pagination } from "@/components/DataTable/Pagination";
 import { Download, Upload } from "lucide-react";
 import dynamic from "next/dynamic";
+import { FloatStageDropdown } from "@/components/ui/FloatStageDropdown";
 const FloatImportModal = dynamic(() => import("./FloatImportModal"), { ssr: false });
 
 export default function FloatListClient({ 
@@ -225,7 +226,9 @@ export default function FloatListClient({
                   <td className="px-4 py-3 text-gray-600">{c.company}</td>
                   <td className="px-4 py-3 text-gray-600">{c.role}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{c.mandateRole} @ {c.mandateCompany}</td>
-                  <td className="px-4 py-3"><StatusBadge status={c.stage} /></td>
+                  <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                    <FloatStageDropdown id={c.id} currentStage={c.stage} />
+                  </td>
                   <td className="px-4 py-3">
                     {c.score ? (
                       <span className={"px-2 py-0.5 rounded-full text-xs font-bold " + (c.score >= 8 ? "bg-green-100 text-green-800" : c.score >= 6.5 ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-700")}>{c.score}/10</span>

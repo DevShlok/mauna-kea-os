@@ -5,7 +5,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea
 import { stageLabel } from "@/lib/helpers";
 
 const PIPELINE_STAGES = [
-  "universe", "mapping", "longlist", "calllist", "shortlist", "interview", "offer-sent", "offer-accepted", "closed",
+  "universe", "mapping", "longlist", "calllist", "shortlist", "client-shortlisted", "interview", "offer-sent", "offer-accepted", "closed",
 ];
 
 export default function MandateKanbanBoard({ 

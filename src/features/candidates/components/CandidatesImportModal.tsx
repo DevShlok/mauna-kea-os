@@ -380,7 +380,7 @@ export function CandidatesImportModal({ isOpen, onClose }: { isOpen: boolean; on
                       <div className="px-6 py-4">
                         <select
                           className="w-full h-10 px-3 bg-white border border-[#e4e8f0] rounded-lg text-sm text-[#111] focus:ring-2 focus:ring-[#133255] outline-none shadow-sm cursor-pointer hover:border-[#cfd6e4] transition-all"
-                          value={fileKey || ""}
+                          value={(fileKey as string) || ""}
                           onChange={(e) => {
                             setImportMapping({
                               ...importMapping,

@@ -17,7 +17,7 @@ const PipelineImportModal = dynamic(() => import("./PipelineImportModal"), { ssr
 const CopyCandidatesModal = dynamic(() => import("./CopyCandidatesModal"), { ssr: false });
 
 const PIPELINE_STAGES = [
-  "universe","mapping","longlist","calllist","shortlist","interview","offer-sent","offer-accepted","closed",
+  "universe","mapping","longlist","calllist","shortlist","client-shortlisted","interview","offer-sent","offer-accepted","closed",
 ];
 
 const AuditText = ({ field, data }: { field: string, data: any }) => {
@@ -46,7 +46,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<number>>(new Set());
   const [isSendingToClient, setIsSendingToClient] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
-  const [workflowTab, setWorkflowTab] = useState<"universe" | "mapping" | "longlist" | "calllist" | "shortlist" | "interview" | "offer-sent" | "offer-accepted" | "closed">("universe");
+  const [workflowTab, setWorkflowTab] = useState<"universe" | "mapping" | "longlist" | "calllist" | "shortlist" | "client-shortlisted" | "interview" | "offer-sent" | "offer-accepted" | "closed">("universe");
   const [isBulkMoving, setIsBulkMoving] = useState(false);
   const [bulkTargetStage, setBulkTargetStage] = useState("");
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -527,6 +527,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
               { value: "longlist", label: "Long List" },
               { value: "calllist", label: "Call List" },
               { value: "shortlist", label: "Shortlist" },
+              { value: "client-shortlisted", label: "Candidate Shortlisted" },
               { value: "interview", label: "Interview" },
               { value: "offer-sent", label: "Offer Sent" },
               { value: "offer-accepted", label: "Offer Accepted" },
@@ -571,6 +572,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                     { value: "longlist", label: "Long List" },
                     { value: "calllist", label: "Call List" },
                     { value: "shortlist", label: "Shortlist" },
+                    { value: "client-shortlisted", label: "Candidate Shortlisted" },
                     { value: "interview", label: "Interview" },
                     { value: "offer-sent", label: "Offer Sent" },
                     { value: "offer-accepted", label: "Offer Accepted" },

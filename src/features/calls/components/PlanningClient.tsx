@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import toast from "react-hot-toast";
 import { createPlanAction, reviewPlanAction } from "@/actions/calls";
 import { useRouter } from "next/navigation";
@@ -15,12 +15,30 @@ export default function PlanningClient({ plans, availableTargets, isAdmin, user 
   const [searchQuery, setSearchQuery] = useState("");
 
   const selectedTargetObjs = availableTargets.filter(t => selectedTargets.includes(t.candId));
-  const filteredTargets = availableTargets.filter(target => 
-    !selectedTargets.includes(target.candId) &&
-    (target.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    target.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    target.designation?.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredTargets = useMemo(() => {
+    // Deduplicate by candId to prevent React key errors if candidate appears in multiple lists
+    const uniqueMap = new Map();
+    availableTargets.forEach(t => {
+      if (!uniqueMap.has(t.candId)) {
+        uniqueMap.set(t.candId, { ...t });
+      } else {
+        const existing = uniqueMap.get(t.candId);
+        if (existing.list && t.list && !existing.list.includes(t.list)) {
+          existing.list = `${existing.list}, ${t.list}`;
+        }
+      }
+    });
+    const uniqueTargets = Array.from(uniqueMap.values());
+
+    if (!searchQuery) return uniqueTargets.filter(t => !selectedTargets.includes(t.candId));
+    const q = searchQuery.toLowerCase();
+    return uniqueTargets.filter(t => 
+      !selectedTargets.includes(t.candId) &&
+      ((t.name?.toLowerCase() || "").includes(q) ||
+      (t.company?.toLowerCase() || "").includes(q) ||
+      (t.designation?.toLowerCase() || "").includes(q))
+    );
+  }, [searchQuery, availableTargets, selectedTargets]);
 
   const [form, setForm] = useState({
     date: new Date().toISOString().split('T')[0],

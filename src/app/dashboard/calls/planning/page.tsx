@@ -50,10 +50,19 @@ export default async function PlanningPage() {
   .innerJoin(candidates, eq(engagementListItems.candId, candidates.id))
   .where(eq(engagementListItems.userId, userId));
 
-  const availableTargets = engagementListCandsRaw.map(c => ({ 
-    ...c, 
-    list: c.listType 
-  }));
+  const uniqueMap = new Map();
+  for (const c of engagementListCandsRaw) {
+    if (!uniqueMap.has(c.candId)) {
+      uniqueMap.set(c.candId, { ...c, list: c.listType });
+    } else {
+      // optionally combine lists if desired
+      const existing = uniqueMap.get(c.candId);
+      if (!existing.list.includes(c.listType)) {
+        existing.list += `, ${c.listType}`;
+      }
+    }
+  }
+  const availableTargets = Array.from(uniqueMap.values());
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">

@@ -1229,3 +1229,31 @@ export async function publishOrgDefaultAction(prefKey: string, prefValue: Record
     .values({ userId: null, prefKey, prefValue, isDefault: true });
 }
 
+
+export async function updateFloatUnifiedStageAction(unifiedId: string, newStage: string) {
+  await requireRole(["admin", "consultant"]);
+  
+  if (!unifiedId) throw new Error("Missing unifiedId");
+
+  if (unifiedId.startsWith("mc-")) {
+    const rawId = parseInt(unifiedId.replace("mc-", ""), 10);
+    await db.update(mandateCandidates)
+      .set({ stage: newStage })
+      .where(eq(mandateCandidates.id, rawId));
+  } else if (unifiedId.startsWith("float-")) {
+    const candId = unifiedId.replace("float-", "");
+    await db.update(floats)
+      .set({ status: newStage })
+      .where(and(eq(floats.candId, candId), eq(floats.client, 'General')));
+  } else {
+    // Attempt fallback for raw IDs (e.g., from profile view)
+    const rawId = parseInt(unifiedId, 10);
+    if (!isNaN(rawId)) {
+      await db.update(mandateCandidates)
+        .set({ stage: newStage })
+        .where(eq(mandateCandidates.id, rawId));
+    }
+  }
+
+  revalidatePath("/dashboard", "layout");
+}

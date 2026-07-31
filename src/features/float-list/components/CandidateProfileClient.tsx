@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { FloatStageDropdown } from "@/components/ui/FloatStageDropdown";
 
 export default function CandidateProfileClient({ mandates }: { mandates: any[] }) {
   const { id } = useParams();
@@ -63,7 +63,7 @@ export default function CandidateProfileClient({ mandates }: { mandates: any[] }
           <h1 className="text-2xl font-bold text-gray-900">{candidate.name}</h1>
           <p className="text-gray-500 text-sm mt-0.5">{candidate.role} · {candidate.company}</p>
           <div className="flex items-center gap-2 mt-2">
-            <StatusBadge status={candidate.stage} />
+            <FloatStageDropdown id={`mc-${candidate.id}`} currentStage={candidate.stage} />
             {candidate.score && (
               <span className={"px-2 py-0.5 rounded-full text-xs font-bold " + (candidate.score >= 8 ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800")}>{candidate.score}/10</span>
             )}
