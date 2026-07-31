@@ -19,7 +19,7 @@ import { convertToClientContactAction, updatePastCompaniesAction, updateCandidat
 import { removeFromEngagementListAction } from "@/actions/calls";
 import { formatCtcValue, getCleanLinkedInUrl } from "@/lib/helpers";
 import { createClient } from "@/utils/supabase/client";
-import { Pin, Download, User, FileText, CheckSquare, Target, Briefcase, IndianRupee, MapPin, Building2, Brain, Link as LinkIcon, Edit, Trash2, ArrowLeft, Plus, Check, Send, Rocket, PhoneCall } from "lucide-react";
+import { Pin, Download, User, FileText, CheckSquare, Target, Briefcase, IndianRupee, MapPin, Building2, Brain, Link as LinkIcon, Edit, Trash2, ArrowLeft, Plus, Check, Send, Rocket, PhoneCall, X } from "lucide-react";
 
 import { useWidgetLayout } from "@/hooks/useWidgetLayout";
 import { WidgetCard } from "@/components/ui/WidgetCard";
@@ -1295,11 +1295,11 @@ export default function FlCandidateClient({
       {/* (Client Contact, Past Company, Reference, Submission Modals all exist above in renderWidgetBody or floating, but standard practice is outside the main grid tree) */}
       
       {isMandateModalOpen && (
-        <div className="fixed inset-0 bg-[#0d162e]/50 z-50 flex items-center justify-center p-5 backdrop-blur-sm">
-          <div className="bg-white rounded-[20px] shadow-2xl w-full max-w-[500px] flex flex-col">
-            <div className="px-6 py-5 border-b border-[#e4e8f0] flex justify-between items-center">
-              <h3 className="font-serif text-[21px] font-bold text-gray-900">Add to mandate</h3>
-              <button onClick={() => setIsMandateModalOpen(false)} className="text-[#8a93a3] text-xl hover:text-gray-900">✕</button>
+        <div className="fixed inset-0 bg-[#0E2150]/20 z-50 flex items-center justify-center p-4 backdrop-blur-[2px]">
+          <div className="bg-white rounded-[20px] shadow-[0_12px_40px_rgba(19,50,85,0.12)] border border-[#e4e8f0] w-full max-w-[500px] flex flex-col overflow-hidden">
+            <div className="px-6 py-5 border-b border-[#e4e8f0] flex justify-between items-center bg-[#fafbfd]">
+              <h3 className="font-serif text-[21px] font-bold text-[#111]">Add to mandate</h3>
+              <button onClick={() => setIsMandateModalOpen(false)} className="w-8 h-8 flex items-center justify-center hover:bg-[#e4e8f0] rounded-full text-[#6b7a99] hover:text-[#111] transition-colors">✕</button>
             </div>
             <div className="p-6 max-h-[60vh] overflow-y-auto space-y-3">
               {mandates.map(m => (
@@ -1320,11 +1320,11 @@ export default function FlCandidateClient({
       {/* Note: I've truncated the other modals (Submission, Reference, Convert, etc.) slightly to save space, but they function identically to the original by accessing the same state. */}
       {/* ... Add Submission Modal ... */}
       {isSubModalOpen && (
-        <div className="fixed inset-0 bg-[#0d162e]/50 z-50 flex items-center justify-center p-5 backdrop-blur-sm">
-          <div className="bg-white rounded-[20px] shadow-2xl w-[450px] overflow-hidden flex flex-col">
-            <div className="px-6 py-5 border-b border-[#e4e8f0] flex justify-between items-center bg-[#f8fafc]">
+        <div className="fixed inset-0 bg-[#0E2150]/20 z-50 flex items-center justify-center p-4 backdrop-blur-[2px]">
+          <div className="bg-white rounded-[20px] shadow-[0_12px_40px_rgba(19,50,85,0.12)] border border-[#e4e8f0] w-[450px] overflow-hidden flex flex-col">
+            <div className="px-6 py-5 border-b border-[#e4e8f0] flex justify-between items-center bg-[#fafbfd]">
               <h3 className="font-serif text-[21px] font-bold text-[#111]">Submit Candidate</h3>
-              <button onClick={() => setIsSubModalOpen(false)} className="text-[#8a93a3] hover:text-[#111]">✕</button>
+              <button onClick={() => setIsSubModalOpen(false)} className="w-8 h-8 flex items-center justify-center hover:bg-[#e4e8f0] rounded-full text-[#6b7a99] hover:text-[#111] transition-colors">✕</button>
             </div>
             <form onSubmit={handleAddSubmission} className="p-6 space-y-4">
               <div><label className="block text-[12px] font-bold uppercase tracking-wide text-[#6b7a99] mb-1">Mandate</label><select value={subForm.mandateId} onChange={e => {const m = mandates.find(x => x.id.toString() === e.target.value); setSubForm({...subForm, mandateId: e.target.value, client: m?.company||"", role: m?.role||""})}} className="w-full h-11 border border-[#e4e8f0] rounded-xl px-3 text-[14px] outline-none focus:border-[#1d4ed8]"><option value="">-- Manual Entry --</option>{mandates.map(m => <option key={m.id} value={m.id}>{m.company} - {m.role}</option>)}</select></div>
@@ -1338,11 +1338,11 @@ export default function FlCandidateClient({
 
       {/* ... Add Reference Modal ... */}
       {isRefModalOpen && (
-        <div className="fixed inset-0 bg-[#0d162e]/50 z-50 flex items-center justify-center p-5 backdrop-blur-sm">
-          <div className="bg-white rounded-[20px] shadow-2xl w-[500px] overflow-hidden flex flex-col">
-            <div className="px-6 py-5 border-b border-[#e4e8f0] flex justify-between items-center bg-[#f8fafc]">
+        <div className="fixed inset-0 bg-[#0E2150]/20 z-50 flex items-center justify-center p-4 backdrop-blur-[2px]">
+          <div className="bg-white rounded-[20px] shadow-[0_12px_40px_rgba(19,50,85,0.12)] border border-[#e4e8f0] w-[500px] overflow-hidden flex flex-col">
+            <div className="px-6 py-5 border-b border-[#e4e8f0] flex justify-between items-center bg-[#fafbfd]">
               <h3 className="font-serif text-[21px] font-bold text-[#111]">Add Reference</h3>
-              <button onClick={() => setIsRefModalOpen(false)} className="text-[#8a93a3] hover:text-[#111]">✕</button>
+              <button onClick={() => setIsRefModalOpen(false)} className="w-8 h-8 flex items-center justify-center hover:bg-[#e4e8f0] rounded-full text-[#6b7a99] hover:text-[#111] transition-colors">✕</button>
             </div>
             <form onSubmit={handleAddReference} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -1362,8 +1362,8 @@ export default function FlCandidateClient({
 
       {/* ... Delete Confirmation ... */}
       {deleteConfirmation && (
-        <div className="fixed inset-0 bg-[#0d162e]/50 z-[100] flex items-center justify-center p-5 backdrop-blur-sm">
-          <div className="bg-white rounded-[20px] shadow-2xl w-[400px] overflow-hidden p-6">
+        <div className="fixed inset-0 bg-[#0E2150]/20 z-[100] flex items-center justify-center p-4 backdrop-blur-[2px]">
+          <div className="bg-white rounded-[20px] shadow-[0_12px_40px_rgba(19,50,85,0.12)] border border-[#e4e8f0] w-[400px] overflow-hidden p-6">
             <h3 className="text-[18px] font-bold text-[#111] mb-2">Delete File</h3>
             <p className="text-[14px] text-[#4a5568] mb-6">Are you sure you want to delete <strong>{deleteConfirmation.fileName}</strong>? This cannot be undone.</p>
             <div className="flex justify-end gap-3"><button onClick={() => setDeleteConfirmation(null)} className="px-4 py-2 border border-[#e4e8f0] rounded-xl text-[13px] font-bold text-[#475569]">Cancel</button><button onClick={confirmDeleteFile} className="px-5 py-2 bg-red-600 text-white rounded-xl text-[13px] font-bold hover:bg-red-700">Delete</button></div>
@@ -1373,11 +1373,11 @@ export default function FlCandidateClient({
       
       {/* ... Past Companies Edit ... */}
       {isPastCompanyModalOpen && (
-        <div className="fixed inset-0 bg-[#0d162e]/50 z-[100] flex items-center justify-center p-5 backdrop-blur-sm">
-          <div className="bg-white rounded-[20px] shadow-2xl w-[400px] overflow-hidden flex flex-col">
-            <div className="px-6 py-5 border-b border-[#e4e8f0] flex justify-between items-center bg-[#f8fafc]">
+        <div className="fixed inset-0 bg-[#0E2150]/20 z-[100] flex items-center justify-center p-4 backdrop-blur-[2px]">
+          <div className="bg-white rounded-[20px] shadow-[0_12px_40px_rgba(19,50,85,0.12)] border border-[#e4e8f0] w-[400px] overflow-hidden flex flex-col">
+            <div className="px-6 py-5 border-b border-[#e4e8f0] flex justify-between items-center bg-[#fafbfd]">
               <h3 className="font-serif text-[19px] font-bold text-[#111]">Past Companies</h3>
-              <button onClick={() => setIsPastCompanyModalOpen(false)} className="text-[#8a93a3] hover:text-[#111]">✕</button>
+              <button onClick={() => setIsPastCompanyModalOpen(false)} className="w-8 h-8 flex items-center justify-center hover:bg-[#e4e8f0] rounded-full text-[#6b7a99] hover:text-[#111] transition-colors">✕</button>
             </div>
             <div className="p-6">
               <div className="flex flex-wrap gap-2 mb-4">
@@ -1394,11 +1394,11 @@ export default function FlCandidateClient({
       
       {/* ... Convert to Client ... */}
       {isClientContactModalOpen && (
-        <div className="fixed inset-0 bg-[#0d162e]/50 z-[100] flex items-center justify-center p-5 backdrop-blur-sm">
-          <div className="bg-white rounded-[20px] shadow-2xl w-[450px] overflow-hidden flex flex-col">
-            <div className="px-6 py-5 border-b border-[#e4e8f0] flex justify-between items-center bg-[#f8fafc]">
+        <div className="fixed inset-0 bg-[#0E2150]/20 z-[100] flex items-center justify-center p-4 backdrop-blur-[2px]">
+          <div className="bg-white rounded-[20px] shadow-[0_12px_40px_rgba(19,50,85,0.12)] border border-[#e4e8f0] w-[450px] overflow-hidden flex flex-col">
+            <div className="px-6 py-5 border-b border-[#e4e8f0] flex justify-between items-center bg-[#fafbfd]">
               <h3 className="font-serif text-[19px] font-bold text-[#111]">Convert to Client</h3>
-              <button onClick={() => setIsClientContactModalOpen(false)} className="text-[#8a93a3] hover:text-[#111]">✕</button>
+              <button onClick={() => setIsClientContactModalOpen(false)} className="w-8 h-8 flex items-center justify-center hover:bg-[#e4e8f0] rounded-full text-[#6b7a99] hover:text-[#111] transition-colors">✕</button>
             </div>
             <form onSubmit={handleConvertToClientContact} className="p-6 space-y-4">
               <div><label className="block text-[12px] font-bold uppercase tracking-wide text-[#6b7a99] mb-1">Select Client</label><select required value={clientContactForm.clientId} onChange={e=>setClientContactForm({...clientContactForm, clientId: e.target.value})} className="w-full h-11 border border-[#e4e8f0] rounded-xl px-3 text-[14px]"><option value="">-- Choose Client --</option>{allClients?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>

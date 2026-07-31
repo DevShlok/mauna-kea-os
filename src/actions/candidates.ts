@@ -29,6 +29,235 @@ async function getCurrentUserName(): Promise<string> {
   return "Unknown";
 }
 
+export async function mapCandidatesAction(headers: string[], sampleData: any[]) {
+  const schema = z.object({
+    mapping: z.object({
+      name: z.string().nullable().describe("Match for Candidate Name"),
+      designation: z.string().nullable().describe("Match for Job Title or Designation"),
+      company: z.string().nullable().describe("Match for Current Company"),
+      phone: z.string().nullable().describe("Match for Phone Number or Mobile"),
+      email: z.string().nullable().describe("Match for Email Address"),
+      linkedin: z.string().nullable().describe("Match for LinkedIn URL"),
+      previousCompany: z.string().nullable().describe("Match for Previous Company"),
+      location: z.string().nullable().describe("Match for City or Location"),
+      industry: z.string().nullable().describe("Match for Industry"),
+      ctc: z.string().nullable().describe("Match for Current CTC or Salary"),
+      totalExperience: z.string().nullable().describe("Match for Total Experience in years"),
+      qualification: z.string().nullable().describe("Match for Highest Qualification or Degree"),
+      yearQualified: z.string().nullable().describe("Match for Year of Passing")
+    }).describe("Map each standard system field to the EXACT CSV header that corresponds to it, or null if no match.")
+  });
+
+  const { object } = await generateObjectWithFallback({
+    schema,
+    prompt: `You are an expert data mapping assistant. You are given a list of CSV headers and a few rows of sample data. 
+Your task is to map the provided CSV headers to the standard system fields. 
+If a system field does not clearly match any CSV header, return null for that field.
+Do not guess wildly; only map if there is a reasonable logical connection.
+
+CSV Headers:
+${JSON.stringify(headers, null, 2)}
+
+Sample Data (first 3 rows):
+${JSON.stringify(sampleData, null, 2)}`
+  });
+
+  return object;
+}
+
+export async function checkCandidateDuplicatesAction(mappedCandidates: any[]) {
+  if (!mappedCandidates || mappedCandidates.length === 0) return { duplicates: [], newCandidates: [] };
+
+  const existingCandidates = await db.select().from(candidates).where(eq(candidates.isDeleted, false));
+  const existingFiles = await db.select().from(candidateFiles);
+  
+  // Attach files to candidates for date checking
+  existingCandidates.forEach((c: any) => {
+    c.files = existingFiles.filter(f => f.candId === c.id);
+  });
+  const duplicates = [];
+  const newCandidates = [];
+
+  for (let i = 0; i < mappedCandidates.length; i++) {
+    const inc = mappedCandidates[i];
+    let foundMatch = false;
+
+    // Check against all existing
+    for (const ext of existingCandidates) {
+      const match = evaluateCandidateMatch(inc, ext);
+      if (match.isDuplicate) {
+        duplicates.push({
+          incomingCandidate: inc,
+          existingCandidate: ext,
+          reason: match.reason,
+          scores: match.scores,
+          incomingIndex: i
+        });
+        foundMatch = true;
+        break; // Stop at first match for this candidate
+      }
+    }
+
+    if (!foundMatch) {
+      newCandidates.push(inc);
+    }
+  }
+
+  return { duplicates, newCandidates };
+}
+
+function safeParseInt(val: any): number | null {
+  if (val === null || val === undefined || val === '') return null;
+  if (typeof val === 'number') return isNaN(val) ? null : val;
+  const parsed = parseInt(val.toString().replace(/[^\d.-]/g, ''), 10);
+  return isNaN(parsed) ? null : parsed;
+}
+
+function safeStr(val: any, maxLen: number): string {
+  if (!val) return "";
+  return String(val).substring(0, maxLen);
+}
+
+export async function finalizeCandidatesImportAction(newCandidates: any[], updatedCandidates: any[]) {
+  const updatedBy = await getCurrentUserName();
+  let insertedCount = 0;
+  let updatedCount = 0;
+  let failedRows: string[] = [];
+
+  // Insert pure new candidates
+  for (let i = 0; i < newCandidates.length; i++) {
+    const c = newCandidates[i];
+    try {
+      let initials = "";
+      if (c.name) {
+        initials = c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+      }
+
+      const newId = `CAND-${crypto.randomUUID()}`;
+
+      const payload = {
+        id: newId,
+        name: safeStr(c.name || "Unknown", 255),
+        email: safeStr(c.email || "", 255),
+        mobile: safeStr(c.phone || "", 20),
+        location: safeStr(c.location || "", 100),
+        company: safeStr(c.company || "", 255),
+        designation: safeStr(c.designation || "", 255),
+        exp: safeParseInt(c.totalExperience),
+        ctc: safeParseInt(c.ctc),
+        notes: c.industry ? `Industry: ${c.industry}` : "",
+        expTags: c.previousCompany ? [c.previousCompany] : [],
+        qual: c.qualification ? [{ degree: c.qualification }] : (c.yearQualified ? [{ degree: "Qualification", year: c.yearQualified }] : []),
+        linkedin: c.linkedin || null,
+        initials,
+        status: "Active",
+        metadata: c.metadata || {},
+      };
+
+      await db.insert(candidates).values(payload);
+      insertedCount++;
+
+      // Dispatch Inngest event if cvLink is provided
+      if (c.cvLink) {
+        await inngest.send({
+          name: "cv.process_gdrive_link",
+          data: { candidateId: newId, gdriveUrl: c.cvLink }
+        });
+      }
+
+      if (c.files && Array.isArray(c.files)) {
+        for (const file of c.files) {
+          try {
+            await db.insert(candidateFiles).values({
+              candId: newId,
+              fileType: "CV / Resume",
+              fileName: file.fileName || "resume.pdf",
+              fileUrl: file.fileUrl || file.fileData,
+            });
+          } catch (fileErr) {
+            console.error("Error inserting file for candidate", newId, fileErr);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to insert candidate row:", c, err);
+      failedRows.push(c.name || `Row ${i + 1}`);
+    }
+  }
+
+  // Handle Updates
+  for (const update of updatedCandidates) {
+    try {
+      const c = update.incomingCandidate;
+      const existingId = update.existingId;
+      const fieldsToUpdate = update.fieldsToUpdate || {}; // { name: true, email: true, etc }
+
+      const updatePayload: any = {};
+      if (fieldsToUpdate.name && c.name) {
+        updatePayload.name = c.name;
+        updatePayload.initials = c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+      }
+      if (fieldsToUpdate.email && c.email) updatePayload.email = c.email;
+      if (fieldsToUpdate.mobile && c.phone) updatePayload.mobile = c.phone;
+      if (fieldsToUpdate.location && c.location) updatePayload.location = c.location;
+      if (fieldsToUpdate.company && c.company) updatePayload.company = c.company;
+      if (fieldsToUpdate.designation && c.designation) updatePayload.designation = c.designation;
+      if (fieldsToUpdate.totalExperience && c.totalExperience) updatePayload.exp = safeParseInt(c.totalExperience);
+      if (fieldsToUpdate.ctc && c.ctc) updatePayload.ctc = safeParseInt(c.ctc);
+      if (fieldsToUpdate.qualification && c.qualification) updatePayload.qual = [{ degree: c.qualification }];
+      if (fieldsToUpdate.linkedin && c.linkedin) updatePayload.linkedin = c.linkedin;
+
+      // Merge notes/tags if selected
+      if (fieldsToUpdate.industry && c.industry) updatePayload.notes = c.industry;
+
+      if (c.metadata && Object.keys(c.metadata).length > 0) {
+        updatePayload.metadata = c.metadata;
+      }
+      
+      if (Object.keys(updatePayload).length > 0) {
+        updatePayload.updatedAt = new Date();
+        updatePayload.updatedBy = updatedBy;
+
+        await db.update(candidates)
+          .set(updatePayload)
+          .where(eq(candidates.id, existingId));
+
+        updatedCount++;
+      }
+      
+      // Dispatch Inngest event if cvLink is provided for an existing candidate
+      if (c.cvLink) {
+        await inngest.send({
+          name: "cv.process_gdrive_link",
+          data: { candidateId: existingId, gdriveUrl: c.cvLink }
+        });
+      }
+
+      if (c.files && Array.isArray(c.files)) {
+        for (const file of c.files) {
+          try {
+            await db.insert(candidateFiles).values({
+              candId: existingId,
+              fileType: "CV / Resume",
+              fileName: file.fileName || "resume.pdf",
+              fileUrl: file.fileUrl || file.fileData,
+            });
+          } catch (fileErr) {
+            console.error("Error inserting file for candidate update", existingId, fileErr);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to update candidate row:", update, err);
+      failedRows.push(update.incomingCandidate?.name || `Update Row`);
+    }
+  }
+
+  revalidatePath("/dashboard/candidates");
+  return { success: true, insertedCount, updatedCount, failedCount: failedRows.length, failedRows };
+}
+
+
 
 
 

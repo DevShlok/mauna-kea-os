@@ -39,6 +39,7 @@ import {
 import { useColumnPrefs, ColumnDef } from "@/hooks/useColumnPrefs";
 import { ColumnCustomizerPanel } from "@/components/ui/ColumnCustomizerPanel";
 import { ResizableHeader } from "@/components/DataTable/ResizableHeader";
+import { CandidatesImportModal } from "./CandidatesImportModal";
 
 const StatusDropdown = ({ val, onStatusChange, activePopoverId, setActivePopoverId, id }: any) => {
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -137,6 +138,7 @@ export default function CandidatesClient({
 
   // Local State
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [search, setSearch] = useState(initialParams?.search || "");
   const [debouncedSearch, setDebouncedSearch] = useState(search);
@@ -643,6 +645,10 @@ export default function CandidatesClient({
         resetToDefault={resetToDefault}
         publishAsOrgDefault={publishAsOrgDefault}
       />
+      <CandidatesImportModal 
+        isOpen={isImportModalOpen} 
+        onClose={() => setIsImportModalOpen(false)} 
+      />
 
       {/* ── Page Header ───────────────────────────────────── */}
       <div className="flex justify-between items-start mb-6">
@@ -662,6 +668,12 @@ export default function CandidatesClient({
               className="h-10 px-4 bg-white border border-[#e4e8f0] text-[#475569] rounded-xl text-[13.5px] font-semibold hover:bg-[#f8fafc] hover:border-[#cfd6e4] hover:text-[#111] transition-all flex items-center gap-2 shadow-sm"
             >
               <Settings size={15} /> Customise View
+            </button>
+            <button
+              onClick={() => setIsImportModalOpen(true)}
+              className="h-10 px-4 bg-white border border-[#e4e8f0] text-[#475569] rounded-xl text-[13.5px] font-semibold hover:bg-[#f8fafc] hover:border-[#cfd6e4] hover:text-[#111] transition-all flex items-center gap-2 shadow-sm"
+            >
+              <Download size={15} className="rotate-180" /> Import Candidates
             </button>
             <Link
               href="/dashboard/candidates/bulk-import"
