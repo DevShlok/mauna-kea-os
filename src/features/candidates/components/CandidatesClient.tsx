@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
@@ -38,6 +39,71 @@ import {
 import { useColumnPrefs, ColumnDef } from "@/hooks/useColumnPrefs";
 import { ColumnCustomizerPanel } from "@/components/ui/ColumnCustomizerPanel";
 import { ResizableHeader } from "@/components/DataTable/ResizableHeader";
+
+const StatusDropdown = ({ val, onStatusChange, activePopoverId, setActivePopoverId, id }: any) => {
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const isOpen = activePopoverId === id;
+  const [rect, setRect] = useState<DOMRect | null>(null);
+
+  useEffect(() => {
+    if (isOpen && btnRef.current) {
+      setRect(btnRef.current.getBoundingClientRect());
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleScroll = () => {
+      if (btnRef.current) setRect(btnRef.current.getBoundingClientRect());
+    };
+    window.addEventListener("scroll", handleScroll, true);
+    return () => window.removeEventListener("scroll", handleScroll, true);
+  }, [isOpen]);
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={(e) => { e.stopPropagation(); setActivePopoverId(isOpen ? null : id); }}
+        className={`px-2.5 py-1 rounded-[6px] text-[11.5px] font-bold flex items-center gap-1.5 transition-colors border ${
+          val === "Active" || !val
+            ? "bg-[#e6f6ee] text-[#127a41] border-[#bfe6ce]"
+            : val === "Passive"
+            ? "bg-[#fdf2d6] text-[#b7791f] border-[#f0dcae]"
+            : val === "Placed"
+            ? "bg-[#e8eefc] text-[#2a44a0] border-[#c9d6f6]"
+            : "bg-[#f1f3f6] text-[#697587] border-[#dde2ea]"
+        }`}
+      >
+        <span className="w-1.5 h-1.5 rounded-full currentColor bg-current opacity-70" />
+        {val || "Active"}
+        <span className="opacity-50 text-[10px]">▼</span>
+      </button>
+
+      {isOpen && rect && createPortal(
+        <>
+          <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setActivePopoverId(null); }} />
+          <div
+            className="fixed z-50 w-[140px] bg-white rounded-lg shadow-[0_12px_40px_rgba(19,50,85,0.12)] border border-[#e4e8f0] py-1 animate-in zoom-in-95 duration-100"
+            style={{ top: rect.bottom + 4, left: rect.left }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {["Active", "Passive", "Placed", "Do Not Contact"].map((s) => (
+              <button
+                key={s}
+                onClick={() => onStatusChange(id, s)}
+                className="w-full text-left px-3 py-1.5 text-[13px] text-[#111] font-medium hover:bg-[#f0f5ff] hover:text-[#133255]"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </>,
+        document.body
+      )}
+    </>
+  );
+};
 
 export default function CandidatesClient({
   candidates,
@@ -421,37 +487,13 @@ export default function CandidatesClient({
         if (col.key === "status") {
           return (
             <div className="relative inline-block text-left" onClick={(e) => e.stopPropagation()}>
-              <button
-                onClick={() => setStatusPopoverId(statusPopoverId === c.id ? null : c.id)}
-                className={`px-2.5 py-1 rounded-[6px] text-[11.5px] font-bold flex items-center gap-1.5 transition-colors border ${
-                  val === "Active" || !val
-                    ? "bg-[#e6f6ee] text-[#127a41] border-[#bfe6ce]"
-                    : val === "Passive"
-                    ? "bg-[#fdf2d6] text-[#b7791f] border-[#f0dcae]"
-                    : val === "Placed"
-                    ? "bg-[#e8eefc] text-[#2a44a0] border-[#c9d6f6]"
-                    : "bg-[#f1f3f6] text-[#697587] border-[#dde2ea]"
-                }`}
-              >
-                <span className="w-1.5 h-1.5 rounded-full currentColor bg-current opacity-70" />
-                {val || "Active"}
-                <span className="opacity-50 text-[10px]">▼</span>
-              </button>
-
-              {/* Status Popover */}
-              {statusPopoverId === c.id && (
-                <div className="absolute top-full left-0 mt-1 z-20 w-[140px] bg-white rounded-lg shadow-xl border border-[#e4e8f0] py-1 animate-in zoom-in-95 duration-100">
-                  {["Active", "Passive", "Placed", "Do Not Contact"].map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => handleStatusChange(c.id, s)}
-                      className="w-full text-left px-3 py-1.5 text-[13px] text-[#111] font-medium hover:bg-[#f0f5ff] hover:text-[#133255]"
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <StatusDropdown 
+                val={val} 
+                onStatusChange={handleStatusChange} 
+                activePopoverId={statusPopoverId} 
+                setActivePopoverId={setStatusPopoverId} 
+                id={c.id} 
+              />
             </div>
           );
         }
@@ -659,7 +701,8 @@ export default function CandidatesClient({
       )}
 
       {/* ── Search & Filter Bar ──────────────────────────── */}
-      <div className="mb-5 bg-white border border-[#e4e8f0] rounded-[16px] shadow-sm p-1.5 flex flex-wrap gap-2 items-center relative z-10">
+      <div className="mb-5 bg-white border border-[#e4e8f0] rounded-[16px] shadow-sm p-1.5 relative z-10">
+        <div className="flex flex-wrap gap-2 items-center">
         {/* Search */}
         <div className="flex-1 flex items-center gap-2.5 px-3 min-w-[200px]">
           <Search size={16} className="text-[#94a3b8]" />
@@ -754,26 +797,27 @@ export default function CandidatesClient({
           <Filter size={15} />
           Filters {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-[#1d4ed8]" />}
         </button>
-      </div>
-
-      {/* Active Filter Chips */}
-      {hasActiveFilters && !showFilters && (
-        <div className="flex flex-wrap gap-2 mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
-          {companiesFilter.map((f) => (
-            <span key={f} className="inline-flex items-center gap-1.5 bg-[#f0f5ff] text-[#1d4ed8] border border-[#d6e4ff] px-2.5 py-1 rounded-full text-[12px] font-bold">
-              {f} <X size={12} className="cursor-pointer hover:text-red-500" onClick={() => setCompaniesFilter(companiesFilter.filter(x => x !== f))} />
-            </span>
-          ))}
-          {search && (
-            <span className="inline-flex items-center gap-1.5 bg-[#f0f5ff] text-[#1d4ed8] border border-[#d6e4ff] px-2.5 py-1 rounded-full text-[12px] font-bold">
-              Search: {search} <X size={12} className="cursor-pointer hover:text-red-500" onClick={() => setSearch("")} />
-            </span>
-          )}
-          <button onClick={clearAllFilters} className="text-[12px] text-[#6b7a99] font-medium hover:text-[#111] px-2 py-1 underline">
-            Clear all
-          </button>
         </div>
-      )}
+
+        {/* Active Filter Chips */}
+        {hasActiveFilters && !showFilters && (
+          <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-[#e4e8f0]/50 animate-in fade-in slide-in-from-top-2 duration-200 px-2 pb-1">
+            {companiesFilter.map((f) => (
+              <span key={f} className="inline-flex items-center gap-1.5 bg-[#f0f5ff] text-[#1d4ed8] border border-[#d6e4ff] px-2.5 py-1 rounded-full text-[12px] font-bold">
+                {f} <X size={12} className="cursor-pointer hover:text-red-500" onClick={() => setCompaniesFilter(companiesFilter.filter(x => x !== f))} />
+              </span>
+            ))}
+            {search && (
+              <span className="inline-flex items-center gap-1.5 bg-[#f0f5ff] text-[#1d4ed8] border border-[#d6e4ff] px-2.5 py-1 rounded-full text-[12px] font-bold">
+                Search: {search} <X size={12} className="cursor-pointer hover:text-red-500" onClick={() => setSearch("")} />
+              </span>
+            )}
+            <button onClick={clearAllFilters} className="text-[12px] text-[#6b7a99] font-medium hover:text-[#111] px-2 py-1 underline">
+              Clear all
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Filter Sidebar Drawer */}
       {showFilters && (
@@ -822,7 +866,7 @@ export default function CandidatesClient({
       {/* ── Sleek Bulk Action Pill ──────────────── */}
       {selectedIds.size > 0 && (
         <div className="mb-5 flex justify-center animate-in zoom-in-95 fade-in slide-in-from-top-4 duration-200 ease-out z-20 relative">
-          <div className="bg-[#0f172a] text-white shadow-xl rounded-full flex items-center p-1.5 border border-white/10 w-max">
+          <div className="bg-[#133255] text-white shadow-[0_12px_40px_rgba(19,50,85,0.2)] rounded-full flex items-center p-1.5 border border-[#3b5574] w-max">
             
             {/* Selected Count */}
             <div className="px-4 py-1.5 flex items-center gap-2 border-r border-white/10 flex-shrink-0">
@@ -915,7 +959,7 @@ export default function CandidatesClient({
                       type="checkbox"
                       checked={candidates.length > 0 && selectedIds.size === candidates.length}
                       onChange={toggleAll}
-                      className="w-4 h-4 accent-[#133255] cursor-pointer rounded-[4px] border-[#cfd6e4]"
+                      className="w-[18px] h-[18px] cursor-pointer rounded-[5px] border border-[#cfd6e4] bg-white appearance-none checked:bg-[#133255] checked:border-[#133255] checked:bg-[url('data:image/svg+xml;utf8,%3Csvg%20viewBox=%220%200%2014%2014%22%20fill=%22none%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cpath%20d=%22M3.5%207.5L6%2010.5L10.5%204%22%20stroke=%22white%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-center bg-no-repeat transition-all hover:border-[#133255] relative flex items-center justify-center m-auto"
                       aria-label="Select all rows"
                     />
                   </th>
@@ -977,7 +1021,7 @@ export default function CandidatesClient({
                           type="checkbox"
                           checked={selectedIds.has(c.id)}
                           onChange={() => toggleRow(c.id)}
-                          className="w-4 h-4 accent-[#133255] cursor-pointer rounded-[4px] border-[#cfd6e4]"
+                          className="w-[18px] h-[18px] cursor-pointer rounded-[5px] border border-[#cfd6e4] bg-white appearance-none checked:bg-[#133255] checked:border-[#133255] checked:bg-[url('data:image/svg+xml;utf8,%3Csvg%20viewBox=%220%200%2014%2014%22%20fill=%22none%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cpath%20d=%22M3.5%207.5L6%2010.5L10.5%204%22%20stroke=%22white%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-center bg-no-repeat transition-all hover:border-[#133255] relative flex items-center justify-center m-auto"
                           aria-label={`Select ${c.name}`}
                         />
                       </td>
@@ -1011,13 +1055,14 @@ export default function CandidatesClient({
       </div>
       {/* ── Add to Mandate Modal ────────────────────────────── */}
       {showMandateModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-[#e4e8f0]">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-[#133255]">Assign to Mandate</h3>
-              <button onClick={() => setShowMandateModal(false)} className="p-1 text-[#6b7a99] hover:text-[#111]"><X size={18} /></button>
+        <div className="fixed inset-0 bg-[#0E2150]/20 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-[0_12px_40px_rgba(19,50,85,0.12)] border border-[#e4e8f0] overflow-hidden">
+            <div className="flex justify-between items-center px-6 py-5 border-b border-[#e4e8f0] bg-[#fafbfd]">
+              <h3 className="text-[18px] font-serif font-bold text-[#111]">Assign to Mandate</h3>
+              <button onClick={() => setShowMandateModal(false)} className="p-2 hover:bg-[#e4e8f0] rounded-full text-[#6b7a99] hover:text-[#111] transition-colors"><X size={18} /></button>
             </div>
-            <p className="text-sm text-[#6b7a99] mb-4">
+            <div className="p-6">
+              <p className="text-sm text-[#6b7a99] mb-4">
               Select a mandate to assign <span className="font-bold text-[#133255]">{selectedIds.size}</span> candidate(s).
             </p>
             <div className="mb-5">
@@ -1041,19 +1086,21 @@ export default function CandidatesClient({
                 {isSubmitting ? "Assigning..." : "Assign Candidates"}
               </button>
             </div>
+            </div>
           </div>
         </div>
       )}
 
       {/* ── Submit / Float Modal ────────────────────────────── */}
       {showSubmissionModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-[#e4e8f0]">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-[#133255]">Submit / Float Candidates</h3>
-              <button onClick={() => setShowSubmissionModal(false)} className="p-1 text-[#6b7a99] hover:text-[#111]"><X size={18} /></button>
+        <div className="fixed inset-0 bg-[#0E2150]/20 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-[0_12px_40px_rgba(19,50,85,0.12)] border border-[#e4e8f0] overflow-hidden">
+            <div className="flex justify-between items-center px-6 py-5 border-b border-[#e4e8f0] bg-[#fafbfd]">
+              <h3 className="text-[18px] font-serif font-bold text-[#111]">Submit / Float Candidates</h3>
+              <button onClick={() => setShowSubmissionModal(false)} className="p-2 hover:bg-[#e4e8f0] rounded-full text-[#6b7a99] hover:text-[#111] transition-colors"><X size={18} /></button>
             </div>
-            <p className="text-sm text-[#6b7a99] mb-4">
+            <div className="p-6">
+              <p className="text-sm text-[#6b7a99] mb-4">
               Submit <span className="font-bold text-[#133255]">{selectedIds.size}</span> candidate(s) to a client.
             </p>
             <div className="space-y-4 mb-5">
@@ -1093,6 +1140,7 @@ export default function CandidatesClient({
               <button onClick={handleBulkAddSubmission} disabled={isSubmitting || !submissionData.client || !submissionData.role} className="px-5 py-2 bg-[#D8B15B] text-[#133255] rounded-xl text-sm font-bold hover:bg-[#e8c97a] disabled:opacity-50">
                 {isSubmitting ? "Submitting..." : "Submit Candidates"}
               </button>
+            </div>
             </div>
           </div>
         </div>
