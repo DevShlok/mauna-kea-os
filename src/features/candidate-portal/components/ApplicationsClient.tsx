@@ -67,10 +67,10 @@ function NeoCard({
 }) {
   return (
     <div
-      className={`rounded-2xl relative overflow-hidden ${className}`}
+      className={`rounded-[36px] relative overflow-hidden ${className}`}
       style={{
-        background: "#e0e5ec",
-        boxShadow: "9px 9px 16px rgba(163,177,198,0.6), -9px -9px 16px rgba(255,255,255,0.5)",
+        background: "#eef2f7",
+        boxShadow: "12px 12px 24px #cbd5e1, -12px -12px 24px #ffffff",
       }}
     >
       {children}
@@ -241,8 +241,8 @@ function ApplicationCard({ float, candId }: { float: Float; candId: string }) {
 
         <button
           onClick={() => setExpanded(!expanded)}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 transition-all shrink-0"
-          style={{ background: "#e0e5ec", boxShadow: "2px 2px 4px rgba(163,177,198,0.4), -2px -2px 4px rgba(255,255,255,0.6)" }}
+          className="p-2 rounded-2xl text-slate-500 hover:text-slate-800 transition-all shrink-0"
+          style={{ background: "#eef2f7", boxShadow: "4px 4px 10px #cbd5e1, -4px -4px 10px #ffffff" }}
         >
           {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
@@ -259,10 +259,10 @@ function ApplicationCard({ float, candId }: { float: Float; candId: string }) {
           {/* Feedback Section */}
           {hasFeedback ? (
             <div
-              className="rounded-xl p-4 flex flex-col gap-3"
+              className="rounded-2xl p-4 flex flex-col gap-3"
               style={{
-                background: "#e0e5ec",
-                boxShadow: "inset 2px 2px 5px rgba(163,177,198,0.5), inset -2px -2px 5px rgba(255,255,255,0.7)",
+                background: "#eef2f7",
+                boxShadow: "inset 4px 4px 10px #cbd4e1, inset -4px -4px 10px #ffffff",
               }}
             >
               <div className="flex items-center gap-2">
@@ -315,8 +315,8 @@ function ApplicationCard({ float, candId }: { float: Float; candId: string }) {
           ) : (
             !isTerminal && (
               <div
-                className="rounded-xl p-3.5 flex items-center gap-3 text-[13px] text-slate-500 font-medium"
-                style={{ background: "#e0e5ec", boxShadow: "inset 2px 2px 5px rgba(163,177,198,0.5), inset -2px -2px 5px rgba(255,255,255,0.7)" }}
+                className="rounded-2xl p-3.5 flex items-center gap-3 text-[13px] text-slate-600 font-medium"
+                style={{ background: "#eef2f7", boxShadow: "inset 4px 4px 10px #cbd4e1, inset -4px -4px 10px #ffffff" }}
               >
                 <MessageSquare className="w-4 h-4 shrink-0 opacity-50" />
                 Feedback will appear here once received from the client.
@@ -393,10 +393,10 @@ export function ApplicationsClient({
           </p>
         </div>
         <div
-          className="px-3 py-1.5 rounded-full text-[13px] font-bold text-slate-600"
+          className="px-3.5 py-1.5 rounded-full text-[13px] font-bold text-slate-700"
           style={{
-            background: "#e0e5ec",
-            boxShadow: "inset 2px 2px 4px rgba(163,177,198,0.5), inset -2px -2px 4px rgba(255,255,255,0.7)",
+            background: "#eef2f7",
+            boxShadow: "4px 4px 10px #cbd5e1, -4px -4px 10px #ffffff",
           }}
         >
           {myFloats.length} Total

@@ -32,10 +32,10 @@ function NeoCard({
 }) {
   return (
     <div
-      className={`rounded-2xl relative overflow-hidden ${className}`}
+      className={`rounded-[36px] relative overflow-hidden ${className}`}
       style={{
-        background: "#e0e5ec",
-        boxShadow: "9px 9px 16px rgba(163,177,198,0.6), -9px -9px 16px rgba(255,255,255,0.5)",
+        background: "#eef2f7",
+        boxShadow: "12px 12px 24px #cbd5e1, -12px -12px 24px #ffffff",
       }}
     >
       {children}
@@ -61,10 +61,10 @@ function StatCard({
   return (
     <div
       onClick={onClick}
-      className={`rounded-2xl p-5 flex flex-col gap-3 relative overflow-hidden transition-all duration-300 ${onClick ? "cursor-pointer hover:-translate-y-1" : ""}`}
+      className={`rounded-[28px] p-5 flex flex-col gap-3 relative overflow-hidden transition-all duration-300 ${onClick ? "cursor-pointer hover:-translate-y-1" : ""}`}
       style={{
-        background: "#e0e5ec",
-        boxShadow: "6px 6px 12px rgba(163,177,198,0.5), -6px -6px 12px rgba(255,255,255,0.7)",
+        background: "#eef2f7",
+        boxShadow: "10px 10px 20px #cbd5e1, -10px -10px 20px #ffffff",
       }}
     >
       {/* Decorative glow orb */}
@@ -73,10 +73,10 @@ function StatCard({
         style={{ background: color }}
       />
       <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center relative z-10"
+        className="w-11 h-11 rounded-2xl flex items-center justify-center relative z-10"
         style={{
-          background: "#e0e5ec",
-          boxShadow: "inset 2px 2px 5px rgba(163,177,198,0.5), inset -2px -2px 5px rgba(255,255,255,0.8)",
+          background: "#eef2f7",
+          boxShadow: "inset 4px 4px 8px #cbd4e1, inset -4px -4px 8px #ffffff",
         }}
       >
         <Icon className="w-5 h-5" style={{ color }} />

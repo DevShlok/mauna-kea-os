@@ -11,10 +11,10 @@ function NeoCard({
 }) {
   return (
     <div
-      className={`rounded-2xl relative overflow-hidden ${className}`}
+      className={`rounded-[36px] relative overflow-hidden ${className}`}
       style={{
-        background: "#e0e5ec",
-        boxShadow: "9px 9px 16px rgba(163,177,198,0.6), -9px -9px 16px rgba(255,255,255,0.5)",
+        background: "#eef2f7",
+        boxShadow: "12px 12px 24px #cbd5e1, -12px -12px 24px #ffffff",
       }}
     >
       {children}
@@ -36,8 +36,8 @@ export function VerificationStatusClient({
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center text-[#133255]"
           style={{
-            background: "#e0e5ec",
-            boxShadow: "4px 4px 8px rgba(163,177,198,0.5), -4px -4px 8px rgba(255,255,255,0.7)",
+            background: "#eef2f7",
+            boxShadow: "4px 4px 10px #cbd5e1, -4px -4px 10px #ffffff",
           }}
         >
           <Shield className="w-8 h-8" />

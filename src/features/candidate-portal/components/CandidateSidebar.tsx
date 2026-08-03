@@ -72,14 +72,14 @@ export function CandidateSidebar({
       <div
         className="absolute inset-0 flex flex-col overflow-y-auto"
         style={{
-          background: "#e0e5ec",
-          borderRight: "1px solid rgba(255,255,255,0.4)",
-          boxShadow: "4px 0 16px rgba(163,177,198,0.2)",
+          background: "linear-gradient(180deg, #133255 0%, #0b1f36 100%)",
+          borderRight: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: "4px 0 20px rgba(0,0,0,0.15)",
         }}
       >
         {/* Logo */}
         <div
-          className={`flex items-center p-5 pb-4 border-b border-slate-300/40 ${
+          className={`h-[76px] flex items-center px-5 border-b border-white/10 ${
             isCollapsed ? "justify-center" : ""
           }`}
         >
@@ -90,20 +90,20 @@ export function CandidateSidebar({
             }`}
           >
             <div
-              className="text-white font-serif text-lg font-bold w-10 h-10 flex items-center justify-center rounded-xl shrink-0"
+              className="text-[#133255] font-serif text-lg font-bold w-10 h-10 flex items-center justify-center rounded-xl shrink-0"
               style={{
-                background: "linear-gradient(135deg, #133255, #1d4d82)",
-                boxShadow: "4px 4px 10px rgba(163,177,198,0.5), -4px -4px 10px rgba(255,255,255,0.8)",
+                background: "linear-gradient(135deg, #D8B15B, #f0c96a)",
+                boxShadow: "0 4px 14px rgba(216,177,91,0.35)",
               }}
             >
               MK
             </div>
             {!isCollapsed && (
               <div className="whitespace-nowrap">
-                <span className="font-serif text-[16px] font-bold block leading-tight text-slate-800">
+                <span className="font-serif text-[16px] font-bold block leading-tight text-white">
                   Mauna Kea
                 </span>
-                <span className="text-[11px] text-[#133255] tracking-wider block font-semibold">
+                <span className="text-[11px] text-[#D8B15B] tracking-wider block font-bold">
                   CAREER PORTAL
                 </span>
               </div>
@@ -112,7 +112,7 @@ export function CandidateSidebar({
         </div>
 
         {/* Nav Items */}
-        <div className="flex-1 py-5 flex flex-col gap-1 px-3">
+        <div className="flex-1 py-5 flex flex-col gap-1.5 px-3">
           {NAV_ITEMS.map((item, idx) => {
             const isActive = item.exact
               ? pathname === item.href
@@ -125,43 +125,43 @@ export function CandidateSidebar({
                 href={item.comingSoon ? "#" : item.href}
                 onClick={item.comingSoon ? (e) => e.preventDefault() : undefined}
                 title={isCollapsed ? item.label : undefined}
-                className={`flex items-center gap-3 rounded-xl transition-all duration-200 group/item relative
+                className={`flex items-center gap-3 rounded-xl transition-all duration-200 group/item relative font-medium
                   ${isCollapsed ? "justify-center px-0 py-3" : "px-4 py-3"}
                   ${
                     item.comingSoon
-                      ? "opacity-40 cursor-not-allowed"
+                      ? "opacity-40 cursor-not-allowed text-white/50"
                       : isActive
-                      ? "text-[#133255]"
-                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                      ? "text-white font-bold"
+                      : "text-white/60 hover:text-white hover:bg-white/5"
                   }
                 `}
                 style={
                   isActive && !item.comingSoon
                     ? {
-                        background: "#e0e5ec",
-                        boxShadow:
-                          "inset 4px 4px 8px rgba(163,177,198,0.5), inset -4px -4px 8px rgba(255,255,255,0.8)",
+                        background: "rgba(216,177,91,0.15)",
+                        border: "1px solid rgba(216,177,91,0.3)",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
                       }
                     : {}
                 }
               >
                 <Icon
                   className={`w-[19px] h-[19px] shrink-0 transition-colors ${
-                    isActive ? "text-[#D8B15B]" : "text-current"
+                    isActive ? "text-[#D8B15B]" : "text-white/60 group-hover/item:text-white"
                   }`}
                 />
                 {!isCollapsed && (
                   <>
-                    <span className="text-[14px] font-medium flex-1 tracking-wide">
+                    <span className="text-[14px] flex-1 tracking-wide">
                       {item.label}
                     </span>
                     {item.comingSoon && (
-                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-slate-300/50 text-slate-500">
+                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-white/10 text-white/40">
                         Soon
                       </span>
                     )}
                     {item.skeleton && (
-                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[#133255]/10 text-[#133255]">
+                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[#D8B15B]/20 text-[#D8B15B]">
                         New
                       </span>
                     )}
@@ -177,18 +177,15 @@ export function CandidateSidebar({
 
         {/* User Footer */}
         <div
-          className={`p-4 border-t border-slate-300/40 flex items-center overflow-hidden ${
+          className={`p-4 border-t border-white/10 flex items-center overflow-hidden ${
             isCollapsed ? "flex-col gap-4 justify-center" : "gap-3"
           }`}
-          style={{
-            background: "transparent",
-          }}
         >
           <div
-            className="w-[38px] h-[38px] rounded-full flex items-center justify-center font-serif text-[14px] font-bold shrink-0 text-white"
+            className="w-[38px] h-[38px] rounded-full flex items-center justify-center font-serif text-[14px] font-bold shrink-0 text-[#133255]"
             style={{
-              background: "linear-gradient(135deg, #133255, #1d4d82)",
-              boxShadow: "2px 2px 6px rgba(163,177,198,0.6)",
+              background: "linear-gradient(135deg, #D8B15B, #f0c96a)",
+              boxShadow: "0 2px 8px rgba(216,177,91,0.3)",
             }}
             title={isCollapsed ? userName : undefined}
           >
@@ -196,15 +193,15 @@ export function CandidateSidebar({
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <span className="text-slate-800 text-[14px] font-semibold block truncate">
+              <span className="text-white text-[14px] font-semibold block truncate">
                 {userName}
               </span>
-              <span className="text-slate-500 text-[11px] block font-medium">Candidate</span>
+              <span className="text-[#D8B15B]/80 text-[11px] block font-medium">Candidate</span>
             </div>
           )}
           <button
             onClick={handleSignOut}
-            className="text-slate-400 hover:text-rose-500 transition-colors p-1 shrink-0"
+            className="text-white/40 hover:text-rose-400 transition-colors p-1 shrink-0"
             title="Sign Out"
           >
             <LogOut className="w-4 h-4" />
@@ -215,11 +212,11 @@ export function CandidateSidebar({
       {/* Floating Toggle */}
       <button
         onClick={toggleSidebar}
-        className="absolute top-1/2 -right-3.5 -translate-y-1/2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-50 flex items-center justify-center cursor-pointer text-white"
+        className="absolute top-1/2 -right-3.5 -translate-y-1/2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-50 flex items-center justify-center cursor-pointer text-[#133255]"
         style={{
-          background: "linear-gradient(135deg, #133255, #1d4d82)",
-          boxShadow: "3px 3px 6px rgba(163,177,198,0.6)",
-          border: "1.5px solid #e0e5ec",
+          background: "linear-gradient(135deg, #D8B15B, #f0c96a)",
+          boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+          border: "2px solid #133255",
         }}
         title={isCollapsed ? "Expand" : "Collapse"}
       >

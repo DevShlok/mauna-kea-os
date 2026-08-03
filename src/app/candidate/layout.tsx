@@ -28,7 +28,7 @@ export default async function CandidateLayout({
 
   return (
     <div
-      className="flex flex-row h-screen overflow-hidden bg-[#e0e5ec] text-[#2D3748]"
+      className="flex flex-row h-screen overflow-hidden bg-[#eef2f7] text-[#1e293b]"
     >
       <CandidateSidebar
         userName={platformUser?.name || "Candidate"}
@@ -40,7 +40,7 @@ export default async function CandidateLayout({
           userName={platformUser?.name || "Candidate"}
         />
         <main
-          className="flex-1 overflow-y-auto bg-[#e0e5ec]"
+          className="flex-1 overflow-y-auto bg-[#eef2f7]"
         >
           <div className="p-6">{children}</div>
         </main>

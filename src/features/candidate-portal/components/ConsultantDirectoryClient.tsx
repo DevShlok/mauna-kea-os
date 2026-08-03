@@ -24,10 +24,10 @@ function ConsultantCard({ consultant }: { consultant: Consultant }) {
 
   return (
     <div
-      className="rounded-2xl p-5 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 group"
+      className="rounded-[32px] p-5 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 group"
       style={{
-        background: "#e0e5ec",
-        boxShadow: "6px 6px 12px rgba(163,177,198,0.5), -6px -6px 12px rgba(255,255,255,0.7)",
+        background: "#eef2f7",
+        boxShadow: "10px 10px 25px #cbd5e1, -10px -10px 25px #ffffff",
       }}
     >
       {/* Avatar + Name */}
@@ -71,10 +71,10 @@ function ConsultantCard({ consultant }: { consultant: Consultant }) {
           {(consultant.expertiseTags as string[]).slice(0, 5).map((tag) => (
             <span
               key={tag}
-              className="text-[11px] font-bold px-2 py-0.5 rounded-full text-slate-600"
+              className="text-[11px] font-bold px-2.5 py-1 rounded-full text-slate-700"
               style={{
-                background: "#e0e5ec",
-                boxShadow: "inset 2px 2px 4px rgba(163,177,198,0.5), inset -2px -2px 4px rgba(255,255,255,0.7)",
+                background: "#eef2f7",
+                boxShadow: "inset 3px 3px 6px #cbd4e1, inset -3px -3px 6px #ffffff",
               }}
             >
               {tag}
@@ -90,8 +90,8 @@ function ConsultantCard({ consultant }: { consultant: Consultant }) {
             href={consultant.linkedinUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-blue-600 hover:text-blue-700 transition-transform hover:-translate-y-0.5"
-            style={{ background: "#e0e5ec", boxShadow: "2px 2px 4px rgba(163,177,198,0.4), -2px -2px 4px rgba(255,255,255,0.6)" }}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl text-[12px] font-bold text-blue-700 transition-transform hover:-translate-y-0.5"
+            style={{ background: "#eef2f7", boxShadow: "4px 4px 10px #cbd5e1, -4px -4px 10px #ffffff" }}
           >
             <Globe className="w-3.5 h-3.5" /> LinkedIn
           </a>
@@ -155,16 +155,16 @@ export function ConsultantDirectoryClient({
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
             type="text"
             placeholder="Search by name or specialty..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-10 pl-9 pr-4 rounded-xl text-[13px] text-slate-700 font-medium placeholder-slate-400 outline-none transition-all focus:ring-2 focus:ring-[#133255]/20"
+            className="w-full h-11 pl-10 pr-4 rounded-2xl text-[13px] text-slate-800 font-bold placeholder-slate-400 outline-none transition-all"
             style={{
-              background: "#e0e5ec",
-              boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+              background: "#eef2f7",
+              boxShadow: "inset 4px 4px 8px #cbd4e1, inset -4px -4px 8px #ffffff",
             }}
           />
         </div>
@@ -172,10 +172,10 @@ export function ConsultantDirectoryClient({
           <select
             value={filterVertical}
             onChange={(e) => setFilterVertical(e.target.value)}
-            className="h-10 px-3 rounded-xl text-[13px] text-slate-600 font-bold outline-none"
+            className="h-11 px-4 rounded-2xl text-[13px] text-slate-800 font-bold outline-none"
             style={{
-              background: "#e0e5ec",
-              boxShadow: "inset 2px 2px 4px rgba(163,177,198,0.5), inset -2px -2px 4px rgba(255,255,255,0.7)",
+              background: "#eef2f7",
+              boxShadow: "inset 4px 4px 8px #cbd4e1, inset -4px -4px 8px #ffffff",
             }}
           >
             <option value="">All Verticals</option>
