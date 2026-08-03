@@ -27,10 +27,6 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -39,24 +35,6 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/dashboard') || 
     request.nextUrl.pathname.startsWith('/client') || 
     request.nextUrl.pathname.startsWith('/candidate');
-
-  if (user && isProtectedRoute) {
-    // Whitelist check: Verify the user's email exists in platform_users
-    const { data: platformUser, error } = await supabase
-      .from('platform_users')
-      .select('id, name')
-      .eq('email', user.email)
-      .limit(1)
-      .single();
-
-    if (error || !platformUser) {
-      // User not in whitelist. Block access.
-      await supabase.auth.signOut();
-      const url = request.nextUrl.clone();
-      url.pathname = '/unauthorized';
-      return NextResponse.redirect(url);
-    }
-  }
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()

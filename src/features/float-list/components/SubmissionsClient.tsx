@@ -249,7 +249,54 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
                   </select>
                 </div>
               </div>
+
+              {/* Candidate-Facing Feedback Section */}
+              <div className="mt-2 pt-3 border-t border-gray-100 flex flex-col gap-3">
+                <div className="text-xs font-bold text-[#133255]">
+                  📋 Candidate-Facing Feedback
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-emerald-700 mb-1">👍 Positives / Strengths</label>
+                  <textarea 
+                    rows={2}
+                    placeholder="e.g. Strong strategic background, clear communication..."
+                    value={editForm.feedbackPositives || ""}
+                    onChange={e => setEditForm({...editForm, feedbackPositives: e.target.value})}
+                    className="w-full px-2.5 py-1.5 border border-gray-200 rounded text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-amber-700 mb-1">🔁 Areas to Improve / Growth</label>
+                  <textarea 
+                    rows={2}
+                    placeholder="e.g. Board-level presentation skills could be sharper..."
+                    value={editForm.feedbackImprovements || ""}
+                    onChange={e => setEditForm({...editForm, feedbackImprovements: e.target.value})}
+                    className="w-full px-2.5 py-1.5 border border-gray-200 rounded text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-blue-700 mb-1">📌 Next Steps / Guidance</label>
+                  <textarea 
+                    rows={2}
+                    placeholder="e.g. Second round interview scheduled for next week..."
+                    value={editForm.feedbackNextSteps || ""}
+                    onChange={e => setEditForm({...editForm, feedbackNextSteps: e.target.value})}
+                    className="w-full px-2.5 py-1.5 border border-gray-200 rounded text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">📅 Interview Date (if applicable)</label>
+                  <input 
+                    type="date"
+                    value={editForm.interviewDate || ""}
+                    onChange={e => setEditForm({...editForm, interviewDate: e.target.value})}
+                    className="w-full px-2.5 py-1.5 border border-gray-200 rounded text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
             </div>
+
             <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
               <button 
                 disabled={isDeleting}
@@ -276,7 +323,11 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
                       client: editForm.client,
                       role: editForm.role,
                       consultant: editForm.consultant,
-                      status: editForm.status
+                      status: editForm.status,
+                      feedbackPositives: editForm.feedbackPositives,
+                      feedbackImprovements: editForm.feedbackImprovements,
+                      feedbackNextSteps: editForm.feedbackNextSteps,
+                      interviewDate: editForm.interviewDate,
                     });
                     setSubmissions(submissions.map((s: any) => s.id === selectedSubmission.id ? { ...s, ...editForm } : s));
                     setIsSaving(false);

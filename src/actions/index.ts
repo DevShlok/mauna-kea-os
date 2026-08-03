@@ -2,7 +2,7 @@
 import { requireRole } from "@/lib/auth";
 
 import { db } from "@/db";
-import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles, clients, clientNotifications, clientRemarks, consultantNotifications, engagementListItems, userPreferences } from "@/db/schema";
+import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles, clients, clientNotifications, clientRemarks, consultantNotifications, candidateNotifications, engagementListItems, userPreferences } from "@/db/schema";
 
 import { eq, sql, inArray, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -349,12 +349,77 @@ export async function removeCandidateFromMandateAction(data: { id: number; exter
   revalidatePath("/dashboard/float-list/submissions");
 }
 
-export async function updateSubmissionAction(id: string, data: { via?: string[]; followUp?: string; response?: string; status?: string; candName?: string; client?: string; role?: string; consultant?: string; }) {
+export async function updateSubmissionAction(
+  id: string,
+  data: {
+    via?: string[];
+    followUp?: string;
+    response?: string;
+    status?: string;
+    candName?: string;
+    client?: string;
+    role?: string;
+    consultant?: string;
+    feedbackPositives?: string;
+    feedbackImprovements?: string;
+    feedbackNextSteps?: string;
+    interviewDate?: string;
+  }
+) {
   await requireRole(["admin", "consultant"]);
-  revalidatePath("/dashboard", "layout");
+
+  // Fetch current float state to check status changes
+  const [existingFloat] = await db.select().from(floats).where(eq(floats.id, id));
+
   await db.update(floats).set(data).where(eq(floats.id, id));
+
+  if (existingFloat) {
+    const candId = existingFloat.candId;
+    const clientName = data.client || existingFloat.client || "Client";
+    const roleName = data.role || existingFloat.role || "Role";
+
+    // 1. Status Change Notification
+    if (data.status && data.status !== existingFloat.status) {
+      const STATUS_LABELS: Record<string, string> = {
+        Shared: "Profile Shared",
+        "Under Review": "Under Review by Client",
+        Shortlisted: "Shortlisted for Interview",
+        Interviewing: "Interview Scheduled",
+        Rejected: "Application Closed",
+        Hired: "Offer Accepted — Congratulations!",
+      };
+      const label = STATUS_LABELS[data.status] || data.status;
+
+      await db.insert(candidateNotifications).values({
+        candId,
+        type: "status_update",
+        message: `Your application to ${clientName} – ${roleName} has been updated: ${label}.`,
+        link: "/candidate/applications",
+        isRead: false,
+      });
+    }
+
+    // 2. Feedback Available Notification
+    const newlyAddedFeedback =
+      (data.feedbackPositives && data.feedbackPositives !== existingFloat.feedbackPositives) ||
+      (data.feedbackImprovements && data.feedbackImprovements !== existingFloat.feedbackImprovements) ||
+      (data.feedbackNextSteps && data.feedbackNextSteps !== existingFloat.feedbackNextSteps);
+
+    if (newlyAddedFeedback) {
+      await db.insert(candidateNotifications).values({
+        candId,
+        type: "feedback_received",
+        message: `Interview feedback is now available for your application to ${clientName} – ${roleName}.`,
+        link: "/candidate/applications",
+        isRead: false,
+      });
+    }
+  }
+
+  revalidatePath("/dashboard", "layout");
   revalidatePath("/dashboard/float-list/submissions");
   revalidatePath("/dashboard/float-list/database");
+  revalidatePath("/candidate/applications");
 }
 
 export async function addFollowUpAction(data: unknown) {

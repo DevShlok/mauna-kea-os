@@ -167,10 +167,17 @@ export const floats = pgTable('floats', {
   followUp: varchar('follow_up', { length: 20 }),
   status: varchar('status', { length: 50 }),
   response: text('response'),
+  // ─── Phase 1: Candidate Portal structured feedback ───
+  feedbackPositives: text('feedback_positives'),
+  feedbackImprovements: text('feedback_improvements'),
+  feedbackNextSteps: text('feedback_next_steps'),
+  interviewDate: varchar('interview_date', { length: 20 }),
+  nudgeSentAt: datetime('nudge_sent_at'),
   isDeleted: boolean('is_deleted').default(false),
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),
   createdAt: datetime('created_at').default(sql`now()`),
+  updatedAt: datetime('updated_at').default(sql`now()`),
 }, (table) => ({
   candIdIdx: index('floats_cand_id_idx').on(table.candId),
   isDeletedIdx: index('floats_is_deleted_idx').on(table.isDeleted),
@@ -248,6 +255,12 @@ export const platformUsers = pgTable('platform_users', {
   email: varchar('email', { length: 255 }).notNull(),
   role: varchar('role', { length: 50 }).default('candidate'), // admin | consultant | client | candidate
   status: varchar('status', { length: 20 }).default('Active'),
+  // ─── Phase 1: Consultant profile for candidate-facing directory ───
+  bio: text('bio'),
+  vertical: varchar('vertical', { length: 100 }),
+  expertiseTags: json('expertise_tags').$type<string[]>().default([]),
+  linkedinUrl: varchar('linkedin_url', { length: 500 }),
+  consultantProfilePic: text('consultant_profile_pic'),
   lastLogin: varchar('last_login', { length: 100 }),
   initials: varchar('initials', { length: 5 }),
   linkedClientId: varchar('linked_client_id', { length: 50 }), // set when role=client
@@ -331,6 +344,19 @@ export const clientRemarks = pgTable('client_remarks', {
   candIdIdx: index('crem_cand_id_idx').on(table.candId),
 }));
 
+// ─── CANDIDATE NOTIFICATIONS (Phase 1) ─────────────────
+export const candidateNotifications = pgTable('candidate_notifications', {
+  id: serial('id').primaryKey(),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
+  type: varchar('type', { length: 50 }), // status_update | feedback_received | nudge_ack | assessment_ready
+  message: text('message').notNull(),
+  link: varchar('link', { length: 255 }),
+  isRead: boolean('is_read').default(false),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  candIdIdx: index('cn2_cand_id_idx').on(table.candId),
+}));
+
 // ─── CONSULTANT NOTIFICATIONS ────────────────────────────
 export const consultantNotifications = pgTable('consultant_notifications', {
   id: serial('id').primaryKey(),
@@ -359,6 +385,7 @@ export type Client = typeof clients.$inferSelect;
 export type ClientNotification = typeof clientNotifications.$inferSelect;
 export type ClientRemark = typeof clientRemarks.$inferSelect;
 export type ConsultantNotification = typeof consultantNotifications.$inferSelect;
+export type CandidateNotification = typeof candidateNotifications.$inferSelect;
 
 // ─── TIME & LEAVE MANAGEMENT ─────────────────────────────
 export const timeLogs = pgTable('time_logs', {
