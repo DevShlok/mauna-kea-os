@@ -147,7 +147,7 @@ export function ColumnCustomizerPanel({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search columns..."
-              className="w-full pl-8 pr-3 py-2 text-[13.5px] border border-[#D4E0F0] rounded-lg outline-none focus:border-[#133255] bg-white transition-colors"
+              className="w-full pl-8 pr-3 py-2 text-[13.5px] neo-inset outline-none transition-colors"
             />
           </div>
         </div>
@@ -182,7 +182,7 @@ export function ColumnCustomizerPanel({
                                   className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${
                                     snapshot.isDragging
                                       ? "bg-[#f0f5ff] shadow-lg rounded-xl mx-2"
-                                      : "hover:bg-[#f8fafc]"
+                                      : "neo-row-hover"
                                   }`}
                                 >
                                   {/* Drag grip */}
@@ -245,7 +245,7 @@ export function ColumnCustomizerPanel({
         <div className="flex-shrink-0 border-t border-[#e4e8f0] p-4 bg-[#f8fafc] flex flex-col gap-2">
           <button
             onClick={resetToDefault}
-            className="flex items-center justify-center gap-2 w-full py-2 text-[13.5px] font-semibold text-[#6b7a99] hover:text-[#133255] hover:bg-white border border-[#e4e8f0] rounded-lg transition-all"
+            className="flex items-center justify-center gap-2 w-full py-2 text-[13.5px] font-semibold text-[#6b7a99] neo-btn hover:text-[#133255] transition-all"
           >
             <RotateCcw size={13} />
             Reset to Default
@@ -254,7 +254,7 @@ export function ColumnCustomizerPanel({
             <button
               onClick={handlePublish}
               disabled={isPublishing}
-              className="flex items-center justify-center gap-2 w-full py-2 text-[13.5px] font-bold text-[#133255] bg-[#DCE5F4] hover:bg-[#c8d8f0] border border-[#b8cce8] rounded-lg transition-all disabled:opacity-50"
+              className="flex items-center justify-center gap-2 w-full py-2 text-[13.5px] font-bold text-[#133255] neo-btn transition-all disabled:opacity-50"
             >
               <Globe size={13} />
               {isPublishing ? "Publishing…" : "Publish as Org Default"}

@@ -299,7 +299,7 @@ export default function PlanningClient({ plans, availableTargets, isAdmin, user 
             }
 
             return (
-            <div key={plan.id} className="p-5 hover:bg-gray-50/50 transition-colors">
+            <div key={plan.id} className="p-5 neo-row-hover transition-colors">
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">

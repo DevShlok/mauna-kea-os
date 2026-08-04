@@ -31,13 +31,7 @@ function NeoCard({
   className?: string;
 }) {
   return (
-    <div
-      className={`rounded-[36px] relative overflow-hidden ${className}`}
-      style={{
-        background: "#eef2f7",
-        boxShadow: "12px 12px 24px #cbd5e1, -12px -12px 24px #ffffff",
-      }}
-    >
+    <div className={`neo-card relative overflow-hidden ${className}`}>
       {children}
     </div>
   );
@@ -61,11 +55,7 @@ function StatCard({
   return (
     <div
       onClick={onClick}
-      className={`rounded-[28px] p-5 flex flex-col gap-3 relative overflow-hidden transition-all duration-300 ${onClick ? "cursor-pointer hover:-translate-y-1" : ""}`}
-      style={{
-        background: "#eef2f7",
-        boxShadow: "10px 10px 20px #cbd5e1, -10px -10px 20px #ffffff",
-      }}
+      className={`neo-card-sm p-5 flex flex-col gap-3 relative overflow-hidden transition-all duration-300 ${onClick ? "cursor-pointer hover:-translate-y-1" : ""}`}
     >
       {/* Decorative glow orb */}
       <div
@@ -73,11 +63,7 @@ function StatCard({
         style={{ background: color }}
       />
       <div
-        className="w-11 h-11 rounded-2xl flex items-center justify-center relative z-10"
-        style={{
-          background: "#eef2f7",
-          boxShadow: "inset 4px 4px 8px #cbd4e1, inset -4px -4px 8px #ffffff",
-        }}
+        className="w-11 h-11 neo-inset flex items-center justify-center relative z-10"
       >
         <Icon className="w-5 h-5" style={{ color }} />
       </div>
@@ -94,6 +80,7 @@ export function CandidateHome({
   recentFloats,
   stats,
   recentNotifs,
+  candidateSlug = "",
 }: {
   candidate: any;
   recentFloats: Float[];
@@ -104,8 +91,10 @@ export function CandidateHome({
     feedbackAvailable: number;
   };
   recentNotifs: CandidateNotification[];
+  candidateSlug?: string;
 }) {
   const router = useRouter();
+  const prefix = candidateSlug ? `/${candidateSlug}` : "/candidate";
 
   const initials = candidate?.name
     ?.split(" ")
@@ -181,7 +170,7 @@ export function CandidateHome({
           icon={Send}
           color="#60a5fa"
           glow="rgba(96,165,250,0.08)"
-          onClick={() => router.push("/candidate/applications")}
+          onClick={() => router.push(`${prefix}/applications`)}
         />
         <StatCard
           label="Awaiting Response"
@@ -189,7 +178,7 @@ export function CandidateHome({
           icon={Clock}
           color="#fbbf24"
           glow="rgba(251,191,36,0.08)"
-          onClick={() => router.push("/candidate/applications")}
+          onClick={() => router.push(`${prefix}/applications`)}
         />
         <StatCard
           label="Interviews Active"
@@ -197,7 +186,7 @@ export function CandidateHome({
           icon={CalendarCheck}
           color="#a78bfa"
           glow="rgba(167,139,250,0.08)"
-          onClick={() => router.push("/candidate/applications")}
+          onClick={() => router.push(`${prefix}/applications`)}
         />
         <StatCard
           label="Feedback Ready"
@@ -205,7 +194,7 @@ export function CandidateHome({
           icon={MessageSquare}
           color="#34d399"
           glow="rgba(52,211,153,0.08)"
-          onClick={() => router.push("/candidate/applications")}
+          onClick={() => router.push(`${prefix}/applications`)}
         />
       </div>
 
@@ -219,7 +208,7 @@ export function CandidateHome({
               <h3 className="text-slate-800 font-semibold text-[15px]">Recent Activity</h3>
             </div>
             <button
-              onClick={() => router.push("/candidate/applications")}
+              onClick={() => router.push(`${prefix}/applications`)}
               className="text-slate-500 hover:text-[#133255] transition-colors text-[12px] flex items-center gap-1 font-medium"
             >
               View all <ChevronRight className="w-3.5 h-3.5" />
@@ -246,11 +235,7 @@ export function CandidateHome({
                   <div
                     key={f.id}
                     onClick={() => router.push("/candidate/applications")}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer group/item hover:-translate-y-0.5"
-                    style={{
-                      background: "#e0e5ec",
-                      boxShadow: "3px 3px 6px rgba(163,177,198,0.5), -3px -3px 6px rgba(255,255,255,0.7)",
-                    }}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer group/item hover:-translate-y-0.5 neo-card-sm"
                   >
                     <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-[12px] font-bold text-white shadow-sm"
@@ -293,12 +278,9 @@ export function CandidateHome({
               {recentNotifs.map((n) => (
                 <div
                   key={n.id}
-                  className={`px-3 py-2.5 rounded-xl text-[12px] leading-relaxed transition-all`}
+                  className={`px-3 py-2.5 rounded-xl text-[12px] leading-relaxed transition-all neo-card-sm`}
                   style={{
-                    background: !n.isRead ? "#d1d9e6" : "#e0e5ec",
-                    boxShadow: !n.isRead 
-                      ? "inset 2px 2px 5px rgba(163,177,198,0.5), inset -2px -2px 5px rgba(255,255,255,0.7)"
-                      : "2px 2px 4px rgba(163,177,198,0.4), -2px -2px 4px rgba(255,255,255,0.6)",
+                    opacity: !n.isRead ? 1 : 0.75
                   }}
                 >
                   <p className="text-slate-700 font-medium">{n.message}</p>

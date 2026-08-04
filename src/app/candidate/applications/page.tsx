@@ -1,12 +1,14 @@
 import { requireRole } from "@/lib/auth";
-import { getCandidateFloatsAction } from "@/actions/candidate-portal";
-import { ApplicationsClient } from "@/features/candidate-portal/components/ApplicationsClient";
+import { getOrCreateCandidateSlug } from "@/lib/slug";
+import { redirect } from "next/navigation";
 
-export default async function ApplicationsPage() {
+export default async function CandidateApplicationsRedirect() {
   const { platformUser } = await requireRole(["candidate"]);
-  const candId = platformUser!.linkedCandidateId!;
-
-  const myFloats = await getCandidateFloatsAction(candId);
-
-  return <ApplicationsClient floats={myFloats} candId={candId} />;
+  if (platformUser.linkedCandidateId) {
+    const slug = await getOrCreateCandidateSlug(platformUser.linkedCandidateId, platformUser.name);
+    if (slug) {
+      redirect(`/${slug}/applications`);
+    }
+  }
+  redirect("/sign-in");
 }

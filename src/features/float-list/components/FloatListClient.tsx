@@ -126,7 +126,7 @@ export default function FloatListClient({
         <div className="flex gap-3 items-center">
           <button 
             onClick={() => setIsImportModalOpen(true)}
-            className="h-10 px-4 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+            className="h-10 px-5 neo-btn text-gray-700 text-sm font-semibold flex items-center gap-1.5"
           >
             <Upload className="w-4 h-4" /> Import Floats
           </button>
@@ -136,7 +136,7 @@ export default function FloatListClient({
       <FloatImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
       
       {/* Filters Bar */}
-      <div className="flex flex-wrap gap-3 mb-6 bg-white p-3 border border-gray-200 rounded-xl shadow-sm">
+      <div className="neo-bar flex flex-wrap gap-3 mb-6 p-4">
         <input 
           type="text" 
           placeholder="Search by Name/Company..." 
@@ -144,10 +144,10 @@ export default function FloatListClient({
           onChange={(e) => setSearch(e.target.value)}
           onBlur={handleSearchBlur}
           onKeyDown={e => e.key === "Enter" && handleSearchBlur()} 
-          className="min-w-[200px] flex-1 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]"
+          className="min-w-[200px] flex-1 px-4 py-2.5 neo-inset text-sm text-slate-800 font-medium placeholder-slate-400 outline-none"
         />
         
-        <select value={stageFilter} onChange={(e) => { setStageFilter(e.target.value); updateURL({ stage: e.target.value }); }} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none">
+        <select value={stageFilter} onChange={(e) => { setStageFilter(e.target.value); updateURL({ stage: e.target.value }); }} className="px-4 py-2.5 neo-inset text-sm text-slate-700 font-semibold outline-none">
           <option value="">All Stages</option>
           <option value="shortlist">Shortlist</option>
           <option value="interview">Interview</option>
@@ -157,17 +157,17 @@ export default function FloatListClient({
           <option value="mapping">Mapping</option>
         </select>
 
-        <select value={mandateFilter} onChange={(e) => { setMandateFilter(e.target.value); updateURL({ mandate: e.target.value }); }} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[200px]">
+        <select value={mandateFilter} onChange={(e) => { setMandateFilter(e.target.value); updateURL({ mandate: e.target.value }); }} className="px-4 py-2.5 neo-inset text-sm text-slate-700 font-semibold outline-none max-w-[200px]">
           <option value="">All Mandates</option>
           {uniqueMandates.map((m: any) => <option key={m} value={m}>{m}</option>)}
         </select>
 
-        <select value={companyFilter} onChange={(e) => { setCompanyFilter(e.target.value); updateURL({ company: e.target.value }); }} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+        <select value={companyFilter} onChange={(e) => { setCompanyFilter(e.target.value); updateURL({ company: e.target.value }); }} className="px-3 py-2 neo-inset text-sm bg-white outline-none max-w-[180px]">
           <option value="">All Companies</option>
           {uniqueCompanies.map((c: any) => <option key={c} value={c}>{c}</option>)}
         </select>
 
-        <select value={designationFilter} onChange={(e) => { setDesignationFilter(e.target.value); updateURL({ designation: e.target.value }); }} className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+        <select value={designationFilter} onChange={(e) => { setDesignationFilter(e.target.value); updateURL({ designation: e.target.value }); }} className="px-3 py-2 neo-inset text-sm bg-white outline-none max-w-[180px]">
           <option value="">All Designations</option>
           {uniqueDesignations.map((d: any) => <option key={d} value={d}>{d}</option>)}
         </select>
@@ -194,11 +194,11 @@ export default function FloatListClient({
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="neo-table">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b-2 border-gray-200">
+              <tr className="border-b border-gray-100">
                 <th className="px-4 py-3 text-center w-10">
                   <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
                 </th>
@@ -213,7 +213,7 @@ export default function FloatListClient({
             </thead>
             <tbody>
               {paginatedData.map((c: any, i: number) => (
-                <tr key={i} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => c.isFloatOnly ? router.push("/dashboard/candidates/" + c.externalId) : router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId)}>
+                <tr key={i} className="border-b border-gray-50 neo-row-hover cursor-pointer" onClick={() => c.isFloatOnly ? router.push("/dashboard/candidates/" + c.externalId) : router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId)}>
                   <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
                     <input type="checkbox" checked={selectedIds.has(c.externalId)} onChange={() => toggleRow(c.externalId)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
                   </td>

@@ -191,12 +191,12 @@ export default function TimeLeaveClient() {
         <div className="space-y-6">
 
 
-          <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm p-6">
+          <div className="neo-card p-6">
             <h2 className="text-lg font-bold text-[#133255] mb-4">Apply for Leave</h2>
             <form onSubmit={handleApplyLeave} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">Leave Type</label>
-                <select value={leaveType} onChange={e => setLeaveType(e.target.value)} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]">
+                <select value={leaveType} onChange={e => setLeaveType(e.target.value)} className="w-full px-3 py-2 neo-inset text-sm outline-none">
                   <option value="Casual">Casual</option>
                   <option value="Sick">Sick</option>
                   <option value="Earned Leave">Earned Leave</option>
@@ -210,16 +210,16 @@ export default function TimeLeaveClient() {
                     if (endDate && new Date(endDate) < new Date(e.target.value)) {
                       setEndDate(e.target.value);
                     }
-                  }} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" required />
+                  }} className="w-full px-3 py-2 neo-inset text-sm outline-none focus:border-[#133255]" required />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">End Date</label>
-                  <input type="date" min={startDate} value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" required />
+                  <input type="date" min={startDate} value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full px-3 py-2 neo-inset text-sm outline-none focus:border-[#133255]" required />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">Reason (Optional)</label>
-                <textarea value={reason} onChange={e => setReason(e.target.value)} rows={3} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255] resize-none"></textarea>
+                <textarea value={reason} onChange={e => setReason(e.target.value)} rows={3} className="w-full px-3 py-2 neo-inset text-sm outline-none focus:border-[#133255] resize-none"></textarea>
               </div>
               <button disabled={isSubmitting} type="submit" className="w-full px-4 py-2.5 bg-[#133255] text-white rounded text-sm font-bold hover:bg-[#0e3178] disabled:opacity-50">
                 {isSubmitting ? "Submitting..." : "Submit Application"}
@@ -227,7 +227,7 @@ export default function TimeLeaveClient() {
             </form>
           </div>
 
-          <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm p-6">
+          <div className="neo-card p-6">
             <h2 className="text-lg font-bold text-[#133255] mb-4">Apply for Work From Home</h2>
             <form onSubmit={handleApplyWfh} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -238,16 +238,16 @@ export default function TimeLeaveClient() {
                     if (wfhEndDate && new Date(wfhEndDate) < new Date(e.target.value)) {
                       setWfhEndDate(e.target.value);
                     }
-                  }} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" required />
+                  }} className="w-full px-3 py-2 neo-inset text-sm outline-none focus:border-[#133255]" required />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">End Date</label>
-                  <input type="date" min={wfhStartDate} value={wfhEndDate} onChange={e => setWfhEndDate(e.target.value)} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" required />
+                  <input type="date" min={wfhStartDate} value={wfhEndDate} onChange={e => setWfhEndDate(e.target.value)} className="w-full px-3 py-2 neo-inset text-sm outline-none focus:border-[#133255]" required />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">Reason (Optional)</label>
-                <textarea value={wfhReason} onChange={e => setWfhReason(e.target.value)} rows={3} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255] resize-none"></textarea>
+                <textarea value={wfhReason} onChange={e => setWfhReason(e.target.value)} rows={3} className="w-full px-3 py-2 neo-inset text-sm outline-none focus:border-[#133255] resize-none"></textarea>
               </div>
               <button disabled={isSubmittingWfh} type="submit" className="w-full px-4 py-2.5 bg-[#133255] text-white rounded text-sm font-bold hover:bg-[#0e3178] disabled:opacity-50">
                 {isSubmittingWfh ? "Submitting..." : "Submit WFH Application"}
@@ -257,7 +257,7 @@ export default function TimeLeaveClient() {
         </div>
 
         <div className="space-y-6 h-full flex flex-col">
-          <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm p-6 flex flex-col justify-center items-center text-center shrink-0">
+          <div className="neo-card p-6 flex flex-col justify-center items-center text-center shrink-0">
             <h2 className="text-lg font-bold text-[#133255] mb-2">My Break Status</h2>
             <p className="text-sm text-gray-500 mb-6">Let the team know if you are stepping away.</p>
             {clockStatus === 'Loading' ? (
@@ -273,7 +273,7 @@ export default function TimeLeaveClient() {
             )}
           </div>
 
-          <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm flex flex-col flex-1 min-h-0">
+          <div className="neo-card flex flex-col flex-1 min-h-0 overflow-hidden">
             <div className="p-4 border-b border-[#D4E0F0] bg-gray-50 shrink-0">
               <h2 className="text-sm font-bold text-[#133255]">My Leave & WFH Requests</h2>
             </div>
@@ -316,7 +316,7 @@ export default function TimeLeaveClient() {
 
       {leaveToWithdraw && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="neo-card w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6">
               <h3 className="text-xl font-serif font-bold text-[#111] mb-2">Withdraw Leave</h3>
               <p className="text-sm text-gray-500">Are you sure you want to withdraw this leave request? This action cannot be undone.</p>

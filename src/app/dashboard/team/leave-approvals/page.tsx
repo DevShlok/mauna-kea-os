@@ -78,11 +78,11 @@ export default function LeaveApprovalsPage() {
         </button>
       </div>
 
-      <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm">
+      <div className="neo-table">
         {activeTab === 'leaves' ? (
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[#f9fafc] border-b-2 border-[#D4E0F0]">
+              <tr className="border-b border-gray-100">
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">User</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Leave Type</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Duration</th>
@@ -97,7 +97,7 @@ export default function LeaveApprovalsPage() {
                 <tr><td colSpan={5} className="px-4 py-6 text-center text-gray-400">No leave requests found.</td></tr>
               ) : (
                 displayLeaves.map(leave => (
-                  <tr key={leave.id} className="border-b border-[#D4E0F0] hover:bg-[#f9fafc]">
+                  <tr key={leave.id} className="border-b border-[#D4E0F0] neo-row-hover">
                     <td className="px-4 py-3 font-semibold text-[#111]">{leave.userName || leave.userId}</td>
                     <td className="px-4 py-3">
                       <span className="font-bold text-[#133255]">{leave.leaveType}</span>
@@ -132,7 +132,7 @@ export default function LeaveApprovalsPage() {
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[#f9fafc] border-b-2 border-[#D4E0F0]">
+              <tr className="border-b border-gray-100">
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">User</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Role</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Status</th>
@@ -145,7 +145,7 @@ export default function LeaveApprovalsPage() {
                 <tr><td colSpan={3} className="px-4 py-6 text-center text-gray-400">No one is currently on break.</td></tr>
               ) : (
                 onBreakUsers.map(u => (
-                  <tr key={u.id} className="border-b border-[#D4E0F0] hover:bg-[#f9fafc]">
+                  <tr key={u.id} className="border-b border-[#D4E0F0] neo-row-hover">
                     <td className="px-4 py-3 font-semibold text-[#111]">{u.name}</td>
                     <td className="px-4 py-3 text-gray-600 capitalize">{u.role}</td>
                     <td className="px-4 py-3">

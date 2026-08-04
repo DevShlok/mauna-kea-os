@@ -355,7 +355,7 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
                       src={`https://logo.clearbit.com/${exp.domain}`} 
                       alt={exp.companyName}
                       crossOrigin="anonymous"
-                      className="w-[30px] h-[30px] shrink-0 object-contain bg-white border border-gray-200 rounded p-0.5"
+                      className="w-[30px] h-[30px] shrink-0 object-contain bg-white neo-inset p-0.5"
                       onError={(e) => {
                         const name = exp.companyName || "C";
                         const initials = name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
@@ -427,7 +427,7 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
                   <button 
                     onClick={() => moveBlock(1, index, 'up')}
                     disabled={index === 0}
-                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 neo-row-hover text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Move Up"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7"></path></svg>
@@ -435,7 +435,7 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
                   <button 
                     onClick={() => moveBlock(1, index, 'down')}
                     disabled={index === page1Blocks.length - 1}
-                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 neo-row-hover text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Move Down"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>
@@ -454,7 +454,7 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
                   {block.type === 'custom' && (
                     <button 
                       onClick={() => toggleCustomBlockStyle(1, block.id)}
-                      className="bg-white rounded shadow-sm border border-gray-200 hover:bg-blue-50 text-blue-600 font-bold text-[12px] leading-none transition-colors h-[28px] w-[28px] flex items-center justify-center"
+                      className="bg-white rounded shadow-sm border border-gray-200 neo-row-hover text-blue-600 font-bold text-[12px] leading-none transition-colors h-[28px] w-[28px] flex items-center justify-center"
                       title="Toggle Heading/Body Font"
                     >
                       {block.style === 'heading' ? 'H' : 'P'}
@@ -472,7 +472,7 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
               blocks.push({ id: `custom_${Date.now()}`, type: 'custom', style: 'body' });
               setPage1Blocks(blocks);
             }}
-            className="w-full py-3 mt-4 border-2 border-dashed border-gray-200 rounded-lg text-gray-400 font-bold hover:bg-gray-50 hover:text-[#133255] hover:border-[#133255] transition-all print:hidden flex items-center justify-center gap-2"
+            className="w-full py-3 mt-4 border-2 border-dashed border-gray-200 rounded-lg text-gray-400 font-bold neo-row-hover hover:text-[#133255] hover:border-[#133255] transition-all print:hidden flex items-center justify-center gap-2"
           >
             ➕ Add Text Box
           </button>
@@ -572,7 +572,7 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
                   <button 
                     onClick={() => moveBlock(2, index, 'up')}
                     disabled={index === 0}
-                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 neo-row-hover text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Move Up"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7"></path></svg>
@@ -580,7 +580,7 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
                   <button 
                     onClick={() => moveBlock(2, index, 'down')}
                     disabled={index === page2Blocks.length - 1}
-                    className="p-1 bg-white rounded shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="p-1 bg-white rounded shadow-sm border border-gray-200 neo-row-hover text-gray-500 hover:text-[#133255] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Move Down"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>
@@ -599,7 +599,7 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
                   {block.type === 'custom' && (
                     <button 
                       onClick={() => toggleCustomBlockStyle(2, block.id)}
-                      className="bg-white rounded shadow-sm border border-gray-200 hover:bg-blue-50 text-blue-600 font-bold text-[12px] leading-none transition-colors h-[28px] w-[28px] flex items-center justify-center"
+                      className="bg-white rounded shadow-sm border border-gray-200 neo-row-hover text-blue-600 font-bold text-[12px] leading-none transition-colors h-[28px] w-[28px] flex items-center justify-center"
                       title="Toggle Heading/Body Font"
                     >
                       {block.style === 'heading' ? 'H' : 'P'}
@@ -617,7 +617,7 @@ function CandidateFormatOne({ cand, framework, scores, isPrinting, onUpdateForma
               blocks.push({ id: `custom_${Date.now()}`, type: 'custom', style: 'body' });
               setPage2Blocks(blocks);
             }}
-            className="w-full py-3 mt-4 border-2 border-dashed border-gray-200 rounded-lg text-gray-400 font-bold hover:bg-gray-50 hover:text-[#133255] hover:border-[#133255] transition-all print:hidden flex items-center justify-center gap-2"
+            className="w-full py-3 mt-4 border-2 border-dashed border-gray-200 rounded-lg text-gray-400 font-bold neo-row-hover hover:text-[#133255] hover:border-[#133255] transition-all print:hidden flex items-center justify-center gap-2"
           >
             ➕ Add Text Box
           </button>

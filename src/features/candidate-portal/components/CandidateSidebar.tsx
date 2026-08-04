@@ -31,12 +31,25 @@ const NAV_ITEMS = [
 export function CandidateSidebar({
   userName = "User",
   unreadCount = 0,
+  candidateSlug = "",
 }: {
   userName?: string;
   unreadCount?: number;
+  candidateSlug?: string;
 }) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const prefix = candidateSlug ? `/${candidateSlug}` : "/candidate";
+
+  const navItems = [
+    { label: "Home", href: prefix, icon: Home, exact: true },
+    { label: "My Applications", href: `${prefix}/applications`, icon: ClipboardList },
+    { label: "My Profile", href: `${prefix}/profile`, icon: User },
+    { label: "My Consultants", href: `${prefix}/consultants`, icon: Users },
+    { label: "Verification", href: `${prefix}/verification`, icon: ShieldCheck, skeleton: true },
+    { label: "Jobs", href: `${prefix}/jobs`, icon: Briefcase, comingSoon: true },
+    { label: "Dream Companies", href: `${prefix}/dream-companies`, icon: Star, comingSoon: true },
+  ];
 
   const initials = userName
     .split(" ")
@@ -84,7 +97,7 @@ export function CandidateSidebar({
           }`}
         >
           <Link
-            href="/candidate"
+            href={prefix}
             className={`flex items-center gap-3 overflow-hidden ${
               isCollapsed ? "justify-center" : ""
             }`}
@@ -113,7 +126,7 @@ export function CandidateSidebar({
 
         {/* Nav Items */}
         <div className="flex-1 py-5 flex flex-col gap-1.5 px-3">
-          {NAV_ITEMS.map((item, idx) => {
+          {navItems.map((item, idx) => {
             const isActive = item.exact
               ? pathname === item.href
               : pathname?.startsWith(item.href);

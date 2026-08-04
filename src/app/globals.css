@@ -258,3 +258,137 @@
   height: 15px !important;
   cursor: nwse-resize !important;
 }
+
+/* ─── GLOBAL NEOMORPHISM DESIGN SYSTEM ─────────────────────
+   WHITE neomorphism:
+   Surface: #ffffff
+   Shadow dark: #d1d9e6  (cool grey — depth)
+   Shadow light: #ffffff (pure white — lift)
+   Use grey ONLY for shadows, never for backgrounds.
+   ──────────────────────────────────────────────────────── */
+
+/* Page background wrapper */
+.neo-page {
+  background-color: #f0f4f8 !important;
+}
+
+/* ── Flat raised card (large panels, sections) ── */
+.neo-card {
+  background: #ffffff !important;
+  box-shadow: 10px 10px 30px #d1d9e6, -10px -10px 30px #ffffff !important;
+  border-radius: 24px !important;
+  border: none !important;
+  will-change: transform, box-shadow !important;
+  transform: translateZ(0) !important;
+}
+
+/* ── Smaller raised card (stat pills, list items, mini panels) ── */
+.neo-card-sm {
+  background: #ffffff !important;
+  box-shadow: 6px 6px 16px #d1d9e6, -6px -6px 16px #ffffff !important;
+  border-radius: 16px !important;
+  border: none !important;
+  will-change: transform, box-shadow !important;
+  transform: translateZ(0) !important;
+}
+
+/* ── Concave / inset (inputs, textareas, pressed elements) ── */
+.neo-inset {
+  background: #f0f4f8 !important;
+  box-shadow: inset 4px 4px 10px #d1d9e6, inset -4px -4px 10px #ffffff !important;
+  border-radius: 12px !important;
+  border: none !important;
+  will-change: transform, box-shadow !important;
+  transform: translateZ(0) !important;
+}
+
+/* ── Raised button ── */
+.neo-btn {
+  background: #ffffff !important;
+  box-shadow: 5px 5px 12px #d1d9e6, -5px -5px 12px #ffffff !important;
+  border-radius: 50px !important;
+  transition: all 0.2s ease-in-out !important;
+  border: none !important;
+  will-change: transform, box-shadow !important;
+  transform: translateZ(0) !important;
+}
+.neo-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 7px 7px 16px #d1d9e6, -7px -7px 16px #ffffff !important;
+}
+.neo-btn:active {
+  transform: translateY(0) !important;
+  box-shadow: inset 3px 3px 8px #d1d9e6, inset -3px -3px 8px #ffffff !important;
+}
+
+/* ── Flat table wrapper ── */
+.neo-table {
+  background: #ffffff !important;
+  box-shadow: 10px 10px 30px #d1d9e6, -10px -10px 30px #ffffff !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  border: none !important;
+  will-change: transform, box-shadow !important;
+  transform: translateZ(0) !important;
+}
+
+/* ── Table row hover ── */
+.neo-row-hover:hover {
+  background: #f0f4f8 !important;
+}
+
+/* ── Search/filter bar container ── */
+.neo-bar {
+  background: #ffffff !important;
+  box-shadow: 8px 8px 20px #d1d9e6, -8px -8px 20px #ffffff !important;
+  border-radius: 50px !important;
+  border: none !important;
+  will-change: transform, box-shadow !important;
+  transform: translateZ(0) !important;
+}
+
+/* ── Branded button variants ── */
+.neo-btn-primary {
+  background: linear-gradient(135deg, #133255, #1d4d82) !important;
+  color: #ffffff !important;
+  box-shadow: 5px 5px 12px #d1d9e6, -5px -5px 12px #ffffff !important;
+  border-radius: 50px !important;
+  transition: all 0.2s ease-in-out !important;
+  border: none !important;
+  will-change: transform, box-shadow !important;
+  transform: translateZ(0) !important;
+}
+.neo-btn-primary:hover { transform: translateY(-2px) !important; }
+
+.neo-btn-gold {
+  background: linear-gradient(135deg, #D8B15B, #f0c96a) !important;
+  color: #133255 !important;
+  box-shadow: 5px 5px 12px #d1d9e6, -5px -5px 12px #ffffff !important;
+  border-radius: 50px !important;
+  transition: all 0.2s ease-in-out !important;
+  border: none !important;
+  will-change: transform, box-shadow !important;
+  transform: translateZ(0) !important;
+}
+.neo-btn-gold:hover { transform: translateY(-2px) !important; }
+
+.neo-btn-danger {
+  color: #dc2626 !important;
+  box-shadow: 5px 5px 12px #d1d9e6, -5px -5px 12px #ffffff !important;
+  border-radius: 50px !important;
+  border: none !important;
+  will-change: transform, box-shadow !important;
+  transform: translateZ(0) !important;
+}
+.neo-btn-danger:hover { background: #fff1f1 !important; }
+
+/* ── Alternate card-style bar (less rounded) ── */
+.neo-bar-md {
+  background: #ffffff !important;
+  box-shadow: 8px 8px 20px #d1d9e6, -8px -8px 20px #ffffff !important;
+  border-radius: 20px !important;
+  border: none !important;
+  will-change: transform, box-shadow !important;
+  transform: translateZ(0) !important;
+}
+

@@ -55,20 +55,28 @@ export default function CallLogModal({ candId, listType, onClose, onSuccess }: C
   };
 
   return (
-    <div className="fixed inset-0 bg-[#111]/50 flex items-center justify-center z-50 backdrop-blur-sm">
-      <div className="bg-white rounded-[10px] shadow-lg w-[500px] overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[19px] font-bold text-[#111] flex justify-between items-center">
-          Log Conversation & Activity
-          <button onClick={onClose} className="text-[#6b7a99] hover:text-[#111]">✕</button>
+    <div className="fixed inset-0 bg-[#111]/30 flex items-center justify-center z-50 backdrop-blur-sm">
+      <div className="neo-card w-[500px] overflow-hidden p-0">
+        {/* Header */}
+        <div className="px-7 py-5 border-b border-gray-100 flex justify-between items-center">
+          <h2 className="font-serif text-[19px] font-bold text-[#133255]">Log Conversation & Activity</h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 neo-card-sm flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors"
+          >
+            ✕
+          </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="p-7 flex flex-col gap-5">
           <div>
-            <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Call Status <span className="text-red-500">*</span></label>
+            <label className="block text-[12px] font-bold tracking-widest uppercase text-[#6b7a99] mb-2">
+              Call Status <span className="text-red-500">*</span>
+            </label>
             <select 
               value={form.status} 
               onChange={e => setForm({...form, status: e.target.value})} 
-              className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]"
+              className="w-full h-11 neo-inset px-4 text-[14px] text-slate-800 font-medium outline-none"
             >
               {statuses.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -76,32 +84,43 @@ export default function CallLogModal({ candId, listType, onClose, onSuccess }: C
 
           {(form.status === "Connected - Follow Up" || form.status === "In Progress") && (
             <div>
-              <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Next Follow-Up Date <span className="text-red-500">*</span></label>
+              <label className="block text-[12px] font-bold tracking-widest uppercase text-[#6b7a99] mb-2">
+                Next Follow-Up Date <span className="text-red-500">*</span>
+              </label>
               <input 
                 required
                 type="date" 
                 value={form.nextFollowUp} 
                 onChange={e => setForm({...form, nextFollowUp: e.target.value})} 
-                className="w-full h-10 border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[15px] outline-none bg-white focus:border-[#133255]" 
+                className="w-full h-11 neo-inset px-4 text-[14px] text-slate-800 outline-none" 
               />
             </div>
           )}
 
           <div>
-            <label className="block text-[13px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Notes / Description <span className="text-red-500">*</span></label>
+            <label className="block text-[12px] font-bold tracking-widest uppercase text-[#6b7a99] mb-2">
+              Notes / Description <span className="text-red-500">*</span>
+            </label>
             <textarea 
               required 
               rows={4} 
               value={form.note} 
               onChange={e => setForm({...form, note: e.target.value})} 
-              className="w-full border-[1.5px] border-[#D4E0F0] rounded-md p-3 text-[15px] outline-none bg-white focus:border-[#133255] resize-none" 
+              className="w-full neo-inset px-4 py-3 text-[14px] text-slate-800 outline-none resize-none" 
               placeholder="Detailed conversation log..."
             ></textarea>
           </div>
 
-          <div className="flex gap-2.5 justify-end mt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-[15px] font-semibold text-[#6b7a99] hover:bg-[#f4f7fd] transition-all">Cancel</button>
-            <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md text-[15px] font-semibold bg-[#133255] text-white hover:bg-[#0e2150] transition-all">
+          <div className="flex gap-3 justify-end mt-1">
+            <button type="button" onClick={onClose} className="px-5 py-2.5 neo-btn text-[14px] font-semibold text-gray-600">
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              disabled={isSubmitting} 
+              className="px-5 py-2.5 neo-btn text-[14px] font-bold"
+              style={{ color: '#ffffff', background: 'linear-gradient(135deg, #133255, #1d4d82)' }}
+            >
               {isSubmitting ? "Saving..." : "Log Activity"}
             </button>
           </div>

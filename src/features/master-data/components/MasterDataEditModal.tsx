@@ -55,7 +55,7 @@ export default function MasterDataEditModal({
     }
   };
 
-  const inputClass = "w-full h-10 px-3 border border-gray-300 rounded-md focus:border-[#133255] focus:ring-1 focus:ring-[#133255] outline-none";
+  const inputClass = "w-full h-10 px-3 neo-inset-md focus:border-[#133255] focus:ring-1 focus:ring-[#133255] outline-none";
 
   return (
     <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">

@@ -33,38 +33,43 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-        <div className="flex gap-2">
-          <button className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Export CSV</button>
-          <button className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Export PDF</button>
+        <div className="flex gap-3">
+          <button className="px-5 py-2.5 neo-btn text-gray-600 text-xs font-bold">Export CSV</button>
+          <button className="px-5 py-2.5 neo-btn text-gray-600 text-xs font-bold">Export PDF</button>
         </div>
       </div>
 
-      <div className="flex gap-3 mb-6 flex-wrap">
-        <select defaultValue="Year to Date" className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none">
+      <div className="neo-bar flex gap-3 mb-6 flex-wrap p-3">
+        <select defaultValue="Year to Date" className="px-4 py-2 neo-inset text-sm text-slate-700 font-semibold outline-none">
           <option>Month to Date</option>
           <option>Year to Date</option>
           <option>Custom Range</option>
         </select>
-        <select className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none">
+        <select className="px-4 py-2 neo-inset text-sm text-slate-700 font-semibold outline-none">
           <option>All Consultants</option>
           <option>Priya Menon</option>
           <option>Amit Sharma</option>
           <option>Sanya Rao</option>
           <option>Rahul Kumar</option>
         </select>
-        <select className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none">
+        <select className="px-4 py-2 neo-inset text-sm text-slate-700 font-semibold outline-none">
           <option>All Clients</option>
           <option>ABC Limited</option>
           <option>XYZ Corporation</option>
           <option>Finova Tech</option>
           <option>Capital Group</option>
         </select>
-        <button className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Apply</button>
+        <button className="px-5 py-2 neo-btn-primary text-white text-xs font-bold">Apply</button>
       </div>
 
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
+      <div className="flex gap-2 mb-6 flex-wrap">
         {TABS.map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={"px-4 py-2.5 text-sm font-bold border-b-2 transition-colors " + (tab === t ? "border-[#133255] text-[#133255]" : "border-transparent text-gray-400 hover:text-gray-700")}>
+          <button key={t} onClick={() => setTab(t)}
+            className={"px-5 py-2.5 text-sm font-bold transition-all rounded-full " + (tab === t
+              ? "text-white"
+              : "neo-btn text-gray-500")}
+            style={tab === t ? { background: 'linear-gradient(135deg,#133255,#1d4d82)', boxShadow: '5px 5px 12px #d1d9e6, -5px -5px 12px #ffffff' } : {}}
+          >
             {t}
           </button>
         ))}
@@ -72,13 +77,13 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
 
       {tab === "Mandate Status" && (
         <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="grid grid-cols-2 gap-4">
+            <div className="neo-card p-5">
               <h3 className="font-bold text-gray-900 text-sm mb-4">Candidates by Stage</h3>
               {STAGE_DATA.map((d) => (
                 <div key={d.l} className="flex items-center gap-3 mb-2">
                   <div className="w-20 text-xs text-gray-400 text-right shrink-0">{d.l}</div>
-                  <div className="flex-1 bg-gray-100 rounded h-6 overflow-hidden">
+                  <div className="flex-1 neo-inset rounded h-6 overflow-hidden">
                     <div className="bg-[#133255] h-full rounded flex items-center px-2" style={{ width: ((d.n / 12) * 100) + "%" }}>
                       <span className="text-white text-xs font-bold">{d.n}</span>
                     </div>
@@ -86,10 +91,10 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
                 </div>
               ))}
             </div>
-            <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div className="neo-card p-5">
               <div className="grid grid-cols-2 gap-4">
                 {[{l:"Active Mandates",v:analyticsData.activeMandates},{l:"Placed YTD",v:"8",green:true},{l:"Avg. Days to Offer",v:"67"},{l:"Revenue YTD",v:"1.8Cr",gold:true}].map((s) => (
-                  <div key={s.l} className="text-center p-4 bg-gray-50 rounded-xl">
+                  <div key={s.l} className="text-center p-4 neo-card-sm">
                     <div className="text-xs text-gray-400 font-bold uppercase mb-1">{s.l}</div>
                     <div className={"text-2xl font-bold " + (s.green ? "text-green-700" : s.gold ? "text-yellow-600" : "text-[#133255]")}>
                       {s.gold ? "₹" : ""}{s.v}
@@ -99,9 +104,9 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
               </div>
             </div>
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="neo-table">
             <table className="w-full text-sm">
-              <thead><tr className="bg-gray-50 border-b-2 border-gray-200">
+              <thead><tr className="border-b border-gray-100">
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Company</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Role</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Consultant</th>
@@ -128,7 +133,7 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
 
       {tab === "Consultant Productivity" && (
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+          <div className="neo-card p-5">
             <h3 className="font-bold text-gray-900 text-sm mb-4">Placements by Consultant</h3>
             {CONSULTANT_DATA.map((d) => (
               <div key={d.name} className="flex items-center gap-3 mb-2">
@@ -141,10 +146,10 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
               </div>
             ))}
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="neo-table">
             <div className="p-5 border-b border-gray-100"><h3 className="font-bold text-gray-900 text-sm">Performance Snapshot</h3></div>
             <table className="w-full text-sm">
-              <thead><tr className="bg-gray-50 border-b border-gray-200">
+              <thead><tr className="border-b border-gray-100">
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Consultant</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Mandates</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Placed</th>
@@ -168,9 +173,9 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
       )}
 
       {tab === "Search Ageing" && (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="neo-table">
           <table className="w-full text-sm">
-            <thead><tr className="bg-gray-50 border-b-2 border-gray-200">
+            <thead><tr className="border-b border-gray-100">
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Company</th>
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Role</th>
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Days Open</th>
@@ -200,7 +205,7 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
 
       {tab === "Custom Report" && (
         <div className="flex flex-col gap-4">
-          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+          <div className="neo-card p-5">
             <h3 className="font-bold text-gray-900 text-sm mb-4">Select Report Fields</h3>
             <div className="flex flex-wrap gap-4">
               {["Company","Role","CTC Range","Geography","Consultant","Status","Days Open","Candidates Count","Placed"].map((f) => (
@@ -209,14 +214,14 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
                 </label>
               ))}
             </div>
-            <div className="flex gap-2 mt-4">
-              <button className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Save Report</button>
-              <button className="px-4 py-2 bg-yellow-500 text-[#133255] rounded text-xs font-bold hover:bg-yellow-400">Export</button>
+            <div className="flex gap-3 mt-4">
+              <button className="px-5 py-2.5 neo-btn-primary text-white text-xs font-bold">Save Report</button>
+              <button className="px-5 py-2.5 neo-btn-gold text-[#133255] text-xs font-bold">Export</button>
             </div>
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="neo-table">
             <table className="w-full text-sm">
-              <thead><tr className="bg-gray-50 border-b-2 border-gray-200">
+              <thead><tr className="border-b border-gray-100">
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Company</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Role</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">CTC Range</th>
@@ -242,9 +247,9 @@ export default function AnalyticsClient({ initialMandates, analyticsData }: { in
       )}
 
       {tab === "Audit Trail" && (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="neo-table">
           <table className="w-full text-sm">
-            <thead><tr className="bg-gray-50 border-b-2 border-gray-200">
+            <thead><tr className="border-b border-gray-100">
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Timestamp</th>
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">User</th>
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Action</th>

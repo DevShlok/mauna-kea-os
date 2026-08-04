@@ -760,7 +760,7 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
               )}
             </div>
 
-            <div className="border border-gray-200 rounded-lg overflow-hidden mt-6 mb-2">
+            <div className="neo-inset overflow-hidden mt-6 mb-2">
               <table className="w-full text-left text-sm">
                 <thead className="bg-gray-50 text-gray-700">
                   <tr>
@@ -781,7 +781,7 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
                     candidateFiles.map((file) => {
                       const dateStr = new Date(file.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }).replace(/ /g, '-');
                       return (
-                        <tr key={file.id} className="hover:bg-gray-50 transition-colors">
+                        <tr key={file.id} className="neo-row-hover transition-colors">
                           <td className="px-4 py-2 border-r border-gray-200 font-medium text-gray-900">{file.fileType}</td>
                           <td className="px-4 py-2 border-r border-gray-200 text-gray-600">{dateStr}</td>
                           <td className="px-4 py-2 border-r border-gray-200">
@@ -836,7 +836,7 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
               <div className="flex justify-end gap-3">
                 <button 
                   onClick={() => setDeleteConfirmation(null)}
-                  className="px-4 py-2 border border-[#D4E0F0] rounded-[6px] text-[#4a5568] text-[15px] font-bold hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 border border-[#D4E0F0] rounded-[6px] text-[#4a5568] text-[15px] font-bold neo-row-hover transition-colors"
                 >
                   Cancel
                 </button>

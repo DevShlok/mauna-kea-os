@@ -211,7 +211,7 @@ export function ClientTopbar() {
                                   setShowNotifications(false);
                                   router.push(destUrl);
                                 }}
-                                className="block px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                                className="block px-4 py-3 cursor-pointer neo-row-hover transition-colors"
                               >
                                 <p className="text-[13px] text-gray-800 leading-relaxed">{notif.message}</p>
                                 <span className="text-[11px] text-gray-400 mt-1 block">{new Date(notif.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>

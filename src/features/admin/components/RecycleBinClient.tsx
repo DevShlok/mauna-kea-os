@@ -100,7 +100,7 @@ export default function RecycleBinClient({ items }: { items: any[] }) {
         <select 
           value={filterType} 
           onChange={(e) => { setFilterType(e.target.value); setSelectedIds(new Set()); }}
-          className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#133255]"
+          className="neo-inset px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#133255]"
         >
           <option value="All">All Types</option>
           <option value="Clients">Clients</option>
@@ -131,10 +131,10 @@ export default function RecycleBinClient({ items }: { items: any[] }) {
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="neo-table">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-gray-50 border-b-2 border-gray-200">
+            <tr className="border-b border-gray-100">
               <th className="px-4 py-3 text-center w-10">
                 <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
               </th>
@@ -155,7 +155,7 @@ export default function RecycleBinClient({ items }: { items: any[] }) {
               const expires = new Date(d.getTime() + 30 * 24 * 60 * 60 * 1000);
               const daysLeft = Math.max(0, Math.ceil((expires.getTime() - new Date().getTime()) / (1000 * 3600 * 24)));
               return (
-                <tr key={item.id} className="border-b border-gray-50 hover:bg-blue-50">
+                <tr key={item.id} className="border-b border-gray-50 neo-row-hover">
                   <td className="px-4 py-3 text-center">
                     <input type="checkbox" checked={selectedIds.has(item.id.toString())} onChange={() => toggleRow(item.id.toString())} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
                   </td>

@@ -405,10 +405,10 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
               {accordions.map((acc, i) => {
                 const isOpen = !!openAccordions[acc.title];
                 return (
-                  <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div key={i} className="neo-card shadow-sm overflow-hidden">
                     <button
                       onClick={() => toggleAccordion(acc.title)}
-                      className="w-full flex items-center justify-between p-4 text-left font-bold text-[14px] text-[#0b1f3a] hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-center justify-between p-4 text-left font-bold text-[14px] text-[#0b1f3a] neo-row-hover transition-colors"
                     >
                       <span>{acc.title}</span>
                       {isOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
@@ -622,7 +622,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
               value={remarkText}
               onChange={(e) => setRemarkText(e.target.value)}
               placeholder="Add a new remark, feedback or special instruction..."
-              className="w-full border border-gray-200 rounded-xl p-3 text-[13px] text-gray-700 placeholder:text-gray-400 min-h-[80px] focus:outline-none focus:border-indigo-300 resize-none"
+              className="w-full neo-inset-xl p-3 text-[13px] text-gray-700 placeholder:text-gray-400 min-h-[80px] focus:outline-none focus:border-indigo-300 resize-none"
             />
             <button 
               onClick={handleSendRemark}
@@ -651,7 +651,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
             </button>
           </div>
           
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto print:border-none print:shadow-none print:m-0 print:p-0">
+          <div className="neo-card overflow-x-auto print:border-none print:shadow-none print:m-0 print:p-0">
             <div className="min-w-[794px] print:min-w-0 flex flex-col items-center py-10 print:py-0 [&_.print\:hidden]:!hidden">
               <div dangerouslySetInnerHTML={{ __html: reportData.final_accepted_html }} />
             </div>

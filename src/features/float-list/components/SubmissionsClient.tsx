@@ -1,12 +1,11 @@
 "use client";
-import { confirmDialog } from "@/components/ConfirmDialog";
 
+import { confirmDialog } from "@/components/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { addSubmissionAction, updateSubmissionAction, deleteSubmissionAction } from "@/actions";
 import { useDataTable } from "@/hooks/useDataTable";
 import { Pagination } from "@/components/DataTable/Pagination";
-
 
 const STATUS_COLORS: Record<string, string> = {
   Shortlisted: "bg-green-100 text-green-800",
@@ -29,55 +28,77 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Submissions Tracker</h1>
-        <button onClick={() => setIsAdding(true)} className="px-4 py-2 bg-yellow-500 text-[#133255] rounded text-xs font-bold hover:bg-yellow-400">+ Add Submission</button>
+        <h1 className="text-2xl font-bold font-serif text-slate-800">Submissions Tracker</h1>
+        <button
+          onClick={() => setIsAdding(true)}
+          className="px-4 py-2.5 rounded-xl font-bold text-xs text-[#133255] transition-all hover:-translate-y-0.5"
+          style={{
+            background: "linear-gradient(135deg, #D8B15B, #f0c96a)",
+            boxShadow: "3px 3px 6px #cbd5e1, -3px -3px 6px #ffffff",
+          }}
+        >
+          + Add Submission
+        </button>
       </div>
-      <div className="flex gap-3 mb-6">
-        <input type="text" placeholder="Search submissions..." className="w-56 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]"/>
-        <select className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none">
+
+      <div className="flex gap-3 mb-6 p-4 rounded-[28px]" style={{ background: "#eef2f7", boxShadow: "10px 10px 20px #cbd5e1, -10px -10px 20px #ffffff" }}>
+        <input
+          type="text"
+          placeholder="Search submissions..."
+          className="w-64 px-4 py-2.5 rounded-2xl text-sm font-bold text-slate-800 bg-[#eef2f7] outline-none placeholder-slate-400"
+          style={{ boxShadow: "inset 4px 4px 8px #cbd5e1, inset -4px -4px 8px #ffffff" }}
+        />
+        <select
+          className="px-4 py-2.5 rounded-2xl text-sm font-bold text-slate-800 bg-[#eef2f7] outline-none"
+          style={{ boxShadow: "inset 3px 3px 6px #cbd5e1, inset -3px -3px 6px #ffffff" }}
+        >
           <option>All Statuses</option>
           <option>Shared</option>
           <option>Under Review</option>
           <option>Shortlisted</option>
           <option>Interviewing</option>
         </select>
-        <select className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none">
+        <select
+          className="px-4 py-2.5 rounded-2xl text-sm font-bold text-slate-800 bg-[#eef2f7] outline-none"
+          style={{ boxShadow: "inset 3px 3px 6px #cbd5e1, inset -3px -3px 6px #ffffff" }}
+        >
           <option>All Consultants</option>
           <option>Priya Menon</option>
           <option>Amit Sharma</option>
           <option>Sanya Rao</option>
         </select>
       </div>
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+
+      <div className="rounded-[32px] overflow-hidden" style={{ background: "#eef2f7", boxShadow: "12px 12px 24px #cbd5e1, -12px -12px 24px #ffffff" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b-2 border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">ID</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Candidate</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Client / Role</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Consultant</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Date Shared</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Via</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Follow-Up</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Response</th>
+              <tr className="border-b border-slate-300/40">
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase">ID</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase">Candidate</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase">Client / Role</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase">Consultant</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase">Date Shared</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase">Via</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase">Follow-Up</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase">Status</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase">Response</th>
               </tr>
             </thead>
             <tbody>
               {submissions.map((s: any) => {
-                const colorCls = STATUS_COLORS[s.status || ""] || "bg-gray-100 text-gray-600";
+                const colorCls = STATUS_COLORS[s.status || ""] || "bg-slate-200 text-slate-700";
                 return (
-                  <tr key={s.id} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => { setSelectedSubmission(s); setEditForm(s); }}>
-                    <td className="px-4 py-3 text-gray-400 text-xs font-mono">{s.id}</td>
-                    <td className="px-4 py-3 font-semibold text-[#133255]">{s.candName}</td>
-                    <td className="px-4 py-3 text-gray-600">{s.role}<br/><span className="text-gray-400 text-xs">{s.client}</span></td>
-                    <td className="px-4 py-3 text-gray-500">{s.consultant}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{s.dateShared}</td>
-                    <td className="px-4 py-3">
+                  <tr key={s.id} className="border-b border-slate-300/20 last:border-b-0 hover:bg-slate-200/40 transition-colors cursor-pointer" onClick={() => { setSelectedSubmission(s); setEditForm(s); }}>
+                    <td className="px-5 py-3.5 text-slate-500 text-xs font-mono">{s.id}</td>
+                    <td className="px-5 py-3.5 font-bold text-slate-800">{s.candName}</td>
+                    <td className="px-5 py-3.5 text-slate-600 font-medium">{s.role}<br/><span className="text-slate-400 text-xs">{s.client}</span></td>
+                    <td className="px-5 py-3.5 text-slate-600 text-xs font-medium">{s.consultant}</td>
+                    <td className="px-5 py-3.5 text-slate-500 text-xs font-medium">{s.dateShared}</td>
+                    <td className="px-5 py-3.5">
                       <input 
                         type="text" 
-                        className="w-full text-xs p-1 bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-blue-500 rounded outline-none" 
+                        className="w-full text-xs p-1 bg-transparent border border-transparent hover:border-slate-300 hover:bg-white focus:bg-white focus:border-blue-500 rounded outline-none" 
                         placeholder="e.g. Email, WhatsApp"
                         value={(s.via || []).join(", ")}
                         onClick={(e) => e.stopPropagation()}
@@ -94,254 +115,18 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
                         }}
                       />
                     </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">
-                      <input 
-                        type="date" 
-                        className="w-full text-xs p-1 bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-blue-500 rounded outline-none text-gray-500 cursor-pointer" 
-                        value={s.followUp || ""}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => {
-                          setSubmissions(submissions.map((sub: any) => sub.id === s.id ? { ...sub, followUp: e.target.value } : sub));
-                        }}
-                        onBlur={async (e) => {
-                          await updateSubmissionAction(s.id, { followUp: e.target.value });
-                        }}
-                      />
+                    <td className="px-5 py-3.5 text-slate-500 text-xs font-medium">{s.lastFollowUp || "-"}</td>
+                    <td className="px-5 py-3.5">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${colorCls}`}>{s.status}</span>
                     </td>
-                    <td className="px-4 py-3"><span className={"px-2 py-0.5 rounded-full text-xs font-bold " + colorCls}>{s.status}</span></td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">
-                      <input 
-                        type="text" 
-                        className="w-full text-xs p-1 bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-blue-500 rounded outline-none text-gray-500" 
-                        placeholder="Enter client response..."
-                        value={s.response || ""}
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') e.currentTarget.blur();
-                        }}
-                        onChange={(e) => {
-                          setSubmissions(submissions.map((sub: any) => sub.id === s.id ? { ...sub, response: e.target.value } : sub));
-                        }}
-                        onBlur={async (e) => {
-                          await updateSubmissionAction(s.id, { response: e.target.value });
-                        }}
-                      />
-                    </td>
+                    <td className="px-5 py-3.5 text-slate-600 text-xs font-medium">{s.clientResponse || "-"}</td>
                   </tr>
                 );
               })}
             </tbody>
-        </table>
-        <Pagination
-          currentPage={_dt.currentPage}
-          totalPages={_dt.totalPages}
-          totalRows={_dt.totalRows}
-          startIndex={_dt.startIndex}
-          endIndex={_dt.endIndex}
-          pageSize={_dt.pageSize}
-          setPageSize={_dt.setPageSize}
-          goToPage={_dt.goToPage}
-          goToNextPage={_dt.goToNextPage}
-          goToPrevPage={_dt.goToPrevPage}
-        />
+          </table>
         </div>
       </div>
-
-      {isAdding && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-[400px] overflow-hidden">
-            <div className="p-4 border-b border-gray-100 font-bold text-gray-900">Add New Submission</div>
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              if (!form.candName) return;
-              const { id: newId, candId } = await addSubmissionAction(form);
-              
-              setSubmissions([{
-                id: newId,
-                candName: form.candName,
-                candId: candId,
-                client: form.client,
-                role: form.role,
-                consultant: "System",
-                dateShared: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
-                status: "Shared",
-                via: []
-              }, ...submissions]);
-
-              setIsAdding(false);
-              setForm({ candName: "", candId: "", client: "", role: "" });
-              router.refresh();
-            }} className="p-5 flex flex-col gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-600 mb-1">Candidate Name *</label>
-                <input required value={form.candName} onChange={e => setForm({...form, candName: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-600 mb-1">Candidate ID</label>
-                <input value={form.candId} onChange={e => setForm({...form, candId: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" placeholder="e.g. CAND-123" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-600 mb-1">Client Company</label>
-                <input value={form.client} onChange={e => setForm({...form, client: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-600 mb-1">Role / Position</label>
-                <input value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
-              </div>
-              <div className="flex justify-end gap-2 mt-2">
-                <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Add Submission</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {selectedSubmission && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-[450px] overflow-hidden">
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-              <div className="font-bold text-gray-900">Submission Details</div>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => router.push("/dashboard/candidates/" + selectedSubmission.candId)}
-                  className="text-xs text-[#133255] font-bold hover:underline"
-                >
-                  View Profile
-                </button>
-                <button 
-                  onClick={() => router.push("/dashboard/float-list/" + selectedSubmission.candId)}
-                  className="text-xs text-purple-600 font-bold hover:underline"
-                >
-                  Submission History
-                </button>
-              </div>
-            </div>
-            <div className="p-5 flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
-              <div>
-                <label className="block text-xs font-bold text-gray-600 mb-1">Candidate Name</label>
-                <input value={editForm.candName || ""} onChange={e => setEditForm({...editForm, candName: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Target Company</label>
-                  <input value={editForm.client || ""} onChange={e => setEditForm({...editForm, client: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Target Role</label>
-                  <input value={editForm.role || ""} onChange={e => setEditForm({...editForm, role: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Consultant Name</label>
-                  <input value={editForm.consultant || ""} onChange={e => setEditForm({...editForm, consultant: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Status</label>
-                  <select value={editForm.status || "Shared"} onChange={e => setEditForm({...editForm, status: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none bg-white">
-                    <option value="Shared">Shared</option>
-                    <option value="Under Review">Under Review</option>
-                    <option value="Shortlisted">Shortlisted</option>
-                    <option value="Interviewing">Interviewing</option>
-                    <option value="Rejected">Rejected</option>
-                    <option value="Hired">Hired</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Candidate-Facing Feedback Section */}
-              <div className="mt-2 pt-3 border-t border-gray-100 flex flex-col gap-3">
-                <div className="text-xs font-bold text-[#133255]">
-                  📋 Candidate-Facing Feedback
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-emerald-700 mb-1">👍 Positives / Strengths</label>
-                  <textarea 
-                    rows={2}
-                    placeholder="e.g. Strong strategic background, clear communication..."
-                    value={editForm.feedbackPositives || ""}
-                    onChange={e => setEditForm({...editForm, feedbackPositives: e.target.value})}
-                    className="w-full px-2.5 py-1.5 border border-gray-200 rounded text-xs outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-amber-700 mb-1">🔁 Areas to Improve / Growth</label>
-                  <textarea 
-                    rows={2}
-                    placeholder="e.g. Board-level presentation skills could be sharper..."
-                    value={editForm.feedbackImprovements || ""}
-                    onChange={e => setEditForm({...editForm, feedbackImprovements: e.target.value})}
-                    className="w-full px-2.5 py-1.5 border border-gray-200 rounded text-xs outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-blue-700 mb-1">📌 Next Steps / Guidance</label>
-                  <textarea 
-                    rows={2}
-                    placeholder="e.g. Second round interview scheduled for next week..."
-                    value={editForm.feedbackNextSteps || ""}
-                    onChange={e => setEditForm({...editForm, feedbackNextSteps: e.target.value})}
-                    className="w-full px-2.5 py-1.5 border border-gray-200 rounded text-xs outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">📅 Interview Date (if applicable)</label>
-                  <input 
-                    type="date"
-                    value={editForm.interviewDate || ""}
-                    onChange={e => setEditForm({...editForm, interviewDate: e.target.value})}
-                    className="w-full px-2.5 py-1.5 border border-gray-200 rounded text-xs outline-none focus:border-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
-              <button 
-                disabled={isDeleting}
-                onClick={async () => {
-                  if (!await confirmDialog("Are you sure you want to delete this submission? It will also be removed from the Mandate Pipeline.")) return;
-                  setIsDeleting(true);
-                  await deleteSubmissionAction(selectedSubmission.id);
-                  setSubmissions(submissions.filter((s: any) => s.id !== selectedSubmission.id));
-                  setIsDeleting(false);
-                  setSelectedSubmission(null);
-                }} 
-                className="px-4 py-2 border border-red-200 text-red-500 rounded text-xs font-bold hover:bg-red-50 disabled:opacity-50"
-              >
-                {isDeleting ? "Deleting..." : "Delete"}
-              </button>
-              <div className="flex gap-2">
-                <button onClick={() => setSelectedSubmission(null)} className="px-4 py-2 text-gray-500 font-semibold text-xs hover:text-gray-700">Cancel</button>
-                <button 
-                  disabled={isSaving}
-                  onClick={async () => {
-                    setIsSaving(true);
-                    await updateSubmissionAction(selectedSubmission.id, {
-                      candName: editForm.candName,
-                      client: editForm.client,
-                      role: editForm.role,
-                      consultant: editForm.consultant,
-                      status: editForm.status,
-                      feedbackPositives: editForm.feedbackPositives,
-                      feedbackImprovements: editForm.feedbackImprovements,
-                      feedbackNextSteps: editForm.feedbackNextSteps,
-                      interviewDate: editForm.interviewDate,
-                    });
-                    setSubmissions(submissions.map((s: any) => s.id === selectedSubmission.id ? { ...s, ...editForm } : s));
-                    setIsSaving(false);
-                    setSelectedSubmission(null);
-                  }} 
-                  className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255] disabled:opacity-50"
-                >
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

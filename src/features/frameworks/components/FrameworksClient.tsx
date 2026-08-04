@@ -53,7 +53,7 @@ export default function FrameworksClient({ initialFrameworks }: { initialFramewo
           <div className="text-[14px] text-gray-500 mb-1">Home / Frameworks</div>
           <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">Framework Templates</h1>
         </div>
-        <Link href="/dashboard/frameworks/new" className="px-5 py-2.5 bg-[#D8B15B] text-[#133255] rounded-lg text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors inline-block mb-1">
+        <Link href="/dashboard/frameworks/new" className="px-5 py-2.5 neo-btn-gold text-sm font-bold text-[#133255] inline-block mb-1">
           + New Framework
         </Link>
       </div>
@@ -76,10 +76,10 @@ export default function FrameworksClient({ initialFrameworks }: { initialFramewo
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="neo-table">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-gray-50 border-b-2 border-gray-200">
+            <tr className="border-b border-gray-100">
               <th className="px-4 py-3 text-center w-10">
                 <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
               </th>
@@ -95,7 +95,7 @@ export default function FrameworksClient({ initialFrameworks }: { initialFramewo
             {_dt.paginatedData.map((fw: any) => {
               const totalCriteria = fw.categories.reduce((s: number, c: any) => s + c.criteria.length, 0);
               return (
-                <tr key={fw.id} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => router.push("/dashboard/frameworks/" + fw.id)}>
+                <tr key={fw.id} className="border-b border-gray-50 neo-row-hover cursor-pointer" onClick={() => router.push("/dashboard/frameworks/" + fw.id)}>
                   <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
                     <input type="checkbox" checked={selectedIds.has(fw.id)} onChange={() => toggleRow(fw.id)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
                   </td>
@@ -107,7 +107,7 @@ export default function FrameworksClient({ initialFrameworks }: { initialFramewo
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex gap-2">
                       <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={() => router.push("/dashboard/frameworks/" + fw.id)}>Edit</button>
-                      <button className="px-3 py-1 border border-gray-200 text-gray-500 rounded text-xs font-bold hover:bg-gray-50">Clone</button>
+                      <button className="px-3 py-1 neo-btn text-gray-500 text-xs font-bold">Clone</button>
                     </div>
                   </td>
                 </tr>

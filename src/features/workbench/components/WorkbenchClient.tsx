@@ -726,12 +726,12 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
         </div>
 
       {/* TOP CONFIG BAR */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-6 flex gap-6 items-end">
+      <div className="neo-card p-6 mb-6 flex gap-6 items-end">
         <div className="flex-1 relative">
           <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Select Candidate</label>
           <button 
             onClick={() => setIsCandidateModalOpen(true)}
-            className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white text-left flex justify-between items-center hover:border-blue-500 transition-colors"
+            className="w-full px-4 py-2 neo-inset rounded text-sm text-left flex justify-between items-center transition-colors outline-none"
           >
             {selectedCandidate ? selectedCandidate.name : "-- Choose Candidate --"}
           </button>
@@ -742,7 +742,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           <select 
             value={mandateId} 
             onChange={e => setMandateId(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white"
+            className="w-full px-4 py-2 neo-inset rounded text-sm outline-none"
           >
             <option value="">-- None --</option>
             {filteredMandates.map(m => (
@@ -757,7 +757,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
             value={frameworkId} 
             onChange={e => setFrameworkId(e.target.value)}
             disabled={!!(mandateId && selectedMandate?.frameworkId)}
-            className={`w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white ${!!(mandateId && selectedMandate?.frameworkId) ? 'opacity-60 cursor-not-allowed bg-gray-50' : ''}`}
+            className={`w-full px-4 py-2 neo-inset rounded text-sm outline-none ${!!(mandateId && selectedMandate?.frameworkId) ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
             <option value="">-- Select Framework --</option>
             {frameworks.map(f => (
@@ -768,7 +768,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       </div>
 
       {!selectedCandidate ? (
-        <div className="bg-white border border-gray-200 rounded-xl p-10 shadow-sm flex flex-col items-center justify-center text-center h-[400px] text-gray-400">
+        <div className="neo-card p-10 flex flex-col items-center justify-center text-center h-[400px] text-gray-400">
           <div className="text-6xl mb-4 opacity-50">🤖</div>
           <p className="text-sm">Select a candidate from the dropdown above to begin their assessment.</p>
         </div>
@@ -778,12 +778,12 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
           <div className="flex flex-col gap-6 w-full">
             
             {/* Candidate Files */}
-            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col gap-4">
-              <h3 className="font-bold text-gray-900 border-b border-gray-100 pb-2">Candidate Files</h3>
+            <div className="neo-card p-6 flex flex-col gap-4">
+              <h3 className="font-bold text-[#133255] border-b border-[#e4e8f0] pb-2">Candidate Files</h3>
               
               {!readOnly && (
                 <div className="flex flex-wrap gap-4">
-                  <label className="flex items-center gap-2 px-3 py-2 bg-white text-gray-700 rounded-md text-[15px] font-bold border border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer">
+                  <label className="flex items-center gap-2 px-4 py-2 neo-btn text-gray-700 text-[15px] font-bold transition-colors cursor-pointer">
                     {isUploadingCv ? (
                       <span className="flex items-center gap-2">
                         <svg className="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -793,7 +793,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                     <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={(e) => handleUploadFile(e, 'cv')} disabled={isUploadingCv} />
                   </label>
 
-                  <label className="flex items-center gap-2 px-3 py-2 bg-white text-gray-700 rounded-md text-[15px] font-bold border border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer">
+                  <label className="flex items-center gap-2 px-4 py-2 neo-btn text-gray-700 text-[15px] font-bold transition-colors cursor-pointer">
                     {isUploadingLinkedin ? (
                       <span className="flex items-center gap-2">
                         <svg className="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -806,7 +806,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
               )}
 
               {candidateFilesHistory.filter(f => f.fileType !== 'Superior Reference' && f.fileType !== 'Peer Reference' && f.fileType !== 'Team/Subordinate Reference').length > 0 && (
-                <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden">
+                <div className="mt-2 neo-inset overflow-hidden">
                   <table className="w-full text-left text-[15px]">
                     <thead className="bg-gray-50 border-b border-gray-200 text-gray-700 font-bold">
                       <tr>
@@ -821,7 +821,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                       {candidateFilesHistory.filter(f => f.fileType !== 'Superior Reference' && f.fileType !== 'Peer Reference' && f.fileType !== 'Team/Subordinate Reference').map((file) => {
                         const dateStr = new Date(file.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }).replace(/ /g, '-');
                         return (
-                          <tr key={file.id} className="hover:bg-gray-50 transition-colors">
+                          <tr key={file.id} className="neo-row-hover transition-colors">
                             <td className="px-4 py-2 border-r border-gray-200 text-center">
                               <input 
                                 type="checkbox" 
@@ -875,10 +875,10 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 {/* Notes & Feedback */}
-            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex-1">
+            <div className="neo-card p-6 flex-1">
               <div className="flex justify-between items-center mb-3 border-b border-gray-100 pb-2">
                 <h3 className="font-bold text-gray-900">Interview Notes</h3>
-                <label className="cursor-pointer text-xs font-bold text-[#133255] bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                <label className="cursor-pointer text-xs font-bold text-[#133255] neo-btn px-4 py-1.5 transition-colors flex items-center gap-1">
                   {isUploadingNotes ? "Uploading..." : "📎 Upload File"}
                   <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Interview Notes')} disabled={isUploadingNotes} />
                 </label>
@@ -888,32 +888,32 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                 value={interviewNotes}
                 onChange={e => setInterviewNotes(e.target.value)}
                 placeholder="Paste interview notes here..."
-                className="w-full px-3 py-2 border border-gray-200 rounded text-[15px] outline-none focus:border-[#133255] resize-y"
+                className="w-full px-4 py-2 neo-inset text-[15px] outline-none resize-y"
               ></textarea>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex-1">
+            <div className="neo-card p-6 flex-1">
               <h3 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2">Reference Feedback</h3>
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <div className="text-xs font-bold text-gray-500">Superior Reference</div>
-                    <label className="cursor-pointer text-xs font-bold text-[#133255] hover:underline flex items-center gap-1">
+                    <label className="cursor-pointer text-xs font-bold text-[#133255] neo-btn px-2 py-1 transition-colors flex items-center gap-1">
                       {isUploadingSupRef ? "Uploading..." : "📎 Upload File"}
                       <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Superior Reference')} disabled={isUploadingSupRef} />
                     </label>
                   </div>
-                  <textarea rows={5} value={superiorRef} onChange={e => setSuperiorRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[15px] outline-none focus:border-[#133255] resize-y" placeholder="Enter superior reference..."></textarea>
+                  <textarea rows={5} value={superiorRef} onChange={e => setSuperiorRef(e.target.value)} className="w-full px-4 py-2 neo-inset text-[15px] outline-none resize-y" placeholder="Enter superior reference..."></textarea>
                 </div>
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <div className="text-xs font-bold text-gray-500">Peer Reference</div>
-                    <label className="cursor-pointer text-xs font-bold text-[#133255] hover:underline flex items-center gap-1">
+                    <label className="cursor-pointer text-xs font-bold text-[#133255] neo-btn px-2 py-1 transition-colors flex items-center gap-1">
                       {isUploadingPeerRef ? "Uploading..." : "📎 Upload File"}
                       <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleUploadReference(e, 'Peer Reference')} disabled={isUploadingPeerRef} />
                     </label>
                   </div>
-                  <textarea rows={5} value={peerRef} onChange={e => setPeerRef(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[15px] outline-none focus:border-[#133255] resize-y" placeholder="Enter peer reference..."></textarea>
+                  <textarea rows={5} value={peerRef} onChange={e => setPeerRef(e.target.value)} className="w-full px-4 py-2 neo-inset text-[15px] outline-none resize-y" placeholder="Enter peer reference..."></textarea>
                 </div>
               </div>
             </div>
@@ -923,7 +923,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
 
             {/* Criteria & Manual Scores */}
             {selectedFramework && (
-              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-6">
+              <div className="neo-card p-6 mb-6">
                 <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Assessment Criteria & Scores</h3>
                 
                 <div className="space-y-6">
@@ -1042,7 +1042,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                     </div>
 
                     {isGeneratingFormat && (
-                      <div className="bg-white border border-gray-200 rounded-xl p-10 shadow-sm flex flex-col items-center justify-center text-center sticky top-6 mt-6">
+                      <div className="neo-card p-10 shadow-sm flex flex-col items-center justify-center text-center sticky top-6 mt-6">
                         <div className="w-12 h-12 border-4 border-[#133255] border-t-transparent rounded-full animate-spin mb-6"></div>
                         <h3 className="text-lg font-bold text-[#133255] mb-2">AI is Generating Report</h3>
                         <p className="text-sm text-gray-500 max-w-sm">
@@ -1158,7 +1158,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                     )}
               </div>
             ) : isGenerating ? (
-              <div className="bg-white border border-gray-200 rounded-xl p-10 shadow-sm flex flex-col items-center justify-center text-center h-[600px] sticky top-6">
+              <div className="neo-card p-10 flex flex-col items-center justify-center text-center h-[600px] sticky top-6">
                 <div className="w-12 h-12 border-4 border-[#133255] border-t-transparent rounded-full animate-spin mb-6"></div>
                 <h3 className="text-lg font-bold text-[#133255] mb-2">Analyzing Candidate</h3>
                 <p className="text-sm text-gray-500 max-w-sm">
@@ -1166,7 +1166,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                 </p>
               </div>
             ) : (
-              <div className="bg-white border border-gray-200 rounded-xl p-10 shadow-sm flex flex-col items-center justify-center text-center h-[600px] text-gray-400 sticky top-6">
+              <div className="neo-card p-10 flex flex-col items-center justify-center text-center h-[600px] text-gray-400 sticky top-6">
                 <div className="text-6xl mb-4 opacity-50">🤖</div>
                 <p className="text-sm text-gray-500">Click <strong>Generate Assessment Draft</strong> to create the assessment draft.</p>
               </div>
@@ -1194,7 +1194,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                   placeholder="Search candidates by name, company, or designation..." 
                   value={candidateSearch}
                   onChange={e => setCandidateSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#133255] focus:ring-1 focus:ring-[#133255] transition-all"
+                  className="neo-inset px-4 py-2.5 text-sm text-slate-800 font-medium outline-none w-full"
                 />
               </div>
             </div>
@@ -1229,7 +1229,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                     </tr>
                   ) : (
                     sortedAndFilteredCandidates.map(c => (
-                      <tr key={c.searchId} className="hover:bg-blue-50/50 transition-colors group cursor-pointer" onClick={() => {
+                      <tr key={c.searchId} className="neo-row-hover transition-colors group cursor-pointer" onClick={() => {
                         setSelectedCandidateId(c.searchId);
                         setSelectedCandidateRef(c);
                         setIsCandidateModalOpen(false);
@@ -1268,7 +1268,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
                           </select>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button className="px-4 py-2 bg-white border border-gray-200 text-[#133255] font-bold text-xs rounded-lg group-hover:bg-[#133255] group-hover:text-white group-hover:border-[#133255] transition-all shadow-sm">
+                          <button className="px-4 py-2 neo-btn text-[#133255] font-bold text-xs">
                             Select
                           </button>
                         </td>
@@ -1295,7 +1295,7 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
             <div className="flex justify-end gap-3">
               <button 
                 onClick={() => setDeleteConfirmation(null)}
-                className="px-4 py-2 border border-[#D4E0F0] rounded-[6px] text-[#4a5568] text-[15px] font-bold hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 border border-[#D4E0F0] rounded-[6px] text-[#4a5568] text-[15px] font-bold neo-row-hover transition-colors"
               >
                 Cancel
               </button>

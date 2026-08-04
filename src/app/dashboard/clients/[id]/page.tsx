@@ -36,12 +36,19 @@ export default async function ClientDetailPage({ params  }: { params: Promise<{ 
   const industries = await db.select().from(masterIndustries).orderBy(asc(masterIndustries.id));
 
   // Fetch associated candidates
-  const associatedCandidates = await db.select().from(candidates).where(
-    or(
-      ilike(candidates.company, `%${client.name}%`),
-      sql`${candidates.pastCompanies}::text ILIKE ${'%' + client.name + '%'}`
-    )
-  ).limit(50);
+  let associatedCandidates: any[] = [];
+  try {
+    if (client?.name) {
+      associatedCandidates = await db.select().from(candidates).where(
+        or(
+          ilike(candidates.company, `%${client.name}%`),
+          sql`${candidates.pastCompanies}::text ILIKE ${'%' + client.name + '%'}`
+        )
+      ).limit(50);
+    }
+  } catch (err) {
+    console.error("Failed to fetch associated candidates:", err);
+  }
 
   return <ClientDetailClient client={client} mandates={clientMandates} industries={industries} associatedCandidates={associatedCandidates} currentUser={platformUser!} />;
 }

@@ -344,7 +344,7 @@ export default function UserImportModal({ isOpen, onClose }: { isOpen: boolean, 
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <button 
                   onClick={() => { setImportMapping(null); setImportFileData([]); }}
-                  className="px-5 py-2.5 rounded-md border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors text-sm"
+                  className="px-5 py-2.5 rounded-md border border-gray-200 text-gray-600 font-medium neo-row-hover transition-colors text-sm"
                   disabled={isImporting}
                 >
                   Cancel

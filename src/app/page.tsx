@@ -225,7 +225,7 @@ export default function LandingPage() {
                     <button 
                       type="button" 
                       onClick={() => setIsCountryOpen(!isCountryOpen)} 
-                      className="relative z-50 flex items-center justify-center bg-transparent px-2 py-3 text-[13px] text-gray-600 border-r border-gray-200/60 outline-none cursor-pointer font-medium w-[90px] hover:bg-gray-50/50 transition-colors"
+                      className="relative z-50 flex items-center justify-center bg-transparent px-2 py-3 text-[13px] text-gray-600 border-r border-gray-200/60 outline-none cursor-pointer font-medium w-[90px] neo-row-hover transition-colors"
                     >
                       <div className="flex items-center space-x-2">
                         <img src={`https://flagcdn.com/w20/${countryIso}.png`} className="w-[18px] h-[13px] object-cover rounded-sm shadow-sm" alt="" />

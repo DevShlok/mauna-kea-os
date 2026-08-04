@@ -124,7 +124,7 @@ export const DualRangeSlider = ({ min, max, step, value, onChange }: any) => {
               max={maxVal}
               value={minVal}
               onChange={handleManualMinChange}
-              className="w-full h-[32px] border border-[#e4e8f0] rounded-[6px] px-2 text-[12px] font-bold text-[#334155] focus:outline-none focus:border-[#1d4ed8] focus:ring-1 focus:ring-[#1d4ed8]"
+              className="w-full h-[32px] neo-inset px-2 text-[12px] font-bold text-[#334155] outline-none"
             />
           </div>
         </div>
@@ -138,7 +138,7 @@ export const DualRangeSlider = ({ min, max, step, value, onChange }: any) => {
               max={max}
               value={maxVal}
               onChange={handleManualMaxChange}
-              className="w-full h-[32px] border border-[#e4e8f0] rounded-[6px] px-2 text-[12px] font-bold text-[#334155] text-right focus:outline-none focus:border-[#1d4ed8] focus:ring-1 focus:ring-[#1d4ed8]"
+              className="w-full h-[32px] neo-inset px-2 text-[12px] font-bold text-[#334155] text-right outline-none"
             />
           </div>
         </div>

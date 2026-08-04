@@ -347,7 +347,7 @@ export default function FloatImportModal({ isOpen, onClose }: { isOpen: boolean,
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <button 
                   onClick={() => { setImportMapping(null); setImportFileData([]); }}
-                  className="px-5 py-2.5 rounded-md border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors text-sm"
+                  className="px-5 py-2.5 rounded-md border border-gray-200 text-gray-600 font-medium neo-row-hover transition-colors text-sm"
                   disabled={isImporting}
                 >
                   Cancel
@@ -432,7 +432,7 @@ export default function FloatImportModal({ isOpen, onClose }: { isOpen: boolean,
             <div className="flex gap-3">
               <button 
                 onClick={() => handleNextDuplicate('new')}
-                className="px-4 py-2 bg-white border border-[#e4e8f0] text-gray-900 rounded-[9px] text-[14px] font-bold hover:bg-gray-50"
+                className="px-4 py-2 neo-btn text-gray-900 text-[14px] font-bold"
               >
                 Import as New
               </button>

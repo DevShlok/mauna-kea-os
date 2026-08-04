@@ -21,6 +21,13 @@ export const getMandates = cache(async () => {
   const rows = await db.query.mandates.findMany({
     where: eq(mandates.isDeleted, false),
     orderBy: desc(mandates.id),
+    columns: {
+      jdText: false,
+      interviewNotesText: false,
+      searchNotes: false,
+      additionalDocsText: false,
+      openQuestions: false,
+    },
     with: { 
       candidates: {
         columns: {
@@ -131,7 +138,14 @@ export const getMandatesPaginated = cache(async (params: {
   const rows = await db.query.mandates.findMany({
     where: whereClause,
     orderBy: orderByClause,
-    with: { 
+    columns: {
+      jdText: false,
+      interviewNotesText: false,
+      searchNotes: false,
+      additionalDocsText: false,
+      openQuestions: false,
+    },
+    with: {  
       candidates: {
         columns: {
           id: true,

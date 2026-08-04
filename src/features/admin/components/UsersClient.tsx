@@ -118,53 +118,53 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
         </div>
       )}
 
-      <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-[#D4E0F0] flex justify-end gap-3">
+      <div className="neo-table">
+        <div className="p-4 border-b border-gray-100 flex justify-end gap-3">
           <button 
             onClick={() => setIsImportModalOpen(true)}
-            className="h-9 px-4 bg-white border border-gray-200 text-gray-700 rounded text-xs font-bold hover:bg-gray-50 flex items-center gap-1.5"
+            className="h-9 px-5 neo-btn text-gray-700 text-xs font-bold flex items-center gap-1.5"
           >
             <Upload className="w-3.5 h-3.5" />
             Import Users
           </button>
           <button onClick={() => {
             router.push('/dashboard/admin/users/new');
-          }} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#0e3178]">
+          }} className="h-9 px-5 neo-btn-primary text-xs font-bold text-white">
             + Add User
           </button>
         </div>
         <UserImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-[#f9fafc] border-b-2 border-[#D4E0F0]">
+            <tr className="border-b border-gray-100">
               <th className="px-4 py-3 text-center w-10">
                 <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
               </th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Name</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Email</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Role</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Last Active</th>
+              <th className="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Name</th>
+              <th className="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Role</th>
+              <th className="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Last Active</th>
             </tr>
           </thead>
           <tbody>
             {_dt.paginatedData.map((u) => (
-              <tr key={u.id} className="border-b border-[#D4E0F0] hover:bg-[#f9fafc]">
+              <tr key={u.id} className="border-b border-gray-50 neo-row-hover">
                 <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
                   <input type="checkbox" checked={selectedIds.has(u.id)} onChange={() => toggleRow(u.id)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
                 </td>
                 <td className="px-4 py-3 cursor-pointer" onClick={() => handleEditClick(u)}>
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded bg-[#133255] text-[#D8B15B] flex items-center justify-center text-xs font-bold font-serif">{u.initials}</div>
+                    <div className="w-8 h-8 neo-card-sm text-[#D8B15B] flex items-center justify-center text-xs font-bold font-serif" style={{ background: '#133255' }}>{u.initials}</div>
                     <span className="font-semibold text-[#111]">{u.name}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-[#6b7a99]">{u.email}</td>
                 <td className="px-4 py-3">
-                  <span className={`px-2.5 py-1 rounded-full text-[13px] font-bold uppercase tracking-wider ${
-                    u.role === "admin" ? "bg-[#fde8e8] text-[#C0392B]" : 
-                    u.role === "consultant" ? "bg-blue-100 text-blue-800" :
-                    u.role === "client" ? "bg-green-100 text-green-800" :
-                    "bg-purple-100 text-purple-800"
+                  <span className={`px-2.5 py-1 neo-card-sm text-[13px] font-bold uppercase tracking-wider ${
+                    u.role === "admin" ? "text-[#C0392B]" : 
+                    u.role === "consultant" ? "text-blue-800" :
+                    u.role === "client" ? "text-green-800" :
+                    "text-purple-800"
                   }`}>
                     {u.role}
                   </span>

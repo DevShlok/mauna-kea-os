@@ -39,7 +39,8 @@ import {
 import { useColumnPrefs, ColumnDef } from "@/hooks/useColumnPrefs";
 import { ColumnCustomizerPanel } from "@/components/ui/ColumnCustomizerPanel";
 import { ResizableHeader } from "@/components/DataTable/ResizableHeader";
-import { CandidatesImportModal } from "./CandidatesImportModal";
+import dynamic from 'next/dynamic';
+const CandidatesImportModal = dynamic(() => import('./CandidatesImportModal').then(mod => mod.CandidatesImportModal), { ssr: false });
 
 const StatusDropdown = ({ val, onStatusChange, activePopoverId, setActivePopoverId, id }: any) => {
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -665,25 +666,25 @@ export default function CandidatesClient({
           <div className="flex gap-2.5">
             <button
               onClick={() => setIsCustomizerOpen(true)}
-              className="h-10 px-4 bg-white border border-[#e4e8f0] text-[#475569] rounded-xl text-[13.5px] font-semibold hover:bg-[#f8fafc] hover:border-[#cfd6e4] hover:text-[#111] transition-all flex items-center gap-2 shadow-sm"
+              className="h-10 px-4 neo-btn text-[#475569] text-[13.5px] font-semibold transition-all flex items-center gap-2"
             >
               <Settings size={15} /> Customise View
             </button>
             <button
               onClick={() => setIsImportModalOpen(true)}
-              className="h-10 px-4 bg-white border border-[#e4e8f0] text-[#475569] rounded-xl text-[13.5px] font-semibold hover:bg-[#f8fafc] hover:border-[#cfd6e4] hover:text-[#111] transition-all flex items-center gap-2 shadow-sm"
+              className="h-10 px-4 neo-btn text-[#475569] text-[13.5px] font-semibold transition-all flex items-center gap-2"
             >
               <Download size={15} className="rotate-180" /> Import Candidates
             </button>
             <Link
               href="/dashboard/candidates/bulk-import"
-              className="h-10 px-4 bg-white border border-[#e4e8f0] text-[#475569] rounded-xl text-[13.5px] font-semibold hover:bg-[#f8fafc] hover:border-[#cfd6e4] hover:text-[#111] transition-all flex items-center gap-2 shadow-sm"
+              className="h-10 px-4 neo-btn text-[#475569] text-[13.5px] font-semibold transition-all flex items-center gap-2"
             >
               <Upload size={15} /> Import CVs
             </Link>
             <Link
               href="/dashboard/candidates/new"
-              className="h-10 px-5 bg-[#D8B15B] text-[#133255] rounded-xl text-[13.5px] font-bold hover:bg-[#e8c97a] hover:shadow-md transition-all flex items-center gap-2 shadow-sm"
+              className="h-10 px-5 neo-btn text-[#133255] text-[13.5px] font-bold transition-all flex items-center gap-2"
             >
               <Plus size={16} /> Add Candidate
             </Link>
@@ -693,18 +694,21 @@ export default function CandidatesClient({
 
       {/* ── KPI Pills ─────────────────────────────────────── */}
       {!isBulkMode && (
-        <div className="flex items-center gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex items-center gap-4 mb-6 overflow-x-auto pb-2 scrollbar-hide">
           {[
             { label: "Active", value: stats.active, color: "text-[#127a41]" },
             { label: "Passive", value: stats.passive, color: "text-[#b7791f]" },
             { label: "Placed", value: stats.placed, color: "text-[#2a44a0]" },
             { label: "Avg CTC", value: `₹${stats.avgCtc}L`, color: "text-[#133255]" },
           ].map((kpi, i) => (
-            <div key={i} className="flex-1 min-w-[140px] bg-[#f4f7fd] border border-[#e4e8f0] rounded-[16px] px-5 py-3.5">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-[#6b7a99] mb-1">
+            <div
+              key={i}
+              className="flex-1 min-w-[150px] neo-card-sm px-6 py-4 transition-transform hover:-translate-y-0.5"
+            >
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                 {kpi.label}
               </div>
-              <div className={`text-[22px] font-serif font-bold ${kpi.color}`}>
+              <div className={`text-[24px] font-serif font-bold ${kpi.color}`}>
                 {kpi.value.toLocaleString()}
               </div>
             </div>
@@ -713,17 +717,21 @@ export default function CandidatesClient({
       )}
 
       {/* ── Search & Filter Bar ──────────────────────────── */}
-      <div className="mb-5 bg-white border border-[#e4e8f0] rounded-[16px] shadow-sm p-1.5 relative z-10">
-        <div className="flex flex-wrap gap-2 items-center">
+      <div
+        className="neo-card mb-6 p-2 relative z-10"
+      >
+        <div className="flex flex-wrap gap-3 items-center p-1">
         {/* Search */}
-        <div className="flex-1 flex items-center gap-2.5 px-3 min-w-[200px]">
-          <Search size={16} className="text-[#94a3b8]" />
+        <div
+          className="flex-1 flex items-center gap-2.5 px-4 py-2 min-w-[220px] neo-inset"
+        >
+          <Search size={16} className="text-slate-400" />
           <input
             type="text"
             placeholder="Search candidates..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 text-[14px] text-[#111] bg-transparent outline-none placeholder-[#94a3b8]"
+            className="flex-1 text-[14px] font-bold text-slate-800 bg-transparent outline-none placeholder-slate-400"
           />
         </div>
 
@@ -735,7 +743,7 @@ export default function CandidatesClient({
             className={`h-[38px] px-4 rounded-[10px] text-[13.5px] font-bold flex items-center gap-2 transition-colors ${
               showSort
                 ? "bg-[#eef5ff] text-[#1d4ed8]"
-                : "bg-transparent text-[#475569] hover:bg-[#f8fafc]"
+                : "bg-transparent text-[#475569] neo-row-hover"
             }`}
           >
             Sort by {sortKey ? `: ${columns.find(c => c.key === sortKey)?.label || sortKey}` : ""}
@@ -751,7 +759,7 @@ export default function CandidatesClient({
                     <div
                       key={c.key}
                       className={`group flex items-center justify-between px-2 py-1.5 rounded-[8px] transition-colors mb-0.5 ${
-                        sortKey === c.key ? "bg-[#f0f5ff]" : "hover:bg-[#f8fafc]"
+                        sortKey === c.key ? "bg-[#f0f5ff]" : "neo-row-hover"
                       }`}
                     >
                       <button
@@ -803,7 +811,7 @@ export default function CandidatesClient({
           className={`h-[38px] px-4 rounded-[10px] text-[13.5px] font-bold flex items-center gap-2 transition-colors ${
             hasActiveFilters
               ? "bg-[#eef5ff] text-[#1d4ed8]"
-              : "bg-transparent text-[#475569] hover:bg-[#f8fafc]"
+              : "bg-transparent text-[#475569] neo-row-hover"
           }`}
         >
           <Filter size={15} />
@@ -838,7 +846,7 @@ export default function CandidatesClient({
           <div className="fixed top-0 right-0 bottom-0 w-full max-w-[400px] bg-white shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300 border-l border-[#e4e8f0]">
             <div className="flex items-center justify-between px-6 py-5 border-b border-[#e4e8f0]">
               <h2 className="text-[18px] font-serif font-bold text-[#111]">Advanced Filters</h2>
-              <button onClick={() => setShowFilters(false)} className="p-2 hover:bg-[#f8fafc] rounded-full text-[#6b7a99] transition-colors"><X size={18} /></button>
+              <button onClick={() => setShowFilters(false)} className="p-2 rounded-full text-[#6b7a99] transition-colors"><X size={18} /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
               <div className="animate-in fade-in slide-in-from-right-4 duration-300" style={{ animationDelay: '50ms', animationFillMode: 'both' }}>
@@ -1093,7 +1101,7 @@ export default function CandidatesClient({
               </select>
             </div>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowMandateModal(false)} className="px-4 py-2 border border-[#e4e8f0] rounded-xl text-sm font-semibold hover:bg-gray-50 text-[#111]">Cancel</button>
+              <button onClick={() => setShowMandateModal(false)} className="px-4 py-2 border border-[#e4e8f0] rounded-xl text-sm font-semibold neo-row-hover text-[#111]">Cancel</button>
               <button onClick={handleBulkAddToMandate} disabled={isSubmitting || !selectedMandateId} className="px-5 py-2 bg-[#133255] text-white rounded-xl text-sm font-bold hover:bg-[#0e243f] disabled:opacity-50">
                 {isSubmitting ? "Assigning..." : "Assign Candidates"}
               </button>
@@ -1148,7 +1156,7 @@ export default function CandidatesClient({
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowSubmissionModal(false)} className="px-4 py-2 border border-[#e4e8f0] rounded-xl text-sm font-semibold hover:bg-gray-50 text-[#111]">Cancel</button>
+              <button onClick={() => setShowSubmissionModal(false)} className="px-4 py-2 border border-[#e4e8f0] rounded-xl text-sm font-semibold neo-row-hover text-[#111]">Cancel</button>
               <button onClick={handleBulkAddSubmission} disabled={isSubmitting || !submissionData.client || !submissionData.role} className="px-5 py-2 bg-[#D8B15B] text-[#133255] rounded-xl text-sm font-bold hover:bg-[#e8c97a] disabled:opacity-50">
                 {isSubmitting ? "Submitting..." : "Submit Candidates"}
               </button>

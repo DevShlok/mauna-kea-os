@@ -8,7 +8,7 @@ export function Skeleton({ className }: { className?: string }) {
 
 export function SkeletonTable({ rows = 5, columns = 5 }: { rows?: number, columns?: number }) {
   return (
-    <div className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+    <div className="w-full neo-card overflow-hidden">
       <div className="flex bg-gray-50 p-4 border-b border-gray-200">
         {Array.from({ length: columns }).map((_, i) => (
           <Skeleton key={i} className="h-4 w-24 mr-4 last:mr-0" />

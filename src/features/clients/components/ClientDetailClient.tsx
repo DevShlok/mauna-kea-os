@@ -72,15 +72,15 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
         </div>
 
         {/* Client Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+        <div className="neo-card p-8 mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
           <div className="flex gap-6 items-center">
-            <div className="w-20 h-20 bg-blue-50 text-[#133255] rounded-xl flex items-center justify-center border border-blue-100 shrink-0">
+            <div className="w-20 h-20 neo-card-sm text-[#133255] flex items-center justify-center shrink-0">
               <Building2 className="w-10 h-10" />
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-3 mb-2">
                 <h1 className="text-3xl font-serif font-bold text-[#133255] break-words">{client.name}</h1>
-                <span className={`px-2.5 py-1 text-[13px] font-bold rounded-full border shrink-0 ${client.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
+                <span className={`px-3 py-1 text-[13px] font-bold rounded-full neo-card-sm shrink-0 ${client.status === 'Active' ? 'text-green-700' : 'text-yellow-700'}`}>
                   {client.status}
                 </span>
               </div>
@@ -93,17 +93,17 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-2 shrink-0">
-            <Link href={`/dashboard/mandates/new?company=${encodeURIComponent(client.name)}`} className="h-8 px-3 bg-[#133255] text-white rounded-md text-xs font-bold hover:bg-[#133255]/90 transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+          <div className="grid grid-cols-2 gap-3 shrink-0">
+            <Link href={`/dashboard/mandates/new?company=${encodeURIComponent(client.name)}`} className="h-9 px-4 neo-btn-primary text-white text-xs font-bold flex items-center justify-center gap-1.5">
               <Plus className="w-3.5 h-3.5" /> Add Mandate
             </Link>
-            <button onClick={() => setIsImportModalOpen(true)} className="h-8 px-3 bg-[#D8B15B] rounded-md text-xs font-bold text-[#133255] hover:bg-[#e8c97a] transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+            <button onClick={() => setIsImportModalOpen(true)} className="h-9 px-4 neo-btn-gold text-[#133255] text-xs font-bold flex items-center justify-center gap-1.5">
               <Upload className="w-3.5 h-3.5" /> Import Mandates
             </button>
-            <button onClick={() => setIsEditing(true)} className="h-8 px-3 bg-gray-100 border border-gray-200 rounded-md text-xs font-bold text-gray-700 hover:bg-gray-200 transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+            <button onClick={() => setIsEditing(true)} className="h-9 px-4 neo-btn text-gray-700 text-xs font-bold flex items-center justify-center gap-1.5">
               <Edit className="w-3.5 h-3.5" /> Edit
             </button>
-            <button onClick={handleDelete} className="h-8 px-3 border border-red-200 bg-red-50 rounded-md text-xs font-bold text-red-600 hover:bg-red-100 transition-colors flex items-center justify-center gap-1.5">
+            <button onClick={handleDelete} className="h-9 px-4 neo-btn text-red-600 text-xs font-bold flex items-center justify-center gap-1.5">
               <Trash2 className="w-3.5 h-3.5" /> Delete
             </button>
           </div>
@@ -118,7 +118,7 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
         />
 
         {/* Mandates Tabs */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="neo-table">
           <div className="flex border-b border-gray-100 px-6">
             <button 
               onClick={() => setActiveTab("active")}
@@ -148,7 +148,7 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
               </thead>
               <tbody>
                 {displayedMandates.map(m => (
-                  <tr key={m.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                  <tr key={m.id} className="border-b border-gray-50 neo-row-hover transition-colors">
                     <td className="px-6 py-4 font-bold text-[15px] text-gray-900">
                       <Link href={`/dashboard/mandates/${m.id}`} className="text-[#133255] hover:underline">
                         {m.role}
@@ -173,10 +173,10 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
         </div>
 
         {/* Client Contacts Display */}
-        <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+        <div className="mt-8 neo-table">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-[15px] font-bold text-[#133255]">Client Contacts</h2>
-            <button onClick={() => setIsEditing(true)} className="text-sm font-bold text-[#1d4ed8] hover:underline">Manage Contacts</button>
+            <button onClick={() => setIsEditing(true)} className="text-sm font-bold neo-btn px-4 py-1.5 text-[#133255]">Manage Contacts</button>
           </div>
           <div className="p-0">
             {(() => {
@@ -231,7 +231,7 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
                   </thead>
                   <tbody>
                     {allContacts.map((c: any, idx: number) => (
-                      <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                      <tr key={idx} className="border-b border-gray-50 neo-row-hover transition-colors">
                         <td className="px-6 py-3 font-bold text-[14px] text-gray-900">{c.name}</td>
                         <td className="px-6 py-3 text-[14px] text-gray-600">{c.designation || "-"}</td>
                         <td className="px-6 py-3 text-[14px] text-gray-600">{c.number || "-"}</td>
@@ -271,8 +271,8 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
 
         {/* Associated Candidates Display */}
         {associatedCandidates.length > 0 && (
-          <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+          <div className="mt-8 neo-table">
+            <div className="px-6 py-4 border-b border-gray-100">
               <h2 className="text-[15px] font-bold text-[#133255]">Associated Candidates from Database</h2>
               <p className="text-[13px] text-gray-500 mt-0.5">Candidates who currently work or previously worked here.</p>
             </div>
@@ -290,7 +290,7 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
                   {associatedCandidates.map(ac => {
                     const isCurrent = ac.company?.toLowerCase() === client.name.toLowerCase();
                     return (
-                      <tr key={ac.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => router.push(`/dashboard/candidates/${ac.id}`)}>
+                      <tr key={ac.id} className="border-b border-gray-50 neo-row-hover transition-colors cursor-pointer" onClick={() => router.push(`/dashboard/candidates/${ac.id}`)}>
                         <td className="px-6 py-3 font-bold text-[14px] text-[#133255] hover:underline">{ac.name}</td>
                         <td className="px-6 py-3 text-[14px] text-gray-600">{ac.designation || "-"}</td>
                         <td className="px-6 py-3 text-[14px] text-gray-600 font-medium">{ac.company || "-"}</td>
@@ -312,31 +312,31 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
       {/* Edit Client Modal */}
       {isEditing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#133255]/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+          <div className="neo-card w-full max-w-2xl overflow-hidden">
+            <div className="px-7 py-5 border-b border-gray-100 flex justify-between items-center">
               <h2 className="text-lg font-bold text-[#133255]">Edit Client</h2>
-              <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-600 font-bold text-xl leading-none">&times;</button>
+              <button onClick={() => setIsEditing(false)} className="w-8 h-8 neo-card-sm flex items-center justify-center text-gray-400 hover:text-gray-700 font-bold text-xl leading-none">&times;</button>
             </div>
-            <form onSubmit={handleEditSubmit} className="p-6">
+            <form onSubmit={handleEditSubmit} className="p-7">
               <div className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Client *</label>
-                    <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Client *</label>
+                    <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-4 py-2.5 neo-inset text-sm outline-none" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Legal Entity Name</label>
-                    <input value={form.legalEntityName} onChange={e => setForm({...form, legalEntityName: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Legal Entity Name</label>
+                    <input value={form.legalEntityName} onChange={e => setForm({...form, legalEntityName: e.target.value})} className="w-full px-4 py-2.5 neo-inset text-sm outline-none" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Account ID</label>
-                  <input value={form.accountId} onChange={e => setForm({...form, accountId: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Account ID</label>
+                  <input value={form.accountId} onChange={e => setForm({...form, accountId: e.target.value})} className="w-full px-4 py-2.5 neo-inset text-sm outline-none" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Industry</label>
-                  <input list="industry-suggestions" value={form.vertical} onChange={e => setForm({...form, vertical: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Industry</label>
+                  <input list="industry-suggestions" value={form.vertical} onChange={e => setForm({...form, vertical: e.target.value})} className="w-full px-4 py-2.5 neo-inset text-sm outline-none" />
                   <datalist id="industry-suggestions">
                     {industries.map((ind: any) => (
                       <option key={ind.id} value={ind.sectorName} />
@@ -344,8 +344,8 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
                   </datalist>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Account owner</label>
-                  <input value={form.owner} onChange={e => setForm({...form, owner: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#133255]" />
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Account owner</label>
+                  <input value={form.owner} onChange={e => setForm({...form, owner: e.target.value})} className="w-full px-4 py-2.5 neo-inset text-sm outline-none" />
                 </div>
                 </div>
                 
@@ -353,30 +353,30 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
                 <div className="mt-8 pt-6 border-t border-gray-100">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold uppercase tracking-wider text-[#9ca8be]">Client Contacts</h3>
-                    <button type="button" onClick={addContact} className="text-sm font-bold text-[#133255] flex items-center gap-1 hover:text-[#D8B15B] transition-colors">
+                    <button type="button" onClick={addContact} className="text-sm font-bold neo-btn px-4 py-1.5 text-[#133255] flex items-center gap-1">
                       <Plus className="w-4 h-4" /> Add Contact
                     </button>
                   </div>
                   
                   <div className="space-y-4">
                     {contacts.map((contact, idx) => (
-                      <div key={idx} className="p-4 bg-gray-50 border border-gray-100 rounded-lg relative">
+                      <div key={idx} className="p-4 neo-card-sm relative">
                         <div className="grid grid-cols-2 gap-3">
                           <div>
                             <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Contact Name</label>
-                            <input value={contact.name} onChange={e => updateContact(idx, 'name', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-[#133255]" placeholder="Name" />
+                            <input value={contact.name} onChange={e => updateContact(idx, 'name', e.target.value)} className="w-full px-3 py-2 neo-inset text-[13px] outline-none" placeholder="Name" />
                           </div>
                           <div>
                             <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Designation</label>
-                            <input value={contact.designation} onChange={e => updateContact(idx, 'designation', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-[#133255]" placeholder="Designation" />
+                            <input value={contact.designation} onChange={e => updateContact(idx, 'designation', e.target.value)} className="w-full px-3 py-2 neo-inset text-[13px] outline-none" placeholder="Designation" />
                           </div>
                           <div>
                             <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Contact Number</label>
-                            <input value={contact.number} onChange={e => updateContact(idx, 'number', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-[#133255]" placeholder="Phone Number" />
+                            <input value={contact.number} onChange={e => updateContact(idx, 'number', e.target.value)} className="w-full px-3 py-2 neo-inset text-[13px] outline-none" placeholder="Phone Number" />
                           </div>
                           <div>
                             <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Contact Email</label>
-                            <input type="email" value={contact.email} onChange={e => updateContact(idx, 'email', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[13px] outline-none focus:border-[#133255]" placeholder="Email Address" />
+                            <input type="email" value={contact.email} onChange={e => updateContact(idx, 'email', e.target.value)} className="w-full px-3 py-2 neo-inset text-[13px] outline-none" placeholder="Email Address" />
                           </div>
                         </div>
                         <button type="button" onClick={() => removeContact(idx)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors" title="Remove Contact">
@@ -385,7 +385,7 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
                       </div>
                     ))}
                     {contacts.length === 0 && (
-                      <div className="text-[13px] text-gray-500 italic text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                      <div className="text-[13px] text-gray-500 italic text-center py-4 neo-inset">
                         No contacts added yet.
                       </div>
                     )}
@@ -393,8 +393,8 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
                 </div>
               </div>
               <div className="mt-8 flex justify-end gap-3">
-                <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-md transition-colors">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="px-5 py-2 text-sm font-bold bg-[#133255] text-white rounded-md hover:bg-[#0c203b] transition-colors disabled:opacity-50">
+                <button type="button" onClick={() => setIsEditing(false)} className="px-5 py-2.5 neo-btn text-sm font-bold text-gray-600">Cancel</button>
+                <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 neo-btn-primary text-sm font-bold text-white disabled:opacity-50">
                   {isSubmitting ? "Saving..." : "Save Changes"}
                 </button>
               </div>

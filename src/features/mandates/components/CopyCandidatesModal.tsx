@@ -107,7 +107,7 @@ export default function CopyCandidatesModal({
                   <select 
                     value={selectedMandateId}
                     onChange={(e) => setSelectedMandateId(Number(e.target.value))}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#133255] outline-none"
+                    className="w-full neo-inset-xl px-4 py-3 text-sm focus:border-[#133255] outline-none"
                     disabled={isSubmitting}
                   >
                     <option value="">Select a mandate...</option>
@@ -123,7 +123,7 @@ export default function CopyCandidatesModal({
               <div className="mt-8 flex gap-3">
                 <button 
                   onClick={onClose}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-bold neo-row-hover transition-colors"
                   disabled={isSubmitting}
                 >
                   Cancel

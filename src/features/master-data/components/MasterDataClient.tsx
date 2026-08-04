@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { MasterClient, MasterIndustry, MasterLocation } from "@/db/schema";
 import { Upload, Database, Building2, MapPin, Briefcase, Plus, Edit2, Trash2 } from "lucide-react";
-import MasterDataImportModal from "./MasterDataImportModal";
-import MasterDataEditModal from "./MasterDataEditModal";
+import dynamic from 'next/dynamic';
+
+const MasterDataImportModal = dynamic(() => import('./MasterDataImportModal'), { ssr: false });
+const MasterDataEditModal = dynamic(() => import('./MasterDataEditModal'), { ssr: false });
 import toast from "react-hot-toast";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { 
@@ -134,7 +136,7 @@ export default function MasterDataClient({
         )}
         <button 
           onClick={() => openEdit()}
-          className="h-10 px-5 rounded-md bg-white border border-gray-300 text-gray-700 text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+          className="h-10 px-5 rounded-md bg-white border border-gray-300 text-gray-700 text-sm font-bold shadow-sm neo-row-hover transition-colors flex items-center gap-2"
         >
           <Plus className="w-4 h-4" /> Add New
         </button>
@@ -147,7 +149,7 @@ export default function MasterDataClient({
       </div>
 
       {/* Tables */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="neo-table">
         {activeTab === "clients" && (
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 border-b">
@@ -165,7 +167,7 @@ export default function MasterDataClient({
             <tbody className="divide-y">
               {initialClients.length === 0 && <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-400">No master clients found. Import to populate dictionary.</td></tr>}
               {initialClients.map(c => (
-                <tr key={c.id} className={selectedIds.includes(c.id) ? "bg-[#133255]/5" : "hover:bg-gray-50"}>
+                <tr key={c.id} className={selectedIds.includes(c.id) ? "bg-[#133255]/5" : "neo-row-hover"}>
                   <td className="px-6 py-3">
                     <input type="checkbox" checked={selectedIds.includes(c.id)} onChange={() => toggleSelect(c.id)} className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]" />
                   </td>
@@ -198,7 +200,7 @@ export default function MasterDataClient({
             <tbody className="divide-y">
               {initialIndustries.length === 0 && <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-400">No master industries found.</td></tr>}
               {initialIndustries.map(ind => (
-                <tr key={ind.id} className={selectedIds.includes(ind.id) ? "bg-[#133255]/5" : "hover:bg-gray-50"}>
+                <tr key={ind.id} className={selectedIds.includes(ind.id) ? "bg-[#133255]/5" : "neo-row-hover"}>
                   <td className="px-6 py-3">
                     <input type="checkbox" checked={selectedIds.includes(ind.id)} onChange={() => toggleSelect(ind.id)} className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]" />
                   </td>
@@ -229,7 +231,7 @@ export default function MasterDataClient({
             <tbody className="divide-y">
               {initialLocations.length === 0 && <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-400">No master locations found.</td></tr>}
               {initialLocations.map(loc => (
-                <tr key={loc.id} className={selectedIds.includes(loc.id) ? "bg-[#133255]/5" : "hover:bg-gray-50"}>
+                <tr key={loc.id} className={selectedIds.includes(loc.id) ? "bg-[#133255]/5" : "neo-row-hover"}>
                   <td className="px-6 py-3">
                     <input type="checkbox" checked={selectedIds.includes(loc.id)} onChange={() => toggleSelect(loc.id)} className="rounded border-gray-300 text-[#133255] focus:ring-[#133255]" />
                   </td>

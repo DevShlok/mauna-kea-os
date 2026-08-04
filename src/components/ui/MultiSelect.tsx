@@ -30,7 +30,7 @@ export const MultiSelect = ({ options = [], selected = [], onChange, placeholder
     <div className="relative w-full" ref={ref}>
       <div 
         onClick={() => setOpen(!open)}
-        className="w-full min-h-[42px] border-[1.5px] border-[#e4e8f0] rounded-[10px] px-3 py-2 text-[13.5px] bg-white cursor-pointer flex justify-between items-center hover:border-[#1d4ed8] transition-colors shadow-sm"
+        className="w-full min-h-[42px] neo-inset px-3 py-2 text-[13.5px] cursor-pointer flex justify-between items-center"
       >
         <span className={selected.length === 0 ? "text-[#8a93a3]" : "text-gray-900 truncate pr-4 font-bold"}>
           {selected.length === 0 ? placeholder : selected.join(", ")}
@@ -38,14 +38,14 @@ export const MultiSelect = ({ options = [], selected = [], onChange, placeholder
         <span className="text-[#8a93a3] text-[10px] flex-shrink-0">▼</span>
       </div>
       {open && (
-        <div className="absolute top-full mt-2 left-0 w-full min-w-[240px] bg-white border border-[#e4e8f0] rounded-[12px] shadow-[0_12px_40px_rgba(0,0,0,0.12)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-          <div className="p-2 border-b border-[#e4e8f0] bg-[#f8fafc]">
+        <div className="absolute top-full mt-2 left-0 w-full min-w-[240px] neo-card z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-2">
+          <div className="p-2 border-b border-gray-100">
             <input 
               type="text" 
               placeholder="Search..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white border border-[#e4e8f0] rounded-[8px] px-3 py-1.5 text-[13px] text-[#111] focus:outline-none focus:border-[#1d4ed8] placeholder-[#94a3b8]"
+              className="w-full neo-inset px-3 py-1.5 text-[13px] text-[#111] outline-none placeholder-[#94a3b8]"
               onClick={(e) => e.stopPropagation()}
             />
           </div>

@@ -30,7 +30,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex flex-row h-screen overflow-hidden bg-[#f0f4fb] print:h-auto print:overflow-visible print:bg-white">
+    <div className="flex flex-row h-screen overflow-hidden bg-[#f0f4f8] print:h-auto print:overflow-visible print:bg-white text-[#1e293b]">
       <div className="print:hidden">
         <Sidebar userRole={userRole} linkedClientId={linkedClientId} linkedCandidateId={linkedCandidateId} userName={platformUser?.name || "User"} />
       </div>

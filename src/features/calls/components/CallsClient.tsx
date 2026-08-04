@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Phone, Mail, User, Calendar, Loader2, Search } from "lucide-react";
-import CallLogModal from "@/components/shared/CallLogModal";
+import dynamic from 'next/dynamic';
+const CallLogModal = dynamic(() => import('@/components/shared/CallLogModal'), { ssr: false });
 import { useRouter } from "next/navigation";
 import { saveInlineNoteAction, removeFromEngagementListAction } from "@/actions/calls";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -140,28 +141,28 @@ export default function CallsClient({ items, currentDate, user }: { items: any[]
         </div>
       </div>
 
-    <div className="bg-white border border-[#e4e8f0] rounded-[16px] overflow-hidden shadow-sm flex flex-col min-h-[600px]">
+    <div className="neo-table flex flex-col min-h-[600px]">
       
       {/* ── Header: Filters & Progress ── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border-b border-[#e4e8f0] bg-[#fdfdfd] gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border-b border-gray-100 gap-4">
         
         {/* Tabs & Search */}
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-          <div className="flex bg-[#f4f7fd] p-1 rounded-lg w-fit">
+          <div className="flex neo-card-sm p-1 w-fit">
             <button 
-              className={`px-4 py-1.5 text-sm font-bold rounded-md transition-all ${activeTab === 'All' ? 'bg-white text-[#133255] shadow-sm' : 'text-[#6b7a99]'}`}
+              className={`px-4 py-1.5 text-sm font-bold rounded-full transition-all ${activeTab === 'All' ? 'bg-white text-[#133255] shadow-sm' : 'text-[#6b7a99]'}`}
               onClick={() => setActiveTab('All')}
             >
               All
             </button>
             <button 
-              className={`px-4 py-1.5 text-sm font-bold rounded-md transition-all ${activeTab === 'Calling' ? 'bg-white text-[#133255] shadow-sm' : 'text-[#6b7a99]'}`}
+              className={`px-4 py-1.5 text-sm font-bold rounded-full transition-all ${activeTab === 'Calling' ? 'bg-white text-[#133255] shadow-sm' : 'text-[#6b7a99]'}`}
               onClick={() => setActiveTab('Calling')}
             >
               Calling List
             </button>
             <button 
-              className={`px-4 py-1.5 text-sm font-bold rounded-md transition-all ${activeTab === 'BD' ? 'bg-white text-[#133255] shadow-sm' : 'text-[#6b7a99]'}`}
+              className={`px-4 py-1.5 text-sm font-bold rounded-full transition-all ${activeTab === 'BD' ? 'bg-white text-[#133255] shadow-sm' : 'text-[#6b7a99]'}`}
               onClick={() => setActiveTab('BD')}
             >
               BD List
@@ -175,7 +176,7 @@ export default function CallsClient({ items, currentDate, user }: { items: any[]
               placeholder="Search by name, role, company..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-1.5 text-sm bg-white border border-gray-200 rounded-lg outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 shadow-sm"
+              className="neo-inset px-4 py-2.5 text-sm text-slate-800 font-medium outline-none w-full"
             />
           </div>
         </div>
@@ -190,13 +191,13 @@ export default function CallsClient({ items, currentDate, user }: { items: any[]
             >
               All Time
             </button>
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm">
+            <div className="flex items-center gap-2 neo-inset px-3 py-1.5">
               <Calendar size={16} className="text-gray-400" />
               <input 
                 type="date" 
                 value={currentDate === 'all' ? "" : (currentDate || "")}
                 onChange={handleDateChange}
-                className="text-sm font-semibold text-[#133255] outline-none cursor-pointer"
+                className="text-sm font-semibold text-[#133255] outline-none cursor-pointer bg-transparent"
               />
             </div>
           </div>
@@ -218,7 +219,7 @@ export default function CallsClient({ items, currentDate, user }: { items: any[]
           </thead>
           <tbody>
             {filteredItems.map((item) => (
-              <tr key={item.candId + item.listType} className="border-b border-[#e4e8f0] hover:bg-gray-50/50 group">
+              <tr key={item.candId + item.listType} className="border-b border-[#e4e8f0] neo-row-hover group">
                 <td className="px-4 py-4 align-top">
                   <div className="flex flex-col">
                     <Link href={`/dashboard/candidates/${item.candId}`} className="font-bold text-[#133255] hover:underline text-[15px]">
@@ -250,7 +251,7 @@ export default function CallsClient({ items, currentDate, user }: { items: any[]
                       defaultValue={item.notes || ""}
                       placeholder="Type call notes here... (Saves automatically)"
                       onBlur={(e) => handleNoteBlur(item.candId, item.listType as any, e.target.value, item.notes)}
-                      className="w-full min-h-[80px] p-2.5 bg-[#f8fafc] group-hover:bg-white border border-transparent group-hover:border-gray-200 rounded-md outline-none focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all text-[13px] resize-y"
+                      className="w-full min-h-[80px] p-2.5 neo-inset outline-none transition-all text-[13px] resize-y focus:shadow-inner"
                     />
                     {savingNoteId === item.candId && (
                       <div className="absolute right-2 bottom-2 text-blue-500">
@@ -269,7 +270,7 @@ export default function CallsClient({ items, currentDate, user }: { items: any[]
                     </button>
                     <Link 
                       href={`/dashboard/candidates/${item.candId}`}
-                      className="p-1.5 border border-[#D4E0F0] text-[#6b7a99] rounded-md hover:bg-gray-50 bg-white"
+                      className="p-1.5 border border-[#D4E0F0] text-[#6b7a99] rounded-md neo-row-hover bg-white"
                       title="View Profile"
                     >
                       <User size={16} />

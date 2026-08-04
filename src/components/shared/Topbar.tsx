@@ -124,7 +124,8 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
           type="text" 
           placeholder="Search candidates..." 
           onKeyDown={handleSearch}
-          className="w-[200px] h-[34px] border border-white/20 rounded-full pl-9 pr-3 text-[14px] text-white outline-none transition-all focus:border-white focus:w-[240px] bg-white/10 placeholder-white/50"
+          className="w-[200px] h-[34px] rounded-full pl-9 pr-3 text-[14px] text-white outline-none transition-all focus:w-[240px] placeholder-white/50"
+          style={{ background: 'rgba(255,255,255,0.1)', boxShadow: 'inset 3px 3px 8px rgba(0,0,0,0.2), inset -2px -2px 5px rgba(255,255,255,0.06)' }}
         />
       </div>
 
@@ -144,10 +145,10 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
         {showNotifications && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
-            <div className="absolute right-0 top-11 bg-white rounded-xl shadow-xl border border-gray-100 w-80 z-50 overflow-hidden flex flex-col text-gray-900">
-              <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 className="font-bold text-[14px]">Notifications</h3>
-                <button onClick={() => setShowNotifications(false)} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+            <div className="absolute right-0 top-11 neo-card w-80 z-50 overflow-hidden flex flex-col text-gray-900 p-0">
+              <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="font-bold text-[14px] text-slate-800">Notifications</h3>
+                <button onClick={() => setShowNotifications(false)} className="w-6 h-6 neo-card-sm flex items-center justify-center text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
               </div>
               <div className="max-h-[300px] overflow-y-auto">
                 {notifications.length === 0 ? (
@@ -160,7 +161,7 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
                         setShowNotifications(false);
                         if (notif.link) router.push(notif.link);
                       }}
-                      className={`px-4 py-3 border-b border-gray-50 last:border-b-0 cursor-pointer hover:bg-gray-50 ${notif.isRead ? 'bg-white' : 'bg-indigo-50/30'}`}
+                      className={`px-4 py-3 border-b border-gray-50 last:border-b-0 cursor-pointer neo-row-hover ${notif.isRead ? 'bg-white' : 'bg-indigo-50/30'}`}
                     >
                       <p className="text-[13px] text-gray-800 leading-relaxed">{notif.message}</p>
                       <span className="text-[11px] text-gray-400 mt-1 block">{new Date(notif.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>

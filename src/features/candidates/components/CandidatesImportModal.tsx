@@ -325,7 +325,7 @@ export function CandidatesImportModal({ isOpen, onClose }: { isOpen: boolean; on
           <button 
             onClick={handleClose}
             disabled={isProcessing}
-            className="w-10 h-10 rounded-full bg-white border border-[#e4e8f0] flex items-center justify-center text-[#64748b] hover:bg-[#f8fafc] hover:text-[#133255] transition-all shadow-sm z-10 disabled:opacity-50"
+            className="w-10 h-10 rounded-full bg-white border border-[#e4e8f0] flex items-center justify-center text-[#64748b] hover:text-[#133255] transition-all shadow-sm z-10 disabled:opacity-50"
           >
             <X size={20} strokeWidth={2.5} />
           </button>
@@ -402,7 +402,7 @@ export function CandidatesImportModal({ isOpen, onClose }: { isOpen: boolean; on
               <div className="mt-8 flex justify-end gap-3">
                 <button 
                   onClick={resetState}
-                  className="px-6 py-3 bg-white border border-[#e4e8f0] text-[#475569] rounded-xl font-bold hover:bg-[#f8fafc] transition-all shadow-sm"
+                  className="px-6 py-3 neo-btn text-[#475569] font-bold"
                 >
                   Cancel
                 </button>
@@ -481,14 +481,14 @@ export function CandidatesImportModal({ isOpen, onClose }: { isOpen: boolean; on
               <div className="mt-8 pt-6 border-t border-[#e4e8f0] flex items-center justify-between">
                 <button 
                   onClick={() => handleNextDuplicate('keep')}
-                  className="px-6 py-3 bg-white border border-[#e4e8f0] text-[#64748b] rounded-xl font-bold hover:bg-gray-50 transition-all shadow-sm"
+                  className="px-6 py-3 bg-white border border-[#e4e8f0] text-[#64748b] rounded-xl font-bold neo-row-hover transition-all shadow-sm"
                 >
                   Skip & Keep Existing
                 </button>
                 <div className="flex gap-3">
                   <button 
                     onClick={() => handleNextDuplicate('new')}
-                    className="px-6 py-3 bg-white border border-[#e4e8f0] text-[#133255] rounded-xl font-bold hover:bg-[#f8fafc] transition-all shadow-sm"
+                    className="px-6 py-3 neo-btn text-[#133255] font-bold"
                   >
                     Add as New
                   </button>

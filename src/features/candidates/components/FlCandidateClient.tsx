@@ -1038,7 +1038,7 @@ export default function FlCandidateClient({
                     <tr><td colSpan={6} className="py-6 text-center text-[#94a3b8] italic">No submissions yet.</td></tr>
                   ) : (
                     subHistory.map((s: any) => (
-                      <tr key={s.id} className="hover:bg-[#f8fafc]">
+                      <tr key={s.id} className="neo-row-hover">
                         <td className="px-4 py-3 font-semibold text-[#111]">{s.client}</td>
                         <td className="px-4 py-3">{s.role}</td>
                         <td className="px-4 py-3"><span className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${s.type === 'Mandate' ? 'bg-[#eef2ff] text-[#4f46e5]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>{s.type}</span></td>
@@ -1198,7 +1198,7 @@ export default function FlCandidateClient({
                 <button
                   onClick={() => setIsLocked()}
                   className={`px-3 py-1.5 rounded-lg text-[12px] font-bold shadow-sm flex items-center gap-1.5 active:scale-95 transition-colors whitespace-nowrap ${
-                    isLocked ? 'bg-white text-[#475569] border border-[#e4e8f0] hover:bg-gray-50' : 'bg-[#10b981] text-white hover:bg-[#059669]'
+                    isLocked ? 'bg-white text-[#475569] border border-[#e4e8f0]' : 'bg-[#10b981] text-white hover:bg-[#059669]'
                   }`}
                 >
                   <Edit size={12} />

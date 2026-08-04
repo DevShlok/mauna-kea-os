@@ -47,14 +47,14 @@ export function LocationTypeahead({ value, onChange, onKeyDown, onSelect, placeh
         onFocus={() => setIsOpen(true)}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
-        className={className || "w-full h-10 px-3 rounded-md border border-gray-200 text-sm focus:border-[#133255] outline-none transition-colors"}
+        className={className || "w-full h-10 px-3 neo-inset text-sm outline-none"}
       />
       {isOpen && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 neo-card max-h-60 overflow-y-auto p-1">
           {suggestions.map((s, i) => (
             <div 
               key={i} 
-              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+              className="px-4 py-2 text-sm text-gray-700 neo-row-hover cursor-pointer"
               onClick={() => {
                 setQuery(s);
                 onChange(s);
@@ -115,14 +115,14 @@ export function IndustryTypeahead({ value, onChange, onKeyDown, onSelect, placeh
         onFocus={() => setIsOpen(true)}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
-        className={className || "w-full h-10 px-3 rounded-md border border-gray-200 text-sm focus:border-[#133255] outline-none transition-colors"}
+        className={className || "w-full h-10 px-3 neo-inset text-sm outline-none"}
       />
       {isOpen && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 neo-card max-h-60 overflow-y-auto p-1">
           {suggestions.map((s, i) => (
             <div 
               key={i} 
-              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+              className="px-4 py-2 text-sm text-gray-700 neo-row-hover cursor-pointer"
               onClick={() => {
                 setQuery(s);
                 onChange(s);
@@ -182,14 +182,14 @@ export function ClientTypeahead({ value, onChange, onClientSelect, placeholder =
         }}
         onFocus={() => setIsOpen(true)}
         placeholder={placeholder}
-        className={className || "w-full h-10 px-3 rounded-md border border-gray-200 text-sm focus:border-[#133255] outline-none transition-colors"}
+        className={className || "w-full h-10 px-3 neo-inset text-sm outline-none"}
       />
       {isOpen && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 neo-card max-h-60 overflow-y-auto p-1">
           {suggestions.map((s, i) => (
             <div 
               key={i} 
-              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+              className="px-4 py-2 text-sm text-gray-700 neo-row-hover cursor-pointer"
               onClick={() => {
                 setQuery(s.companyName);
                 onChange(s.companyName);

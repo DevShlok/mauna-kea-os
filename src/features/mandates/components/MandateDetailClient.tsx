@@ -284,7 +284,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
         </div>
         <div className="flex gap-2">
           <button onClick={handleDeleteMandate} disabled={isDeleting} className="px-4 py-2 border border-red-200 text-red-600 bg-red-50 rounded text-xs font-bold hover:bg-red-100">{isDeleting ? "Deleting..." : "Delete"}</button>
-          <button onClick={() => { setEditForm(mandate); setIsEditingMandate(true); }} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Edit</button>
+          <button onClick={() => { setEditForm(mandate); setIsEditingMandate(true); }} className="px-4 py-2 neo-btn text-gray-600 text-xs font-bold">Edit</button>
           <button onClick={() => setIsReportModalOpen(true)} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Generate Report</button>
         </div>
       </div>
@@ -301,7 +301,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
         })}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="neo-card p-5">
           <h3 className="font-bold text-gray-900 text-base mb-4">Mandate Details</h3>
           <div className="divide-y divide-gray-50">
             {detailRows.map(([k, v, auditKey]) => (
@@ -315,7 +315,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
             ))}
           </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col gap-4">
+        <div className="neo-card p-5 shadow-sm flex flex-col gap-4">
           <h3 className="font-bold text-gray-900 text-base">Documents</h3>
           
           {/* JD as PDF/Word */}
@@ -389,7 +389,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                     ❌
                   </button>
                 )}
-                <button onClick={() => setTextModal({ isOpen: true, type: "notes", text: mandate.interviewNotesText || "" })} className="px-3 py-1 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">
+                <button onClick={() => setTextModal({ isOpen: true, type: "notes", text: mandate.interviewNotesText || "" })} className="px-3 py-1 neo-btn text-gray-600 text-xs font-bold">
                   {mandate.interviewNotesText ? "Edit Text" : "Add Text"}
                 </button>
               </div>
@@ -443,7 +443,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
               value={searchNotes}
               onChange={e => setSearchNotes(e.target.value)}
               onBlur={handleSaveSearchNotes}
-              className="flex-1 min-h-24 p-3 border border-gray-200 rounded text-sm outline-none focus:border-[#133255] resize-none" 
+              className="flex-1 min-h-24 p-3 neo-inset text-sm outline-none focus:border-[#133255] resize-none" 
               placeholder="Add internal notes..."
             />
             <div className="flex justify-end mt-1">
@@ -452,7 +452,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
           </div>
         </div>
       </div>
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="neo-table">
         <div className="p-5 border-b border-gray-100 flex justify-between items-center">
           <h3 className="font-bold text-gray-900 text-base">Candidate Pipeline</h3>
           <div className="flex items-center gap-2">
@@ -494,7 +494,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                 placeholder="Search candidates..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 border border-gray-200 rounded text-xs focus:border-[#133255] outline-none w-64"
+                className="pl-9 pr-4 py-2 neo-inset text-xs focus:border-[#133255] outline-none w-64"
               />
             </div>
             <button onClick={() => setIsImportModalOpen(true)} className="px-4 py-2 bg-[#D8B15B] text-[#133255] rounded text-xs font-bold hover:bg-[#e8c97a] flex items-center gap-1.5"><Upload className="w-3.5 h-3.5" /> Import</button>
@@ -563,7 +563,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                 <select
                   value={bulkTargetStage}
                   onChange={e => setBulkTargetStage(e.target.value)}
-                  className="h-8 px-2 border border-gray-300 rounded text-xs bg-white outline-none focus:border-[#133255]"
+                  className="h-8 px-2 neo-inset text-xs bg-white outline-none focus:border-[#133255]"
                 >
                   <option value="">Move to stage…</option>
                   {[
@@ -651,7 +651,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
             }
 
             const renderRow = (c: any) => (
-              <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50 group">
+              <tr key={c.id} className="border-b border-gray-50 neo-row-hover group">
                 <td className="px-4 py-3">
                   <input
                     type="checkbox"
@@ -688,7 +688,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                   <select
                     value={c.stage || ""}
                     onChange={(e) => updateCandidateStage(mandate.id, c.id, e.target.value)}
-                    className="border border-gray-200 rounded px-2 py-1 text-xs bg-white outline-none cursor-pointer"
+                    className="neo-inset px-2 py-1 text-xs bg-white outline-none cursor-pointer"
                   >
                     {STAGE_OPTIONS.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
                   </select>
@@ -726,7 +726,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
             return (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 border-b-2 border-gray-200">
+                  <tr className="border-b border-gray-100">
                     <th className="px-4 py-3 text-left w-10">
                       <input
                         type="checkbox"
@@ -792,11 +792,11 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                 required
                 value={textModal.text} 
                 onChange={e => setTextModal({...textModal, text: e.target.value})} 
-                className="flex-1 w-full p-4 border border-gray-200 rounded text-sm outline-none resize-none focus:border-[#133255]"
+                className="flex-1 w-full p-4 neo-inset text-sm outline-none resize-none focus:border-[#133255]"
                 placeholder={`Paste your ${textModal.type === "jd" ? "Job Description" : "Interview Notes"} here...`}
               />
               <div className="flex justify-end gap-2 shrink-0">
-                <button type="button" onClick={() => setTextModal({ ...textModal, isOpen: false })} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Cancel</button>
+                <button type="button" onClick={() => setTextModal({ ...textModal, isOpen: false })} className="px-4 py-2 neo-btn text-gray-600 text-xs font-bold">Cancel</button>
                 <button type="submit" disabled={uploadingDoc !== null} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255] disabled:opacity-50">
                   {uploadingDoc !== null ? "Saving to Drive..." : "Save Text"}
                 </button>
@@ -815,35 +815,35 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Company</label>
-                  <input required value={editForm.company} onChange={e => setEditForm({...editForm, company: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+                  <input required value={editForm.company} onChange={e => setEditForm({...editForm, company: e.target.value})} className="w-full px-3 py-2 neo-inset text-sm outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Role</label>
-                  <input required value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+                  <input required value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})} className="w-full px-3 py-2 neo-inset text-sm outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">CTC</label>
-                  <input value={editForm.ctc || ""} onChange={e => setEditForm({...editForm, ctc: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+                  <input value={editForm.ctc || ""} onChange={e => setEditForm({...editForm, ctc: e.target.value})} className="w-full px-3 py-2 neo-inset text-sm outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Experience</label>
-                  <input value={editForm.exp || ""} onChange={e => setEditForm({...editForm, exp: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+                  <input value={editForm.exp || ""} onChange={e => setEditForm({...editForm, exp: e.target.value})} className="w-full px-3 py-2 neo-inset text-sm outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Work Mode</label>
-                  <input value={editForm.workMode || ""} onChange={e => setEditForm({...editForm, workMode: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+                  <input value={editForm.workMode || ""} onChange={e => setEditForm({...editForm, workMode: e.target.value})} className="w-full px-3 py-2 neo-inset text-sm outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Target Companies</label>
-                  <input value={editForm.target || ""} onChange={e => setEditForm({...editForm, target: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+                  <input value={editForm.target || ""} onChange={e => setEditForm({...editForm, target: e.target.value})} className="w-full px-3 py-2 neo-inset text-sm outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Geography</label>
-                  <input value={editForm.geography || ""} onChange={e => setEditForm({...editForm, geography: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+                  <input value={editForm.geography || ""} onChange={e => setEditForm({...editForm, geography: e.target.value})} className="w-full px-3 py-2 neo-inset text-sm outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Consultant</label>
-                  <select value={editForm.consultant || currentUser} onChange={e => setEditForm({...editForm, consultant: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none bg-white">
+                  <select value={editForm.consultant || currentUser} onChange={e => setEditForm({...editForm, consultant: e.target.value})} className="w-full px-3 py-2 neo-inset text-sm outline-none bg-white">
                     {Array.from(new Set([...consultants, editForm.consultant || currentUser])).map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
@@ -851,15 +851,15 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-gray-600 mb-1">Client POC</label>
-                  <input value={editForm.clientPOC || ""} onChange={e => setEditForm({...editForm, clientPOC: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none mb-2" placeholder="Name" />
+                  <input value={editForm.clientPOC || ""} onChange={e => setEditForm({...editForm, clientPOC: e.target.value})} className="w-full px-3 py-2 neo-inset text-sm outline-none mb-2" placeholder="Name" />
                   <div className="flex gap-2">
-                    <input value={editForm.pocEmail || ""} onChange={e => setEditForm({...editForm, pocEmail: e.target.value})} className="w-1/2 px-3 py-2 border border-gray-200 rounded text-sm outline-none" placeholder="Email" />
-                    <input value={editForm.pocPhone || ""} onChange={e => setEditForm({...editForm, pocPhone: e.target.value})} className="w-1/2 px-3 py-2 border border-gray-200 rounded text-sm outline-none" placeholder="Phone" />
+                    <input value={editForm.pocEmail || ""} onChange={e => setEditForm({...editForm, pocEmail: e.target.value})} className="w-1/2 px-3 py-2 neo-inset text-sm outline-none" placeholder="Email" />
+                    <input value={editForm.pocPhone || ""} onChange={e => setEditForm({...editForm, pocPhone: e.target.value})} className="w-1/2 px-3 py-2 neo-inset text-sm outline-none" placeholder="Phone" />
                   </div>
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-4">
-                <button type="button" onClick={() => setIsEditingMandate(false)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Cancel</button>
+                <button type="button" onClick={() => setIsEditingMandate(false)} className="px-4 py-2 neo-btn text-gray-600 text-xs font-bold">Cancel</button>
                 <button type="submit" disabled={isEditingSubmit} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255] disabled:opacity-50">
                   {isEditingSubmit ? "Saving..." : "Save Changes"}
                 </button>
@@ -878,12 +878,12 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
               <div>
                 <label className="block text-xs font-bold text-gray-600 mb-2">Select Format</label>
                 <div className="flex gap-4">
-                  <label className="flex-1 border border-gray-200 rounded-lg p-3 cursor-pointer flex flex-col gap-1 items-center hover:border-blue-500">
+                  <label className="flex-1 neo-inset p-3 cursor-pointer flex flex-col gap-1 items-center hover:border-blue-500">
                     <input type="radio" name="format" value="1" checked={reportFormat === "1"} onChange={(e) => setReportFormat(e.target.value)} className="mb-2" />
                     <span className="text-sm font-bold text-gray-800 text-center">Multi-Candidate</span>
                     <span className="text-[12px] text-gray-500 text-center">Shortlist format (Horizontal)</span>
                   </label>
-                  <label className="flex-1 border border-gray-200 rounded-lg p-3 cursor-pointer flex flex-col gap-1 items-center hover:border-blue-500">
+                  <label className="flex-1 neo-inset p-3 cursor-pointer flex flex-col gap-1 items-center hover:border-blue-500">
                     <input type="radio" name="format" value="2" checked={reportFormat === "2"} onChange={(e) => setReportFormat(e.target.value)} className="mb-2" />
                     <span className="text-sm font-bold text-gray-800 text-center">Single Profile</span>
                     <span className="text-[12px] text-gray-500 text-center">Detailed format (Vertical)</span>
@@ -892,9 +892,9 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-600 mb-2">Select Candidates</label>
-                <div className="max-h-[200px] overflow-y-auto border border-gray-200 rounded p-2 flex flex-col gap-2">
+                <div className="max-h-[200px] overflow-y-auto neo-inset p-2 flex flex-col gap-2">
                   {mandate.candidates.map((c: any) => (
-                    <label key={c.id} className="flex items-center gap-2 p-1 hover:bg-gray-50 rounded cursor-pointer">
+                    <label key={c.id} className="flex items-center gap-2 p-1 neo-row-hover rounded cursor-pointer">
                       <input 
                         type="checkbox" 
                         checked={selectedReportCands.includes(c.id)}
@@ -911,7 +911,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => setIsReportModalOpen(false)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Cancel</button>
+                <button onClick={() => setIsReportModalOpen(false)} className="px-4 py-2 neo-btn text-gray-600 text-xs font-bold">Cancel</button>
                 <button 
                   onClick={() => {
                     if (selectedReportCands.length === 0) return toast.error("Select at least one candidate");
@@ -934,7 +934,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
             <h2 className="text-xl font-bold text-gray-900 mb-2">Delete Mandate?</h2>
             <p className="text-sm text-gray-500 mb-6">This action cannot be undone. All candidates and files will be permanently removed.</p>
             <div className="flex gap-3 justify-center">
-              <button onClick={() => setIsDeleting(false)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-sm font-bold hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setIsDeleting(false)} className="px-4 py-2 neo-btn text-gray-600 text-sm font-bold">Cancel</button>
               <button onClick={async () => {
                 try {
                   await deleteMandateAction(mandate.id);
@@ -991,21 +991,21 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
               >
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Consultant Ranking (1-10)</label>
-                  <input name="ranking" type="number" min="1" max="10" defaultValue={c.ranking || ""} className="w-full p-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]" placeholder="e.g. 1" />
+                  <input name="ranking" type="number" min="1" max="10" defaultValue={c.ranking || ""} className="w-full p-2 neo-inset text-sm outline-none focus:border-[#133255]" placeholder="e.g. 1" />
                 </div>
                 
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Top 3 Competencies</label>
                   <div className="flex flex-col gap-2">
-                    <input name="comp1" type="text" defaultValue={c.competencies?.[0]?.skill || ""} className="w-full p-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]" placeholder="Competency 1" />
-                    <input name="comp2" type="text" defaultValue={c.competencies?.[1]?.skill || ""} className="w-full p-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]" placeholder="Competency 2" />
-                    <input name="comp3" type="text" defaultValue={c.competencies?.[2]?.skill || ""} className="w-full p-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]" placeholder="Competency 3" />
+                    <input name="comp1" type="text" defaultValue={c.competencies?.[0]?.skill || ""} className="w-full p-2 neo-inset text-sm outline-none focus:border-[#133255]" placeholder="Competency 1" />
+                    <input name="comp2" type="text" defaultValue={c.competencies?.[1]?.skill || ""} className="w-full p-2 neo-inset text-sm outline-none focus:border-[#133255]" placeholder="Competency 2" />
+                    <input name="comp3" type="text" defaultValue={c.competencies?.[2]?.skill || ""} className="w-full p-2 neo-inset text-sm outline-none focus:border-[#133255]" placeholder="Competency 3" />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Movement Probability</label>
-                  <select name="movementProb" defaultValue={c.movementProb || ""} className="w-full p-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]">
+                  <select name="movementProb" defaultValue={c.movementProb || ""} className="w-full p-2 neo-inset text-sm outline-none focus:border-[#133255]">
                     <option value="">Select Probability</option>
                     <option value="80%">80% - Highly Likely</option>
                     <option value="50%">50% - Neutral</option>
@@ -1015,11 +1015,11 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
 
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Reason for Movement / Blockers</label>
-                  <input name="movementReason" type="text" defaultValue={c.movementReason || ""} className="w-full p-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]" placeholder="e.g. Competing offers, Relocation concerns..." />
+                  <input name="movementReason" type="text" defaultValue={c.movementReason || ""} className="w-full p-2 neo-inset text-sm outline-none focus:border-[#133255]" placeholder="e.g. Competing offers, Relocation concerns..." />
                 </div>
 
                 <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
-                  <button type="button" onClick={() => setEditingAssessment(null)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Cancel</button>
+                  <button type="button" onClick={() => setEditingAssessment(null)} className="px-4 py-2 neo-btn text-gray-600 text-xs font-bold">Cancel</button>
                   <button type="submit" className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Save Assessment</button>
                 </div>
               </form>

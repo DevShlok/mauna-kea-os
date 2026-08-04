@@ -12,17 +12,20 @@ const ConfirmModal = ({ t, message, resolve }: { t: any, message: string, resolv
   if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-      <div className={`${t.visible ? 'animate-in zoom-in-95' : 'animate-out zoom-out-95'} max-w-sm w-full bg-white shadow-2xl rounded-2xl pointer-events-auto flex flex-col p-6 border border-[#D4E0F0]`}>
-        <h3 className="text-lg font-serif font-bold text-[#111] mb-2">Confirmation Required</h3>
-        <p className="text-sm text-gray-500 mb-6">{message}</p>
-        <div className="flex justify-end gap-3">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+      <div className={`${t.visible ? 'animate-in zoom-in-95' : 'animate-out zoom-out-95'} neo-card max-w-sm w-full pointer-events-auto flex flex-col p-8`}>
+        <div className="w-12 h-12 neo-card-sm flex items-center justify-center mb-5 mx-auto">
+          <svg className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+        </div>
+        <h3 className="text-lg font-serif font-bold text-[#111] mb-2 text-center">Confirmation Required</h3>
+        <p className="text-sm text-gray-500 mb-8 text-center">{message}</p>
+        <div className="flex justify-center gap-4">
           <button
             onClick={() => {
               toast.dismiss(t.id);
               resolve(false);
             }}
-            className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50 transition-colors"
+            className="px-6 py-2.5 neo-btn text-gray-600 text-sm font-bold"
           >
             Cancel
           </button>
@@ -31,7 +34,8 @@ const ConfirmModal = ({ t, message, resolve }: { t: any, message: string, resolv
               toast.dismiss(t.id);
               resolve(true);
             }}
-            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-bold shadow-sm transition-colors"
+            className="px-6 py-2.5 neo-btn text-sm font-bold"
+            style={{ color: '#dc2626', background: '#fff5f5', boxShadow: '5px 5px 12px #f5c6c6, -5px -5px 12px #ffffff' }}
           >
             Confirm
           </button>

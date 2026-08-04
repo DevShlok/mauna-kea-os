@@ -53,7 +53,7 @@ export default function MandateKanbanBoard({
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className={`flex-shrink-0 w-[280px] bg-gray-50 rounded-xl border border-gray-200 flex flex-col max-h-[800px] ${
+                className={`flex-shrink-0 w-[280px] neo-card flex flex-col max-h-[800px] ${
                   snapshot.isDraggingOver ? 'bg-blue-50/50 border-blue-200' : ''
                 }`}
               >

@@ -277,7 +277,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
               <input 
                 type="text" 
                 placeholder="New Section Heading (e.g. Technical Skills)"
-                className="flex-1 border border-gray-300 rounded px-3 py-2 text-[16px] outline-none focus:border-blue-500"
+                className="flex-1 neo-inset px-3 py-2 text-[16px] outline-none focus:border-blue-500"
                 value={newSectionHeading}
                 onChange={(e) => setNewSectionHeading(e.target.value)}
                 onKeyDown={(e) => {
@@ -302,7 +302,7 @@ export default function CandidateReportPDF({ candidate, frameworkName, reportDat
           ) : (
             <button 
               onClick={() => setIsAddingSection(true)}
-              className="flex items-center gap-2 text-[#133255] font-bold hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors border border-dashed border-blue-300"
+              className="flex items-center gap-2 text-[#133255] font-bold neo-row-hover px-4 py-2 rounded-lg transition-colors border border-dashed border-blue-300"
             >
               <span>+</span> Add Custom Section
             </button>

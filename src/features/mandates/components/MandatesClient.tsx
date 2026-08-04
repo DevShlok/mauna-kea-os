@@ -43,6 +43,7 @@ export default function MandatesClient({
   }, [initialMandates]);
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get("search") || "");
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [companyFilter, setCompanyFilter] = useState(searchParams.get("company") || "");
   const [roleFilter, setRoleFilter] = useState(searchParams.get("role") || "");
@@ -53,6 +54,12 @@ export default function MandatesClient({
   
   const sortKey = searchParams.get("sortKey") || "id";
   const sortDir = (searchParams.get("sortDir") || "desc") as "asc" | "desc";
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const updateURL = (newParams: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -67,7 +74,12 @@ export default function MandatesClient({
     router.push(`?${params.toString()}`);
   };
 
-  const handleSearchBlur = () => updateURL({ search });
+  useEffect(() => {
+    const currentSearch = searchParams.get("search") || "";
+    if (debouncedSearch !== currentSearch) {
+      updateURL({ search: debouncedSearch });
+    }
+  }, [debouncedSearch]);
   
   const toggleSort = (key: string) => {
     const newDir = sortKey === key && sortDir === "asc" ? "desc" : "asc";
@@ -158,12 +170,14 @@ export default function MandatesClient({
         <div className="flex items-center gap-2 mb-1">
           <button 
             onClick={() => setIsImportModalOpen(true)}
-            className="h-10 px-4 rounded-lg bg-white border border-gray-200 text-gray-700 text-[13px] font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+            className="h-10 px-5 neo-btn text-gray-700 text-[13px] font-semibold flex items-center gap-1.5"
           >
             <Upload className="w-3.5 h-3.5" />
             Import
           </button>
-          <Link href="/dashboard/mandates/new" className="px-5 py-2.5 h-10 flex items-center bg-[#D8B15B] text-[#133255] rounded-lg text-sm font-bold shadow-sm hover:bg-[#e8c97a] transition-colors">
+          <Link href="/dashboard/mandates/new" className="px-5 py-2.5 h-10 flex items-center neo-btn text-[#133255] text-sm font-bold"
+            style={{ background: 'linear-gradient(135deg, #D8B15B, #f0c96a)' }}
+          >
             + Add New Mandate
           </Link>
         </div>
@@ -173,20 +187,20 @@ export default function MandatesClient({
         onClose={() => setIsImportModalOpen(false)} 
         currentUser={currentUser}
       />
-      <div className="flex flex-wrap gap-3 mb-6 bg-white p-3 border border-gray-200 rounded-xl shadow-sm">
+      <div className="neo-bar flex flex-wrap gap-3 mb-6 p-4">
         <input 
           type="text" 
           placeholder="Search mandates..." 
           value={search} 
           onChange={e => setSearch(e.target.value)} 
-          onBlur={handleSearchBlur}
-          onKeyDown={e => e.key === "Enter" && handleSearchBlur()}
-          className="min-w-[200px] flex-1 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]"/>
+          className="min-w-[200px] flex-1 px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none"
+        />
         
         <select 
           value={companyFilter} 
           onChange={e => { setCompanyFilter(e.target.value); updateURL({ company: e.target.value }); }} 
-          className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+          className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
+        >
           <option value="">All Companies</option>
           {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
@@ -194,7 +208,8 @@ export default function MandatesClient({
         <select 
           value={roleFilter} 
           onChange={e => { setRoleFilter(e.target.value); updateURL({ role: e.target.value }); }} 
-          className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+          className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
+        >
           <option value="">All Roles</option>
           {uniqueRoles.map(r => <option key={r} value={r}>{r}</option>)}
         </select>
@@ -202,7 +217,8 @@ export default function MandatesClient({
         <select 
           value={sectorFilter} 
           onChange={e => { setSectorFilter(e.target.value); updateURL({ sector: e.target.value }); }} 
-          className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+          className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
+        >
           <option value="">All Sectors</option>
           {uniqueSectors.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
@@ -210,7 +226,8 @@ export default function MandatesClient({
         <select 
           value={statusFilter} 
           onChange={e => { setStatusFilter(e.target.value); updateURL({ status: e.target.value }); }} 
-          className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+          className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
+        >
           <option value="">All Statuses</option>
           {STAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
@@ -218,38 +235,25 @@ export default function MandatesClient({
         <select 
           value={internalFilter} 
           onChange={e => { setInternalFilter(e.target.value); updateURL({ internalStatus: e.target.value }); }} 
-          className="px-3 py-2 border border-gray-200 rounded text-sm bg-white outline-none max-w-[180px]">
+          className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
+        >
           <option value="">All Internal</option>
           {INTERNAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
+        
+        <button 
+          onClick={handleExportSelected} 
+          className="px-4 py-2.5 neo-btn text-slate-700 text-sm font-bold flex items-center gap-1.5"
+        >
+          <Download className="w-4 h-4" />
+          Export
+        </button>
       </div>
 
-      {/* Bulk Action Bar */}
-      {selectedIds.size > 0 && (
-        <div className="flex items-center gap-4 bg-[#0E2150] text-white rounded-[13px] px-5 py-3 mb-4 shadow-md transition-all">
-          <div className="font-semibold text-sm">
-            <b className="text-[#d7a33c]">{selectedIds.size}</b> selected
-          </div>
-          <div className="ml-auto flex gap-3">
-            <button onClick={handleExportSelected} className="px-3 py-2 bg-emerald-600 text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 flex items-center gap-1.5">
-              <Download className="w-4 h-4" />
-              Export
-            </button>
-            <button onClick={() => setIsDeleteDialogOpen(true)} className="px-3 py-2 bg-red-500 text-white rounded-[9px] text-[15px] font-bold shadow-md hover:brightness-105 flex items-center gap-1.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              Delete
-            </button>
-            <button onClick={() => setSelectedIds(new Set())} className="text-[#a9b7da] font-semibold text-[15px] hover:text-white px-2">
-              Clear
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="neo-table">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="bg-gray-50 border-b-2 border-gray-200">
+            <thead><tr className="border-b border-gray-100">
               <th className="px-4 py-3 text-center w-10">
                 <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
               </th>
@@ -264,7 +268,7 @@ export default function MandatesClient({
             </tr></thead>
             <tbody>
               {paginatedData.map(m => (
-                <tr key={m.id} className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer" onClick={() => router.push("/dashboard/mandates/" + m.id)}>
+                <tr key={m.id} className="border-b border-gray-50 neo-row-hover cursor-pointer" onClick={() => router.push("/dashboard/mandates/" + m.id)}>
                   <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
                     <input type="checkbox" checked={selectedIds.has(m.id)} onChange={() => toggleRow(m.id)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
                   </td>
@@ -280,17 +284,17 @@ export default function MandatesClient({
                     </div>
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                    <select value={m.status || ""} onChange={e => handleStatusChange(m.id, "status", e.target.value)} className="border border-gray-200 rounded px-2 py-1 text-xs bg-white outline-none cursor-pointer">
+                    <select value={m.status || ""} onChange={e => handleStatusChange(m.id, "status", e.target.value)} className="neo-inset px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none cursor-pointer">
                       {STAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                    <select value={m.internalStatus || ""} onChange={e => handleStatusChange(m.id, "internalStatus", e.target.value)} className="border border-gray-200 rounded px-2 py-1 text-xs bg-white outline-none cursor-pointer">
+                    <select value={m.internalStatus || ""} onChange={e => handleStatusChange(m.id, "internalStatus", e.target.value)} className="neo-inset px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none cursor-pointer">
                       {INTERNAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                    <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={() => router.push("/dashboard/mandates/" + m.id)}>Open</button>
+                    <button className="px-3 py-1.5 neo-btn-primary text-xs font-bold text-white" onClick={() => router.push("/dashboard/mandates/" + m.id)}>Open</button>
                   </td>
                 </tr>
               ))}
@@ -334,24 +338,28 @@ export default function MandatesClient({
       {/* Delete Confirmation Modal */}
       {isDeleteDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#133255]/40 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-[20px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-6">
-              <h3 className="font-serif text-[21px] font-bold text-gray-900 mb-2">Delete Mandates</h3>
-              <p className="text-[#4a5568] text-sm">
-                Are you sure you want to delete <b className="text-red-600">{selectedIds.size}</b> mandate{selectedIds.size > 1 ? "s" : ""}? This action cannot be undone. All associated data will be permanently removed.
+        <div className="neo-card max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-8">
+              <div className="w-12 h-12 neo-card-sm flex items-center justify-center mb-5 mx-auto">
+                <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </div>
+              <h3 className="font-serif text-[21px] font-bold text-gray-900 mb-2 text-center">Delete Mandates</h3>
+              <p className="text-[#4a5568] text-sm text-center">
+                Are you sure you want to delete <b className="text-red-600">{selectedIds.size}</b> mandate{selectedIds.size > 1 ? "s" : ""}? This action cannot be undone.
               </p>
               
-              <div className="mt-6 flex justify-end gap-3">
+              <div className="mt-8 flex justify-center gap-4">
                 <button 
                   onClick={() => setIsDeleteDialogOpen(false)}
-                  className="px-5 py-2.5 rounded-xl font-bold text-sm text-[#4a5568] hover:bg-gray-100 transition-colors"
+                  className="px-5 py-2.5 neo-btn font-bold text-sm text-gray-600"
                   disabled={isSubmitting}
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={handleDeleteSelected}
-                  className="px-5 py-2.5 rounded-xl font-bold text-sm bg-red-600 text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-50"
+                  className="px-5 py-2.5 neo-btn font-bold text-sm text-white disabled:opacity-50"
+                  style={{ background: '#dc2626' }}
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Deleting..." : "Delete Permanently"}

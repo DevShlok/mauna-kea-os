@@ -34,8 +34,8 @@ export default function FollowUpsClient({ initialFollowUps }: { initialFollowUps
       <div className="mt-2 text-xs text-gray-600 bg-gray-50 rounded p-2">{f.note}</div>
       <div className="flex gap-2 mt-3">
         <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={(e) => { e.stopPropagation(); }}>Mark Done</button>
-        <button className="px-3 py-1 border border-gray-200 text-gray-500 rounded text-xs font-bold hover:bg-gray-50" onClick={(e) => { e.stopPropagation(); }}>Snooze</button>
-        <button className="px-3 py-1 border border-gray-200 text-gray-500 rounded text-xs font-bold hover:bg-gray-50" onClick={(e) => { e.stopPropagation(); router.push("/dashboard/float-list/" + f.candId); }}>View Profile</button>
+        <button className="px-3 py-1 neo-btn text-gray-500 text-xs font-bold" onClick={(e) => { e.stopPropagation(); }}>Snooze</button>
+        <button className="px-3 py-1 neo-btn text-gray-500 text-xs font-bold" onClick={(e) => { e.stopPropagation(); router.push("/dashboard/float-list/" + f.candId); }}>View Profile</button>
       </div>
     </div>
   );
@@ -49,7 +49,7 @@ export default function FollowUpsClient({ initialFollowUps }: { initialFollowUps
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[{label:"Overdue",count:overdue.length,cls:"text-red-600"},{label:"Due Today",count:today.length,cls:"text-orange-600"},{label:"Upcoming",count:upcoming.length,cls:"text-[#133255]"}].map((s) => (
-          <div key={s.label} className="bg-white border border-gray-200 rounded-xl p-5 text-center shadow-sm">
+          <div key={s.label} className="neo-card p-5 text-center shadow-sm">
             <div className="text-xs font-bold text-gray-400 uppercase mb-1">{s.label}</div>
             <div className={"text-4xl font-bold " + s.cls}>{s.count}</div>
           </div>
@@ -108,24 +108,24 @@ export default function FollowUpsClient({ initialFollowUps }: { initialFollowUps
             }} className="p-5 flex flex-col gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-600 mb-1">Candidate Name *</label>
-                <input required value={form.candName} onChange={e => setForm({...form, candName: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+                <input required value={form.candName} onChange={e => setForm({...form, candName: e.target.value})} className="w-full px-3 py-2 neo-inset text-sm outline-none" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Due Date</label>
-                  <input type="date" value={form.dueDate} onChange={e => setForm({...form, dueDate: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+                  <input type="date" value={form.dueDate} onChange={e => setForm({...form, dueDate: e.target.value})} className="w-full px-3 py-2 neo-inset text-sm outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Client</label>
-                  <input value={form.client} onChange={e => setForm({...form, client: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none" />
+                  <input value={form.client} onChange={e => setForm({...form, client: e.target.value})} className="w-full px-3 py-2 neo-inset text-sm outline-none" />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-600 mb-1">Note</label>
-                <textarea value={form.note} onChange={e => setForm({...form, note: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none resize-none h-20" placeholder="Follow-up details..." />
+                <textarea value={form.note} onChange={e => setForm({...form, note: e.target.value})} className="w-full px-3 py-2 neo-inset text-sm outline-none resize-none h-20" placeholder="Follow-up details..." />
               </div>
               <div className="flex justify-end gap-2 mt-2">
-                <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Cancel</button>
+                <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 neo-btn text-gray-600 text-xs font-bold">Cancel</button>
                 <button type="submit" className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Add Follow-Up</button>
               </div>
             </form>

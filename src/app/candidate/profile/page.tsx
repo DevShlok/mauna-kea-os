@@ -1,11 +1,14 @@
 import { requireRole } from "@/lib/auth";
-import { getCandidateById } from "@/db/queries";
-import { CandidateProfileView } from "@/features/candidate-portal/components/CandidateProfileView";
+import { getOrCreateCandidateSlug } from "@/lib/slug";
+import { redirect } from "next/navigation";
 
-export default async function CandidateProfilePage() {
+export default async function CandidateProfileRedirect() {
   const { platformUser } = await requireRole(["candidate"]);
-  const candId = platformUser!.linkedCandidateId!;
-  const candidate = await getCandidateById(candId);
-
-  return <CandidateProfileView candidate={candidate} />;
+  if (platformUser.linkedCandidateId) {
+    const slug = await getOrCreateCandidateSlug(platformUser.linkedCandidateId, platformUser.name);
+    if (slug) {
+      redirect(`/${slug}/profile`);
+    }
+  }
+  redirect("/sign-in");
 }

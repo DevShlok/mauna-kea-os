@@ -55,7 +55,7 @@ export default function CandidateProfileClient({ mandates }: { mandates: any[] }
         <span className="text-gray-800">{candidate.name}</span>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex items-start gap-5 mb-6">
+      <div className="neo-card p-6 shadow-sm flex items-start gap-5 mb-6">
         <div className="w-16 h-16 rounded-full bg-yellow-500 text-[#133255] flex items-center justify-center text-2xl font-bold shrink-0">
           {candidate.initials}
         </div>
@@ -70,15 +70,15 @@ export default function CandidateProfileClient({ mandates }: { mandates: any[] }
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => router.back()} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">← Back</button>
-          <button onClick={() => toast.error("Edit candidate details (Coming Soon)")} className="px-4 py-2 border border-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-50">Edit</button>
+          <button onClick={() => router.back()} className="px-4 py-2 neo-btn text-gray-600 text-xs font-bold">← Back</button>
+          <button onClick={() => toast.error("Edit candidate details (Coming Soon)")} className="px-4 py-2 neo-btn text-gray-600 text-xs font-bold">Edit</button>
           <button onClick={() => router.push("/dashboard/workbench?candId=" + candidate.id + "&mandateId=" + mandate.id)} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Open in Workbench</button>
           <button onClick={handleDelete} disabled={isDeleting} className="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded text-xs font-bold hover:bg-red-100">{isDeleting ? 'Deleting...' : 'Delete'}</button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="neo-card p-5">
           <h3 className="font-bold text-gray-900 text-base mb-4">Competency Assessment</h3>
           {candidate.score ? (
             <>
@@ -103,7 +103,7 @@ export default function CandidateProfileClient({ mandates }: { mandates: any[] }
           )}
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="neo-card p-5">
           <h3 className="font-bold text-gray-900 text-base mb-4">Career Timeline</h3>
           <div className="flex flex-col gap-4">
             {[["2022-Present", "HDFC Bank", "Deputy CFO"], ["2018-2022", "Axis Bank", "VP Finance"], ["2014-2018", "Deloitte", "Senior Manager"]].map(([yr, co, rol]) => (

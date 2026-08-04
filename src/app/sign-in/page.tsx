@@ -63,7 +63,7 @@ export default function SignInPage() {
             src="/login-bg-removebg.png" 
             alt="Logo background" 
             fill 
-            sizes="100vw"
+            sizes="(max-width: 768px) 100vw, 50vw"
             style={{ objectFit: 'contain', objectPosition: '40% center', transform: 'scale(0.55)' }} 
             priority 
           />

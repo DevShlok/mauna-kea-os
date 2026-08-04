@@ -34,10 +34,10 @@ export function WidgetCard({
 
   return (
     <div
-      className="bg-white border border-[#D4E0F0] rounded-2xl shadow-sm overflow-hidden transition-shadow duration-200 hover:shadow-md flex flex-col h-full"
+      className="neo-card-sm overflow-hidden flex flex-col h-full"
     >
       {/* Header */}
-      <div className={`flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#fafbfd] to-white border-b border-[#eef1f7] select-none ${isLocked ? '' : 'draggable-handle cursor-grab active:cursor-grabbing'}`}>
+      <div className={`flex items-center gap-2 px-4 py-3 border-b border-gray-100 select-none ${isLocked ? '' : 'draggable-handle cursor-grab active:cursor-grabbing'}`}>
         {!isLocked && (
           <div className="text-[#ccd3df] flex-shrink-0">
             <GripVertical size={16} />

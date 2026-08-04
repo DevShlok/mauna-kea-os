@@ -38,28 +38,28 @@ export default function NewClientClient({ industries = [] }: { industries?: any[
       <div className="text-[14px] text-gray-500 mb-1">Home / Clients / New</div>
       <h1 className="text-3xl font-serif font-bold text-[#133255] mb-8 tracking-tight">Add New Client</h1>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="neo-table">
         <form onSubmit={handleAddSubmit} className="p-8">
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Client *</label>
-                <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[15px] outline-none focus:border-[#133255]" placeholder="e.g. Finova Tech"/>
+                <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-4 py-3 neo-inset text-[15px] outline-none" placeholder="e.g. Finova Tech"/>
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Legal Entity Name</label>
-                <input value={form.legalEntityName} onChange={e => setForm({...form, legalEntityName: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[15px] outline-none focus:border-[#133255]" placeholder="e.g. Finova Technologies Pvt. Ltd."/>
+                <input value={form.legalEntityName} onChange={e => setForm({...form, legalEntityName: e.target.value})} className="w-full px-4 py-3 neo-inset text-[15px] outline-none" placeholder="e.g. Finova Technologies Pvt. Ltd."/>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Account ID</label>
-                <input value={form.accountId} onChange={e => setForm({...form, accountId: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[15px] outline-none focus:border-[#133255]" placeholder="e.g. ACC-101"/>
+                <input value={form.accountId} onChange={e => setForm({...form, accountId: e.target.value})} className="w-full px-4 py-3 neo-inset text-[15px] outline-none" placeholder="e.g. ACC-101"/>
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Industry</label>
-                <input list="industry-suggestions" value={form.vertical} onChange={e => setForm({...form, vertical: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[15px] outline-none focus:border-[#133255]" placeholder="e.g. Financial services"/>
+                <input list="industry-suggestions" value={form.vertical} onChange={e => setForm({...form, vertical: e.target.value})} className="w-full px-4 py-3 neo-inset text-[15px] outline-none" placeholder="e.g. Financial services"/>
                 <datalist id="industry-suggestions">
                   {industries.map((ind: any) => (
                     <option key={ind.id} value={ind.sectorName} />
@@ -71,11 +71,11 @@ export default function NewClientClient({ industries = [] }: { industries?: any[
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Account owner</label>
-                <input value={form.owner} onChange={e => setForm({...form, owner: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[15px] outline-none focus:border-[#133255]" placeholder="e.g. Sahil Bhatia"/>
+                <input value={form.owner} onChange={e => setForm({...form, owner: e.target.value})} className="w-full px-4 py-3 neo-inset text-[15px] outline-none" placeholder="e.g. Sahil Bhatia"/>
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Status</label>
-                <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[15px] outline-none focus:border-[#133255]">
+                <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="w-full px-4 py-3 neo-inset text-[15px] outline-none">
                   <option value="Active">Active</option>
                   <option value="Prospect">Prospect</option>
                   <option value="Inactive">Inactive</option>
@@ -94,23 +94,23 @@ export default function NewClientClient({ industries = [] }: { industries?: any[
               
               <div className="space-y-4">
                 {contacts.map((contact, idx) => (
-                  <div key={idx} className="p-5 bg-gray-50 border border-gray-100 rounded-lg relative">
+                  <div key={idx} className="p-5 neo-card-sm relative">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Contact Name</label>
-                        <input value={contact.name} onChange={e => updateContact(idx, 'name', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[14px] outline-none focus:border-[#133255]" placeholder="Name" />
+                        <input value={contact.name} onChange={e => updateContact(idx, 'name', e.target.value)} className="w-full px-3 py-2 neo-inset text-[14px] outline-none" placeholder="Name" />
                       </div>
                       <div>
                         <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Designation</label>
-                        <input value={contact.designation} onChange={e => updateContact(idx, 'designation', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[14px] outline-none focus:border-[#133255]" placeholder="Designation" />
+                        <input value={contact.designation} onChange={e => updateContact(idx, 'designation', e.target.value)} className="w-full px-3 py-2 neo-inset text-[14px] outline-none" placeholder="Designation" />
                       </div>
                       <div>
                         <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Contact Number</label>
-                        <input value={contact.number} onChange={e => updateContact(idx, 'number', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[14px] outline-none focus:border-[#133255]" placeholder="Phone Number" />
+                        <input value={contact.number} onChange={e => updateContact(idx, 'number', e.target.value)} className="w-full px-3 py-2 neo-inset text-[14px] outline-none" placeholder="Phone Number" />
                       </div>
                       <div>
                         <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Contact Email</label>
-                        <input type="email" value={contact.email} onChange={e => updateContact(idx, 'email', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded text-[14px] outline-none focus:border-[#133255]" placeholder="Email Address" />
+                        <input type="email" value={contact.email} onChange={e => updateContact(idx, 'email', e.target.value)} className="w-full px-3 py-2 neo-inset text-[14px] outline-none" placeholder="Email Address" />
                       </div>
                     </div>
                     {contacts.length > 1 && (
@@ -126,8 +126,8 @@ export default function NewClientClient({ industries = [] }: { industries?: any[
           </div>
 
           <div className="mt-10 flex justify-end gap-4 border-t border-gray-100 pt-6">
-            <button type="button" onClick={() => router.back()} className="px-6 py-2.5 text-[15px] font-bold text-gray-600 border border-gray-200 hover:bg-gray-50 rounded-md transition-colors">Cancel</button>
-            <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 text-[15px] font-bold bg-[#D8B15B] text-[#133255] rounded-md hover:bg-[#e8c97a] transition-colors disabled:opacity-50">
+            <button type="button" onClick={() => router.back()} className="px-6 py-2.5 neo-btn text-[15px] font-bold text-gray-600">Cancel</button>
+            <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 neo-btn text-[15px] font-bold text-white disabled:opacity-50" style={{ background: 'linear-gradient(135deg,#D8B15B,#f0c96a)', color: '#133255' }}>
               {isSubmitting ? "Saving..." : "Save Client"}
             </button>
           </div>

@@ -25,6 +25,7 @@ export default function ClientsClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get("search") || "");
   const [verticalFilter, setVerticalFilter] = useState(searchParams.get("vertical") || "All industries");
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "All status");
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -38,6 +39,12 @@ export default function ClientsClient({
     setLocalClients(initialClients);
   }, [initialClients]);
 
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const updateURL = (newParams: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(newParams).forEach(([k, v]) => {
@@ -48,7 +55,12 @@ export default function ClientsClient({
     router.push(`?${params.toString()}`);
   };
 
-  const handleSearchBlur = () => updateURL({ search });
+  useEffect(() => {
+    const currentSearch = searchParams.get("search") || "";
+    if (debouncedSearch !== currentSearch) {
+      updateURL({ search: debouncedSearch });
+    }
+  }, [debouncedSearch]);
 
   const toggleSort = (key: string) => {
     const newDir = sortKey === key && sortDir === "asc" ? "desc" : "asc";
@@ -137,24 +149,22 @@ export default function ClientsClient({
         <h1 className="text-3xl font-serif font-bold text-[#133255] mb-8 tracking-tight">Client Database</h1>
 
         {/* Action Bar */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <div className="flex items-center gap-4 mb-6 neo-bar p-3 flex-wrap">
+          <div className="flex-1 relative min-w-[200px]">
+            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
             <input 
           type="text" 
           placeholder="Search by client or industry..." 
           value={search} 
           onChange={e => setSearch(e.target.value)} 
-          onBlur={handleSearchBlur}
-          onKeyDown={e => e.key === "Enter" && handleSearchBlur()}
-          className="min-w-[250px] flex-1 pl-9 pr-4 h-10 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#133255] transition-colors"
+          className="w-full pl-10 pr-4 h-10 neo-inset text-sm text-slate-800 placeholder-slate-400 font-medium outline-none"
         />
           </div>
           
           <select 
           value={verticalFilter} 
           onChange={e => { setVerticalFilter(e.target.value); updateURL({ vertical: e.target.value }); }} 
-          className="px-4 h-10 border border-gray-200 rounded-lg text-sm bg-white outline-none hover:border-[#133255] transition-colors min-w-[180px]">
+          className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[160px]">
           <option value="All industries">All industries</option>
           {uniqueVerticals.map(i => <option key={i} value={i}>{i}</option>)}
         </select>
@@ -162,7 +172,7 @@ export default function ClientsClient({
         <select 
           value={statusFilter} 
           onChange={e => { setStatusFilter(e.target.value); updateURL({ status: e.target.value }); }} 
-          className="px-4 h-10 border border-gray-200 rounded-lg text-sm bg-white outline-none hover:border-[#133255] transition-colors min-w-[180px]">
+          className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[150px]">
           <option value="All status">All statuses</option>
           <option value="Active">Active</option>
           <option value="Inactive">Inactive</option>
@@ -170,7 +180,7 @@ export default function ClientsClient({
 
           <button 
             onClick={() => setIsImportModalOpen(true)}
-            className="h-10 px-4 rounded-lg bg-white border border-gray-200 text-gray-700 text-[13px] font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+            className="h-10 px-5 neo-btn text-gray-700 text-[13px] font-semibold flex items-center gap-1.5"
           >
             <Upload className="w-3.5 h-3.5" />
             Import
@@ -178,7 +188,8 @@ export default function ClientsClient({
 
           <button 
             onClick={() => router.push('/dashboard/clients/new')}
-            className="h-10 px-4 rounded-lg bg-[#D8B15B] text-[#133255] text-[13px] font-bold shadow-sm hover:bg-[#e8c97a] transition-colors flex items-center gap-1.5"
+            className="h-10 px-5 neo-btn text-[#133255] text-[13px] font-bold flex items-center gap-1.5"
+            style={{ background: 'linear-gradient(135deg, #D8B15B, #f0c96a)' }}
           >
             <Plus className="w-3.5 h-3.5" /> Add client
           </button>
@@ -209,7 +220,7 @@ export default function ClientsClient({
         )}
 
         {/* Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="neo-table">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-100">
@@ -226,7 +237,7 @@ export default function ClientsClient({
             </thead>
             <tbody>
               {paginatedData.map(c => (
-                <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => router.push(`/dashboard/clients/${c.id}`)}>
+                <tr key={c.id} className="border-b border-gray-50 neo-row-hover transition-colors cursor-pointer" onClick={() => router.push(`/dashboard/clients/${c.id}`)}>
                   <td className="px-4 py-4 text-center" onClick={e => e.stopPropagation()}>
                     <input type="checkbox" checked={selectedIds.has(c.id)} onChange={() => toggleRow(c.id)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
                   </td>
@@ -251,10 +262,10 @@ export default function ClientsClient({
                   </td>
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-2">
-                      <Link href={`/dashboard/clients/${c.id}`} className="px-3 py-1.5 text-[13px] font-bold text-[#133255] border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                      <Link href={`/dashboard/clients/${c.id}`} className="px-3 py-1.5 text-[13px] font-bold text-white neo-btn" style={{ background: 'linear-gradient(135deg,#133255,#1d4d82)' }}>
                         View
                       </Link>
-                      <Link href={`/dashboard/mandates/new?company=${encodeURIComponent(c.name)}`} className="px-3 py-1.5 text-[13px] font-bold text-gray-600 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors flex items-center gap-1">
+                      <Link href={`/dashboard/mandates/new?company=${encodeURIComponent(c.name)}`} className="px-3 py-1.5 text-[13px] font-bold text-[#133255] neo-btn" style={{ background: 'linear-gradient(135deg,#D8B15B,#f0c96a)' }}>
                         + Mandate
                       </Link>
                     </div>
@@ -285,37 +296,41 @@ export default function ClientsClient({
       {/* Delete Confirmation Modal */}
       {isDeleteDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#133255]/40 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-[20px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-6">
-              <h3 className="font-serif text-[21px] font-bold text-gray-900 mb-2">Delete Clients</h3>
-              <p className="text-[#4a5568] text-sm mb-3">
+          <div className="neo-card w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-8">
+              <div className="w-12 h-12 neo-card-sm flex items-center justify-center mb-5 mx-auto">
+                <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </div>
+              <h3 className="font-serif text-[21px] font-bold text-gray-900 mb-2 text-center">Delete Clients</h3>
+              <p className="text-[#4a5568] text-sm mb-3 text-center">
                 Are you sure you want to delete <b className="text-red-600">{selectedIds.size}</b> client{selectedIds.size > 1 ? "s" : ""}?
               </p>
               {attachedMandatesCount > 0 && (
-                <div className="bg-red-50 border border-red-100 rounded-lg p-3 mb-3">
-                  <p className="text-red-800 text-sm font-semibold">
+                <div className="neo-inset p-3 mb-3 rounded-xl">
+                  <p className="text-red-700 text-sm font-semibold">
                     The client{selectedIds.size > 1 ? "s" : ""} you are trying to delete {selectedIds.size > 1 ? "have" : "has"} <b className="text-red-600">{attachedMandatesCount} mandate{attachedMandatesCount > 1 ? "s" : ""}</b> attached.
                   </p>
-                  <p className="text-red-600 text-xs mt-1">
+                  <p className="text-red-500 text-xs mt-1">
                     These mandates (and any float list entries associated with them) will also be deleted.
                   </p>
                 </div>
               )}
-              <p className="text-[#4a5568] text-sm">
+              <p className="text-[#4a5568] text-sm text-center">
                 If you still wish to continue, click delete permanently.
               </p>
               
-              <div className="mt-6 flex justify-end gap-3">
+              <div className="mt-8 flex justify-center gap-4">
                 <button 
                   onClick={() => setIsDeleteDialogOpen(false)}
-                  className="px-5 py-2.5 rounded-xl font-bold text-sm text-[#4a5568] hover:bg-gray-100 transition-colors"
+                  className="px-5 py-2.5 neo-btn font-bold text-sm text-gray-600"
                   disabled={isSubmitting}
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={handleDeleteSelected}
-                  className="px-5 py-2.5 rounded-xl font-bold text-sm bg-red-600 text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-50"
+                  className="px-5 py-2.5 neo-btn font-bold text-sm text-white disabled:opacity-50"
+                  style={{ background: '#dc2626' }}
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Deleting..." : "Delete Permanently"}

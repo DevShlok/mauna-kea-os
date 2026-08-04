@@ -68,6 +68,7 @@ export const mandateCandidates = pgTable('mandate_candidates', {
 // ─── CANDIDATES (MASTER) ─────────────────────────────────
 export const candidates = pgTable('candidates', {
   id: varchar('id', { length: 50 }).primaryKey(),
+  slug: varchar('slug', { length: 255 }).unique(),
   initials: varchar('initials', { length: 5 }),
   name: varchar('name', { length: 255 }).notNull(),
   mobile: varchar('mobile', { length: 20 }),
@@ -123,6 +124,7 @@ export const candidates = pgTable('candidates', {
   companyIdx: index('candidates_company_idx').on(table.company),
   statusIdx: index('candidates_status_idx').on(table.status),
   isDeletedIdx: index('candidates_is_deleted_idx').on(table.isDeleted),
+  statusIsDeletedIdx: index('candidates_status_is_deleted_idx').on(table.status, table.isDeleted),
 }));
 
 // ─── CANDIDATE FILES (HISTORY) ───────────────────────────

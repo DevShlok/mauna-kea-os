@@ -6,15 +6,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { getCandidateNotificationsAction, markCandidateNotificationsAsReadAction } from "@/actions/candidate-portal";
 import type { CandidateNotification } from "@/db/schema";
 
-const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
-  "/candidate": { title: "Home", subtitle: "Your career overview" },
-  "/candidate/applications": { title: "My Applications", subtitle: "Track your interview journey" },
-  "/candidate/profile": { title: "My Profile", subtitle: "Your professional snapshot" },
-  "/candidate/consultants": { title: "My Consultants", subtitle: "Know your Mauna Kea team" },
-  "/candidate/verification": { title: "Verification", subtitle: "Your verified credentials" },
-  "/candidate/jobs": { title: "Jobs", subtitle: "Curated opportunities for you" },
-  "/candidate/dream-companies": { title: "Dream Companies", subtitle: "Companies you aspire to join" },
-};
+function getPageInfo(pathname: string | null) {
+  if (!pathname) return { title: "Home", subtitle: "Your career overview" };
+  if (pathname.endsWith("/applications")) return { title: "My Applications", subtitle: "Track your interview journey" };
+  if (pathname.endsWith("/profile")) return { title: "My Profile", subtitle: "Your professional snapshot" };
+  if (pathname.endsWith("/consultants")) return { title: "My Consultants", subtitle: "Know your Mauna Kea team" };
+  if (pathname.endsWith("/verification")) return { title: "Verification", subtitle: "Your verified credentials" };
+  if (pathname.endsWith("/jobs")) return { title: "Jobs", subtitle: "Curated opportunities for you" };
+  if (pathname.endsWith("/dream-companies")) return { title: "Dream Companies", subtitle: "Companies you aspire to join" };
+  return { title: "Home", subtitle: "Your career overview" };
+}
 
 export function CandidateTopbar({
   candId,
@@ -29,9 +30,7 @@ export function CandidateTopbar({
   const [showNotifs, setShowNotifs] = useState(false);
   const bellRef = useRef<HTMLButtonElement>(null);
 
-  const sortedKeys = Object.keys(PAGE_TITLES).sort((a, b) => b.length - a.length);
-  const match = sortedKeys.find((key) => pathname?.startsWith(key));
-  const { title, subtitle } = match ? PAGE_TITLES[match] : { title: "Portal", subtitle: "" };
+  const { title, subtitle } = getPageInfo(pathname);
 
   useEffect(() => {
     if (candId) {

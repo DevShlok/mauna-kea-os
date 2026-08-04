@@ -35,23 +35,23 @@ export default function NewUserClient({ clients, managers = [] }: { clients: any
       <div className="text-[16px] text-gray-500 mb-1">Home / Admin / Users / New</div>
       <h1 className="text-3xl font-serif font-bold text-[#111] mb-8 tracking-tight">Add New User</h1>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="neo-table">
         <form onSubmit={handleSubmit} className="p-8">
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-[15px] font-bold text-[#6b7a99] uppercase tracking-wider mb-2">Full Name *</label>
-                <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[17px] outline-none focus:border-[#133255]" placeholder="John Doe" required />
+                <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-4 py-3 neo-inset text-[17px] outline-none focus:border-[#133255]" placeholder="John Doe" required />
               </div>
               <div>
                 <label className="block text-[15px] font-bold text-[#6b7a99] uppercase tracking-wider mb-2">Email Address *</label>
-                <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[17px] outline-none focus:border-[#133255]" placeholder="john@example.com" required />
+                <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full px-4 py-3 neo-inset text-[17px] outline-none focus:border-[#133255]" placeholder="john@example.com" required />
               </div>
             </div>
 
             <div>
               <label className="block text-[15px] font-bold text-[#6b7a99] uppercase tracking-wider mb-2">Role</label>
-              <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[17px] outline-none focus:border-[#133255]">
+              <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full px-4 py-3 neo-inset text-[17px] outline-none focus:border-[#133255]">
                 <option value="admin">Admin</option>
                 <option value="consultant">Consultant</option>
                 <option value="client">Client</option>
@@ -62,7 +62,7 @@ export default function NewUserClient({ clients, managers = [] }: { clients: any
             {form.role === "consultant" && (
               <div>
                 <label className="block text-[15px] font-bold text-[#6b7a99] uppercase tracking-wider mb-2">Reporting Manager</label>
-                <select value={form.reportingManagerId} onChange={e => setForm({...form, reportingManagerId: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[17px] outline-none focus:border-[#133255]">
+                <select value={form.reportingManagerId} onChange={e => setForm({...form, reportingManagerId: e.target.value})} className="w-full px-4 py-3 neo-inset text-[17px] outline-none focus:border-[#133255]">
                   <option value="">Default (Neha)</option>
                   {managers.map(m => (
                     <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
@@ -75,7 +75,7 @@ export default function NewUserClient({ clients, managers = [] }: { clients: any
             {form.role === "client" && (
               <div>
                 <label className="block text-[15px] font-bold text-[#6b7a99] uppercase tracking-wider mb-2">Link to Company</label>
-                <select value={form.linkedClientId} onChange={e => setForm({...form, linkedClientId: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-md text-[17px] outline-none focus:border-[#133255]" required>
+                <select value={form.linkedClientId} onChange={e => setForm({...form, linkedClientId: e.target.value})} className="w-full px-4 py-3 neo-inset text-[17px] outline-none focus:border-[#133255]" required>
                   <option value="">Select Company...</option>
                   {clients.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -92,7 +92,7 @@ export default function NewUserClient({ clients, managers = [] }: { clients: any
           </div>
 
           <div className="mt-10 flex justify-end gap-4 border-t border-gray-100 pt-6">
-            <button type="button" onClick={() => router.back()} className="px-6 py-2.5 text-[17px] font-bold text-gray-600 border border-gray-200 hover:bg-gray-50 rounded-md transition-colors">Cancel</button>
+            <button type="button" onClick={() => router.back()} className="px-6 py-2.5 text-[17px] font-bold text-gray-600 border border-gray-200 neo-row-hover rounded-md transition-colors">Cancel</button>
             <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 text-[17px] font-bold bg-[#133255] text-white rounded-md hover:bg-[#0e3178] transition-colors disabled:opacity-50">
               {isSubmitting ? "Adding..." : "Add User"}
             </button>

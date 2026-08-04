@@ -5,17 +5,21 @@ import { createClient } from "@/utils/supabase/server";
 import { getUserByEmail } from "@/db/queries";
 import { redirect } from "next/navigation";
 import { cache } from "react";
+import { getOrCreateCandidateSlug, slugify } from "@/lib/slug";
 
 // Helper function to safely find or create a candidate record by email
 async function findOrCreateCandidateId(email: string, name: string): Promise<string> {
   // 1. Check if candidate record already exists with this email
   const [existing] = await db
-    .select({ id: candidates.id })
+    .select({ id: candidates.id, slug: candidates.slug })
     .from(candidates)
     .where(eq(candidates.email, email))
     .limit(1);
 
   if (existing?.id) {
+    if (!existing.slug) {
+      await getOrCreateCandidateSlug(existing.id, name);
+    }
     return existing.id;
   }
 
@@ -28,9 +32,12 @@ async function findOrCreateCandidateId(email: string, name: string): Promise<str
     .substring(0, 2)
     .toUpperCase();
 
+  const baseSlug = slugify(name || "candidate") || `cand-${candId.toLowerCase()}`;
+
   try {
     await db.insert(candidates).values({
       id: candId,
+      slug: baseSlug,
       name,
       email,
       initials,
@@ -43,7 +50,9 @@ async function findOrCreateCandidateId(email: string, name: string): Promise<str
       .from(candidates)
       .where(eq(candidates.email, email))
       .limit(1);
-    return retry?.id || candId;
+    const retryId = retry?.id || candId;
+    await getOrCreateCandidateSlug(retryId, name);
+    return retryId;
   }
 }
 
@@ -133,7 +142,16 @@ export const requireRole = cache(async (allowedRoles: string[]) => {
       }
       redirect("/sign-in");
     } else if (userRole === "candidate") {
-      redirect("/candidate");
+      if (platformUser?.linkedCandidateId) {
+        const slug = await getOrCreateCandidateSlug(
+          platformUser.linkedCandidateId,
+          platformUser.name
+        );
+        if (slug) {
+          redirect(`/${slug}`);
+        }
+      }
+      redirect("/sign-in");
     } else {
       redirect("/dashboard");
     }
@@ -141,3 +159,4 @@ export const requireRole = cache(async (allowedRoles: string[]) => {
 
   return { platformUser, userRole, email, supabaseUser: user };
 });
+

@@ -243,10 +243,10 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
       </div>
 
       {!selectedUser ? (
-        <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm">
+        <div className="neo-table">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[#f9fafc] border-b-2 border-[#D4E0F0]">
+              <tr className="border-b border-gray-100">
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">User</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Role</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Status</th>
@@ -255,7 +255,7 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
             </thead>
             <tbody>
               {users.map(u => (
-                <tr key={u.id} className="border-b border-[#D4E0F0] hover:bg-[#f9fafc] cursor-pointer" onClick={() => setSelectedUser(u.id)}>
+                <tr key={u.id} className="border-b border-gray-50 neo-row-hover cursor-pointer" onClick={() => setSelectedUser(u.id)}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded bg-[#133255] text-[#D8B15B] flex items-center justify-center text-xs font-bold font-serif">{u.initials}</div>
@@ -295,10 +295,10 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
             <span className="font-bold text-[#111]">Viewing: {users.find(u => u.id === selectedUser)?.name || selectedUser}</span>
           </div>
 
-          <div className="bg-white border border-[#D4E0F0] rounded-xl overflow-hidden shadow-sm">
+          <div className="neo-table">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[#f9fafc] border-b-2 border-[#D4E0F0]">
+              <tr className="border-b border-gray-100">
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Date</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">First In</th>
                 <th className="px-4 py-3 text-left text-xs font-bold text-[#6b7a99] uppercase tracking-wider">Last Out</th>
@@ -314,7 +314,7 @@ export default function TimesheetsClient({ users }: { users: any[] }) {
                 <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-400">No time logs found for this user.</td></tr>
               ) : (
                 Object.values(timesheetByDate).map((day: any) => (
-                  <tr key={day.date} className="border-b border-[#D4E0F0] hover:bg-[#f9fafc]">
+                  <tr key={day.date} className="border-b border-[#D4E0F0] neo-row-hover">
                     <td className="px-4 py-3 font-semibold text-[#111]">{day.date}</td>
                     <td className="px-4 py-3 text-gray-600">{day.firstIn ? day.firstIn.toLocaleTimeString() : '-'}</td>
                     <td className="px-4 py-3 text-gray-600">{day.lastOut ? day.lastOut.toLocaleTimeString() : '-'}</td>

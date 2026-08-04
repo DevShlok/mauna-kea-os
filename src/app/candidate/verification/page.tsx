@@ -1,17 +1,14 @@
 import { requireRole } from "@/lib/auth";
-import { db } from "@/db";
-import { floatReferences } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { VerificationStatusClient } from "@/features/candidate-portal/components/VerificationStatusClient";
+import { getOrCreateCandidateSlug } from "@/lib/slug";
+import { redirect } from "next/navigation";
 
-export default async function VerificationPage() {
+export default async function CandidateVerificationRedirect() {
   const { platformUser } = await requireRole(["candidate"]);
-  const candId = platformUser!.linkedCandidateId!;
-
-  const references = await db
-    .select()
-    .from(floatReferences)
-    .where(eq(floatReferences.candId, candId));
-
-  return <VerificationStatusClient candId={candId} refCount={references.length} />;
+  if (platformUser.linkedCandidateId) {
+    const slug = await getOrCreateCandidateSlug(platformUser.linkedCandidateId, platformUser.name);
+    if (slug) {
+      redirect(`/${slug}/verification`);
+    }
+  }
+  redirect("/sign-in");
 }

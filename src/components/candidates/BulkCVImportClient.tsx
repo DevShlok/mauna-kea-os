@@ -207,7 +207,7 @@ export default function BulkCVImportClient() {
                     ? "bg-[#f0fff6]"
                     : file.status === "error"
                     ? "bg-[#fff8f8]"
-                    : "hover:bg-[#f8fafc]"
+                    : "neo-row-hover"
                 }`}
               >
                 <div className="flex items-center gap-3 overflow-hidden">

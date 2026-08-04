@@ -127,8 +127,8 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
     }
   };
 
-  const inp = "w-full px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]";
-  const section = "bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mb-6";
+  const inp = "w-full px-3 py-2 neo-inset text-sm outline-none focus:border-[#133255]";
+  const section = "neo-card overflow-hidden mb-6";
   const sectionHead = "bg-gray-50 border-b border-gray-200 px-5 py-3 font-bold text-xs uppercase tracking-wider text-[#133255]";
 
   return (
@@ -154,9 +154,9 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
             </div>
               <div className="col-span-2">
                 <label className="block text-xs font-bold text-gray-600 mb-1.5">Attach to Mandates (Optional)</label>
-                <div className="border border-gray-200 rounded p-2 bg-white max-h-[150px] overflow-y-auto space-y-1">
+                <div className="neo-inset p-2 bg-white max-h-[150px] overflow-y-auto space-y-1">
                   {mandates.map(m => (
-                    <label key={m.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1.5 rounded transition-colors">
+                    <label key={m.id} className="flex items-center gap-2 text-sm cursor-pointer neo-row-hover p-1.5 rounded transition-colors">
                       <input 
                         type="checkbox" 
                         checked={mandateIds.includes(m.id.toString())}
@@ -183,7 +183,7 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
           {categories.map((cat, cIdx) => {
             const sum = cat.criteria.reduce((a, b) => a + b.weight, 0);
             return (
-              <div key={cIdx} className="bg-white border border-gray-200 rounded-[8px] overflow-hidden">
+              <div key={cIdx} className="bg-white neo-inset-[8px] overflow-hidden">
                 <div className="bg-[#133255] text-white px-4 py-3 flex justify-between items-center">
                   <div className="flex items-center gap-4 w-1/2">
                     <input 
@@ -210,13 +210,13 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
                 </div>
                 <div className="p-4 bg-gray-50 flex flex-col gap-2">
                   {cat.criteria.map((cr, crIdx) => (
-                    <div key={crIdx} className="flex gap-2 items-center bg-white p-2 border border-gray-200 rounded">
+                    <div key={crIdx} className="flex gap-2 items-center bg-white p-2 neo-inset">
                       <span className="text-gray-400 cursor-move px-2">⠿</span>
                       <input 
                         type="text" 
                         value={cr.name} 
                         onChange={(e) => handleCriterionChange(cIdx, crIdx, 'name', e.target.value)}
-                        className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-sm outline-none focus:border-[#133255]"
+                        className="flex-1 px-3 py-1.5 neo-inset text-sm outline-none focus:border-[#133255]"
                         placeholder="Criterion name"
                         required
                       />
@@ -226,7 +226,7 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
                         min={0}
                         max={100}
                         onChange={(e) => handleCriterionChange(cIdx, crIdx, 'weight', e.target.value)}
-                        className="w-20 px-3 py-1.5 border border-gray-200 rounded text-sm outline-none focus:border-[#133255] text-center"
+                        className="w-20 px-3 py-1.5 neo-inset text-sm outline-none focus:border-[#133255] text-center"
                         required
                       />
                       <span className="text-gray-500 font-bold">%</span>
@@ -261,7 +261,7 @@ export default function CreateFrameworkClient({ mandates, initialData }: { manda
               {isDeleting ? "Deleting..." : "Delete Framework"}
             </button>
           )}
-          <button type="button" onClick={() => router.push("/dashboard/frameworks")} className="px-5 py-2.5 border border-gray-200 text-gray-700 rounded text-sm font-bold hover:bg-gray-50">
+          <button type="button" onClick={() => router.push("/dashboard/frameworks")} className="px-5 py-2.5 neo-btn text-gray-700 text-sm font-bold">
             Cancel
           </button>
           <button type="submit" className="px-6 py-2.5 bg-[#133255] text-white rounded text-sm font-bold hover:bg-[#133255] shadow-sm transition-colors">
