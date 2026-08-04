@@ -370,6 +370,43 @@ export const consultantNotifications = pgTable('consultant_notifications', {
   createdAt: datetime('created_at').default(sql`now()`),
 });
 
+// ─── REFERENCE CHECKS (Phase 2) ─────────────────────────
+export const referenceChecks = pgTable('reference_checks', {
+  id: serial('id').primaryKey(),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
+  conductedBy: varchar('conducted_by', { length: 255 }),
+  refereeName: varchar('referee_name', { length: 255 }),
+  refereeRelationship: varchar('referee_relationship', { length: 100 }),
+  refereeCompany: varchar('referee_company', { length: 255 }),
+  status: varchar('status', { length: 50 }).default('In Progress'),
+  responses: json('responses').$type<Record<string, string>>().default({}),
+  summaryPositives: text('summary_positives'),
+  summaryImprovements: text('summary_improvements'),
+  summaryNeutral: text('summary_neutral'),
+  isSharedWithClient: boolean('is_shared_with_client').default(false),
+  isVerified: boolean('is_verified').default(false),
+  verifiedAt: datetime('verified_at'),
+  verifiedBy: varchar('verified_by', { length: 255 }),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  candIdIdx: index('rc_cand_id_idx').on(table.candId),
+  statusIdx: index('rc_status_idx').on(table.status),
+}));
+
+// ─── CANDIDATE VERIFICATION STATUS (Phase 2) ───────────
+export const candidateVerifications = pgTable('candidate_verifications', {
+  id: serial('id').primaryKey(),
+  candId: varchar('cand_id', { length: 50 }).unique().notNull().references(() => candidates.id),
+  status: varchar('status', { length: 50 }).default('Not Started'),
+  badgeLevel: varchar('badge_level', { length: 50 }).default('none'),
+  verifiedAt: datetime('verified_at'),
+  verifiedBy: varchar('verified_by', { length: 255 }),
+  createdAt: datetime('created_at').default(sql`now()`),
+  updatedAt: datetime('updated_at').default(sql`now()`),
+}, (table) => ({
+  candIdIdx: index('cv_cand_id_idx').on(table.candId),
+}));
+
 // ─── TYPES ───────────────────────────────────────────────
 export type Mandate = typeof mandates.$inferSelect;
 export type MandateCandidate = typeof mandateCandidates.$inferSelect;
@@ -388,6 +425,8 @@ export type ClientNotification = typeof clientNotifications.$inferSelect;
 export type ClientRemark = typeof clientRemarks.$inferSelect;
 export type ConsultantNotification = typeof consultantNotifications.$inferSelect;
 export type CandidateNotification = typeof candidateNotifications.$inferSelect;
+export type ReferenceCheck = typeof referenceChecks.$inferSelect;
+export type CandidateVerification = typeof candidateVerifications.$inferSelect;
 
 // ─── TIME & LEAVE MANAGEMENT ─────────────────────────────
 export const timeLogs = pgTable('time_logs', {

@@ -46,15 +46,23 @@ export async function getCurrentUserName(): Promise<string> {
 }
 
 export async function createMandateAction(data: unknown) {
-  await requireRole(["admin", "consultant"]);
+  const { platformUser } = await requireRole(["admin", "consultant", "client"]);
   const d = createMandateSchema.parse(data);
   revalidatePath("/dashboard", "layout");
   
-  // Try to find the client by exact name match (case-insensitive)
-  const existingClient = await db.select().from(clients).where(eq(sql`LOWER(${clients.name})`, (d.company || "").toLowerCase()));
+  // Try to find the client by exact name match (case-insensitive) or via linkedClientId for client user
+  let targetCompany = d.company;
+  if (platformUser?.role === "client" && platformUser.linkedClientId) {
+    const [linkedClient] = await db.select().from(clients).where(eq(clients.id, platformUser.linkedClientId));
+    if (linkedClient) {
+      targetCompany = linkedClient.name;
+    }
+  }
+
+  const existingClient = await db.select().from(clients).where(eq(sql`LOWER(${clients.name})`, (targetCompany || "").toLowerCase()));
   let clientId = existingClient.length > 0 ? existingClient[0].id : null;
   // Normalize company name if client exists
-  let companyName = existingClient.length > 0 ? existingClient[0].name : d.company;
+  let companyName = existingClient.length > 0 ? existingClient[0].name : targetCompany;
 
   // Auto-initialize client and portal user if not found
   if (!clientId && companyName) {

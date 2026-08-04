@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { stageLabel } from "@/lib/helpers";
+import { VerifiedBadge } from "@/components/ui/StatusBadge";
 
 const PIPELINE_STAGES = [
   "universe", "mapping", "longlist", "calllist", "shortlist", "client-shortlisted", "interview", "offer-sent", "offer-accepted", "closed",
@@ -81,7 +82,10 @@ export default function MandateKanbanBoard({
                               {c.initials}
                             </div>
                             <div className="min-w-0">
-                              <div className="font-bold text-gray-900 text-sm truncate" title={c.name}>{c.name}</div>
+                              <div className="font-bold text-gray-900 text-sm truncate flex items-center gap-1.5" title={c.name}>
+                                {c.name}
+                                {c.isVerified === 'Verified' && <VerifiedBadge size="sm" />}
+                              </div>
                               <div className="text-[11px] text-gray-500 truncate" title={c.role + ' - ' + c.company}>{c.role} - {c.company}</div>
                             </div>
                           </div>

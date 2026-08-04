@@ -291,6 +291,15 @@ export const getMandateById = cache(async (id: number) => {
     },
   });
   if (!mandate) return null;
+
+  const { candidateVerifications } = await import('./schema');
+  const candIds = mandate.candidates.map(c => c.candId);
+  const verifs = candIds.length > 0 
+    ? await db.select().from(candidateVerifications).where(inArray(candidateVerifications.candId, candIds))
+    : [];
+  
+  const verifMap = new Map(verifs.map(v => [v.candId, v]));
+
   return {
     ...mandate,
     sectors: (mandate.sectors ?? []) as string[],
@@ -306,6 +315,7 @@ export const getMandateById = cache(async (id: number) => {
       initials: c.candidate?.initials || "UN",
       company: c.candidate?.company || null,
       role: c.candidate?.designation || null,
+      isVerified: verifMap.get(c.candId)?.status || 'Not Started',
     }))
   };
 });

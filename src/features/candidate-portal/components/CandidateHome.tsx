@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Bell,
 } from "lucide-react";
+import { VerifiedBadge } from "@/components/ui/StatusBadge";
 
 const STATUS_MAP: Record<string, { label: string; color: string; dot: string }> = {
   Shared: { label: "Profile Shared", color: "text-blue-400", dot: "bg-blue-400" },
@@ -136,8 +137,9 @@ export function CandidateHome({
           )}
           <div className="flex-1 min-w-0">
             <p className="text-[#133255] text-[13px] font-bold">{greeting}</p>
-            <h2 className="text-slate-800 text-[22px] font-bold leading-tight truncate">
+            <h2 className="text-slate-800 text-[22px] font-bold leading-tight truncate flex items-center gap-2">
               {candidate?.name || "Welcome"}
+              {candidate?.isVerified && <VerifiedBadge size="lg" />}
             </h2>
             {candidate?.designation && candidate?.company && (
               <p className="text-slate-600 text-[14px] mt-0.5 flex items-center gap-1.5 font-medium">

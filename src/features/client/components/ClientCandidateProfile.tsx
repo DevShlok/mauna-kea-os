@@ -25,6 +25,7 @@ import {
   Send,
 } from "lucide-react";
 import { updateMandateCandidateStageAction, submitClientRemarkAction } from "@/actions";
+import { VerifiedBadge } from "@/components/ui/StatusBadge";
 
 import { useClientPortal } from "../context/ClientPortalContext";
 
@@ -92,9 +93,11 @@ type Props = {
   framework: any;
   mandate?: any;
   clientRemarks?: any[];
+  verificationStatus?: any;
+  sharedChecks?: any[];
 };
 
-export default function ClientCandidateProfile({ candidate, mandateCandidate, mandateId, reportData = {}, framework, mandate, clientRemarks = [] }: Props) {
+export default function ClientCandidateProfile({ candidate, mandateCandidate, mandateId, reportData = {}, framework, mandate, clientRemarks = [], verificationStatus, sharedChecks = [] }: Props) {
   const router = useRouter();
   const [currentStage, setCurrentStage] = useState(mandateCandidate?.stage || "universe");
   const [isUpdating, setIsUpdating] = useState(false);
@@ -205,10 +208,10 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
       title: "Leadership Style",
       content: reportData?.["Leadership Style"]
     } : null,
-    candidate?.references && candidate.references.length > 0 ? {
-      title: "References",
-      content: candidate.references,
-      isReferences: true
+    (sharedChecks.length > 0 || verificationStatus) ? {
+      title: "Verification & References",
+      isVerification: true,
+      content: sharedChecks
     } : null,
     reportData?.["Interviewer Feedback"] ? {
       title: "Analysis Basis Interview Recordings",
@@ -286,9 +289,13 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <h1 className="text-[22px] font-bold text-[#0b1f3a] truncate">{name}</h1>
-              <span className="bg-blue-500 text-white rounded-full p-0.5" title="Verified Match">
-                <Check className="w-3 h-3 stroke-[3]" />
-              </span>
+              {verificationStatus?.status === 'Verified' ? (
+                <VerifiedBadge size="sm" />
+              ) : (
+                <span className="bg-blue-500 text-white rounded-full p-0.5" title="Verified Match">
+                  <Check className="w-3 h-3 stroke-[3]" />
+                </span>
+              )}
             </div>
             {title && <p className="text-[14px] text-gray-500 font-medium mt-0.5">{title}</p>}
             {company && (
@@ -415,16 +422,35 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
                     </button>
                     {isOpen && (
                       <div className="px-4 pb-4 pt-1 text-[13px] text-gray-600 leading-relaxed space-y-2 border-t border-gray-50">
-                        {acc.isReferences ? (
-                          <div className="space-y-3 pt-2">
-                            {acc.content.map((r: any, idx: number) => (
-                              <div key={idx} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
-                                <div className="font-semibold text-gray-800 text-[13px]">
-                                  {r.name} - {r.rel} ({r.org})
+                        {acc.isVerification ? (
+                          <div className="space-y-4 pt-2">
+                            {acc.content.length === 0 ? (
+                              <div className="text-gray-400 italic text-[12px]">No verified references shared yet.</div>
+                            ) : (
+                              acc.content.map((r: any, idx: number) => (
+                                <div key={idx} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+                                  <div className="font-semibold text-gray-800 text-[13px] flex items-center justify-between">
+                                    <span>{r.refereeRelationship} at {r.refereeCompany}</span>
+                                    <span className="text-[10px] uppercase font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Verified Check</span>
+                                  </div>
+                                  {r.summaryPositives && (
+                                    <div className="mt-2 text-[12px] text-gray-600">
+                                      <span className="font-bold text-gray-800">Strengths: </span>{r.summaryPositives}
+                                    </div>
+                                  )}
+                                  {r.summaryImprovements && (
+                                    <div className="mt-1 text-[12px] text-gray-600">
+                                      <span className="font-bold text-gray-800">Areas for Growth: </span>{r.summaryImprovements}
+                                    </div>
+                                  )}
+                                  {r.summaryNeutral && (
+                                    <div className="mt-1 text-[12px] text-gray-600">
+                                      <span className="font-bold text-gray-800">Observations: </span>{r.summaryNeutral}
+                                    </div>
+                                  )}
                                 </div>
-                                <p className="text-[12.5px] text-gray-500 mt-1 italic">&quot;{r.text}&quot;</p>
-                              </div>
-                            ))}
+                              ))
+                            )}
                           </div>
                         ) : Array.isArray(acc.content) ? (
                           <ul className="list-disc list-inside space-y-1.5 pt-2">

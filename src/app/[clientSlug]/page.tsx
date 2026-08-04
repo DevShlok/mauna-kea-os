@@ -44,11 +44,14 @@ export default async function DynamicSlugPage(props: PageProps) {
     const { platformUser } = await requireRole(["candidate"]);
     const candId = platformUser!.linkedCandidateId!;
 
-    const [candData, myFloats, recentNotifs] = await Promise.all([
+    const { candidateVerifications } = await import('@/db/schema');
+    const [candData, myFloats, recentNotifs, verifData] = await Promise.all([
       getCandidateById(candId),
       getCandidateFloatsAction(candId),
       getCandidateNotificationsAction(candId),
+      db.select().from(candidateVerifications).where(eq(candidateVerifications.candId, candId)).limit(1)
     ]);
+    const isVerified = verifData[0]?.status === 'Verified';
 
     const totalShared = myFloats.length;
     const awaiting = myFloats.filter(
@@ -61,7 +64,7 @@ export default async function DynamicSlugPage(props: PageProps) {
 
     return (
       <CandidateHome
-        candidate={candData}
+        candidate={{ ...candData, isVerified }}
         recentFloats={myFloats.slice(0, 5)}
         stats={{ totalShared, awaiting, interviewing, feedbackAvailable }}
         recentNotifs={recentNotifs.slice(0, 5)}

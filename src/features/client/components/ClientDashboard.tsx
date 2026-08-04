@@ -16,6 +16,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useClientPortal } from "@/features/client/context/ClientPortalContext";
+import { VerifiedBadge } from "@/components/ui/StatusBadge";
 
 // ─── Types ───────────────────────────────────────────────
 type MandateCandidate = {
@@ -344,7 +345,10 @@ export default function ClientDashboard({ clientName, clientSlug, mandates, init
                             {initials}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className="text-[13px] font-semibold text-[#0b1f3a] truncate block">{c.name}</span>
+                            <span className="text-[13px] font-semibold text-[#0b1f3a] truncate flex items-center gap-1.5">
+                              {c.name}
+                              {(c as any).isVerified === 'Verified' && <VerifiedBadge size="sm" />}
+                            </span>
                           </div>
                           <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 rounded-full px-2.5 py-0.5">{stageLabel}</span>
                         </div>

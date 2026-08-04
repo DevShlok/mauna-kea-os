@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { updateCandidateSelfProfileAction } from "@/actions/candidate-portal";
 import toast from "react-hot-toast";
+import { VerifiedBadge } from "@/components/ui/StatusBadge";
 
 function NeoCard({
   children,
@@ -41,7 +42,7 @@ function NeoCard({
   );
 }
 
-export function CandidateProfileView({ candidate }: { candidate: any }) {
+export function CandidateProfileView({ candidate, isVerified = false }: { candidate: any, isVerified?: boolean }) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<"general" | "career" | "tags" | "history">("general");
@@ -72,14 +73,6 @@ export function CandidateProfileView({ candidate }: { candidate: any }) {
       </div>
     );
   }
-
-  const initials =
-    candidate.name
-      ?.split(" ")
-      .map((n: string) => n[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase() || "MK";
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -143,6 +136,14 @@ export function CandidateProfileView({ candidate }: { candidate: any }) {
   const removeQual = (index: number) => {
     setForm({ ...form, qual: form.qual.filter((_: any, i: number) => i !== index) });
   };
+
+  const initials =
+    candidate.name
+      ?.split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase() || "MK";
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">

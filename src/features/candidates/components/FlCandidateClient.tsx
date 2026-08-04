@@ -19,7 +19,8 @@ import { convertToClientContactAction, updatePastCompaniesAction, updateCandidat
 import { removeFromEngagementListAction } from "@/actions/calls";
 import { formatCtcValue, getCleanLinkedInUrl } from "@/lib/helpers";
 import { createClient } from "@/utils/supabase/client";
-import { Pin, Download, User, FileText, CheckSquare, Target, Briefcase, IndianRupee, MapPin, Building2, Brain, Link as LinkIcon, Edit, Trash2, ArrowLeft, Plus, Check, Send, Rocket, PhoneCall, X } from "lucide-react";
+import { Pin, Download, User, FileText, CheckSquare, Target, Briefcase, IndianRupee, MapPin, Building2, Brain, Link as LinkIcon, Edit, Trash2, ArrowLeft, Plus, Check, Send, Rocket, PhoneCall, X, ShieldCheck } from "lucide-react";
+import { VerifiedBadge } from "@/components/ui/StatusBadge";
 
 import { useWidgetLayout } from "@/hooks/useWidgetLayout";
 import { WidgetCard } from "@/components/ui/WidgetCard";
@@ -604,7 +605,10 @@ export default function FlCandidateClient({
                     )}
                   </div>
                   <div>
-                    <div className="font-serif text-[22px] font-bold text-[#111] mb-0.5 leading-tight">{candidate.name}</div>
+                    <div className="font-serif text-[22px] font-bold text-[#111] mb-0.5 leading-tight flex items-center gap-2">
+                      {candidate.name}
+                      {(candidate.isVerified || candidate.verifications?.[0]?.status === 'Verified') && <VerifiedBadge size="md" />}
+                    </div>
                     <div className="text-[13px] text-[#6b7a99] flex items-center gap-1 mb-2">
                       <MapPin size={13} className="text-[#133255]" /> {candidate.location || "Location not provided"}
                     </div>
@@ -627,9 +631,18 @@ export default function FlCandidateClient({
                     </div>
                   )}
                   {!readOnly && (
-                    <button onClick={() => setIsClientContactModalOpen(true)} className="px-3 py-1.5 mt-2 text-[12px] font-semibold text-[#133255] bg-[#DCE5F4] hover:bg-[#c5d3ec] rounded-lg transition-all border border-[#bacce6] w-fit">
-                      Convert to Client Contact
-                    </button>
+                    <div className="flex items-center gap-2 pt-1 flex-wrap">
+                      <button onClick={() => setIsClientContactModalOpen(true)} className="px-3 py-1.5 text-[12px] font-semibold text-[#133255] bg-[#DCE5F4] hover:bg-[#c5d3ec] rounded-lg transition-all border border-[#bacce6] w-fit">
+                        Convert to Client Contact
+                      </button>
+                      <Link 
+                        href={`/dashboard/candidates/${candidate.id}/reference-checks`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold text-[#059669] bg-[#ecfdf5] hover:bg-[#d1fae5] rounded-lg transition-all border border-[#a7f3d0] w-fit"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5 text-[#059669]" />
+                        Reference Checks
+                      </Link>
+                    </div>
                   )}
                 </div>
                 {candidate.auditLog?.['contact'] && (

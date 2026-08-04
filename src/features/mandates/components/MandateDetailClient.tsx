@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { StatusBadge, VerifiedBadge } from "@/components/ui/StatusBadge";
 import { STAGE_OPTIONS, stageLabel, formatMandateCtc } from "@/lib/helpers";
 import { editMandateAction, updateMandateSearchNotesAction, updateMandateCandidateStageAction, deleteMandateAction, sendCandidatesToClientAction, saveCandidateAssessmentAction, bulkMovePipelineCandidatesAction, bulkDeletePipelineCandidatesAction } from "@/actions";
 import MandateKanbanBoard from "./MandateKanbanBoard";
@@ -669,7 +669,10 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded bg-[#133255] text-white flex items-center justify-center text-xs font-bold shrink-0">{c.initials}</div>
                     <div>
-                      <Link href={`/dashboard/candidates/${c.externalId}`} className="font-semibold text-[#133255] hover:underline">{c.name}</Link>
+                      <div className="flex items-center gap-1.5">
+                        <Link href={`/dashboard/candidates/${c.externalId}`} className="font-semibold text-[#133255] hover:underline">{c.name}</Link>
+                        {c.isVerified === 'Verified' && <VerifiedBadge size="sm" />}
+                      </div>
                       <div className="text-xs text-gray-400">{c.role} - {c.company}</div>
                     </div>
                   </div>
