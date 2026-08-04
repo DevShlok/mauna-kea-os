@@ -136,6 +136,7 @@ export default async function ClientCandidateDetailPage({
       clientRemarks={remarks}
       verificationStatus={verification || null}
       sharedChecks={sharedChecks}
+      clientSlug={resolvedParams.clientSlug}
     />
   );
 }

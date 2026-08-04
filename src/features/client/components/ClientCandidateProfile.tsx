@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { formatCtcValue } from "@/lib/helpers";
 import {
   ArrowLeft,
@@ -15,6 +15,8 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Award,
 
   Sliders,
@@ -95,13 +97,22 @@ type Props = {
   clientRemarks?: any[];
   verificationStatus?: any;
   sharedChecks?: any[];
+  clientSlug?: string;
 };
 
-export default function ClientCandidateProfile({ candidate, mandateCandidate, mandateId, reportData = {}, framework, mandate, clientRemarks = [], verificationStatus, sharedChecks = [] }: Props) {
+export default function ClientCandidateProfile({ candidate, mandateCandidate, mandateId, reportData = {}, framework, mandate, clientRemarks = [], verificationStatus, sharedChecks = [], clientSlug }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentStage, setCurrentStage] = useState(mandateCandidate?.stage || "universe");
   const [isUpdating, setIsUpdating] = useState(false);
   const { setTopbarConfig } = useClientPortal();
+
+  // Navigation Logic
+  const listParam = searchParams.get("list");
+  const listIds = listParam ? listParam.split(",") : [];
+  const currentIndex = listIds.indexOf(candidate.externalId || candidate.id?.toString());
+  const prevId = currentIndex > 0 ? listIds[currentIndex - 1] : null;
+  const nextId = currentIndex >= 0 && currentIndex < listIds.length - 1 ? listIds[currentIndex + 1] : null;
 
   useEffect(() => {
     setTopbarConfig({
@@ -275,6 +286,29 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
 
       {/* ─── Candidate Overview Card ─── */}
       <div className="max-w-4xl mx-auto w-full px-5 mt-6">
+        {/* Navigation Bar */}
+        {listIds.length > 1 && (
+          <div className="flex items-center justify-between bg-white rounded-xl p-3 mb-4 shadow-sm border border-gray-100 print:hidden">
+            <button
+              onClick={() => prevId && router.push(`/${clientSlug || "client"}/candidates/${prevId}?mandateId=${mandateId}&list=${listParam}`)}
+              disabled={!prevId}
+              className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" /> Previous Candidate
+            </button>
+            <span className="text-sm text-gray-500 font-medium">
+              Candidate {currentIndex + 1} of {listIds.length}
+            </span>
+            <button
+              onClick={() => nextId && router.push(`/${clientSlug || "client"}/candidates/${nextId}?mandateId=${mandateId}&list=${listParam}`)}
+              disabled={!nextId}
+              className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg text-[#0b1f3a] hover:bg-indigo-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+            >
+              Next Candidate <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-5">
           {/* Avatar */}
           <div className="w-24 h-24 rounded-2xl bg-indigo-50 border border-gray-100 flex items-center justify-center text-3xl font-bold text-[#0b1f3a] overflow-hidden shrink-0 shadow-inner">

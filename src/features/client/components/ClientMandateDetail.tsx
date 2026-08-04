@@ -323,6 +323,18 @@ export default function ClientMandateDetail({ mandate, clientSlug }: Props) {
           <div className="sticky bottom-4 mt-6 z-40">
             <button
               disabled={selectedIds.size === 0}
+              onClick={() => {
+                const firstId = Array.from(selectedIds)[0];
+                const firstCand = rankedCandidates.find(c => c.id === firstId);
+                if (firstCand) {
+                  const selectedList = Array.from(selectedIds)
+                    .map(id => rankedCandidates.find(c => c.id === id)?.externalId)
+                    .filter(Boolean)
+                    .join(',');
+                  const prefix = clientSlug ? `/${clientSlug}` : "/client";
+                  router.push(`${prefix}/candidates/${firstCand.externalId}?mandateId=${mandate.id}&list=${selectedList}`);
+                }
+              }}
               className={`w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl text-[14px] font-semibold transition-all duration-200 ${
                 selectedIds.size > 0
                   ? "bg-[#0b1f3a] text-white hover:bg-[#162d4f] shadow-lg shadow-[#0b1f3a]/25"
