@@ -322,13 +322,13 @@ export default function ClientDashboard({ clientName, clientSlug, mandates, init
   // ─── Shortlist View ────────────────────────────────────
   if (activeTab === "shortlist") {
     const shortlisted = mandates.filter(m => {
-      return m.candidates.some(c => c.stage && ["interviewed", "offered", "hired"].includes(c.stage));
+      return m.candidates.some(c => c.stage && ["client-shortlisted", "interviewed", "offered", "hired"].includes(c.stage));
     });
     return (
           <div className="flex-1 overflow-y-auto w-full">
             <div className="max-w-5xl mx-auto w-full px-8 mt-6 pb-12">
             {shortlisted.length > 0 ? shortlisted.map(mandate => {
-              const shortCands = mandate.candidates.filter(c => c.stage && ["interviewed", "offered", "hired"].includes(c.stage));
+              const shortCands = mandate.candidates.filter(c => c.stage && ["client-shortlisted", "interviewed", "offered", "hired"].includes(c.stage));
               return (
                 <div key={mandate.id} className="mb-5">
                   <h3 className="text-[14px] font-bold text-[#0b1f3a] mb-2 flex items-center gap-2">
