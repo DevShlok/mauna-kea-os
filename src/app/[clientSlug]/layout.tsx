@@ -21,28 +21,35 @@ export default async function DynamicSlugLayout({
   const resolvedParams = await params;
   const slug = resolvedParams.clientSlug;
 
+  const { platformUser } = await requireRole(["admin", "consultant", "client", "candidate"]);
+
   // 1. Check if client
-  const [client] = await db.select().from(clients).where(eq(clients.slug, slug));
-  
-  if (client) {
-    const { platformUser } = await requireRole(["client"]);
-    if (platformUser.linkedClientId !== client.id) {
-      if (platformUser.linkedClientId) {
-        const [ownClient] = await db.select().from(clients).where(eq(clients.id, platformUser.linkedClientId));
-        if (ownClient?.slug) {
-          redirect(`/${ownClient.slug}/mandates`);
-        }
+  let [client] = await db.select().from(clients).where(eq(clients.slug, slug));
+
+  if (!client) {
+    if (platformUser?.linkedClientId) {
+      [client] = await db.select().from(clients).where(eq(clients.id, platformUser.linkedClientId));
+    } else if (slug === "client" || platformUser?.role === "admin" || platformUser?.role === "consultant") {
+      const allClients = await db.select().from(clients).limit(1);
+      client = allClients[0] || { id: "client", name: "Client Portal", slug: "client" };
+    }
+  }
+
+  if (client && platformUser?.role !== "candidate") {
+    if (platformUser.role === "client" && platformUser.linkedClientId && platformUser.linkedClientId !== client.id) {
+      const [ownClient] = await db.select().from(clients).where(eq(clients.id, platformUser.linkedClientId));
+      if (ownClient?.slug) {
+        redirect(`/${ownClient.slug}`);
       }
-      notFound();
     }
 
-    const clientName = platformUser?.name || client.name;
+    const clientName = (platformUser?.role === "client" ? platformUser?.name : client.name) || client.name;
     return (
       <ClientPortalProvider>
         <div className="h-screen overflow-hidden bg-[#f4f6fb] flex print:h-auto print:overflow-visible">
           <div className="shrink-0 h-full z-50 print:hidden">
             <Suspense fallback={<div className="w-64 h-full bg-[#0b1f3a]"></div>}>
-              <ClientSidebar clientName={clientName} clientSlug={client.slug || ""} />
+              <ClientSidebar clientName={clientName} clientSlug={client.slug || "client"} />
             </Suspense>
           </div>
           <div className="flex-1 flex flex-col h-full overflow-hidden relative print:h-auto print:overflow-visible">
@@ -57,27 +64,27 @@ export default async function DynamicSlugLayout({
   }
 
   // 2. Check if candidate
-  const [candidate] = await db.select().from(candidates).where(eq(candidates.slug, slug));
+  let [candidate] = await db.select().from(candidates).where(eq(candidates.slug, slug));
+  if (!candidate && platformUser?.linkedCandidateId) {
+    [candidate] = await db.select().from(candidates).where(eq(candidates.id, platformUser.linkedCandidateId));
+  }
 
-  if (candidate) {
-    const { platformUser } = await requireRole(["candidate"]);
-    if (platformUser.linkedCandidateId !== candidate.id) {
-      if (platformUser.linkedCandidateId) {
-        const ownSlug = await getOrCreateCandidateSlug(platformUser.linkedCandidateId, platformUser.name);
-        if (ownSlug) {
-          redirect(`/${ownSlug}`);
-        }
+  if (candidate || platformUser?.role === "candidate") {
+    const candObj = candidate || { id: platformUser.linkedCandidateId || "", name: platformUser.name || "Candidate", slug: slug };
+    if (platformUser.role === "candidate" && platformUser.linkedCandidateId && candObj.id && platformUser.linkedCandidateId !== candObj.id) {
+      const ownSlug = await getOrCreateCandidateSlug(platformUser.linkedCandidateId, platformUser.name);
+      if (ownSlug) {
+        redirect(`/${ownSlug}`);
       }
-      notFound();
     }
 
-    const unreadRows = candidate.id
+    const unreadRows = candObj.id
       ? await db
           .select()
           .from(candidateNotifications)
           .where(
             and(
-              eq(candidateNotifications.candId, candidate.id),
+              eq(candidateNotifications.candId, candObj.id),
               eq(candidateNotifications.isRead, false)
             )
           )
@@ -86,14 +93,14 @@ export default async function DynamicSlugLayout({
     return (
       <div className="flex flex-row h-screen overflow-hidden bg-[#eef2f7] text-[#1e293b]">
         <CandidateSidebar
-          userName={platformUser?.name || candidate.name || "Candidate"}
+          userName={platformUser?.name || candObj.name || "Candidate"}
           unreadCount={unreadRows.length}
-          candidateSlug={candidate.slug || ""}
+          candidateSlug={candObj.slug || slug}
         />
         <div className="flex-1 flex flex-col overflow-hidden">
           <CandidateTopbar
-            candId={candidate.id}
-            userName={platformUser?.name || candidate.name || "Candidate"}
+            candId={candObj.id}
+            userName={platformUser?.name || candObj.name || "Candidate"}
           />
           <main className="flex-1 overflow-y-auto bg-[#eef2f7]">
             <div className="p-6">{children}</div>

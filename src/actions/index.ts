@@ -524,8 +524,9 @@ export async function addReferenceAction(data: unknown) {
 
 
 export async function updateMandateCandidateStageAction(candId: number, stage: string, mandateId: number) {
-  await requireRole(["admin", "consultant"]);
+  await requireRole(["admin", "consultant", "client"]);
   revalidatePath("/dashboard", "layout");
+  revalidatePath("/", "layout"); // Revalidate all layouts so client portal updates too
   await db.update(mandateCandidates).set({ stage }).where(eq(mandateCandidates.id, candId));
   revalidatePath("/dashboard/candidates");
   revalidatePath(`/dashboard/mandates/${mandateId}`);
