@@ -40,10 +40,14 @@ export const getMandates = cache(async () => {
           candId: true
         },
         with: {
+        with: {
           candidate: {
             columns: {
               name: true,
               initials: true
+            },
+            with: {
+              verification: true
             }
           }
         }
@@ -62,7 +66,8 @@ export const getMandates = cache(async () => {
       isSentToClient: c.isSentToClient,
       externalId: c.candId,
       name: c.candidate?.name || "Unknown",
-      initials: c.candidate?.initials || "UN"
+      initials: c.candidate?.initials || "UN",
+      isVerified: c.candidate?.verification?.status === 'Verified' ? 'Verified' : 'Unverified'
     }))
   }));
 });

@@ -509,8 +509,12 @@ export const mandateCandidatesRelations = relations(mandateCandidates, ({ one })
   }),
 }));
 
-export const candidatesRelations = relations(candidates, ({ many }) => ({
+export const candidatesRelations = relations(candidates, ({ many, one }) => ({
   mandateCandidates: many(mandateCandidates),
+  verification: one(candidateVerifications, {
+    fields: [candidates.id],
+    references: [candidateVerifications.candId],
+  }),
 }));
 
 export const frameworksRelations = relations(frameworks, ({ many }) => ({
