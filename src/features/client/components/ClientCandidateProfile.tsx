@@ -105,6 +105,7 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
   const searchParams = useSearchParams();
   const [currentStage, setCurrentStage] = useState(mandateCandidate?.stage || "universe");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isRefExpanded, setIsRefExpanded] = useState(true);
   const { setTopbarConfig } = useClientPortal();
 
   // Navigation Logic
@@ -647,6 +648,70 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
         )}
 
 
+
+        {/* ─── Verification & References Accordion ─── */}
+        {sharedChecks && sharedChecks.length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm mt-6 overflow-hidden">
+            <button
+              onClick={() => setIsRefExpanded(!isRefExpanded)}
+              className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50/50 transition-colors text-left"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center">
+                  <Award className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#0b1f3a]">Verification & References</h3>
+                  <p className="text-[11px] text-gray-400 font-medium">
+                    Consultant-approved qualitative reference feedback ({sharedChecks.length} shared)
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                  Verified Vetted
+                </span>
+                {isRefExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+              </div>
+            </button>
+
+            {isRefExpanded && (
+              <div className="p-5 border-t border-gray-100 space-y-4 bg-gray-50/30">
+                {sharedChecks.map((check, idx) => (
+                  <div key={check.id || idx} className="bg-white p-4 rounded-xl border border-gray-100 shadow-2xs space-y-3">
+                    <div className="flex items-center justify-between border-b border-gray-50 pb-2.5">
+                      <span className="text-xs font-bold text-[#0b1f3a] bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-0.5 rounded-full">
+                        {check.refereeRelationship || "Reference"} · {check.refereeCompany || "Past Employer"}
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-medium">Verified by Mauna Kea</span>
+                    </div>
+
+                    {check.summaryPositives && (
+                      <div>
+                        <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block mb-0.5">Strengths</span>
+                        <p className="text-[13px] text-gray-700 leading-relaxed">{check.summaryPositives}</p>
+                      </div>
+                    )}
+
+                    {check.summaryImprovements && (
+                      <div>
+                        <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider block mb-0.5">Areas for Growth</span>
+                        <p className="text-[13px] text-gray-700 leading-relaxed">{check.summaryImprovements}</p>
+                      </div>
+                    )}
+
+                    {check.summaryNeutral && (
+                      <div>
+                        <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider block mb-0.5">Observations</span>
+                        <p className="text-[13px] text-gray-700 leading-relaxed">{check.summaryNeutral}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Remarks Section */}
         <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm mt-6 flex flex-col">

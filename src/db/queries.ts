@@ -40,7 +40,6 @@ export const getMandates = cache(async () => {
           candId: true
         },
         with: {
-        with: {
           candidate: {
             columns: {
               name: true,
