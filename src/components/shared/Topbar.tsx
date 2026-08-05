@@ -83,6 +83,7 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
       "/dashboard/candidates": { title: "Candidates", subtitle: "Candidate Database" },
       "/dashboard/calls": { title: "Productivity Tools", subtitle: "Engagement Lists" },
       "/dashboard/float-list/submissions": { title: "Candidates", subtitle: "Submissions" },
+      "/dashboard/candidate-jobs": { title: "Candidates", subtitle: "Curated Jobs Feed" },
       "/dashboard/float-list": { title: "Candidates", subtitle: "Float List" },
       "/dashboard/workbench": { title: "Productivity Tools", subtitle: "AI Workbench" },
       "/dashboard/frameworks": { title: "Productivity Tools", subtitle: "Frameworks" },

@@ -1,11 +1,31 @@
 import { requireRole } from "@/lib/auth";
+import { getCandidateById } from "@/db/queries";
+import { db } from "@/db";
+import { dreamCompanyStatus, masterClients } from "@/db/schema";
+import { eq, asc } from "drizzle-orm";
+import { getSuggestedCompanies } from "@/lib/dreamCompanySuggestions";
+import { DreamCompaniesClient } from "@/features/candidate-portal/components/DreamCompaniesClient";
 
 export default async function CandidateDreamCompaniesPage() {
-  await requireRole(["candidate"]);
+  const { platformUser } = await requireRole(["candidate"]);
+  const candId = platformUser!.linkedCandidateId!;
+
+  const [candidate, statuses, suggestions, clientsList] = await Promise.all([
+    getCandidateById(candId),
+    db.select().from(dreamCompanyStatus).where(eq(dreamCompanyStatus.candId, candId)),
+    getSuggestedCompanies(candId),
+    db.select({ name: masterClients.companyName }).from(masterClients).orderBy(asc(masterClients.companyName)),
+  ]);
+
+  const dreamCos = (candidate?.dreamCos as string[]) ?? [];
+  const masterClientNames = Array.from(new Set(clientsList.map((c) => c.name).filter(Boolean)));
+
   return (
-    <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center py-16">
-      <h2 className="text-xl font-serif font-bold text-[#133255] mb-2">Dream Companies</h2>
-      <p className="text-gray-500 text-sm">Track and set target companies for your next career move coming soon.</p>
-    </div>
+    <DreamCompaniesClient
+      dreamCos={dreamCos}
+      statuses={statuses}
+      suggestions={suggestions}
+      masterClientNames={masterClientNames}
+    />
   );
 }

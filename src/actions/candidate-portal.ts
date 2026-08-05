@@ -7,6 +7,9 @@ import {
   candidateNotifications,
   consultantNotifications,
   platformUsers,
+  candidateJobs,
+  candidateJobInterests,
+  dreamCompanyStatus,
 } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { requireRole } from "@/lib/auth";
@@ -220,5 +223,179 @@ export async function updateCandidateSelfProfileAction(
 
   revalidatePath("/candidate/profile");
   revalidatePath("/candidate");
+  return { success: true };
+}
+
+// ─── Mark Job Interest ──────────────────────────────────────────────
+export async function markJobInterestAction(jobId: number, status: 'Interested' | 'Not Interested') {
+  const { platformUser } = await requireRole(["candidate"]);
+  const candId = platformUser!.linkedCandidateId!;
+
+  const existing = await db
+    .select()
+    .from(candidateJobInterests)
+    .where(
+      and(
+        eq(candidateJobInterests.jobId, jobId),
+        eq(candidateJobInterests.candId, candId)
+      )
+    )
+    .limit(1);
+
+  if (existing.length > 0) {
+    await db
+      .update(candidateJobInterests)
+      .set({ status })
+      .where(eq(candidateJobInterests.id, existing[0].id));
+  } else {
+    await db.insert(candidateJobInterests).values({
+      jobId,
+      candId,
+      status,
+    });
+  }
+
+  if (status === "Interested") {
+    const [cand] = await db.select().from(candidates).where(eq(candidates.id, candId)).limit(1);
+    const [job] = await db.select().from(candidateJobs).where(eq(candidateJobs.id, jobId)).limit(1);
+    
+    await db.insert(consultantNotifications).values({
+      userId: null,
+      targetRole: "consultant",
+      message: `Candidate ${cand?.name || candId} expressed interest in curated job: ${job?.title || '#' + jobId}`,
+      link: `/dashboard/candidate-jobs`,
+    });
+  }
+
+  revalidatePath("/candidate/jobs");
+  return { success: true };
+}
+
+// ─── Add Dream Company ──────────────────────────────────────────────
+export async function addDreamCompanyAction(companyName: string) {
+  const { platformUser } = await requireRole(["candidate"]);
+  const candId = platformUser!.linkedCandidateId!;
+
+  const [cand] = await db.select().from(candidates).where(eq(candidates.id, candId)).limit(1);
+  if (!cand) throw new Error("Candidate not found");
+
+  const dreamCos = (cand.dreamCos as string[]) ?? [];
+
+  if (dreamCos.length >= 10) {
+    return { success: false, error: "Maximum limit of 10 dream companies reached." };
+  }
+
+  if (dreamCos.some((c) => c.toLowerCase() === companyName.toLowerCase())) {
+    return { success: false, error: "Company is already in your dream list." };
+  }
+
+  const updatedDreamCos = [...dreamCos, companyName];
+
+  await db
+    .update(candidates)
+    .set({ dreamCos: updatedDreamCos })
+    .where(eq(candidates.id, candId));
+
+  const existingStatus = await db
+    .select()
+    .from(dreamCompanyStatus)
+    .where(
+      and(
+        eq(dreamCompanyStatus.candId, candId),
+        eq(dreamCompanyStatus.companyName, companyName)
+      )
+    )
+    .limit(1);
+
+  if (existingStatus.length === 0) {
+    await db.insert(dreamCompanyStatus).values({
+      candId,
+      companyName,
+      status: "Not Started",
+    });
+  }
+
+  revalidatePath("/candidate/dream-companies");
+  return { success: true };
+}
+
+// ─── Remove Dream Company ───────────────────────────────────────────
+export async function removeDreamCompanyAction(companyName: string) {
+  const { platformUser } = await requireRole(["candidate"]);
+  const candId = platformUser!.linkedCandidateId!;
+
+  const [cand] = await db.select().from(candidates).where(eq(candidates.id, candId)).limit(1);
+  if (!cand) throw new Error("Candidate not found");
+
+  const dreamCos = (cand.dreamCos as string[]) ?? [];
+  const updatedDreamCos = dreamCos.filter((c) => c.toLowerCase() !== companyName.toLowerCase());
+
+  await db
+    .update(candidates)
+    .set({ dreamCos: updatedDreamCos })
+    .where(eq(candidates.id, candId));
+
+  await db
+    .delete(dreamCompanyStatus)
+    .where(
+      and(
+        eq(dreamCompanyStatus.candId, candId),
+        eq(dreamCompanyStatus.companyName, companyName)
+      )
+    );
+
+  revalidatePath("/candidate/dream-companies");
+  return { success: true };
+}
+
+// ─── Update Dream Company Status (Consultant Side) ─────────────────
+export async function updateDreamCompanyStatusAction(
+  candId: string,
+  companyName: string,
+  status: string,
+  notes?: string
+) {
+  const { platformUser } = await requireRole(["admin", "consultant"]);
+
+  const existingStatus = await db
+    .select()
+    .from(dreamCompanyStatus)
+    .where(
+      and(
+        eq(dreamCompanyStatus.candId, candId),
+        eq(dreamCompanyStatus.companyName, companyName)
+      )
+    )
+    .limit(1);
+
+  if (existingStatus.length > 0) {
+    await db
+      .update(dreamCompanyStatus)
+      .set({
+        status,
+        ...(notes !== undefined && { notes }),
+        updatedBy: platformUser?.name || "Consultant",
+        updatedAt: new Date(),
+      })
+      .where(eq(dreamCompanyStatus.id, existingStatus[0].id));
+  } else {
+    await db.insert(dreamCompanyStatus).values({
+      candId,
+      companyName,
+      status,
+      notes: notes || null,
+      updatedBy: platformUser?.name || "Consultant",
+    });
+  }
+
+  await db.insert(candidateNotifications).values({
+    candId,
+    type: "status_update",
+    message: `Update on your dream company: ${companyName} → ${status}`,
+    link: "/candidate/dream-companies",
+  });
+
+  revalidatePath("/candidate/dream-companies");
+  revalidatePath(`/dashboard/candidates/${candId}`);
   return { success: true };
 }

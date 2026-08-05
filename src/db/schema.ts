@@ -596,3 +596,57 @@ export const userPreferences = pgTable('user_preferences', {
 }));
 
 export type UserPreference = typeof userPreferences.$inferSelect;
+
+// ─── CURATED JOBS (Phase 3) ───────────────────────────────
+export const candidateJobs = pgTable('candidate_jobs', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  companyDisplay: varchar('company_display', { length: 255 }),
+  isConfidential: boolean('is_confidential').default(false),
+  location: varchar('location', { length: 255 }),
+  ctcRangeMin: int('ctc_range_min'),
+  ctcRangeMax: int('ctc_range_max'),
+  experienceMin: int('experience_min'),
+  experienceMax: int('experience_max'),
+  sector: varchar('sector', { length: 255 }),
+  description: text('description'),
+  highlights: json('highlights').$type<string[]>().default([]),
+  isActive: boolean('is_active').default(true),
+  targetCandIds: json('target_cand_ids').$type<string[]>().default([]),
+  createdBy: varchar('created_by', { length: 255 }),
+  createdAt: datetime('created_at').default(sql`now()`),
+  expiresAt: datetime('expires_at'),
+}, (table) => ({
+  isActiveIdx: index('cj_is_active_idx').on(table.isActive),
+  sectorIdx: index('cj_sector_idx').on(table.sector),
+}));
+
+// ─── JOB INTEREST SIGNALS (Phase 3) ───────────────────────
+export const candidateJobInterests = pgTable('candidate_job_interests', {
+  id: serial('id').primaryKey(),
+  jobId: int('job_id').notNull().references(() => candidateJobs.id, { onDelete: 'cascade' }),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id, { onDelete: 'cascade' }),
+  status: varchar('status', { length: 50 }).default('Shown'),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  jobCandUnique: unique('cji_job_cand_unique').on(table.jobId, table.candId),
+  candIdIdx: index('cji_cand_id_idx').on(table.candId),
+}));
+
+// ─── DREAM COMPANY STATUS (Phase 3) ───────────────────────
+export const dreamCompanyStatus = pgTable('dream_company_status', {
+  id: serial('id').primaryKey(),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id, { onDelete: 'cascade' }),
+  companyName: varchar('company_name', { length: 255 }).notNull(),
+  status: varchar('status', { length: 50 }).default('Not Started'),
+  notes: text('notes'),
+  updatedBy: varchar('updated_by', { length: 255 }),
+  updatedAt: datetime('updated_at').default(sql`now()`),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  candIdIdx: index('dcs_cand_id_idx').on(table.candId),
+}));
+
+export type CandidateJob = typeof candidateJobs.$inferSelect;
+export type CandidateJobInterest = typeof candidateJobInterests.$inferSelect;
+export type DreamCompanyStatus = typeof dreamCompanyStatus.$inferSelect;

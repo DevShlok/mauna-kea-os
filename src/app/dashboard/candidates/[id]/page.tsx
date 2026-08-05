@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/auth";
 import { getCandidateById, getMandates, getUserByEmail } from "@/db/queries";
 import { db } from "@/db";
-import { clientRemarks, clients, engagementListItems } from "@/db/schema";
+import { clientRemarks, clients, engagementListItems, dreamCompanyStatus } from "@/db/schema";
 import { eq, asc, and } from "drizzle-orm";
 import FlCandidateClient from "@/features/candidates/components/FlCandidateClient";
 import { redirect } from "next/navigation";
@@ -25,7 +25,7 @@ export default async function FlCandidateProfilePage({ params }: { params: Promi
     }
   }
 
-  const [candidate, mandates, remarks, allClientsList, userLists] = await Promise.all([
+  const [candidate, mandates, remarks, allClientsList, userLists, dreamStatuses] = await Promise.all([
     getCandidateById(id),
     getMandates(),
     db.select().from(clientRemarks).where(eq(clientRemarks.candId, id)).orderBy(asc(clientRemarks.createdAt)),
@@ -35,7 +35,8 @@ export default async function FlCandidateProfilePage({ params }: { params: Promi
         eq(engagementListItems.candId, id),
         eq(engagementListItems.userId, pUser.id)
       )
-    ) : Promise.resolve([])
+    ) : Promise.resolve([]),
+    db.select().from(dreamCompanyStatus).where(eq(dreamCompanyStatus.candId, id))
   ]);
 
   if (!candidate) {
@@ -44,6 +45,17 @@ export default async function FlCandidateProfilePage({ params }: { params: Promi
 
   const initialEngagementLists = userLists.map((l: any) => l.listType);
 
-  return <FlCandidateClient candidate={candidate} mandates={mandates} userRole={userRole} readOnly={readOnly} clientRemarks={remarks} allClients={allClientsList} initialEngagementLists={initialEngagementLists} />;
+  return (
+    <FlCandidateClient
+      candidate={candidate}
+      mandates={mandates}
+      userRole={userRole}
+      readOnly={readOnly}
+      clientRemarks={remarks}
+      allClients={allClientsList}
+      initialEngagementLists={initialEngagementLists}
+      dreamStatuses={dreamStatuses}
+    />
+  );
 }
 // Triggering HMR rebuild

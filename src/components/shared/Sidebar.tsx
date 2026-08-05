@@ -15,7 +15,8 @@ import {
   Trash2,
   PanelLeftClose,
   PanelLeftOpen,
-  PhoneCall
+  PhoneCall,
+  Briefcase
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useState, useEffect } from "react";
@@ -72,6 +73,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
         { label: "Float List", href: "/dashboard/float-list", visibleTo: ["admin", "consultant"] },
         { label: "Add to Float List", href: "/dashboard/candidates?mode=float", icon: Plus, visibleTo: ["admin", "consultant"] },
         { label: "Submissions", href: "/dashboard/float-list/submissions", visibleTo: ["admin", "consultant"] },
+        { label: "Job Curation Feed", href: "/dashboard/candidate-jobs", icon: Briefcase, visibleTo: ["admin", "consultant"] },
       ]
     },
     {

@@ -1,24 +1,14 @@
-import { Star } from "lucide-react";
+import { requireRole } from "@/lib/auth";
+import { getOrCreateCandidateSlug } from "@/lib/slug";
+import { redirect } from "next/navigation";
 
-export default function CandidateDreamCompaniesPage() {
-  return (
-    <div className="max-w-2xl mx-auto py-16 flex flex-col items-center justify-center text-center">
-      <div
-        className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 text-[#D8B15B]"
-        style={{
-          background: "rgba(216,177,91,0.12)",
-          border: "1px solid rgba(216,177,91,0.25)",
-        }}
-      >
-        <Star className="w-8 h-8" />
-      </div>
-      <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#D8B15B]/15 text-[#D8B15B] mb-3">
-        Phase 3 Feature
-      </span>
-      <h1 className="text-white text-2xl font-bold mb-2">Dream Companies Tracker</h1>
-      <p className="text-white/40 text-[14px] max-w-sm">
-        List your target companies and track active representation status with our consultant team.
-      </p>
-    </div>
-  );
+export default async function CandidateDreamCompaniesRedirect() {
+  const { platformUser } = await requireRole(["candidate"]);
+  if (platformUser.linkedCandidateId) {
+    const slug = await getOrCreateCandidateSlug(platformUser.linkedCandidateId, platformUser.name);
+    if (slug) {
+      redirect(`/${slug}/dream-companies`);
+    }
+  }
+  redirect("/sign-in");
 }

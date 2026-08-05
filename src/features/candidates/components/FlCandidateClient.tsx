@@ -16,6 +16,7 @@ import {
   bulkAddToEngagementListAction 
 } from "@/actions";
 import { convertToClientContactAction, updatePastCompaniesAction, updateCandidateTargetCompaniesAction } from "@/actions/candidates";
+import { updateDreamCompanyStatusAction } from "@/actions/candidate-portal";
 import { removeFromEngagementListAction } from "@/actions/calls";
 import { formatCtcValue, getCleanLinkedInUrl } from "@/lib/helpers";
 import { createClient } from "@/utils/supabase/client";
@@ -56,7 +57,8 @@ export default function FlCandidateClient({
   readOnly = false, 
   clientRemarks = [], 
   allClients = [],
-  initialEngagementLists = []
+  initialEngagementLists = [],
+  dreamStatuses = []
 }: { 
   candidate: any; 
   mandates?: any[]; 
@@ -65,8 +67,10 @@ export default function FlCandidateClient({
   clientRemarks?: any[]; 
   allClients?: any[];
   initialEngagementLists?: string[];
+  dreamStatuses?: any[];
 }) {
   const router = useRouter();
+  const [localDreamStatuses, setLocalDreamStatuses] = useState<any[]>(dreamStatuses);
   const [user, setUser] = useState<any>(null);
 
   // Layout hook
@@ -871,14 +875,86 @@ export default function FlCandidateClient({
                   {(!candidate.dreamRoles || candidate.dreamRoles.length === 0) && <span className="text-[13px] text-[#94a3b8]">None added</span>}
                 </div>
               </div>
-              <div>
-                <div className="text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Dream Companies</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {candidate.dreamCos?.map((c: string) => (
-                    <span key={c} className="px-2.5 py-1 bg-[#fef5e6] text-[#b36b00] border border-[#fdebb4] rounded-[6px] text-[12px] font-bold">{c}</span>
-                  ))}
-                  {(!candidate.dreamCos || candidate.dreamCos.length === 0) && <span className="text-[13px] text-[#94a3b8]">None added</span>}
-                </div>
+              <div className="sm:col-span-2">
+                <div className="text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Dream Companies & Representation Status</div>
+                {candidate.dreamCos && candidate.dreamCos.length > 0 ? (
+                  <div className="border border-[#e4e8f0] rounded-xl overflow-hidden mt-1">
+                    <table className="w-full text-left text-[12px]">
+                      <thead className="bg-[#fafbfd] text-[#6b7a99] border-b border-[#e4e8f0]">
+                        <tr>
+                          <th className="px-3 py-2 font-bold uppercase tracking-wider">Company</th>
+                          <th className="px-3 py-2 font-bold uppercase tracking-wider">Representation Status</th>
+                          <th className="px-3 py-2 font-bold uppercase tracking-wider">Internal Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#e4e8f0] bg-white">
+                        {candidate.dreamCos.map((comp: string) => {
+                          const currentStatObj = localDreamStatuses.find(s => s.companyName?.toLowerCase() === comp.toLowerCase());
+                          const currentStatus = currentStatObj?.status || "Not Started";
+                          const currentNotes = currentStatObj?.notes || "";
+                          return (
+                            <tr key={comp}>
+                              <td className="px-3 py-2 font-bold text-[#133255]">{comp}</td>
+                              <td className="px-3 py-2">
+                                <select
+                                  disabled={readOnly}
+                                  value={currentStatus}
+                                  onChange={async (e) => {
+                                    const nextStatus = e.target.value;
+                                    setLocalDreamStatuses(prev => {
+                                      const idx = prev.findIndex(s => s.companyName?.toLowerCase() === comp.toLowerCase());
+                                      if (idx >= 0) {
+                                        const updated = [...prev];
+                                        updated[idx] = { ...updated[idx], status: nextStatus };
+                                        return updated;
+                                      }
+                                      return [...prev, { candId: candidate.id, companyName: comp, status: nextStatus, notes: currentNotes }];
+                                    });
+                                    try {
+                                      await updateDreamCompanyStatusAction(candidate.id, comp, nextStatus, currentNotes);
+                                      toast.success(`Updated status for ${comp}`);
+                                    } catch {
+                                      toast.error("Failed to update status");
+                                    }
+                                  }}
+                                  className="h-8 text-[11px] font-semibold border border-[#d6e4ff] bg-[#f8faff] rounded-lg px-2 text-[#133255] focus:outline-none cursor-pointer"
+                                >
+                                  <option value="Not Started">Not Started</option>
+                                  <option value="Outreach Sent">Outreach Sent</option>
+                                  <option value="In Talks">In Talks</option>
+                                  <option value="Interviewed">Interviewed</option>
+                                  <option value="Rejected">Rejected</option>
+                                  <option value="Offer">Offer</option>
+                                </select>
+                              </td>
+                              <td className="px-3 py-2">
+                                <input
+                                  type="text"
+                                  disabled={readOnly}
+                                  placeholder="Internal notes (not visible to candidate)..."
+                                  defaultValue={currentNotes}
+                                  onBlur={async (e) => {
+                                    const nextNotes = e.target.value;
+                                    if (nextNotes === currentNotes) return;
+                                    try {
+                                      await updateDreamCompanyStatusAction(candidate.id, comp, currentStatus, nextNotes);
+                                      toast.success(`Saved notes for ${comp}`);
+                                    } catch {
+                                      toast.error("Failed to save notes");
+                                    }
+                                  }}
+                                  className="w-full text-[11px] p-1.5 bg-[#f8fafc] border border-[#e2e8f0] rounded focus:outline-none focus:border-[#133255]"
+                                />
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <span className="text-[13px] text-[#94a3b8]">None added</span>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <div className="text-[12px] font-bold tracking-wide uppercase text-[#6b7a99] mb-2">Relocation Preference</div>
