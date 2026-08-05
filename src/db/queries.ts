@@ -802,34 +802,95 @@ export const getFrameworks = cache(async () => {
     }
   });
 
-  const reports = await db.select({ frameworkId: candidateReports.frameworkId, candidateId: candidateReports.candidateId }).from(candidateReports);
-  const candIds = Array.from(new Set(reports.map(r => String(r.candidateId))));
+  // Count mandates that reference each framework directly (non-deleted)
+  const mandateCounts = await db
+    .select({ frameworkId: mandates.frameworkId, count: sql<number>`count(*)` })
+    .from(mandates)
+    .where(and(eq(mandates.isDeleted, false), sql`${mandates.frameworkId} IS NOT NULL`))
+    .groupBy(mandates.frameworkId);
 
-  let mCands: { id: number, externalId: string, mandateId: number }[] = [];
-  if (candIds.length > 0) {
-    mCands = await db.select({ id: mandateCandidates.id, externalId: mandateCandidates.candId, mandateId: mandateCandidates.mandateId })
-      .from(mandateCandidates); 
-      // Note: Kept simple for now to avoid breaking SQL types, but limited impact as it runs on the server.
-      // A better approach is to fix how candidateId is stored in reports.
-  }
+  const countMap = new Map(mandateCounts.map(r => [r.frameworkId, Number(r.count)]));
 
-  return fws.map(fw => {
-    const fwReports = reports.filter(r => r.frameworkId === fw.id);
-    const uniqueMandates = new Set<number>();
-    fwReports.forEach(r => {
-      const isNum = !isNaN(Number(r.candidateId));
-      const candMatch = isNum 
-        ? mCands.find(mc => mc.id === Number(r.candidateId) || mc.externalId === r.candidateId)
-        : mCands.find(mc => mc.externalId === r.candidateId);
-        
-      if (candMatch) uniqueMandates.add(candMatch.mandateId);
-    });
-    
-    return {
-      ...fw,
-      usedIn: uniqueMandates.size > 0 ? uniqueMandates.size : (fwReports.length > 0 ? 1 : (fw.usedIn || 0)),
-    };
+  return fws.map(fw => ({
+    ...fw,
+    usedIn: countMap.get(fw.id) ?? 0,
+  }));
+});
+
+export const getFrameworksPaginated = cache(async ({
+  page = 1,
+  limit = 50,
+  search = '',
+  sortKey = 'createdAt',
+  sortDir = 'desc' as 'asc' | 'desc',
+} = {}) => {
+  const offset = (page - 1) * limit;
+
+  const searchCondition = search
+    ? or(
+        ilike(frameworks.name, `%${search}%`),
+        ilike(frameworks.industry, `%${search}%`)
+      )
+    : undefined;
+
+  const baseWhere = and(eq(frameworks.isDeleted, false), searchCondition);
+
+  const [totalResult] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(frameworks)
+    .where(baseWhere);
+
+  const totalCount = Number(totalResult?.count ?? 0);
+
+  const validSortKeys: Record<string, any> = {
+    name: frameworks.name,
+    industry: frameworks.industry,
+    createdAt: frameworks.createdAt,
+    lastModified: frameworks.lastModified,
+  };
+  const sortCol = validSortKeys[sortKey] ?? frameworks.createdAt;
+  const orderFn = sortDir === 'asc' ? asc : desc;
+
+  const fws = await db.query.frameworks.findMany({
+    where: baseWhere,
+    orderBy: orderFn(sortCol),
+    limit,
+    offset,
+    with: {
+      categories: {
+        orderBy: (cats, { asc }) => [asc(cats.sortOrder)],
+        with: { criteria: { orderBy: (crits, { asc }) => [asc(crits.sortOrder)] } }
+      }
+    }
   });
+
+  // Join usedIn count from mandates
+  const fwIds = fws.map(fw => fw.id);
+  const mandateCounts = fwIds.length > 0
+    ? await db
+        .select({ frameworkId: mandates.frameworkId, count: sql<number>`count(*)` })
+        .from(mandates)
+        .where(and(eq(mandates.isDeleted, false), sql`${mandates.frameworkId} = ANY(${sql.raw(`ARRAY[${fwIds.map(() => '?').join(',')}]`)})`  ))
+        .groupBy(mandates.frameworkId)
+    : [];
+
+  // Simpler: just fetch all mandate counts and filter in JS (small overhead for frameworks page)
+  const allMandateCounts = await db
+    .select({ frameworkId: mandates.frameworkId, count: sql<number>`count(*)` })
+    .from(mandates)
+    .where(and(eq(mandates.isDeleted, false), sql`${mandates.frameworkId} IS NOT NULL`))
+    .groupBy(mandates.frameworkId);
+
+  const countMap = new Map(allMandateCounts.map(r => [r.frameworkId, Number(r.count)]));
+
+  return {
+    rows: fws.map(fw => ({ ...fw, usedIn: countMap.get(fw.id) ?? 0 })),
+    metadata: {
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
+    }
+  };
 });
 
 export const getFrameworkById = cache(async (id: string) => {
@@ -900,3 +961,134 @@ export async function getUserPreference(userId: string, prefKey: string): Promis
     .limit(1);
   return (rows[0]?.prefValue as Record<string, any>) ?? null;
 }
+
+// ─── USERS PAGINATED ─────────────────────────────────────
+export const getUsersPaginated = cache(async ({
+  page = 1,
+  limit = 50,
+  search = '',
+  sortKey = 'createdAt',
+  sortDir = 'desc' as 'asc' | 'desc',
+  role = '',
+} = {}) => {
+  const offset = (page - 1) * limit;
+
+  const searchCondition = search
+    ? or(
+        ilike(platformUsers.name, `%${search}%`),
+        ilike(platformUsers.email, `%${search}%`),
+        ilike(platformUsers.role, `%${search}%`)
+      )
+    : undefined;
+
+  const roleCondition = role ? eq(platformUsers.role, role) : undefined;
+  const baseWhere = and(eq(platformUsers.isDeleted, false), searchCondition, roleCondition);
+
+  const [totalResult] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(platformUsers)
+    .where(baseWhere);
+
+  const totalCount = Number(totalResult?.count ?? 0);
+
+  const validSortKeys: Record<string, any> = {
+    name: platformUsers.name,
+    email: platformUsers.email,
+    role: platformUsers.role,
+    status: platformUsers.status,
+    createdAt: platformUsers.createdAt,
+    lastActive: platformUsers.lastActive,
+  };
+  const sortCol = validSortKeys[sortKey] ?? platformUsers.createdAt;
+  const orderFn = sortDir === 'asc' ? asc : desc;
+
+  const rows = await db
+    .select()
+    .from(platformUsers)
+    .where(baseWhere)
+    .orderBy(orderFn(sortCol))
+    .limit(limit)
+    .offset(offset);
+
+  // Deduplicate by email (same logic as existing getPlatformUsers)
+  const uniqueMap = new Map<string, typeof rows[0]>();
+  for (const u of rows) {
+    if (u.email && !uniqueMap.has(u.email.toLowerCase())) {
+      uniqueMap.set(u.email.toLowerCase(), u);
+    }
+  }
+
+  return {
+    rows: Array.from(uniqueMap.values()),
+    metadata: {
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
+    }
+  };
+});
+
+// ─── RECYCLE BIN PAGINATED ───────────────────────────────
+export const getRecycleBinPaginated = cache(async ({
+  page = 1,
+  limit = 50,
+  search = '',
+  sortKey = 'deletedAt',
+  sortDir = 'desc' as 'asc' | 'desc',
+  type = '',  // 'candidate' | 'client' | 'mandate' | 'framework' | ''
+} = {}) => {
+  const offset = (page - 1) * limit;
+
+  // Fetch deleted items from each entity table, union them in JS
+  // (Simple approach — acceptable since recycle bin is accessed rarely)
+  const results: any[] = [];
+
+  if (!type || type === 'candidate') {
+    const rows = await db.select().from(candidates).where(eq(candidates.isDeleted, true));
+    rows.forEach(r => results.push({ ...r, entityType: 'candidate', displayName: r.name }));
+  }
+
+  if (!type || type === 'client') {
+    const rows = await db.select().from(clients).where(eq(clients.isDeleted, true));
+    rows.forEach(r => results.push({ ...r, entityType: 'client', displayName: r.name }));
+  }
+
+  if (!type || type === 'mandate') {
+    const rows = await db.select().from(mandates).where(eq(mandates.isDeleted, true));
+    rows.forEach(r => results.push({ ...r, entityType: 'mandate', displayName: `${r.role} @ ${r.company}` }));
+  }
+
+  if (!type || type === 'framework') {
+    const rows = await db.select().from(frameworks).where(eq(frameworks.isDeleted, true));
+    rows.forEach(r => results.push({ ...r, entityType: 'framework', displayName: r.name }));
+  }
+
+  // Filter by search
+  const filtered = search
+    ? results.filter(r =>
+        r.displayName?.toLowerCase().includes(search.toLowerCase()) ||
+        r.deletedBy?.toLowerCase().includes(search.toLowerCase())
+      )
+    : results;
+
+  // Sort
+  filtered.sort((a, b) => {
+    const av = a[sortKey] ?? '';
+    const bv = b[sortKey] ?? '';
+    const cmp = String(av).localeCompare(String(bv));
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+
+  const totalCount = filtered.length;
+  const pageRows = filtered.slice(offset, offset + limit);
+
+  return {
+    rows: pageRows,
+    metadata: {
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
+      uniqueTypes: Array.from(new Set(results.map(r => r.entityType))),
+    }
+  };
+});

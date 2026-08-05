@@ -279,9 +279,14 @@ export async function finalizeMandatesImportAction(newMandates: any[], resolvedU
       let companyName = m.company;
       
       if (!clientId) {
-        // Look for the client by name (case-insensitive) to auto-create if missing
-        const [existing] = await db.select().from(clients).where(sql`LOWER(${clients.name}) = LOWER(${companyName})`).limit(1);
-        if (!existing) {
+        // Fuzzy lookup: normalize company name (strip legal suffixes like Ltd, Pvt, Inc)
+        // so "Tata Ltd" matches "Tata Limited" in the DB.
+        const allClients = await db.select({ id: clients.id, name: clients.name }).from(clients);
+        const normalizedIncoming = normalizeClientName(companyName);
+        const existingClient = allClients.find(c => normalizeClientName(c.name) === normalizedIncoming);
+
+        if (!existingClient) {
+          // Create a new client record
           const newClientId = ("CLI-" + Date.now().toString() + "-" + i).substring(0, 50);
           await db.insert(clients).values({
             id: newClientId,
@@ -292,7 +297,8 @@ export async function finalizeMandatesImportAction(newMandates: any[], resolvedU
             metadata: {},
           });
         } else {
-          companyName = existing.name; // normalize to DB name
+          // Normalize mandate company name to exactly match the existing client name
+          companyName = existingClient.name;
         }
       }
 

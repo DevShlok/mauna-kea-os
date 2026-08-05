@@ -18,7 +18,7 @@ interface ColumnCustomizerPanelProps {
   toggleColumn: (key: string) => void;
   reorderColumns: (from: number, to: number) => void;
   resetToDefault: () => void;
-  publishAsOrgDefault: () => Promise<void>;
+  publishAsOrgDefault?: () => Promise<void>;
 }
 
 export function ColumnCustomizerPanel({
@@ -79,6 +79,7 @@ export function ColumnCustomizerPanel({
   };
 
   const handlePublish = async () => {
+    if (!publishAsOrgDefault) return;
     setIsPublishing(true);
     try {
       await publishAsOrgDefault();

@@ -1,18 +1,53 @@
 "use client";
 import { confirmDialog } from "@/components/ConfirmDialog";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { updatePlatformUserAction, deletePlatformUserAction, deleteMultiplePlatformUsersAction } from "@/actions";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 import { useColumnPrefs, DEFAULT_USER_COLUMNS, ColumnDef } from "@/hooks/useColumnPrefs";
 import { AdvancedTable } from "@/components/ui/AdvancedTable";
-import { Download, Upload } from "lucide-react";
+import { ColumnCustomizerPanel } from "@/components/ui/ColumnCustomizerPanel";
+import { Download, Upload, Settings, Search } from "lucide-react";
 import dynamic from "next/dynamic";
 const UserImportModal = dynamic(() => import("./UserImportModal"), { ssr: false });
 
-export default function UsersClient({ initialUsers, clients }: { initialUsers: any[], clients: any[] }) {
+type Metadata = { totalCount: number; totalPages: number; currentPage: number };
+
+export default function UsersClient({ initialUsers, clients, metadata }: { initialUsers: any[], clients: any[], metadata: Metadata }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
+
+  const updateURL = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, val]) => {
+      if (val === null || val === "") params.delete(key);
+      else params.set(key, val);
+    });
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [pathname, router, searchParams]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const current = searchParams.get("search") || "";
+      if (searchInput !== current) updateURL({ search: searchInput || null, page: "1" });
+    }, 500);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const sortKey = searchParams.get("sortKey") || "createdAt";
+  const sortDir = (searchParams.get("sortDir") || "desc") as "asc" | "desc";
+  const page = Number(searchParams.get("page")) || 1;
+  const pageSize = Number(searchParams.get("pageSize")) || 50;
+
+  const toggleSort = (key: string) => {
+    const newDir = sortKey === key && sortDir === "asc" ? "desc" : "asc";
+    updateURL({ sortKey: key, sortDir: newDir, page: "1" });
+  };
+
   const [users, setUsers] = useState(initialUsers);
   const [isAdding, setIsAdding] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -83,13 +118,8 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
   };
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
 
-  const { columns, visibleColumns, isLoading: isColsLoading, setColumnWidth, reorderColumns } = useColumnPrefs("userListCols", DEFAULT_USER_COLUMNS);
-
-  const totalRows = users.length;
-  const paginatedData = users.slice((page - 1) * pageSize, page * pageSize);
+  const { columns, visibleColumns, isLoading: isColsLoading, setColumnWidth, reorderColumns, toggleColumn, resetToDefault } = useColumnPrefs("userListCols", DEFAULT_USER_COLUMNS);
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
@@ -99,7 +129,34 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
           <span>/</span>
           <span>Users</span>
         </div>
-        <h1 className="text-[29px] font-serif font-bold text-[#111]">User Management</h1>
+        <h1 className="text-[29px] font-serif font-bold text-[#111]">
+          User Management
+          <span className="text-sm font-sans font-normal text-gray-400 ml-3">({metadata.totalCount} users)</span>
+        </h1>
+      </div>
+
+      {/* Action Bar */}
+      <div className="neo-bar p-3 mb-4 flex items-center gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            className="w-full h-10 pl-9 pr-3 border border-gray-200 rounded-[9px] text-sm focus:outline-none focus:border-[#133255] bg-white"
+            placeholder="Search users..."
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+          />
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <button onClick={() => setIsCustomizerOpen(true)} className="h-10 w-10 neo-btn flex items-center justify-center text-gray-500 hover:text-[#133255]" title="Customize columns">
+            <Settings className="w-4 h-4" />
+          </button>
+          <button onClick={() => setIsImportModalOpen(true)} className="h-10 px-4 neo-btn text-gray-700 text-sm font-bold flex items-center gap-1.5">
+            <Upload className="w-3.5 h-3.5" /> Import
+          </button>
+          <button onClick={() => router.push('/dashboard/admin/users/new')} className="h-10 px-4 neo-btn-primary text-sm font-bold text-white">
+            + Add User
+          </button>
+        </div>
       </div>
 
       {/* Bulk Action Bar */}
@@ -123,31 +180,19 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
         </div>
       )}
 
+      <UserImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
       <div className="h-full flex flex-col min-h-[400px]">
-        <div className="p-4 border-b border-gray-100 flex justify-end gap-3">
-          <button 
-            onClick={() => setIsImportModalOpen(true)}
-            className="h-9 px-5 neo-btn text-gray-700 text-xs font-bold flex items-center gap-1.5"
-          >
-            <Upload className="w-3.5 h-3.5" />
-            Import Users
-          </button>
-          <button onClick={() => router.push('/dashboard/admin/users/new')} className="h-9 px-5 neo-btn-primary text-xs font-bold text-white">
-            + Add User
-          </button>
-        </div>
-        <UserImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
         <AdvancedTable
-          data={paginatedData}
-          total={totalRows}
+          data={users}
+          total={metadata.totalCount}
           columns={columns}
           page={page}
           pageSize={pageSize}
-          setPageSize={(s) => { setPageSize(s); setPage(1); }}
-          setPage={setPage}
-          sortKey="name"
-          sortDir="asc"
-          onSort={() => {}}
+          setPageSize={(s) => updateURL({ pageSize: String(s), page: "1" })}
+          setPage={(p) => updateURL({ page: String(p) })}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          onSort={toggleSort}
           visibleColumns={visibleColumns}
           setColumnWidth={setColumnWidth}
           reorderColumns={reorderColumns}
@@ -265,7 +310,17 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      <ColumnCustomizerPanel
+        isOpen={isCustomizerOpen}
+        onClose={() => setIsCustomizerOpen(false)}
+        columns={columns}
+        visibleColumns={visibleColumns}
+        toggleColumn={toggleColumn}
+        reorderColumns={reorderColumns}
+        resetToDefault={resetToDefault}
+        isAdmin={false}
+      />
+
       {isDeleteDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#133255]/40 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[20px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">

@@ -1,13 +1,14 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { deleteMultipleCandidatesAction } from "@/actions";
 import toast from "react-hot-toast";
 import { AdvancedTable } from "@/components/ui/AdvancedTable";
 import { useColumnPrefs, DEFAULT_FLOAT_COLUMNS, ColumnDef } from "@/hooks/useColumnPrefs";
-import { Download, Upload } from "lucide-react";
+import { ColumnCustomizerPanel } from "@/components/ui/ColumnCustomizerPanel";
+import { Download, Upload, Settings, Search } from "lucide-react";
 import dynamic from "next/dynamic";
 import { FloatStageDropdown } from "@/components/ui/FloatStageDropdown";
 const FloatImportModal = dynamic(() => import("./FloatImportModal"), { ssr: false });
@@ -22,12 +23,15 @@ export default function FloatListClient({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const pathname = usePathname();
+
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [stageFilter, setStageFilter] = useState(searchParams.get("stage") || "");
   const [mandateFilter, setMandateFilter] = useState(searchParams.get("mandate") || "");
   const [companyFilter, setCompanyFilter] = useState(searchParams.get("company") || "");
   const [designationFilter, setDesignationFilter] = useState(searchParams.get("designation") || "");
   const [pageSize, setPageSize] = useState(Number(searchParams.get("pageSize")) || 50);
+  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
 
   const sortKey = searchParams.get("sortKey") || "createdAt";
   const sortDir = searchParams.get("sortDir") || "desc";
@@ -38,6 +42,8 @@ export default function FloatListClient({
     isLoading: isColsLoading,
     setColumnWidth,
     reorderColumns,
+    toggleColumn,
+    resetToDefault,
   } = useColumnPrefs("floatListCols", DEFAULT_FLOAT_COLUMNS);
 
   const { uniqueMandates, uniqueCompanies, uniqueDesignations, totalCount: totalRows, totalPages, currentPage } = metadata;
@@ -45,17 +51,24 @@ export default function FloatListClient({
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalRows);
 
-  const updateURL = (newParams: Record<string, string>) => {
+  const updateURL = useCallback((newParams: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(newParams).forEach(([k, v]) => {
       if (v === "") params.delete(k);
       else params.set(k, v);
     });
     if (!newParams.page) params.set("page", "1");
-    router.push(`?${params.toString()}`);
-  };
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [pathname, router, searchParams]);
 
-  const handleSearchBlur = () => updateURL({ search });
+  // Debounced search — fires 500ms after the user stops typing
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const current = searchParams.get("search") || "";
+      if (search !== current) updateURL({ search });
+    }, 500);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const toggleSort = (key: string) => {
     const newDir = sortKey === key && sortDir === "asc" ? "desc" : "asc";
@@ -127,36 +140,32 @@ export default function FloatListClient({
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <div className="text-[14px] text-gray-500 mb-1">Home / Candidates</div>
-          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">Float Database</h1>
-        </div>
-        <div className="flex gap-3 items-center">
-          <button 
-            onClick={() => setIsImportModalOpen(true)}
-            className="h-10 px-5 neo-btn text-gray-700 text-sm font-semibold flex items-center gap-1.5"
-          >
-            <Upload className="w-4 h-4" /> Import Floats
-          </button>
+          <div className="text-[14px] text-gray-500 mb-1">Home / Talent Pool</div>
+          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">
+            Float Database
+            <span className="text-sm font-sans font-normal text-gray-400 ml-3">({metadata.totalCount} candidates)</span>
+          </h1>
         </div>
       </div>
-      
+
       <FloatImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
-      
+
       {/* Filters Bar */}
-      <div className="neo-bar flex flex-wrap gap-3 mb-6 p-4">
-        <input 
-          type="text" 
-          placeholder="Search by Name/Company..." 
-          value={search} 
-          onChange={(e) => setSearch(e.target.value)}
-          onBlur={handleSearchBlur}
-          onKeyDown={e => e.key === "Enter" && handleSearchBlur()} 
-          className="min-w-[200px] flex-1 px-4 py-2.5 neo-inset text-sm text-slate-800 font-medium placeholder-slate-400 outline-none"
-        />
+      <div className="neo-bar flex flex-wrap gap-3 mb-4 p-3 items-center">
+        <div className="relative min-w-[200px] flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by Name / Company..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-10 pl-9 pr-3 border border-gray-200 rounded-[9px] text-sm focus:outline-none focus:border-[#133255] bg-white"
+          />
+        </div>
         
-        <select value={stageFilter} onChange={(e) => { setStageFilter(e.target.value); updateURL({ stage: e.target.value }); }} className="px-4 py-2.5 neo-inset text-sm text-slate-700 font-semibold outline-none">
+        <select value={stageFilter} onChange={(e) => { setStageFilter(e.target.value); updateURL({ stage: e.target.value }); }} className="h-10 px-3 border border-gray-200 rounded-[9px] text-sm bg-white focus:outline-none focus:border-[#133255]">
           <option value="">All Stages</option>
           <option value="shortlist">Shortlist</option>
           <option value="interview">Interview</option>
@@ -166,20 +175,29 @@ export default function FloatListClient({
           <option value="mapping">Mapping</option>
         </select>
 
-        <select value={mandateFilter} onChange={(e) => { setMandateFilter(e.target.value); updateURL({ mandate: e.target.value }); }} className="px-4 py-2.5 neo-inset text-sm text-slate-700 font-semibold outline-none max-w-[200px]">
+        <select value={mandateFilter} onChange={(e) => { setMandateFilter(e.target.value); updateURL({ mandate: e.target.value }); }} className="h-10 px-3 border border-gray-200 rounded-[9px] text-sm bg-white focus:outline-none focus:border-[#133255] max-w-[200px]">
           <option value="">All Mandates</option>
           {uniqueMandates.map((m: any) => <option key={m} value={m}>{m}</option>)}
         </select>
 
-        <select value={companyFilter} onChange={(e) => { setCompanyFilter(e.target.value); updateURL({ company: e.target.value }); }} className="px-3 py-2 neo-inset text-sm bg-white outline-none max-w-[180px]">
+        <select value={companyFilter} onChange={(e) => { setCompanyFilter(e.target.value); updateURL({ company: e.target.value }); }} className="h-10 px-3 border border-gray-200 rounded-[9px] text-sm bg-white focus:outline-none focus:border-[#133255] max-w-[180px]">
           <option value="">All Companies</option>
           {uniqueCompanies.map((c: any) => <option key={c} value={c}>{c}</option>)}
         </select>
 
-        <select value={designationFilter} onChange={(e) => { setDesignationFilter(e.target.value); updateURL({ designation: e.target.value }); }} className="px-3 py-2 neo-inset text-sm bg-white outline-none max-w-[180px]">
+        <select value={designationFilter} onChange={(e) => { setDesignationFilter(e.target.value); updateURL({ designation: e.target.value }); }} className="h-10 px-3 border border-gray-200 rounded-[9px] text-sm bg-white focus:outline-none focus:border-[#133255] max-w-[180px]">
           <option value="">All Designations</option>
           {uniqueDesignations.map((d: any) => <option key={d} value={d}>{d}</option>)}
         </select>
+
+        <div className="ml-auto flex items-center gap-2">
+          <button onClick={() => setIsCustomizerOpen(true)} className="h-10 w-10 neo-btn flex items-center justify-center text-gray-500 hover:text-[#133255]" title="Customize columns">
+            <Settings className="w-4 h-4" />
+          </button>
+          <button onClick={() => setIsImportModalOpen(true)} className="h-10 px-4 neo-btn text-gray-700 text-sm font-semibold flex items-center gap-1.5">
+            <Upload className="w-4 h-4" /> Import
+          </button>
+        </div>
       </div>
       
       {/* Bulk Action Bar */}
@@ -329,6 +347,17 @@ export default function FloatListClient({
           </div>
         </div>
       )}
+
+      <ColumnCustomizerPanel
+        isOpen={isCustomizerOpen}
+        onClose={() => setIsCustomizerOpen(false)}
+        columns={columns}
+        visibleColumns={visibleColumns}
+        toggleColumn={toggleColumn}
+        reorderColumns={reorderColumns}
+        resetToDefault={resetToDefault}
+        isAdmin={false}
+      />
 
     </div>
   );
