@@ -41,17 +41,44 @@ export default function FollowUpsClient({ initialFollowUps }: { initialFollowUps
   );
 
   return (
-    <div className="max-w-screen-xl mx-auto pb-10">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Follow-Ups</h1>
-        <button onClick={() => setIsAdding(true)} className="px-4 py-2 bg-yellow-500 text-[#133255] rounded text-xs font-bold hover:bg-yellow-400">+ Add Follow-Up</button>
+    <div className="w-full max-w-[1600px] mx-auto px-6 pb-10 pt-6">
+      {/* ── Page Header ───────────────────────────────────── */}
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h1 className="text-[26px] font-serif font-bold text-[#133255] tracking-tight">
+            Follow-Ups Tracker
+          </h1>
+          <p className="text-[13.5px] text-[#6b7a99] mt-1">
+            {followUps.length.toLocaleString()} active follow-up tasks
+          </p>
+        </div>
+
+        <button 
+          onClick={() => setIsAdding(true)} 
+          className="h-10 px-5 neo-btn text-[#133255] text-[13.5px] font-bold transition-all flex items-center gap-2"
+        >
+          + Add Follow-Up
+        </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        {[{label:"Overdue",count:overdue.length,cls:"text-red-600"},{label:"Due Today",count:today.length,cls:"text-orange-600"},{label:"Upcoming",count:upcoming.length,cls:"text-[#133255]"}].map((s) => (
-          <div key={s.label} className="neo-card p-5 text-center shadow-sm">
-            <div className="text-xs font-bold text-gray-400 uppercase mb-1">{s.label}</div>
-            <div className={"text-4xl font-bold " + s.cls}>{s.count}</div>
+      {/* ── KPI Stat Cards ─────────────────────────────────── */}
+      <div className="flex items-center gap-4 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+        {[
+          { label: "Overdue", value: overdue.length, color: "text-[#c53030]" },
+          { label: "Due Today", value: today.length, color: "text-[#b7791f]" },
+          { label: "Upcoming", value: upcoming.length, color: "text-[#2a44a0]" },
+          { label: "Total Follow-Ups", value: followUps.length, color: "text-[#133255]" },
+        ].map((kpi, i) => (
+          <div
+            key={i}
+            className="flex-1 min-w-[150px] neo-card-sm px-6 py-4 transition-transform hover:-translate-y-0.5"
+          >
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              {kpi.label}
+            </div>
+            <div className={`text-[24px] font-serif font-bold ${kpi.color}`}>
+              {kpi.value.toLocaleString()}
+            </div>
           </div>
         ))}
       </div>

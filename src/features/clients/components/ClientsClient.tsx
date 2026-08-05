@@ -8,10 +8,11 @@ import { Search } from "lucide-react";
 import { updateClientAction, deleteMultipleClientsAction } from "@/actions";
 import dynamic from "next/dynamic";
 const ClientImportModal = dynamic(() => import("./ClientImportModal"), { ssr: false });
-import { Upload, Plus, Download } from "lucide-react";
+import { Upload, Plus, Download, Settings } from "lucide-react";
 import toast from "react-hot-toast";
 import { AdvancedTable } from "@/components/ui/AdvancedTable";
 import { useColumnPrefs, DEFAULT_CLIENT_COLUMNS, ColumnDef } from "@/hooks/useColumnPrefs";
+import { ColumnCustomizerPanel } from "@/components/ui/ColumnCustomizerPanel";
 
 export default function ClientsClient({ 
   initialClients, 
@@ -29,6 +30,7 @@ export default function ClientsClient({
   const [verticalFilter, setVerticalFilter] = useState(searchParams.get("vertical") || "All industries");
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "All status");
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   const [pageSize, setPageSize] = useState(Number(searchParams.get("pageSize")) || 50);
 
   const sortKey = searchParams.get("sortKey") || "createdAt";
@@ -38,8 +40,12 @@ export default function ClientsClient({
     columns,
     visibleColumns,
     isLoading: isColsLoading,
+    toggleColumn,
     setColumnWidth,
     reorderColumns,
+    resetToDefault,
+    publishAsOrgDefault,
+    isAdmin,
   } = useColumnPrefs("clientListCols", DEFAULT_CLIENT_COLUMNS);
 
   const [localClients, setLocalClients] = useState(initialClients);
@@ -151,30 +157,40 @@ export default function ClientsClient({
   const selectedClientNames = selectedClients.map(c => c.name);
   const attachedMandatesCount = selectedClients.reduce((acc, c) => acc + (c.mandates?.length || 0), 0);
 
+  const activeCount = localClients.filter(c => c.status === "Active").length;
+  const totalMandatesCount = localClients.reduce((acc, c) => acc + (c.mandates?.length || 0), 0);
+  const topVertical = uniqueVerticals[0] || "General";
+
   const renderCell = (c: any, col: ColumnDef) => {
     switch (col.key) {
       case "name":
+        const initials = c.name ? c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase() : "?";
         return (
-          <div>
-            <div className="font-bold text-[15px] text-gray-900">{c.name}</div>
-            <div className="text-[13px] text-gray-400">{c.accountId}</div>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-[8px] bg-[#133255] text-white flex items-center justify-center text-[12px] font-bold shrink-0 shadow-sm uppercase">
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-bold text-[14px] text-[#111] truncate hover:underline">{c.name}</div>
+              <div className="text-[12px] text-[#6b7a99] truncate">{c.accountId || "Client Account"}</div>
+            </div>
           </div>
         );
       case "vertical":
-        return <div className="text-[15px] text-gray-600">{c.vertical || "-"}</div>;
+        return <div className="text-[13px] text-[#475569] font-medium">{c.vertical || "-"}</div>;
       case "owner":
-        return <div className="text-[15px] text-gray-600">{c.owner || "-"}</div>;
+        return <div className="text-[13px] text-[#475569] font-medium">{c.owner || "-"}</div>;
       case "liveMandates":
         return (
-          <div className="text-[14px] text-gray-600 font-medium">
-            {getLiveMandatesCount(c)}
+          <div className="text-[13px] text-[#133255] font-bold">
+            {getLiveMandatesCount(c)} Live
           </div>
         );
       case "status":
         return (
-          <span className={`px-2.5 py-1 text-[12px] font-bold rounded-full border ${
-            c.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' :
-            'bg-gray-50 text-gray-600 border-gray-200'
+          <span className={`px-2.5 py-1 text-[11.5px] font-bold rounded-[6px] border ${
+            c.status === 'Active' ? 'bg-[#e6f6ee] text-[#127a41] border-[#bfe6ce]' :
+            'bg-[#f1f3f6] text-[#697587] border-[#dde2ea]'
           }`}>
             {c.status || "Inactive"}
           </span>
@@ -182,10 +198,10 @@ export default function ClientsClient({
       case "actions":
         return (
           <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-            <Link href={`/dashboard/clients/${c.id}`} className="px-3 py-1.5 text-[13px] font-bold text-white neo-btn" style={{ background: 'linear-gradient(135deg,#133255,#1d4d82)' }}>
+            <Link href={`/dashboard/clients/${c.id}`} className="h-8 px-3 text-[12px] font-bold text-white rounded-[6px] bg-[#133255] hover:bg-[#1d4d82] transition-colors inline-flex items-center">
               View
             </Link>
-            <Link href={`/dashboard/mandates/new?company=${encodeURIComponent(c.name)}`} className="px-3 py-1.5 text-[13px] font-bold text-[#133255] neo-btn" style={{ background: 'linear-gradient(135deg,#D8B15B,#f0c96a)' }}>
+            <Link href={`/dashboard/mandates/new?company=${encodeURIComponent(c.name)}`} className="h-8 px-3 text-[12px] font-bold text-[#133255] rounded-[6px] bg-[#D8B15B] hover:bg-[#f0c96a] transition-colors inline-flex items-center">
               + Mandate
             </Link>
           </div>
@@ -196,58 +212,109 @@ export default function ClientsClient({
   };
 
   return (
-    <div className="max-w-screen-xl mx-auto pb-10">
-        <div className="text-[14px] text-gray-500 mb-1">Home / Clients</div>
-        <h1 className="text-3xl font-serif font-bold text-[#133255] mb-8 tracking-tight">Client Database</h1>
+    <div className="w-full max-w-[1600px] mx-auto px-6 pb-10 pt-6">
+      <ColumnCustomizerPanel
+        isOpen={isCustomizerOpen}
+        onClose={() => setIsCustomizerOpen(false)}
+        columns={columns}
+        visibleColumns={visibleColumns}
+        isAdmin={isAdmin}
+        toggleColumn={toggleColumn}
+        reorderColumns={reorderColumns}
+        resetToDefault={resetToDefault}
+        publishAsOrgDefault={publishAsOrgDefault}
+      />
+      <ClientImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
 
-        {/* Action Bar */}
-        <div className="flex items-center gap-4 mb-6 neo-bar p-3 flex-wrap">
-          <div className="flex-1 relative min-w-[200px]">
-            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-          type="text" 
-          placeholder="Search by client or industry..." 
-          value={search} 
-          onChange={e => setSearch(e.target.value)} 
-          className="w-full pl-10 pr-4 h-10 neo-inset text-sm text-slate-800 placeholder-slate-400 font-medium outline-none"
-        />
-          </div>
-          
-          <select 
-          value={verticalFilter} 
-          onChange={e => { setVerticalFilter(e.target.value); updateURL({ vertical: e.target.value }); }} 
-          className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[160px]">
-          <option value="All industries">All industries</option>
-          {uniqueVerticals.map(i => <option key={i} value={i}>{i}</option>)}
-        </select>
-        
-        <select 
-          value={statusFilter} 
-          onChange={e => { setStatusFilter(e.target.value); updateURL({ status: e.target.value }); }} 
-          className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[150px]">
-          <option value="All status">All statuses</option>
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
-        </select>
-
-          <button 
-            onClick={() => setIsImportModalOpen(true)}
-            className="h-10 px-5 neo-btn text-gray-700 text-[13px] font-semibold flex items-center gap-1.5"
-          >
-            <Upload className="w-3.5 h-3.5" />
-            Import
-          </button>
-
-          <button 
-            onClick={() => router.push('/dashboard/clients/new')}
-            className="h-10 px-5 neo-btn text-[#133255] text-[13px] font-bold flex items-center gap-1.5"
-            style={{ background: 'linear-gradient(135deg, #D8B15B, #f0c96a)' }}
-          >
-            <Plus className="w-3.5 h-3.5" /> Add client
-          </button>
+      {/* ── Page Header ───────────────────────────────────── */}
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h1 className="text-[26px] font-serif font-bold text-[#133255] tracking-tight">
+            Client Database
+          </h1>
+          <p className="text-[13.5px] text-[#6b7a99] mt-1">
+            {totalRows.toLocaleString()} total clients · Showing {startIndex + 1}–{endIndex}
+          </p>
         </div>
 
-        <ClientImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
+        <div className="flex gap-2.5">
+          <button
+            onClick={() => setIsCustomizerOpen(true)}
+            className="h-10 px-4 neo-btn text-[#475569] text-[13.5px] font-semibold transition-all flex items-center gap-2"
+          >
+            <Settings size={15} /> Customise View
+          </button>
+          <button 
+            onClick={() => setIsImportModalOpen(true)}
+            className="h-10 px-4 neo-btn text-[#475569] text-[13.5px] font-semibold transition-all flex items-center gap-2"
+          >
+            <Upload size={15} /> Import Clients
+          </button>
+          <button 
+            onClick={() => router.push('/dashboard/clients/new')}
+            className="h-10 px-5 neo-btn text-[#133255] text-[13.5px] font-bold transition-all flex items-center gap-2"
+          >
+            <Plus size={16} /> Add Client
+          </button>
+        </div>
+      </div>
+
+      {/* ── KPI Stat Cards ─────────────────────────────────── */}
+      <div className="flex items-center gap-4 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        {[
+          { label: "Total Clients", value: totalRows, color: "text-[#133255]" },
+          { label: "Active Clients", value: activeCount, color: "text-[#127a41]" },
+          { label: "Attached Mandates", value: totalMandatesCount, color: "text-[#2a44a0]" },
+          { label: "Primary Vertical", value: topVertical, color: "text-[#b7791f]" },
+        ].map((kpi, i) => (
+          <div
+            key={i}
+            className="flex-1 min-w-[150px] neo-card-sm px-6 py-4 transition-transform hover:-translate-y-0.5"
+          >
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              {kpi.label}
+            </div>
+            <div className={`text-[24px] font-serif font-bold ${kpi.color}`}>
+              {typeof kpi.value === "number" ? kpi.value.toLocaleString() : kpi.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Search & Filter Bar ──────────────────────────── */}
+      <div className="neo-card mb-6 p-2 relative z-10">
+        <div className="flex flex-wrap gap-3 items-center p-1">
+          <div className="flex-1 flex items-center gap-2.5 px-4 py-2 min-w-[220px] neo-inset">
+            <Search size={16} className="text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Search by client or industry..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+              className="flex-1 text-[14px] font-bold text-slate-800 bg-transparent outline-none placeholder-slate-400"
+            />
+          </div>
+
+          <select 
+            value={verticalFilter} 
+            onChange={e => { setVerticalFilter(e.target.value); updateURL({ vertical: e.target.value }); }} 
+            className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[160px]"
+          >
+            <option value="All industries">All industries</option>
+            {uniqueVerticals.map(i => <option key={i} value={i}>{i}</option>)}
+          </select>
+          
+          <select 
+            value={statusFilter} 
+            onChange={e => { setStatusFilter(e.target.value); updateURL({ status: e.target.value }); }} 
+            className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[150px]"
+          >
+            <option value="All status">All statuses</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
 
         {/* Bulk Action Bar */}
         {selectedIds.size > 0 && (

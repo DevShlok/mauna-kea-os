@@ -121,41 +121,92 @@ export default function UsersClient({ initialUsers, clients, metadata }: { initi
 
   const { columns, visibleColumns, isLoading: isColsLoading, setColumnWidth, reorderColumns, toggleColumn, resetToDefault } = useColumnPrefs("userListCols", DEFAULT_USER_COLUMNS);
 
-  return (
-    <div className="max-w-screen-xl mx-auto pb-10">
-      <div className="mb-6 flex flex-col gap-1">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400">
-          <span className="text-[#133255]">Admin</span>
-          <span>/</span>
-          <span>Users</span>
-        </div>
-        <h1 className="text-[29px] font-serif font-bold text-[#111]">
-          User Management
-          <span className="text-sm font-sans font-normal text-gray-400 ml-3">({metadata.totalCount} users)</span>
-        </h1>
-      </div>
+  const adminCount = users.filter((u: any) => u.role === "admin").length;
+  const consultantCount = users.filter((u: any) => u.role === "consultant").length;
+  const clientUserCount = users.filter((u: any) => u.role === "client").length;
 
-      {/* Action Bar */}
-      <div className="neo-bar p-3 mb-4 flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            className="w-full h-10 pl-9 pr-3 border border-gray-200 rounded-[9px] text-sm focus:outline-none focus:border-[#133255] bg-white"
-            placeholder="Search users..."
-            value={searchInput}
-            onChange={e => setSearchInput(e.target.value)}
-          />
+  return (
+    <div className="w-full max-w-[1600px] mx-auto px-6 pb-10 pt-6">
+      <ColumnCustomizerPanel
+        isOpen={isCustomizerOpen}
+        onClose={() => setIsCustomizerOpen(false)}
+        columns={columns}
+        visibleColumns={visibleColumns}
+        isAdmin={true}
+        toggleColumn={toggleColumn}
+        reorderColumns={reorderColumns}
+        resetToDefault={resetToDefault}
+      />
+      <UserImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
+
+      {/* ── Page Header ───────────────────────────────────── */}
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h1 className="text-[26px] font-serif font-bold text-[#133255] tracking-tight">
+            User Management
+          </h1>
+          <p className="text-[13.5px] text-[#6b7a99] mt-1">
+            {metadata.totalCount.toLocaleString()} total registered platform users
+          </p>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <button onClick={() => setIsCustomizerOpen(true)} className="h-10 w-10 neo-btn flex items-center justify-center text-gray-500 hover:text-[#133255]" title="Customize columns">
-            <Settings className="w-4 h-4" />
+
+        <div className="flex gap-2.5">
+          <button
+            onClick={() => setIsCustomizerOpen(true)}
+            className="h-10 px-4 neo-btn text-[#475569] text-[13.5px] font-semibold transition-all flex items-center gap-2"
+          >
+            <Settings size={15} /> Customise View
           </button>
-          <button onClick={() => setIsImportModalOpen(true)} className="h-10 px-4 neo-btn text-gray-700 text-sm font-bold flex items-center gap-1.5">
-            <Upload className="w-3.5 h-3.5" /> Import
+          <button 
+            onClick={() => setIsImportModalOpen(true)}
+            className="h-10 px-4 neo-btn text-[#475569] text-[13.5px] font-semibold transition-all flex items-center gap-2"
+          >
+            <Upload size={15} /> Import Users
           </button>
-          <button onClick={() => router.push('/dashboard/admin/users/new')} className="h-10 px-4 neo-btn-primary text-sm font-bold text-white">
+          <button 
+            onClick={() => router.push('/dashboard/admin/users/new')}
+            className="h-10 px-5 neo-btn text-[#133255] text-[13.5px] font-bold transition-all flex items-center gap-2"
+          >
             + Add User
           </button>
+        </div>
+      </div>
+
+      {/* ── KPI Stat Cards ─────────────────────────────────── */}
+      <div className="flex items-center gap-4 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        {[
+          { label: "Total Users", value: metadata.totalCount, color: "text-[#133255]" },
+          { label: "Consultants", value: consultantCount, color: "text-[#2a44a0]" },
+          { label: "Admins", value: adminCount, color: "text-[#c53030]" },
+          { label: "Client Access", value: clientUserCount, color: "text-[#127a41]" },
+        ].map((kpi, i) => (
+          <div
+            key={i}
+            className="flex-1 min-w-[150px] neo-card-sm px-6 py-4 transition-transform hover:-translate-y-0.5"
+          >
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              {kpi.label}
+            </div>
+            <div className={`text-[24px] font-serif font-bold ${kpi.color}`}>
+              {kpi.value.toLocaleString()}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Search & Filter Bar ──────────────────────────── */}
+      <div className="neo-card mb-6 p-2 relative z-10">
+        <div className="flex flex-wrap gap-3 items-center p-1">
+          <div className="flex-1 flex items-center gap-2.5 px-4 py-2 min-w-[220px] neo-inset">
+            <Search size={16} className="text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by user name or email..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="flex-1 text-[14px] font-bold text-slate-800 bg-transparent outline-none placeholder-slate-400"
+            />
+          </div>
         </div>
       </div>
 
@@ -309,17 +360,6 @@ export default function UsersClient({ initialUsers, clients, metadata }: { initi
           </div>
         </div>
       )}
-
-      <ColumnCustomizerPanel
-        isOpen={isCustomizerOpen}
-        onClose={() => setIsCustomizerOpen(false)}
-        columns={columns}
-        visibleColumns={visibleColumns}
-        toggleColumn={toggleColumn}
-        reorderColumns={reorderColumns}
-        resetToDefault={resetToDefault}
-        isAdmin={false}
-      />
 
       {isDeleteDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#133255]/40 backdrop-blur-sm">

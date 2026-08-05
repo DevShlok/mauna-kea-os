@@ -138,65 +138,111 @@ export default function FloatListClient({
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
+  const shortlistCount = paginatedData.filter((c: any) => c.stage === 'shortlist').length;
+  const interviewCount = paginatedData.filter((c: any) => c.stage === 'interview').length;
+  const offerCount = paginatedData.filter((c: any) => c.stage === 'offer-sent' || c.stage === 'offer').length;
+
   return (
-    <div className="max-w-screen-xl mx-auto pb-10">
-      <div className="flex justify-between items-center mb-6">
+    <div className="w-full max-w-[1600px] mx-auto px-6 pb-10 pt-6">
+      <ColumnCustomizerPanel
+        isOpen={isCustomizerOpen}
+        onClose={() => setIsCustomizerOpen(false)}
+        columns={columns}
+        visibleColumns={visibleColumns}
+        isAdmin={true}
+        toggleColumn={toggleColumn}
+        reorderColumns={reorderColumns}
+        resetToDefault={resetToDefault}
+      />
+      <FloatImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
+
+      {/* ── Page Header ───────────────────────────────────── */}
+      <div className="flex justify-between items-start mb-6">
         <div>
-          <div className="text-[14px] text-gray-500 mb-1">Home / Talent Pool</div>
-          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">
+          <h1 className="text-[26px] font-serif font-bold text-[#133255] tracking-tight">
             Float Database
-            <span className="text-sm font-sans font-normal text-gray-400 ml-3">({metadata.totalCount} candidates)</span>
           </h1>
+          <p className="text-[13.5px] text-[#6b7a99] mt-1">
+            {totalRows.toLocaleString()} total candidates · Showing {startIndex + 1}–{endIndex}
+          </p>
+        </div>
+
+        <div className="flex gap-2.5">
+          <button
+            onClick={() => setIsCustomizerOpen(true)}
+            className="h-10 px-4 neo-btn text-[#475569] text-[13.5px] font-semibold transition-all flex items-center gap-2"
+          >
+            <Settings size={15} /> Customise View
+          </button>
+          <button 
+            onClick={() => setIsImportModalOpen(true)}
+            className="h-10 px-4 neo-btn text-[#475569] text-[13.5px] font-semibold transition-all flex items-center gap-2"
+          >
+            <Upload size={15} /> Import Floats
+          </button>
         </div>
       </div>
 
-      <FloatImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
+      {/* ── KPI Stat Cards ─────────────────────────────────── */}
+      <div className="flex items-center gap-4 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        {[
+          { label: "Total Floats", value: totalRows, color: "text-[#133255]" },
+          { label: "Shortlisted", value: shortlistCount, color: "text-[#127a41]" },
+          { label: "Interviewing", value: interviewCount, color: "text-[#2a44a0]" },
+          { label: "Offer Sent", value: offerCount, color: "text-[#b7791f]" },
+        ].map((kpi, i) => (
+          <div
+            key={i}
+            className="flex-1 min-w-[150px] neo-card-sm px-6 py-4 transition-transform hover:-translate-y-0.5"
+          >
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              {kpi.label}
+            </div>
+            <div className={`text-[24px] font-serif font-bold ${kpi.color}`}>
+              {typeof kpi.value === "number" ? kpi.value.toLocaleString() : kpi.value}
+            </div>
+          </div>
+        ))}
+      </div>
 
-      {/* Filters Bar */}
-      <div className="neo-bar flex flex-wrap gap-3 mb-4 p-3 items-center">
-        <div className="relative min-w-[200px] flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by Name / Company..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-10 pl-9 pr-3 border border-gray-200 rounded-[9px] text-sm focus:outline-none focus:border-[#133255] bg-white"
-          />
-        </div>
-        
-        <select value={stageFilter} onChange={(e) => { setStageFilter(e.target.value); updateURL({ stage: e.target.value }); }} className="h-10 px-3 border border-gray-200 rounded-[9px] text-sm bg-white focus:outline-none focus:border-[#133255]">
-          <option value="">All Stages</option>
-          <option value="shortlist">Shortlist</option>
-          <option value="interview">Interview</option>
-          <option value="offer-sent">Offer</option>
-          <option value="calllist">Call List</option>
-          <option value="longlist">Long List</option>
-          <option value="mapping">Mapping</option>
-        </select>
+      {/* ── Search & Filter Bar ──────────────────────────── */}
+      <div className="neo-card mb-6 p-2 relative z-10">
+        <div className="flex flex-wrap gap-3 items-center p-1">
+          <div className="flex-1 flex items-center gap-2.5 px-4 py-2 min-w-[220px] neo-inset">
+            <Search size={16} className="text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by Name / Company..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 text-[14px] font-bold text-slate-800 bg-transparent outline-none placeholder-slate-400"
+            />
+          </div>
+          
+          <select value={stageFilter} onChange={(e) => { setStageFilter(e.target.value); updateURL({ stage: e.target.value }); }} className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[140px]">
+            <option value="">All Stages</option>
+            <option value="shortlist">Shortlist</option>
+            <option value="interview">Interview</option>
+            <option value="offer-sent">Offer</option>
+            <option value="calllist">Call List</option>
+            <option value="longlist">Long List</option>
+            <option value="mapping">Mapping</option>
+          </select>
 
-        <select value={mandateFilter} onChange={(e) => { setMandateFilter(e.target.value); updateURL({ mandate: e.target.value }); }} className="h-10 px-3 border border-gray-200 rounded-[9px] text-sm bg-white focus:outline-none focus:border-[#133255] max-w-[200px]">
-          <option value="">All Mandates</option>
-          {uniqueMandates.map((m: any) => <option key={m} value={m}>{m}</option>)}
-        </select>
+          <select value={mandateFilter} onChange={(e) => { setMandateFilter(e.target.value); updateURL({ mandate: e.target.value }); }} className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[150px]">
+            <option value="">All Mandates</option>
+            {uniqueMandates.map((m: any) => <option key={m} value={m}>{m}</option>)}
+          </select>
 
-        <select value={companyFilter} onChange={(e) => { setCompanyFilter(e.target.value); updateURL({ company: e.target.value }); }} className="h-10 px-3 border border-gray-200 rounded-[9px] text-sm bg-white focus:outline-none focus:border-[#133255] max-w-[180px]">
-          <option value="">All Companies</option>
-          {uniqueCompanies.map((c: any) => <option key={c} value={c}>{c}</option>)}
-        </select>
+          <select value={companyFilter} onChange={(e) => { setCompanyFilter(e.target.value); updateURL({ company: e.target.value }); }} className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[140px]">
+            <option value="">All Companies</option>
+            {uniqueCompanies.map((c: any) => <option key={c} value={c}>{c}</option>)}
+          </select>
 
-        <select value={designationFilter} onChange={(e) => { setDesignationFilter(e.target.value); updateURL({ designation: e.target.value }); }} className="h-10 px-3 border border-gray-200 rounded-[9px] text-sm bg-white focus:outline-none focus:border-[#133255] max-w-[180px]">
-          <option value="">All Designations</option>
-          {uniqueDesignations.map((d: any) => <option key={d} value={d}>{d}</option>)}
-        </select>
-
-        <div className="ml-auto flex items-center gap-2">
-          <button onClick={() => setIsCustomizerOpen(true)} className="h-10 w-10 neo-btn flex items-center justify-center text-gray-500 hover:text-[#133255]" title="Customize columns">
-            <Settings className="w-4 h-4" />
-          </button>
-          <button onClick={() => setIsImportModalOpen(true)} className="h-10 px-4 neo-btn text-gray-700 text-sm font-semibold flex items-center gap-1.5">
-            <Upload className="w-4 h-4" /> Import
-          </button>
+          <select value={designationFilter} onChange={(e) => { setDesignationFilter(e.target.value); updateURL({ designation: e.target.value }); }} className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[140px]">
+            <option value="">All Designations</option>
+            {uniqueDesignations.map((d: any) => <option key={d} value={d}>{d}</option>)}
+          </select>
         </div>
       </div>
       
@@ -245,17 +291,20 @@ export default function FloatListClient({
             switch (col.key) {
               case "name":
                 return (
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded bg-[#133255] text-white flex items-center justify-center text-xs font-bold">{c.initials}</div>
-                    <span className="font-semibold text-[#133255]">{c.name}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-[8px] bg-[#133255] text-white flex items-center justify-center text-[12px] font-bold shrink-0 shadow-sm uppercase">{c.initials || "FL"}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-[14px] text-[#111] truncate hover:underline">{c.name}</div>
+                      <div className="text-[12px] text-[#6b7a99] truncate">{c.email || c.mobile || "No contact"}</div>
+                    </div>
                   </div>
                 );
               case "company":
-                return <div className="text-gray-600">{c.company}</div>;
+                return <div className="text-[13px] text-[#475569] font-medium">{c.company || "-"}</div>;
               case "role":
-                return <div className="text-gray-600">{c.role}</div>;
+                return <div className="text-[13px] text-[#475569] font-medium">{c.role || "-"}</div>;
               case "mandate":
-                return <div className="text-gray-500 text-xs">{c.mandateRole} @ {c.mandateCompany}</div>;
+                return <div className="text-[12px] text-[#133255] font-bold">{c.mandateRole ? `${c.mandateRole} @ ${c.mandateCompany}` : "-"}</div>;
               case "stage":
                 return (
                   <div onClick={e => e.stopPropagation()}>
@@ -266,14 +315,14 @@ export default function FloatListClient({
                 return (
                   <div>
                     {c.score ? (
-                      <span className={"px-2 py-0.5 rounded-full text-xs font-bold " + (c.score >= 8 ? "bg-green-100 text-green-800" : c.score >= 6.5 ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-700")}>{c.score}/10</span>
+                      <span className={"px-2.5 py-0.5 rounded-[5px] text-[11.5px] font-bold " + (c.score >= 8 ? "bg-[#e6f6ee] text-[#127a41]" : c.score >= 6.5 ? "bg-[#fdf2d6] text-[#b7791f]" : "bg-[#fde8e8] text-[#c53030]")}>{c.score}/10</span>
                     ) : <span className="text-gray-300">-</span>}
                   </div>
                 );
               case "actions":
                 return (
-                  <div onClick={e => e.stopPropagation()}>
-                    <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={(e) => { 
+                  <div onClick={e => e.stopPropagation()} className="flex items-center justify-end">
+                    <button className="h-8 px-3 rounded-[6px] bg-[#133255] hover:bg-[#1d4d82] text-xs font-bold text-white transition-colors" onClick={(e) => { 
                       e.stopPropagation(); 
                       if (c.isFloatOnly) {
                         router.push("/dashboard/candidates/" + c.externalId);

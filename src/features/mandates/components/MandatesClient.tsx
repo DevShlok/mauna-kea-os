@@ -6,13 +6,13 @@ import { updateMandateFieldAction, deleteMultipleMandatesAction } from "@/action
 import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
 const MandateImportModal = dynamic(() => import("./MandateImportModal"), { ssr: false });
-import { Upload } from "lucide-react";
+import { Upload, Download, Settings, Plus, Search } from "lucide-react";
 
 import { STAGE_OPTIONS, INTERNAL_OPTIONS, formatMandateCtc } from "@/lib/helpers";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AdvancedTable } from "@/components/ui/AdvancedTable";
 import { useColumnPrefs, DEFAULT_MANDATE_COLUMNS, ColumnDef } from "@/hooks/useColumnPrefs";
-import { Download } from "lucide-react";
+import { ColumnCustomizerPanel } from "@/components/ui/ColumnCustomizerPanel";
 
 type Candidate = { id: number; externalId: string; name: string; stage: string | null; score: number | null; hasReport: boolean | null; initials: string | null; mandateId: number; };
 type Mandate = { id: number; company: string; role: string; ctc: string | null; exp: string | null; sectors: string[]; status: string | null; internalStatus: string | null; consultant: string | null; candidates: Candidate[]; };
@@ -37,7 +37,6 @@ export default function MandatesClient({
   
   const [mandates, setMandates] = useState(initialMandates);
   
-  // Sync state with props
   useEffect(() => {
     setMandates(initialMandates);
   }, [initialMandates]);
@@ -45,6 +44,7 @@ export default function MandatesClient({
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get("search") || "");
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   const [companyFilter, setCompanyFilter] = useState(searchParams.get("company") || "");
   const [roleFilter, setRoleFilter] = useState(searchParams.get("role") || "");
   const [sectorFilter, setSectorFilter] = useState(searchParams.get("sector") || "");
@@ -59,8 +59,12 @@ export default function MandatesClient({
     columns,
     visibleColumns,
     isLoading: isColsLoading,
+    toggleColumn,
     setColumnWidth,
     reorderColumns,
+    resetToDefault,
+    publishAsOrgDefault,
+    isAdmin,
   } = useColumnPrefs("mandateListCols", DEFAULT_MANDATE_COLUMNS);
 
   // Debounce search
@@ -169,140 +173,195 @@ export default function MandatesClient({
     router.refresh();
   }
 
-      const renderCell = (m: any, col: ColumnDef) => {
-        switch (col.key) {
-          case "company":
-            return <div className="font-semibold text-[#133255]">{m.company}</div>;
-          case "role":
-            return <div className="text-gray-700">{m.role}</div>;
-          case "ctc":
-            return <div className="text-gray-500 text-xs">{formatMandateCtc(m.ctc)}</div>;
-          case "exp":
-            return <div className="text-gray-500 text-xs">{m.exp}</div>;
-          case "sectors":
-            return (
-              <div className="flex flex-wrap gap-1">
-                {Array.from(new Set(m.sectors)).map((s: any, i: number) => (
-                  <span key={`${s}-${i}`} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">{s}</span>
-                ))}
-              </div>
-            );
-          case "status":
-            return (
-              <div onClick={e => e.stopPropagation()}>
-                <select value={m.status || ""} onChange={e => handleStatusChange(m.id, "status", e.target.value)} className="neo-inset px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none cursor-pointer">
-                  {STAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-            );
-          case "internalStatus":
-            return (
-              <div onClick={e => e.stopPropagation()}>
-                <select value={m.internalStatus || ""} onChange={e => handleStatusChange(m.id, "internalStatus", e.target.value)} className="neo-inset px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none cursor-pointer">
-                  {INTERNAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-            );
-          case "actions":
-            return (
-              <div onClick={e => e.stopPropagation()}>
-                <button className="px-3 py-1.5 neo-btn-primary text-xs font-bold text-white" onClick={() => router.push("/dashboard/mandates/" + m.id)}>Open</button>
-              </div>
-            );
-          default:
-            return <span className="text-[13px] text-gray-500">{m[col.key] || "-"}</span>;
-        }
-      };
+  const universeCount = mandates.filter(m => !m.status || m.status === 'universe' || m.status === 'mapping').length;
+  const interviewCount = mandates.filter(m => m.status === 'interview' || m.status === 'shortlist').length;
+  const closedCount = mandates.filter(m => m.status === 'offer-accepted' || m.status === 'closed' || m.status === 'position-closed').length;
 
-      return (
-        <div className="max-w-screen-xl mx-auto pb-10">
-          <div className="flex justify-between items-end mb-8">
-            <div>
-              <div className="text-[14px] text-gray-500 mb-1">Home / Mandates</div>
-              <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">All Mandates</h1>
+  const renderCell = (m: any, col: ColumnDef) => {
+    switch (col.key) {
+      case "role":
+        const initials = m.role ? m.role.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase() : "M";
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-[8px] bg-[#133255] text-white flex items-center justify-center text-[12px] font-bold shrink-0 shadow-sm uppercase">
+              {initials}
             </div>
-            <div className="flex items-center gap-2 mb-1">
-              <button 
-                onClick={() => setIsImportModalOpen(true)}
-                className="h-10 px-5 neo-btn text-gray-700 text-[13px] font-semibold flex items-center gap-1.5"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                Import
-              </button>
-              <Link href="/dashboard/mandates/new" className="px-5 py-2.5 h-10 flex items-center neo-btn text-[#133255] text-sm font-bold"
-                style={{ background: 'linear-gradient(135deg, #D8B15B, #f0c96a)' }}
-              >
-                + Add New Mandate
-              </Link>
+            <div className="min-w-0 flex-1">
+              <div className="font-bold text-[14px] text-[#111] truncate hover:underline">{m.role}</div>
+              <div className="text-[12px] text-[#6b7a99] truncate">{m.company}</div>
             </div>
           </div>
-          <MandateImportModal 
-            isOpen={isImportModalOpen} 
-            onClose={() => setIsImportModalOpen(false)} 
-            currentUser={currentUser}
-          />
-          <div className="neo-bar flex flex-wrap gap-3 mb-6 p-4">
+        );
+      case "company":
+        return <div className="font-bold text-[14px] text-gray-900">{m.company}</div>;
+      case "ctc":
+        return <div className="text-[13px] font-bold text-[#133255]">{formatMandateCtc(m.ctc)}</div>;
+      case "exp":
+        return <div className="text-[13px] text-gray-600 font-medium">{m.exp || "-"}</div>;
+      case "sectors":
+        return (
+          <div className="flex flex-wrap gap-1">
+            {Array.from(new Set(m.sectors)).map((s: any, i: number) => (
+              <span key={`${s}-${i}`} className="px-2 py-0.5 bg-[#f0f3f8] text-[#475569] rounded-[4px] text-[11px] font-medium">{s}</span>
+            ))}
+          </div>
+        );
+      case "status":
+        return (
+          <div onClick={e => e.stopPropagation()}>
+            <select value={m.status || ""} onChange={e => handleStatusChange(m.id, "status", e.target.value)} className="h-8 px-2 rounded-[6px] border border-[#d6e4ff] bg-[#f0f5ff] text-[#1d4ed8] text-[12px] font-bold outline-none cursor-pointer">
+              {STAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+        );
+      case "internalStatus":
+        return (
+          <div onClick={e => e.stopPropagation()}>
+            <select value={m.internalStatus || ""} onChange={e => handleStatusChange(m.id, "internalStatus", e.target.value)} className="h-8 px-2 rounded-[6px] border border-[#e2e8f0] bg-white text-slate-700 text-[12px] font-medium outline-none cursor-pointer">
+              {INTERNAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+        );
+      case "actions":
+        return (
+          <div onClick={e => e.stopPropagation()} className="flex items-center justify-end">
+            <button className="h-8 px-3 rounded-[6px] bg-[#133255] hover:bg-[#1d4d82] text-xs font-bold text-white transition-colors" onClick={() => router.push("/dashboard/mandates/" + m.id)}>Open</button>
+          </div>
+        );
+      default:
+        return <span className="text-[13px] text-gray-500">{m[col.key] || "-"}</span>;
+    }
+  };
+
+  return (
+    <div className="w-full max-w-[1600px] mx-auto px-6 pb-10 pt-6">
+      <ColumnCustomizerPanel
+        isOpen={isCustomizerOpen}
+        onClose={() => setIsCustomizerOpen(false)}
+        columns={columns}
+        visibleColumns={visibleColumns}
+        isAdmin={isAdmin}
+        toggleColumn={toggleColumn}
+        reorderColumns={reorderColumns}
+        resetToDefault={resetToDefault}
+        publishAsOrgDefault={publishAsOrgDefault}
+      />
+      <MandateImportModal 
+        isOpen={isImportModalOpen} 
+        onClose={() => setIsImportModalOpen(false)} 
+        currentUser={currentUser}
+      />
+
+      {/* ── Page Header ───────────────────────────────────── */}
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h1 className="text-[26px] font-serif font-bold text-[#133255] tracking-tight">
+            Mandate Database
+          </h1>
+          <p className="text-[13.5px] text-[#6b7a99] mt-1">
+            {totalRows.toLocaleString()} total mandates · Showing {startIndex + 1}–{endIndex}
+          </p>
+        </div>
+
+        <div className="flex gap-2.5">
+          <button
+            onClick={() => setIsCustomizerOpen(true)}
+            className="h-10 px-4 neo-btn text-[#475569] text-[13.5px] font-semibold transition-all flex items-center gap-2"
+          >
+            <Settings size={15} /> Customise View
+          </button>
+          <button 
+            onClick={() => setIsImportModalOpen(true)}
+            className="h-10 px-4 neo-btn text-[#475569] text-[13.5px] font-semibold transition-all flex items-center gap-2"
+          >
+            <Upload size={15} /> Import Mandates
+          </button>
+          <Link href="/dashboard/mandates/new" className="h-10 px-5 neo-btn text-[#133255] text-[13.5px] font-bold transition-all flex items-center gap-2">
+            <Plus size={16} /> Add Mandate
+          </Link>
+        </div>
+      </div>
+
+      {/* ── KPI Stat Cards ─────────────────────────────────── */}
+      <div className="flex items-center gap-4 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        {[
+          { label: "Total Mandates", value: totalRows, color: "text-[#133255]" },
+          { label: "Universe / Mapping", value: universeCount, color: "text-[#b7791f]" },
+          { label: "Interview Stage", value: interviewCount, color: "text-[#2a44a0]" },
+          { label: "Closed / Offer", value: closedCount, color: "text-[#127a41]" },
+        ].map((kpi, i) => (
+          <div
+            key={i}
+            className="flex-1 min-w-[150px] neo-card-sm px-6 py-4 transition-transform hover:-translate-y-0.5"
+          >
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              {kpi.label}
+            </div>
+            <div className={`text-[24px] font-serif font-bold ${kpi.color}`}>
+              {typeof kpi.value === "number" ? kpi.value.toLocaleString() : kpi.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Search & Filter Bar ──────────────────────────── */}
+      <div className="neo-card mb-6 p-2 relative z-10">
+        <div className="flex flex-wrap gap-3 items-center p-1">
+          <div className="flex-1 flex items-center gap-2.5 px-4 py-2 min-w-[220px] neo-inset">
+            <Search size={16} className="text-slate-400" />
             <input 
               type="text" 
               placeholder="Search mandates..." 
               value={search} 
               onChange={e => setSearch(e.target.value)} 
-              className="min-w-[200px] flex-1 px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none"
+              className="flex-1 text-[14px] font-bold text-slate-800 bg-transparent outline-none placeholder-slate-400"
             />
-            
-            <select 
-              value={companyFilter} 
-              onChange={e => { setCompanyFilter(e.target.value); updateURL({ company: e.target.value }); }} 
-              className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
-            >
-              <option value="">All Companies</option>
-              {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            
-            <select 
-              value={roleFilter} 
-              onChange={e => { setRoleFilter(e.target.value); updateURL({ role: e.target.value }); }} 
-              className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
-            >
-              <option value="">All Roles</option>
-              {uniqueRoles.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
-            
-            <select 
-              value={sectorFilter} 
-              onChange={e => { setSectorFilter(e.target.value); updateURL({ sector: e.target.value }); }} 
-              className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
-            >
-              <option value="">All Sectors</option>
-              {uniqueSectors.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-            
-            <select 
-              value={statusFilter} 
-              onChange={e => { setStatusFilter(e.target.value); updateURL({ status: e.target.value }); }} 
-              className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
-            >
-              <option value="">All Statuses</option>
-              {STAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            
-            <select 
-              value={internalFilter} 
-              onChange={e => { setInternalFilter(e.target.value); updateURL({ internalStatus: e.target.value }); }} 
-              className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
-            >
-              <option value="">All Internal</option>
-              {INTERNAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            
-            <button 
-              onClick={handleExportSelected} 
-              className="px-4 py-2.5 neo-btn text-slate-700 text-sm font-bold flex items-center gap-1.5"
-            >
-              <Download className="w-4 h-4" />
-              Export
-            </button>
           </div>
+          
+          <select 
+            value={companyFilter} 
+            onChange={e => { setCompanyFilter(e.target.value); updateURL({ company: e.target.value }); }} 
+            className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[150px]"
+          >
+            <option value="">All Companies</option>
+            {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          
+          <select 
+            value={roleFilter} 
+            onChange={e => { setRoleFilter(e.target.value); updateURL({ role: e.target.value }); }} 
+            className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[140px]"
+          >
+            <option value="">All Roles</option>
+            {uniqueRoles.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+          
+          <select 
+            value={sectorFilter} 
+            onChange={e => { setSectorFilter(e.target.value); updateURL({ sector: e.target.value }); }} 
+            className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[140px]"
+          >
+            <option value="">All Sectors</option>
+            {uniqueSectors.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          
+          <select 
+            value={statusFilter} 
+            onChange={e => { setStatusFilter(e.target.value); updateURL({ status: e.target.value }); }} 
+            className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[140px]"
+          >
+            <option value="">All Statuses</option>
+            {STAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          
+          <button 
+            onClick={handleExportSelected} 
+            className="h-10 px-4 neo-btn text-slate-700 text-xs font-bold flex items-center gap-1.5"
+          >
+            <Download className="w-4 h-4" /> Export
+          </button>
+        </div>
+      </div>
 
           {/* Table */}
           <div className="h-full flex flex-col min-h-[500px]">

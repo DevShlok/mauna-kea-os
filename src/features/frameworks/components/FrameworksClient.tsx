@@ -102,41 +102,80 @@ export default function FrameworksClient({
     URL.revokeObjectURL(url);
   };
 
+  const totalUsedMandates = data.reduce((acc, f) => acc + (f.usedIn || 0), 0);
+
   return (
-    <div className="max-w-screen-xl mx-auto pb-10">
-      {/* Page Header */}
-      <div className="flex justify-between items-end mb-6">
+    <div className="w-full max-w-[1600px] mx-auto px-6 pb-10 pt-6">
+      <ColumnCustomizerPanel
+        isOpen={isCustomizerOpen}
+        onClose={() => setIsCustomizerOpen(false)}
+        columns={columns}
+        visibleColumns={visibleColumns}
+        isAdmin={true}
+        toggleColumn={toggleColumn}
+        reorderColumns={reorderColumns}
+        resetToDefault={resetToDefault}
+      />
+
+      {/* ── Page Header ───────────────────────────────────── */}
+      <div className="flex justify-between items-start mb-6">
         <div>
-          <div className="text-[14px] text-gray-500 mb-1">Home / Frameworks</div>
-          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">
-            Framework Templates
-            <span className="text-sm font-sans font-normal text-gray-400 ml-3">({metadata.totalCount} templates)</span>
+          <h1 className="text-[26px] font-serif font-bold text-[#133255] tracking-tight">
+            Evaluation Frameworks
           </h1>
+          <p className="text-[13.5px] text-[#6b7a99] mt-1">
+            {metadata.totalCount.toLocaleString()} total scorecards & frameworks
+          </p>
+        </div>
+
+        <div className="flex gap-2.5">
+          <button
+            onClick={() => setIsCustomizerOpen(true)}
+            className="h-10 px-4 neo-btn text-[#475569] text-[13.5px] font-semibold transition-all flex items-center gap-2"
+          >
+            <Settings size={15} /> Customise View
+          </button>
+          <Link href="/dashboard/frameworks/new" className="h-10 px-5 neo-btn text-[#133255] text-[13.5px] font-bold transition-all flex items-center gap-2">
+            + New Framework
+          </Link>
         </div>
       </div>
 
-      {/* Action Bar */}
-      <div className="neo-bar p-3 mb-4 flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            className="w-full h-10 pl-9 pr-3 border border-gray-200 rounded-[9px] text-sm focus:outline-none focus:border-[#133255] bg-white"
-            placeholder="Search frameworks..."
-            value={searchInput}
-            onChange={e => setSearchInput(e.target.value)}
-          />
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          <button
-            onClick={() => setIsCustomizerOpen(true)}
-            className="h-10 w-10 neo-btn flex items-center justify-center text-gray-500 hover:text-[#133255]"
-            title="Customize columns"
+      {/* ── KPI Stat Cards ─────────────────────────────────── */}
+      <div className="flex items-center gap-4 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        {[
+          { label: "Total Frameworks", value: metadata.totalCount, color: "text-[#133255]" },
+          { label: "Active Templates", value: data.length, color: "text-[#127a41]" },
+          { label: "Linked Mandates", value: totalUsedMandates, color: "text-[#2a44a0]" },
+          { label: "Industry Coverage", value: "Multi-sector", color: "text-[#b7791f]" },
+        ].map((kpi, i) => (
+          <div
+            key={i}
+            className="flex-1 min-w-[150px] neo-card-sm px-6 py-4 transition-transform hover:-translate-y-0.5"
           >
-            <Settings className="w-4 h-4" />
-          </button>
-          <Link href="/dashboard/frameworks/new" className="h-10 px-4 neo-btn-gold text-sm font-bold text-[#133255] flex items-center">
-            + New Framework
-          </Link>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              {kpi.label}
+            </div>
+            <div className={`text-[24px] font-serif font-bold ${kpi.color}`}>
+              {typeof kpi.value === "number" ? kpi.value.toLocaleString() : kpi.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Search & Filter Bar ──────────────────────────── */}
+      <div className="neo-card mb-6 p-2 relative z-10">
+        <div className="flex flex-wrap gap-3 items-center p-1">
+          <div className="flex-1 flex items-center gap-2.5 px-4 py-2 min-w-[220px] neo-inset">
+            <Search size={16} className="text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search frameworks..."
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+              className="flex-1 text-[14px] font-bold text-slate-800 bg-transparent outline-none placeholder-slate-400"
+            />
+          </div>
         </div>
       </div>
 

@@ -30,7 +30,8 @@ export const mandates = pgTable('mandates', {
   searchNotes: text('search_notes'),
   additionalDocsText: text('additional_docs_text'),
   openQuestions: text('open_questions'),
-  frameworkId: varchar('framework_id', { length: 20 }),
+  clientId: varchar('client_id', { length: 50 }).references(() => clients.id, { onDelete: 'set null' }),
+  frameworkId: varchar('framework_id', { length: 20 }).references(() => frameworks.id, { onDelete: 'set null' }),
   isDeleted: boolean('is_deleted').default(false),
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),
@@ -39,6 +40,7 @@ export const mandates = pgTable('mandates', {
   metadata: json('metadata').$type<Record<string, any>>().default({}),
 }, (table) => ({
   companyIdx: index('mandates_company_idx').on(table.company),
+  clientIdIdx: index('mandates_client_id_idx').on(table.clientId),
   roleIdx: index('mandates_role_idx').on(table.role),
   statusIdx: index('mandates_status_idx').on(table.status),
   isDeletedIdx: index('mandates_is_deleted_idx').on(table.isDeleted),
@@ -165,6 +167,8 @@ export const floatReferences = pgTable('float_references', {
 export const floats = pgTable('floats', {
   id: varchar('id', { length: 50 }).primaryKey(),
   candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
+  clientId: varchar('client_id', { length: 50 }).references(() => clients.id, { onDelete: 'set null' }),
+  mandateId: int('mandate_id').references(() => mandates.id, { onDelete: 'set null' }),
   client: varchar('client', { length: 255 }),
   role: varchar('role', { length: 255 }),
   consultant: varchar('consultant', { length: 255 }),
@@ -186,6 +190,8 @@ export const floats = pgTable('floats', {
   updatedAt: datetime('updated_at').default(sql`now()`),
 }, (table) => ({
   candIdIdx: index('floats_cand_id_idx').on(table.candId),
+  clientIdIdx: index('floats_client_id_idx').on(table.clientId),
+  mandateIdIdx: index('floats_mandate_id_idx').on(table.mandateId),
   isDeletedIdx: index('floats_is_deleted_idx').on(table.isDeleted),
   statusIdx: index('floats_status_idx').on(table.status),
 }));
@@ -194,6 +200,7 @@ export const floats = pgTable('floats', {
 export const floatFollowUps = pgTable('float_followups', {
   id: varchar('id', { length: 50 }).primaryKey(),
   candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
+  floatId: varchar('float_id', { length: 50 }).references(() => floats.id, { onDelete: 'cascade' }),
   client: varchar('client', { length: 255 }),
   role: varchar('role', { length: 255 }),
   consultant: varchar('consultant', { length: 255 }),
@@ -203,12 +210,14 @@ export const floatFollowUps = pgTable('float_followups', {
   createdAt: datetime('created_at').default(sql`now()`),
 }, (table) => ({
   candIdIdx: index('ff_cand_id_idx').on(table.candId),
+  floatIdIdx: index('ff_float_id_idx').on(table.floatId),
 }));
 
 // ─── FLOAT ACTIVITIES ────────────────────────────────────
 export const floatActivities = pgTable('float_activities', {
   id: serial('id').primaryKey(),
   candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id),
+  floatId: varchar('float_id', { length: 50 }).references(() => floats.id, { onDelete: 'cascade' }),
   date: varchar('date', { length: 20 }),
   time: varchar('time', { length: 20 }),
   consultant: varchar('consultant', { length: 255 }),
@@ -218,6 +227,7 @@ export const floatActivities = pgTable('float_activities', {
   createdAt: datetime('created_at').default(sql`now()`),
 }, (table) => ({
   candIdIdx: index('fa_cand_id_idx').on(table.candId),
+  floatIdIdx: index('fa_float_id_idx').on(table.floatId),
 }));
 
 // ─── FRAMEWORKS ──────────────────────────────────────────
@@ -498,8 +508,24 @@ export type MasterLocation = typeof masterLocations.$inferSelect;
 export type MasterClient = typeof masterClients.$inferSelect;
 
 // ─── RELATIONS ───────────────────────────────────────────
-export const mandatesRelations = relations(mandates, ({ many }) => ({
+export const clientsRelations = relations(clients, ({ many }) => ({
+  mandates: many(mandates),
+  notifications: many(clientNotifications),
+  remarks: many(clientRemarks),
+  floats: many(floats),
+}));
+
+export const mandatesRelations = relations(mandates, ({ one, many }) => ({
+  client: one(clients, {
+    fields: [mandates.clientId],
+    references: [clients.id],
+  }),
+  framework: one(frameworks, {
+    fields: [mandates.frameworkId],
+    references: [frameworks.id],
+  }),
   candidates: many(mandateCandidates),
+  floats: many(floats),
 }));
 
 export const mandateCandidatesRelations = relations(mandateCandidates, ({ one }) => ({
@@ -515,14 +541,55 @@ export const mandateCandidatesRelations = relations(mandateCandidates, ({ one })
 
 export const candidatesRelations = relations(candidates, ({ many, one }) => ({
   mandateCandidates: many(mandateCandidates),
+  floats: many(floats),
   verification: one(candidateVerifications, {
     fields: [candidates.id],
     references: [candidateVerifications.candId],
   }),
 }));
 
+export const floatsRelations = relations(floats, ({ one, many }) => ({
+  candidate: one(candidates, {
+    fields: [floats.candId],
+    references: [candidates.id],
+  }),
+  client: one(clients, {
+    fields: [floats.clientId],
+    references: [clients.id],
+  }),
+  mandate: one(mandates, {
+    fields: [floats.mandateId],
+    references: [mandates.id],
+  }),
+  followUps: many(floatFollowUps),
+  activities: many(floatActivities),
+}));
+
+export const floatFollowUpsRelations = relations(floatFollowUps, ({ one }) => ({
+  float: one(floats, {
+    fields: [floatFollowUps.floatId],
+    references: [floats.id],
+  }),
+  candidate: one(candidates, {
+    fields: [floatFollowUps.candId],
+    references: [candidates.id],
+  }),
+}));
+
+export const floatActivitiesRelations = relations(floatActivities, ({ one }) => ({
+  float: one(floats, {
+    fields: [floatActivities.floatId],
+    references: [floats.id],
+  }),
+  candidate: one(candidates, {
+    fields: [floatActivities.candId],
+    references: [candidates.id],
+  }),
+}));
+
 export const frameworksRelations = relations(frameworks, ({ many }) => ({
   categories: many(frameworkCategories),
+  mandates: many(mandates),
   reports: many(candidateReports),
 }));
 

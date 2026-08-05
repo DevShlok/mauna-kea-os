@@ -25,48 +25,77 @@ export default function SubmissionsClient({ initialSubmissions }: { initialSubmi
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  const shortlistedCount = submissions.filter((s: any) => s.status === 'Shortlisted').length;
+  const interviewingCount = submissions.filter((s: any) => s.status === 'Interviewing').length;
+  const sharedCount = submissions.filter((s: any) => s.status === 'Shared' || s.status === 'Under Review').length;
+
   return (
-    <div className="max-w-screen-xl mx-auto pb-10">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold font-serif text-slate-800">Submissions Tracker</h1>
+    <div className="w-full max-w-[1600px] mx-auto px-6 pb-10 pt-6">
+      {/* ── Page Header ───────────────────────────────────── */}
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h1 className="text-[26px] font-serif font-bold text-[#133255] tracking-tight">
+            Submissions Tracker
+          </h1>
+          <p className="text-[13.5px] text-[#6b7a99] mt-1">
+            {submissions.length.toLocaleString()} total client submissions
+          </p>
+        </div>
+
         <button
           onClick={() => setIsAdding(true)}
-          className="px-4 py-2.5 rounded-xl font-bold text-xs text-[#133255] transition-all hover:-translate-y-0.5"
-          style={{
-            background: "linear-gradient(135deg, #D8B15B, #f0c96a)",
-            boxShadow: "3px 3px 6px #cbd5e1, -3px -3px 6px #ffffff",
-          }}
+          className="h-10 px-5 neo-btn text-[#133255] text-[13.5px] font-bold transition-all flex items-center gap-2"
         >
           + Add Submission
         </button>
       </div>
 
-      <div className="flex gap-3 mb-6 p-4 rounded-[28px]" style={{ background: "#eef2f7", boxShadow: "10px 10px 20px #cbd5e1, -10px -10px 20px #ffffff" }}>
-        <input
-          type="text"
-          placeholder="Search submissions..."
-          className="w-64 px-4 py-2.5 rounded-2xl text-sm font-bold text-slate-800 bg-[#eef2f7] outline-none placeholder-slate-400"
-          style={{ boxShadow: "inset 4px 4px 8px #cbd5e1, inset -4px -4px 8px #ffffff" }}
-        />
-        <select
-          className="px-4 py-2.5 rounded-2xl text-sm font-bold text-slate-800 bg-[#eef2f7] outline-none"
-          style={{ boxShadow: "inset 3px 3px 6px #cbd5e1, inset -3px -3px 6px #ffffff" }}
-        >
-          <option>All Statuses</option>
-          <option>Shared</option>
-          <option>Under Review</option>
-          <option>Shortlisted</option>
-          <option>Interviewing</option>
-        </select>
-        <select
-          className="px-4 py-2.5 rounded-2xl text-sm font-bold text-slate-800 bg-[#eef2f7] outline-none"
-          style={{ boxShadow: "inset 3px 3px 6px #cbd5e1, inset -3px -3px 6px #ffffff" }}
-        >
-          <option>All Consultants</option>
-          <option>Priya Menon</option>
-          <option>Amit Sharma</option>
-          <option>Sanya Rao</option>
-        </select>
+      {/* ── KPI Stat Cards ─────────────────────────────────── */}
+      <div className="flex items-center gap-4 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        {[
+          { label: "Total Submissions", value: submissions.length, color: "text-[#133255]" },
+          { label: "Shared / Under Review", value: sharedCount, color: "text-[#b7791f]" },
+          { label: "Interviewing", value: interviewingCount, color: "text-[#2a44a0]" },
+          { label: "Shortlisted", value: shortlistedCount, color: "text-[#127a41]" },
+        ].map((kpi, i) => (
+          <div
+            key={i}
+            className="flex-1 min-w-[150px] neo-card-sm px-6 py-4 transition-transform hover:-translate-y-0.5"
+          >
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              {kpi.label}
+            </div>
+            <div className={`text-[24px] font-serif font-bold ${kpi.color}`}>
+              {typeof kpi.value === "number" ? kpi.value.toLocaleString() : kpi.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Search & Filter Bar ──────────────────────────── */}
+      <div className="neo-card mb-6 p-2 relative z-10">
+        <div className="flex flex-wrap gap-3 items-center p-1">
+          <div className="flex-1 flex items-center gap-2.5 px-4 py-2 min-w-[220px] neo-inset">
+            <input
+              type="text"
+              placeholder="Search submissions..."
+              className="flex-1 text-[14px] font-bold text-slate-800 bg-transparent outline-none placeholder-slate-400"
+            />
+          </div>
+          <select className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[140px]">
+            <option>All Statuses</option>
+            <option>Shared</option>
+            <option>Under Review</option>
+            <option>Shortlisted</option>
+            <option>Interviewing</option>
+          </select>
+          <select className="px-4 h-10 neo-inset text-sm text-slate-700 font-semibold outline-none min-w-[150px]">
+            <option>All Consultants</option>
+            <option>Priya Menon</option>
+            <option>Amit Sharma</option>
+            <option>Sanya Rao</option>
+          </select>
+        </div>
       </div>
 
       <div className="rounded-[32px] overflow-hidden" style={{ background: "#eef2f7", boxShadow: "12px 12px 24px #cbd5e1, -12px -12px 24px #ffffff" }}>
