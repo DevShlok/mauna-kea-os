@@ -10,8 +10,8 @@ import dynamic from "next/dynamic";
 const ClientImportModal = dynamic(() => import("./ClientImportModal"), { ssr: false });
 import { Upload, Plus, Download } from "lucide-react";
 import toast from "react-hot-toast";
-import { Pagination } from "@/components/DataTable/Pagination";
-import { SortableHeader } from "@/components/DataTable/SortableHeader";
+import { AdvancedTable } from "@/components/ui/AdvancedTable";
+import { useColumnPrefs, DEFAULT_CLIENT_COLUMNS, ColumnDef } from "@/hooks/useColumnPrefs";
 
 export default function ClientsClient({ 
   initialClients, 
@@ -33,6 +33,14 @@ export default function ClientsClient({
 
   const sortKey = searchParams.get("sortKey") || "createdAt";
   const sortDir = (searchParams.get("sortDir") || "desc") as "asc" | "desc";
+
+  const {
+    columns,
+    visibleColumns,
+    isLoading: isColsLoading,
+    setColumnWidth,
+    reorderColumns,
+  } = useColumnPrefs("clientListCols", DEFAULT_CLIENT_COLUMNS);
 
   const [localClients, setLocalClients] = useState(initialClients);
   useEffect(() => {
@@ -143,6 +151,50 @@ export default function ClientsClient({
   const selectedClientNames = selectedClients.map(c => c.name);
   const attachedMandatesCount = selectedClients.reduce((acc, c) => acc + (c.mandates?.length || 0), 0);
 
+  const renderCell = (c: any, col: ColumnDef) => {
+    switch (col.key) {
+      case "name":
+        return (
+          <div>
+            <div className="font-bold text-[15px] text-gray-900">{c.name}</div>
+            <div className="text-[13px] text-gray-400">{c.accountId}</div>
+          </div>
+        );
+      case "vertical":
+        return <div className="text-[15px] text-gray-600">{c.vertical || "-"}</div>;
+      case "owner":
+        return <div className="text-[15px] text-gray-600">{c.owner || "-"}</div>;
+      case "liveMandates":
+        return (
+          <div className="text-[14px] text-gray-600 font-medium">
+            {getLiveMandatesCount(c)}
+          </div>
+        );
+      case "status":
+        return (
+          <span className={`px-2.5 py-1 text-[12px] font-bold rounded-full border ${
+            c.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' :
+            'bg-gray-50 text-gray-600 border-gray-200'
+          }`}>
+            {c.status || "Inactive"}
+          </span>
+        );
+      case "actions":
+        return (
+          <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+            <Link href={`/dashboard/clients/${c.id}`} className="px-3 py-1.5 text-[13px] font-bold text-white neo-btn" style={{ background: 'linear-gradient(135deg,#133255,#1d4d82)' }}>
+              View
+            </Link>
+            <Link href={`/dashboard/mandates/new?company=${encodeURIComponent(c.name)}`} className="px-3 py-1.5 text-[13px] font-bold text-[#133255] neo-btn" style={{ background: 'linear-gradient(135deg,#D8B15B,#f0c96a)' }}>
+              + Mandate
+            </Link>
+          </div>
+        );
+      default:
+        return <span className="text-[13px] text-gray-500">{c[col.key] || "-"}</span>;
+    }
+  };
+
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
         <div className="text-[14px] text-gray-500 mb-1">Home / Clients</div>
@@ -220,77 +272,28 @@ export default function ClientsClient({
         )}
 
         {/* Table */}
-        <div className="neo-table">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className="px-4 py-4 text-center w-10">
-                  <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
-                </th>
-                <SortableHeader label="Client" colKey="name" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
-                <SortableHeader label="Industry" colKey="vertical" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
-                <th className="px-5 py-3.5 text-left text-[12px] font-bold text-gray-400 uppercase tracking-wider">Owner</th>
-                <th className="px-5 py-3.5 text-left text-[12px] font-bold text-gray-400 uppercase tracking-wider">Live Mandates</th>
-                <SortableHeader label="Status" colKey="status" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
-                <th className="px-5 py-3.5 text-left text-[12px] font-bold text-gray-400 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedData.map(c => (
-                <tr key={c.id} className="border-b border-gray-50 neo-row-hover transition-colors cursor-pointer" onClick={() => router.push(`/dashboard/clients/${c.id}`)}>
-                  <td className="px-4 py-4 text-center" onClick={e => e.stopPropagation()}>
-                    <input type="checkbox" checked={selectedIds.has(c.id)} onChange={() => toggleRow(c.id)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="font-bold text-[15px] text-gray-900">{c.name}</div>
-                    <div className="text-[13px] text-gray-400">{c.accountId}</div>
-                  </td>
-                  <td className="px-6 py-4 text-[15px] text-gray-600">{c.vertical || "-"}</td>
-                  <td className="px-6 py-4 text-[15px] text-gray-600">{c.owner || "-"}</td>
-                    <td className="px-5 py-4">
-                      <div className="text-[14px] text-gray-600 font-medium">
-                        {getLiveMandatesCount(c)}
-                      </div>
-                    </td>
-                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                    <span className={`px-2.5 py-1 text-[12px] font-bold rounded-full border ${
-                      c.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' :
-                      'bg-gray-50 text-gray-600 border-gray-200'
-                    }`}>
-                      {c.status || "Inactive"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-2">
-                      <Link href={`/dashboard/clients/${c.id}`} className="px-3 py-1.5 text-[13px] font-bold text-white neo-btn" style={{ background: 'linear-gradient(135deg,#133255,#1d4d82)' }}>
-                        View
-                      </Link>
-                      <Link href={`/dashboard/mandates/new?company=${encodeURIComponent(c.name)}`} className="px-3 py-1.5 text-[13px] font-bold text-[#133255] neo-btn" style={{ background: 'linear-gradient(135deg,#D8B15B,#f0c96a)' }}>
-                        + Mandate
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {totalRows === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">No clients found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-          <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          startIndex={startIndex}
-          endIndex={endIndex}
-          totalRows={totalRows}
-          goToNextPage={goToNextPage}
-          goToPrevPage={goToPrevPage}
-          pageSize={pageSize}
-          setPageSize={handlePageSizeChange}
-          goToPage={goToPage}
-        />
+        <div className="h-full flex flex-col min-h-[500px]">
+          <AdvancedTable
+            data={paginatedData}
+            total={totalRows}
+            columns={columns}
+            page={currentPage}
+            pageSize={pageSize}
+            setPageSize={handlePageSizeChange}
+            setPage={goToPage}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSort={toggleSort}
+            visibleColumns={visibleColumns}
+            setColumnWidth={setColumnWidth}
+            reorderColumns={reorderColumns}
+            isLoadingCols={isColsLoading}
+            selectedIds={selectedIds}
+            onToggleRow={toggleRow}
+            onToggleAll={toggleAll}
+            renderCell={renderCell}
+            onRowClick={(row: any) => router.push(`/dashboard/clients/${row.id}`)}
+          />
         </div>
 
       {/* Delete Confirmation Modal */}

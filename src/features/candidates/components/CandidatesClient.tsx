@@ -13,7 +13,6 @@ import {
   bulkAddToEngagementListAction,
 } from "@/actions";
 import { getDaysOpen, formatCtcValue, getCleanLinkedInUrl } from "@/lib/helpers";
-import { Pagination } from "@/components/DataTable/Pagination";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MultiSelect } from "@/components/ui/MultiSelect";
 import { DualRangeSlider } from "@/components/ui/DualRangeSlider";
@@ -36,9 +35,9 @@ import {
 } from "lucide-react";
 
 // New Components & Hooks
-import { useColumnPrefs, ColumnDef } from "@/hooks/useColumnPrefs";
+import { useColumnPrefs, ColumnDef, DEFAULT_COLUMNS } from "@/hooks/useColumnPrefs";
 import { ColumnCustomizerPanel } from "@/components/ui/ColumnCustomizerPanel";
-import { ResizableHeader } from "@/components/DataTable/ResizableHeader";
+import { AdvancedTable } from "@/components/ui/AdvancedTable";
 import dynamic from 'next/dynamic';
 const CandidatesImportModal = dynamic(() => import('./CandidatesImportModal').then(mod => mod.CandidatesImportModal), { ssr: false });
 
@@ -135,7 +134,7 @@ export default function CandidatesClient({
     resetToDefault,
     publishAsOrgDefault,
     isAdmin,
-  } = useColumnPrefs();
+  } = useColumnPrefs("candidateListCols", DEFAULT_COLUMNS);
 
   // Local State
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
@@ -147,10 +146,6 @@ export default function CandidatesClient({
   const [showSort, setShowSort] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Drag state for columns
-  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
-  const [dragTargetPosition, setDragTargetPosition] = useState<"left" | "right" | null>(null);
 
   // Filters
   const [companiesFilter, setCompaniesFilter] = useState<string[]>(initialParams?.companies || []);
@@ -289,22 +284,6 @@ export default function CandidatesClient({
   const toggleAll = () => {
     if (selectedIds.size === candidates.length) setSelectedIds(new Set());
     else setSelectedIds(new Set(candidates.map((c) => c.id)));
-  };
-
-  const handleColumnDrop = (sourceKey: string, targetKey: string) => {
-    const sortedColumns = [...columns].sort((a, b) => a.order - b.order);
-    const fromIdx = sortedColumns.findIndex((c) => c.key === sourceKey);
-    let toIdx = sortedColumns.findIndex((c) => c.key === targetKey);
-    
-    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
-  
-    if (dragTargetPosition === "right") {
-      if (fromIdx > toIdx) toIdx += 1;
-    } else {
-      if (fromIdx < toIdx) toIdx -= 1;
-    }
-    
-    reorderColumns(fromIdx, toIdx);
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
@@ -944,134 +923,47 @@ export default function CandidatesClient({
       )}
 
       {/* ── Table Area ────────────────────────────────────── */}
-      <div className="bg-white border border-[#e4e8f0] rounded-[16px] overflow-hidden shadow-sm relative z-0">
-        <div className="overflow-x-auto custom-scrollbar pb-2">
-          {isColsLoading ? (
-            <div className="w-full bg-white animate-pulse">
-              <div className="flex bg-[#fafbfd] border-b-2 border-[#e4e8f0] px-4 py-3">
-                <div className="w-[52px]" />
-                <div className="flex-1 flex gap-4">
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i} className="h-4 bg-[#eef1f7] rounded flex-1" />
-                  ))}
-                </div>
-              </div>
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="flex border-b border-[#eef1f7] px-4 py-4 items-center">
-                  <div className="w-[52px]">
-                    <div className="w-4 h-4 bg-[#eef1f7] rounded-[4px]" />
-                  </div>
-                  <div className="flex-1 flex gap-4">
-                    {[...Array(6)].map((_, j) => (
-                      <div key={j} className="h-3.5 bg-[#eef1f7] rounded w-full opacity-60" style={{ width: `${60 + (i * 7 + j * 13) % 40}%` }} />
-                    ))}
-                  </div>
-                </div>
-              ))}
+      <div className="h-full flex flex-col min-h-[500px]">
+        <AdvancedTable
+          data={paginatedData}
+          total={total}
+          columns={columns}
+          page={currentPage}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          setPage={goToPage}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          onSort={toggleSort}
+          visibleColumns={visibleColumns}
+          setColumnWidth={setColumnWidth}
+          reorderColumns={reorderColumns}
+          isLoadingCols={isColsLoading}
+          selectedIds={selectedIds}
+          onToggleRow={toggleRow}
+          onToggleAll={toggleAll}
+          renderCell={renderCell}
+          onRowClick={(row: any) => router.push(`/dashboard/candidates/${row.id}`)}
+          emptyState={
+            <div className="py-16 text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
+              {hasActiveFilters ? (
+                <EmptyState
+                  title="No matching candidates"
+                  description="We couldn't find anyone matching your current filters."
+                  actionLabel="Clear filters"
+                  onAction={clearAllFilters}
+                />
+              ) : (
+                <EmptyState
+                  title="Your pipeline is empty"
+                  description="Add your first candidate to get started."
+                  actionLabel="Add Candidate"
+                  onAction={() => router.push("/dashboard/candidates/new")}
+                />
+              )}
             </div>
-          ) : (
-            <table className="w-full text-center border-collapse" style={{ tableLayout: "fixed" }}>
-              <thead>
-                <tr className="bg-[#fafbfd]">
-                  {/* Fixed Checkbox Column */}
-                  <th className="w-[52px] min-w-[52px] max-w-[52px] px-4 py-3 border-b-2 border-r border-[#e4e8f0]">
-                    <input
-                      type="checkbox"
-                      checked={candidates.length > 0 && selectedIds.size === candidates.length}
-                      onChange={toggleAll}
-                      className="w-[18px] h-[18px] cursor-pointer rounded-[5px] border border-[#cfd6e4] bg-white appearance-none checked:bg-[#133255] checked:border-[#133255] checked:bg-[url('data:image/svg+xml;utf8,%3Csvg%20viewBox=%220%200%2014%2014%22%20fill=%22none%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cpath%20d=%22M3.5%207.5L6%2010.5L10.5%204%22%20stroke=%22white%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-center bg-no-repeat transition-all hover:border-[#133255] relative flex items-center justify-center m-auto"
-                      aria-label="Select all rows"
-                    />
-                  </th>
-                  {/* Dynamic Columns */}
-                  {visibleColumns.map((col) => (
-                    <ResizableHeader
-                      key={col.key}
-                      col={col}
-                      onWidthChange={setColumnWidth}
-                      sortKey={sortKey || ""}
-                      sortDir={sortDir}
-                      onSort={toggleSort}
-                      dragOverKey={dragOverKey}
-                      dragTargetPosition={dragTargetPosition}
-                      setDragOverKey={setDragOverKey}
-                      setDragTargetPosition={setDragTargetPosition}
-                      onColumnDrop={handleColumnDrop}
-                    >
-                      {col.label}
-                    </ResizableHeader>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedData.length === 0 ? (
-                  <tr>
-                    <td colSpan={visibleColumns.length + 1} className="p-0">
-                      <div className="py-16 text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        {hasActiveFilters ? (
-                          <EmptyState
-                            title="No matching candidates"
-                            description="We couldn't find anyone matching your current filters."
-                            actionLabel="Clear filters"
-                            onAction={clearAllFilters}
-                          />
-                        ) : (
-                          <EmptyState
-                            title="Your pipeline is empty"
-                            description="Add your first candidate to get started."
-                            actionLabel="Add Candidate"
-                            onAction={() => router.push("/dashboard/candidates/new")}
-                          />
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedData.map((c: any) => (
-                    <tr
-                      key={c.id}
-                      onClick={() => router.push(`/dashboard/candidates/${c.id}`)}
-                      className={`group/row border-b border-[#eef1f7] cursor-pointer relative candidate-row ${
-                        selectedIds.has(c.id) ? "bg-[#f0f5ff] shadow-[inset_3px_0_0_#D8B15B]" : "hover:bg-[#eef3fb] hover:shadow-[inset_3px_0_0_#133255] hover:-translate-y-[1px] hover:shadow-sm z-0 hover:z-10"
-                      } transition-all duration-200`}
-                    >
-                      {/* Checkbox */}
-                      <td className="px-4 py-3 w-[52px] border-r border-[#e4e8f0]/50" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(c.id)}
-                          onChange={() => toggleRow(c.id)}
-                          className="w-[18px] h-[18px] cursor-pointer rounded-[5px] border border-[#cfd6e4] bg-white appearance-none checked:bg-[#133255] checked:border-[#133255] checked:bg-[url('data:image/svg+xml;utf8,%3Csvg%20viewBox=%220%200%2014%2014%22%20fill=%22none%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cpath%20d=%22M3.5%207.5L6%2010.5L10.5%204%22%20stroke=%22white%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-center bg-no-repeat transition-all hover:border-[#133255] relative flex items-center justify-center m-auto"
-                          aria-label={`Select ${c.name}`}
-                        />
-                      </td>
-                      {/* Dynamic Cells */}
-                      {visibleColumns.map((col) => (
-                        <td key={col.key} className="px-4 py-3 overflow-hidden border-r border-[#e4e8f0]/50" style={{ width: col.width, maxWidth: col.width }}>
-                          {renderCell(c, col)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
-        {!isColsLoading && paginatedData.length > 0 && (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalRows={total}
-            startIndex={startIndex}
-            endIndex={endIndex}
-            pageSize={pageSize}
-            setPageSize={setPageSize}
-            goToPage={goToPage}
-            goToNextPage={() => goToPage(Math.min(currentPage + 1, totalPages))}
-            goToPrevPage={() => goToPage(Math.max(currentPage - 1, 1))}
-          />
-        )}
+          }
+        />
       </div>
       {/* ── Add to Mandate Modal ────────────────────────────── */}
       {showMandateModal && (

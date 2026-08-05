@@ -10,8 +10,8 @@ import { Upload } from "lucide-react";
 
 import { STAGE_OPTIONS, INTERNAL_OPTIONS, formatMandateCtc } from "@/lib/helpers";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Pagination } from "@/components/DataTable/Pagination";
-import { SortableHeader } from "@/components/DataTable/SortableHeader";
+import { AdvancedTable } from "@/components/ui/AdvancedTable";
+import { useColumnPrefs, DEFAULT_MANDATE_COLUMNS, ColumnDef } from "@/hooks/useColumnPrefs";
 import { Download } from "lucide-react";
 
 type Candidate = { id: number; externalId: string; name: string; stage: string | null; score: number | null; hasReport: boolean | null; initials: string | null; mandateId: number; };
@@ -54,6 +54,14 @@ export default function MandatesClient({
   
   const sortKey = searchParams.get("sortKey") || "id";
   const sortDir = (searchParams.get("sortDir") || "desc") as "asc" | "desc";
+
+  const {
+    columns,
+    visibleColumns,
+    isLoading: isColsLoading,
+    setColumnWidth,
+    reorderColumns,
+  } = useColumnPrefs("mandateListCols", DEFAULT_MANDATE_COLUMNS);
 
   // Debounce search
   useEffect(() => {
@@ -101,26 +109,27 @@ export default function MandatesClient({
   };
 
   // Bulk Delete State
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allSelected = paginatedData.length > 0 && paginatedData.every(m => selectedIds.has(m.id));
+  const allSelected = paginatedData.length > 0 && paginatedData.every(m => selectedIds.has(m.id.toString()));
   const toggleAll = () => {
     if (allSelected) setSelectedIds(new Set());
-    else setSelectedIds(new Set(paginatedData.map(m => m.id)));
+    else setSelectedIds(new Set(paginatedData.map(m => m.id.toString())));
   };
-  const toggleRow = (id: number) => {
+  const toggleRow = (id: string | number) => {
+    const strId = id.toString();
     const next = new Set(selectedIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
+    if (next.has(strId)) next.delete(strId);
+    else next.add(strId);
     setSelectedIds(next);
   };
 
   const handleDeleteSelected = async () => {
     setIsSubmitting(true);
     try {
-      await deleteMultipleMandatesAction(Array.from(selectedIds));
+      await deleteMultipleMandatesAction(Array.from(selectedIds).map(Number));
       setSelectedIds(new Set());
       setIsDeleteDialogOpen(false);
       toast.success("Mandates deleted successfully");
@@ -132,7 +141,7 @@ export default function MandatesClient({
   };
 
   const handleExportSelected = () => {
-    const selected = mandates.filter(m => selectedIds.has(m.id));
+    const selected = mandates.filter(m => selectedIds.has(m.id.toString()));
     if (selected.length === 0) return;
     const headers = ["Company", "Role", "CTC", "Experience", "Sectors", "Status", "Internal Status"];
     const rows = selected.map(m => [
@@ -160,180 +169,183 @@ export default function MandatesClient({
     router.refresh();
   }
 
-  return (
-    <div className="max-w-screen-xl mx-auto pb-10">
-      <div className="flex justify-between items-end mb-8">
-        <div>
-          <div className="text-[14px] text-gray-500 mb-1">Home / Mandates</div>
-          <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">All Mandates</h1>
-        </div>
-        <div className="flex items-center gap-2 mb-1">
-          <button 
-            onClick={() => setIsImportModalOpen(true)}
-            className="h-10 px-5 neo-btn text-gray-700 text-[13px] font-semibold flex items-center gap-1.5"
-          >
-            <Upload className="w-3.5 h-3.5" />
-            Import
-          </button>
-          <Link href="/dashboard/mandates/new" className="px-5 py-2.5 h-10 flex items-center neo-btn text-[#133255] text-sm font-bold"
-            style={{ background: 'linear-gradient(135deg, #D8B15B, #f0c96a)' }}
-          >
-            + Add New Mandate
-          </Link>
-        </div>
-      </div>
-      <MandateImportModal 
-        isOpen={isImportModalOpen} 
-        onClose={() => setIsImportModalOpen(false)} 
-        currentUser={currentUser}
-      />
-      <div className="neo-bar flex flex-wrap gap-3 mb-6 p-4">
-        <input 
-          type="text" 
-          placeholder="Search mandates..." 
-          value={search} 
-          onChange={e => setSearch(e.target.value)} 
-          className="min-w-[200px] flex-1 px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none"
-        />
-        
-        <select 
-          value={companyFilter} 
-          onChange={e => { setCompanyFilter(e.target.value); updateURL({ company: e.target.value }); }} 
-          className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
-        >
-          <option value="">All Companies</option>
-          {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        
-        <select 
-          value={roleFilter} 
-          onChange={e => { setRoleFilter(e.target.value); updateURL({ role: e.target.value }); }} 
-          className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
-        >
-          <option value="">All Roles</option>
-          {uniqueRoles.map(r => <option key={r} value={r}>{r}</option>)}
-        </select>
-        
-        <select 
-          value={sectorFilter} 
-          onChange={e => { setSectorFilter(e.target.value); updateURL({ sector: e.target.value }); }} 
-          className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
-        >
-          <option value="">All Sectors</option>
-          {uniqueSectors.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        
-        <select 
-          value={statusFilter} 
-          onChange={e => { setStatusFilter(e.target.value); updateURL({ status: e.target.value }); }} 
-          className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
-        >
-          <option value="">All Statuses</option>
-          {STAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-        
-        <select 
-          value={internalFilter} 
-          onChange={e => { setInternalFilter(e.target.value); updateURL({ internalStatus: e.target.value }); }} 
-          className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
-        >
-          <option value="">All Internal</option>
-          {INTERNAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-        
-        <button 
-          onClick={handleExportSelected} 
-          className="px-4 py-2.5 neo-btn text-slate-700 text-sm font-bold flex items-center gap-1.5"
-        >
-          <Download className="w-4 h-4" />
-          Export
-        </button>
-      </div>
+      const renderCell = (m: any, col: ColumnDef) => {
+        switch (col.key) {
+          case "company":
+            return <div className="font-semibold text-[#133255]">{m.company}</div>;
+          case "role":
+            return <div className="text-gray-700">{m.role}</div>;
+          case "ctc":
+            return <div className="text-gray-500 text-xs">{formatMandateCtc(m.ctc)}</div>;
+          case "exp":
+            return <div className="text-gray-500 text-xs">{m.exp}</div>;
+          case "sectors":
+            return (
+              <div className="flex flex-wrap gap-1">
+                {Array.from(new Set(m.sectors)).map((s: any, i: number) => (
+                  <span key={`${s}-${i}`} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">{s}</span>
+                ))}
+              </div>
+            );
+          case "status":
+            return (
+              <div onClick={e => e.stopPropagation()}>
+                <select value={m.status || ""} onChange={e => handleStatusChange(m.id, "status", e.target.value)} className="neo-inset px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none cursor-pointer">
+                  {STAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+            );
+          case "internalStatus":
+            return (
+              <div onClick={e => e.stopPropagation()}>
+                <select value={m.internalStatus || ""} onChange={e => handleStatusChange(m.id, "internalStatus", e.target.value)} className="neo-inset px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none cursor-pointer">
+                  {INTERNAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+            );
+          case "actions":
+            return (
+              <div onClick={e => e.stopPropagation()}>
+                <button className="px-3 py-1.5 neo-btn-primary text-xs font-bold text-white" onClick={() => router.push("/dashboard/mandates/" + m.id)}>Open</button>
+              </div>
+            );
+          default:
+            return <span className="text-[13px] text-gray-500">{m[col.key] || "-"}</span>;
+        }
+      };
 
-      <div className="neo-table">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead><tr className="border-b border-gray-100">
-              <th className="px-4 py-3 text-center w-10">
-                <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
-              </th>
-              <SortableHeader label="Company" colKey="company" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
-              <SortableHeader label="Role" colKey="role" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Budget</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Experience</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Sectors</th>
-              <SortableHeader label="Status" colKey="status" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
-              <SortableHeader label="Internal" colKey="internalStatus" sortKey={sortKey as string} sortDir={sortDir} toggleSort={toggleSort} />
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Actions</th>
-            </tr></thead>
-            <tbody>
-              {paginatedData.map(m => (
-                <tr key={m.id} className="border-b border-gray-50 neo-row-hover cursor-pointer" onClick={() => router.push("/dashboard/mandates/" + m.id)}>
-                  <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
-                    <input type="checkbox" checked={selectedIds.has(m.id)} onChange={() => toggleRow(m.id)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-[#133255]">{m.company}</td>
-                  <td className="px-4 py-3 text-gray-700">{m.role}</td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{formatMandateCtc(m.ctc)}</td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{m.exp}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {Array.from(new Set(m.sectors)).map((s, i) => (
-                        <span key={`${s}-${i}`} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">{s}</span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                    <select value={m.status || ""} onChange={e => handleStatusChange(m.id, "status", e.target.value)} className="neo-inset px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none cursor-pointer">
-                      {STAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                    <select value={m.internalStatus || ""} onChange={e => handleStatusChange(m.id, "internalStatus", e.target.value)} className="neo-inset px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none cursor-pointer">
-                      {INTERNAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                    <button className="px-3 py-1.5 neo-btn-primary text-xs font-bold text-white" onClick={() => router.push("/dashboard/mandates/" + m.id)}>Open</button>
-                  </td>
-                </tr>
-              ))}
-              {totalRows === 0 && (
-                <tr>
-                  <td colSpan={9} className="p-0 border-none">
-                    <EmptyState 
-                      title="No mandates found" 
-                      description="No mandates match your current filters. Try adjusting them." 
-                      actionLabel="Clear Filters" 
-                      onAction={() => {
-                        setSearch("");
-                        setCompanyFilter("");
-                        setRoleFilter("");
-                        setSectorFilter("");
-                        setStatusFilter("");
-                        setInternalFilter("");
-                        updateURL({ search: "", company: "", role: "", sector: "", status: "", internalStatus: "" });
-                      }}
-                    />
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        startIndex={startIndex}
-        endIndex={endIndex}
-        totalRows={totalRows}
-        goToNextPage={goToNextPage}
-        goToPrevPage={goToPrevPage}
-        pageSize={pageSize}
-        setPageSize={handlePageSizeChange}
-        goToPage={goToPage}
-      />
-      </div>
+      return (
+        <div className="max-w-screen-xl mx-auto pb-10">
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <div className="text-[14px] text-gray-500 mb-1">Home / Mandates</div>
+              <h1 className="text-3xl font-serif font-bold text-[#133255] tracking-tight">All Mandates</h1>
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              <button 
+                onClick={() => setIsImportModalOpen(true)}
+                className="h-10 px-5 neo-btn text-gray-700 text-[13px] font-semibold flex items-center gap-1.5"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                Import
+              </button>
+              <Link href="/dashboard/mandates/new" className="px-5 py-2.5 h-10 flex items-center neo-btn text-[#133255] text-sm font-bold"
+                style={{ background: 'linear-gradient(135deg, #D8B15B, #f0c96a)' }}
+              >
+                + Add New Mandate
+              </Link>
+            </div>
+          </div>
+          <MandateImportModal 
+            isOpen={isImportModalOpen} 
+            onClose={() => setIsImportModalOpen(false)} 
+            currentUser={currentUser}
+          />
+          <div className="neo-bar flex flex-wrap gap-3 mb-6 p-4">
+            <input 
+              type="text" 
+              placeholder="Search mandates..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+              className="min-w-[200px] flex-1 px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none"
+            />
+            
+            <select 
+              value={companyFilter} 
+              onChange={e => { setCompanyFilter(e.target.value); updateURL({ company: e.target.value }); }} 
+              className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
+            >
+              <option value="">All Companies</option>
+              {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            
+            <select 
+              value={roleFilter} 
+              onChange={e => { setRoleFilter(e.target.value); updateURL({ role: e.target.value }); }} 
+              className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
+            >
+              <option value="">All Roles</option>
+              {uniqueRoles.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+            
+            <select 
+              value={sectorFilter} 
+              onChange={e => { setSectorFilter(e.target.value); updateURL({ sector: e.target.value }); }} 
+              className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
+            >
+              <option value="">All Sectors</option>
+              {uniqueSectors.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            
+            <select 
+              value={statusFilter} 
+              onChange={e => { setStatusFilter(e.target.value); updateURL({ status: e.target.value }); }} 
+              className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
+            >
+              <option value="">All Statuses</option>
+              {STAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            
+            <select 
+              value={internalFilter} 
+              onChange={e => { setInternalFilter(e.target.value); updateURL({ internalStatus: e.target.value }); }} 
+              className="px-4 py-2.5 neo-inset text-sm font-semibold text-slate-800 outline-none max-w-[180px]"
+            >
+              <option value="">All Internal</option>
+              {INTERNAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            
+            <button 
+              onClick={handleExportSelected} 
+              className="px-4 py-2.5 neo-btn text-slate-700 text-sm font-bold flex items-center gap-1.5"
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </button>
+          </div>
+
+          {/* Table */}
+          <div className="h-full flex flex-col min-h-[500px]">
+            <AdvancedTable
+              data={paginatedData}
+              total={totalRows}
+              columns={columns}
+              page={currentPage}
+              pageSize={pageSize}
+              setPageSize={handlePageSizeChange}
+              setPage={goToPage}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={toggleSort}
+              visibleColumns={visibleColumns}
+              setColumnWidth={setColumnWidth}
+              reorderColumns={reorderColumns}
+              isLoadingCols={isColsLoading}
+              selectedIds={selectedIds}
+              onToggleRow={toggleRow}
+              onToggleAll={toggleAll}
+              renderCell={renderCell}
+              onRowClick={(row: any) => router.push(`/dashboard/mandates/${row.id}`)}
+              emptyState={
+                <div className="py-16 text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  <EmptyState 
+                    title="No mandates found" 
+                    description="No mandates match your current filters. Try adjusting them." 
+                    actionLabel="Clear Filters" 
+                    onAction={() => {
+                      setSearch("");
+                      setCompanyFilter("");
+                      setRoleFilter("");
+                      setSectorFilter("");
+                      setStatusFilter("");
+                      setInternalFilter("");
+                      updateURL({ search: "", company: "", role: "", sector: "", status: "", internalStatus: "" });
+                    }}
+                  />
+                </div>
+              }
+            />
+          </div>
 
       {/* Delete Confirmation Modal */}
       {isDeleteDialogOpen && (

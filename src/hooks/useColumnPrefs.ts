@@ -40,7 +40,7 @@ export interface ColumnDef {
 
 // ─── Default registry (31 columns) ───────────────────────
 
-const DEFAULT_COLUMNS: Omit<ColumnDef, "visible" | "order">[] = [
+export const DEFAULT_COLUMNS: Omit<ColumnDef, "visible" | "order">[] = [
   // Core Identity
   { key: "name",        label: "Name",               category: "identity",     defaultVisible: true,  width: 220, sortable: true,  renderer: "avatar" },
   { key: "initials",    label: "Initials",            category: "identity",     defaultVisible: false, width: 60,  sortable: false, renderer: "avatar" },
@@ -85,6 +85,36 @@ const DEFAULT_COLUMNS: Omit<ColumnDef, "visible" | "order">[] = [
   { key: "updatedAt",  label: "Last Updated",   category: "metadata",  defaultVisible: false, width: 130, sortable: true,  renderer: "date" },
 ];
 
+export const DEFAULT_CLIENT_COLUMNS: Omit<ColumnDef, "visible" | "order">[] = [
+  { key: "name",       label: "Client",         category: "identity",  defaultVisible: true,  width: 250, sortable: true,  renderer: "text" },
+  { key: "vertical",   label: "Industry",       category: "identity",  defaultVisible: true,  width: 180, sortable: true,  renderer: "text" },
+  { key: "owner",      label: "Owner",          category: "metadata",  defaultVisible: true,  width: 150, sortable: true,  renderer: "text" },
+  { key: "liveMandates", label: "Live Mandates", category: "metadata",  defaultVisible: true,  width: 150, sortable: false, renderer: "text" },
+  { key: "status",     label: "Status",         category: "identity",  defaultVisible: true,  width: 130, sortable: true,  renderer: "badge" },
+  { key: "actions",    label: "Actions",        category: "metadata",  defaultVisible: true,  width: 180, sortable: false, renderer: "text" },
+];
+
+export const DEFAULT_MANDATE_COLUMNS: Omit<ColumnDef, "visible" | "order">[] = [
+  { key: "company",    label: "Company",        category: "role",      defaultVisible: true,  width: 200, sortable: true,  renderer: "text" },
+  { key: "role",       label: "Role",           category: "role",      defaultVisible: true,  width: 200, sortable: true,  renderer: "text" },
+  { key: "ctc",        label: "Budget",         category: "compensation", defaultVisible: true, width: 130, sortable: false, renderer: "currency" },
+  { key: "exp",        label: "Experience",     category: "background", defaultVisible: true, width: 130, sortable: false, renderer: "text" },
+  { key: "sectors",    label: "Sectors",        category: "background", defaultVisible: true, width: 220, sortable: false, renderer: "tags" },
+  { key: "status",     label: "Status",         category: "metadata",  defaultVisible: true,  width: 150, sortable: true,  renderer: "badge" },
+  { key: "internalStatus", label: "Internal",   category: "metadata",  defaultVisible: true,  width: 150, sortable: true,  renderer: "badge" },
+  { key: "actions",    label: "Actions",        category: "metadata",  defaultVisible: true,  width: 120, sortable: false, renderer: "text" },
+];
+
+export const DEFAULT_FLOAT_COLUMNS: Omit<ColumnDef, "visible" | "order">[] = [
+  { key: "name",       label: "Name",           category: "identity",  defaultVisible: true,  width: 250, sortable: true,  renderer: "avatar" },
+  { key: "company",    label: "Company",        category: "role",      defaultVisible: true,  width: 180, sortable: true,  renderer: "text" },
+  { key: "role",       label: "Designation",    category: "role",      defaultVisible: true,  width: 180, sortable: true,  renderer: "text" },
+  { key: "mandate",    label: "Mandate",        category: "metadata",  defaultVisible: true,  width: 220, sortable: false, renderer: "text" },
+  { key: "stage",      label: "Stage",          category: "metadata",  defaultVisible: true,  width: 160, sortable: true,  renderer: "badge" },
+  { key: "score",      label: "Score",          category: "identity",  defaultVisible: true,  width: 120, sortable: true,  renderer: "badge" },
+  { key: "actions",    label: "Actions",        category: "metadata",  defaultVisible: true,  width: 120, sortable: false, renderer: "text" },
+];
+
 export const COLUMN_CATEGORIES: { key: ColumnCategory; label: string; icon: string }[] = [
   { key: "identity",     label: "Core Identity",           icon: "👤" },
   { key: "contact",      label: "Contact",                 icon: "📞" },
@@ -96,51 +126,50 @@ export const COLUMN_CATEGORIES: { key: ColumnCategory; label: string; icon: stri
   { key: "metadata",     label: "Metadata",                icon: "🗂" },
 ];
 
-/** Build the full defaults with order assigned */
-function buildDefaultColumns(): ColumnDef[] {
-  return DEFAULT_COLUMNS.map((c, i) => ({
-    ...c,
-    visible: c.defaultVisible,
-    order: i + 1,
-  }));
-}
-
-/** Merge saved prefs over defaults (handles new columns added to registry) */
-function mergeWithDefaults(saved: Record<string, any>): ColumnDef[] {
-  const defaults = buildDefaultColumns();
-  if (!saved?.columns) return defaults;
-  const savedMap = new Map<string, any>(saved.columns.map((c: any) => [c.key, c]));
-  return defaults.map((d) => {
-    const s = savedMap.get(d.key);
-    if (!s) return d;
-    return { ...d, visible: s.visible ?? d.visible, width: s.width ?? d.width, order: s.order ?? d.order };
-  });
-}
-
 // ─── Hook ─────────────────────────────────────────────────
 
-export function useColumnPrefs(userRole?: string) {
+export function useColumnPrefs(prefKey: string, defaultColumns: Omit<ColumnDef, "visible" | "order">[], userRole?: string) {
+  const buildDefaultColumns = useCallback(() => {
+    return defaultColumns.map((c, i) => ({
+      ...c,
+      visible: c.defaultVisible,
+      order: i + 1,
+    }));
+  }, [defaultColumns]);
+
+  const mergeWithDefaults = useCallback((saved: Record<string, any>) => {
+    const defaults = buildDefaultColumns();
+    if (!saved?.columns) return defaults;
+    const savedMap = new Map<string, any>(saved.columns.map((c: any) => [c.key, c]));
+    return defaults.map((d) => {
+      const s = savedMap.get(d.key);
+      if (!s) return d;
+      return { ...d, visible: s.visible ?? d.visible, width: s.width ?? d.width, order: s.order ?? d.order };
+    });
+  }, [buildDefaultColumns]);
+
   const [columns, setColumns] = useState<ColumnDef[]>(buildDefaultColumns());
   const [isLoading, setIsLoading] = useState(true);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load from server on mount
   useEffect(() => {
-    getUserPreferenceAction("candidateListCols")
+    setIsLoading(true);
+    getUserPreferenceAction(prefKey)
       .then((saved) => {
         if (saved) setColumns(mergeWithDefaults(saved));
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [prefKey, mergeWithDefaults]);
 
   /** Debounced server save — 1200ms after last change */
   const scheduleSave = useCallback((cols: ColumnDef[]) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      saveUserPreferenceAction("candidateListCols", { columns: cols }).catch(console.error);
+      saveUserPreferenceAction(prefKey, { columns: cols }).catch(console.error);
     }, 1200);
-  }, []);
+  }, [prefKey]);
 
   const toggleColumn = useCallback((key: string) => {
     setColumns((prev) => {
@@ -172,12 +201,12 @@ export function useColumnPrefs(userRole?: string) {
   const resetToDefault = useCallback(() => {
     const defaults = buildDefaultColumns();
     setColumns(defaults);
-    saveUserPreferenceAction("candidateListCols", { columns: defaults }).catch(console.error);
-  }, []);
+    saveUserPreferenceAction(prefKey, { columns: defaults }).catch(console.error);
+  }, [buildDefaultColumns, prefKey]);
 
   const publishAsOrgDefault = useCallback(async () => {
-    await publishOrgDefaultAction("candidateListCols", { columns });
-  }, [columns]);
+    await publishOrgDefaultAction(prefKey, { columns });
+  }, [prefKey, columns]);
 
   const visibleColumns = [...columns]
     .filter((c) => c.visible)
