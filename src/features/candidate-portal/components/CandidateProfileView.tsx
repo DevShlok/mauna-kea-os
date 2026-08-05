@@ -23,6 +23,7 @@ import toast from "react-hot-toast";
 import { VerifiedBadge } from "@/components/ui/StatusBadge";
 import { Camera, Loader2 } from "lucide-react";
 import { updateProfilePhotoAction } from "@/actions/candidate-portal";
+import { formatCtcValue } from "@/lib/helpers";
 import { CareerTimeline } from "./CareerTimeline";
 
 function NeoCard({
@@ -301,32 +302,53 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
             </button>
           </div>
 
-          <div className="flex flex-col gap-3 text-[14px]">
-            <div className="flex justify-between py-2 border-b border-slate-300/40">
-              <span className="text-slate-500 font-medium">Current CTC</span>
-              <span className="text-slate-800 font-bold">
-                {candidate.fixedCtc || candidate.ctc
-                  ? `${candidate.fixedCtc || candidate.ctc} LPA`
-                  : "Confidential / Not specified"}
-              </span>
+          <div className="flex flex-col gap-4 mt-2">
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                ['Current Fixed', formatCtcValue(candidate.fixedCtc, candidate.currency)],
+                ['Variable', formatCtcValue(candidate.variableCtc, candidate.currency)],
+                ['Total Current', formatCtcValue(candidate.ctc, candidate.currency)],
+                ['Expected', formatCtcValue(candidate.expected, candidate.currency)]
+              ].map(([l, v]) => (
+                <div key={l} className="text-center p-3 bg-[#f4f7fd] rounded-lg border border-[#e4e8f0]">
+                  <div className="text-[11px] font-bold uppercase text-[#6b7a99] tracking-wide mb-1">{l}</div>
+                  <div className="font-serif text-[15px] md:text-[17px] font-bold text-[#133255]">{v}</div>
+                </div>
+              ))}
             </div>
-            <div className="flex justify-between py-2 border-b border-slate-300/40">
-              <span className="text-slate-500 font-medium">Expected CTC</span>
-              <span className="text-slate-800 font-bold">
-                {candidate.expected ? `${candidate.expected} LPA` : "Not specified"}
-              </span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-slate-300/40">
-              <span className="text-slate-500 font-medium">Notice Period</span>
-              <span className="text-slate-800 font-bold">
-                {candidate.notice ? `${candidate.notice} Days` : "Immediate / Negotiable"}
-              </span>
-            </div>
-            <div className="flex justify-between py-2">
-              <span className="text-slate-500 font-medium">Preferred Location</span>
-              <span className="text-slate-800 font-bold">
-                {candidate.prefLocation || candidate.location || "Open"}
-              </span>
+
+            {candidate.esops > 0 && candidate.esopVesting && candidate.esopVesting.years > 0 && (
+              <div className="pt-3 border-t border-[#e2e8f0]">
+                <div className="text-[12px] font-bold uppercase text-[#6b7a99] mb-2">ESOP Vesting Schedule ({candidate.esopVesting.years} Years)</div>
+                <div className="flex flex-wrap gap-3">
+                  {candidate.esopVesting.distribution.map((pct: number, idx: number) => {
+                    const esopValue = candidate.esops ? (candidate.esops * pct) / 100 : null;
+                    return (
+                      <div key={idx} className="bg-white border border-[#D4E0F0] px-3 py-1.5 rounded flex flex-col items-center flex-1 min-w-[70px]">
+                        <span className="text-[11px] font-semibold text-[#6b7a99]">Year {idx + 1}</span>
+                        <span className="text-[13px] font-bold text-[#111]">
+                          {pct}% {esopValue ? `(${formatCtcValue(esopValue, candidate.currency)})` : ''}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            
+            <div className="flex flex-col gap-3 text-[14px] mt-2 border-t border-[#e2e8f0] pt-3">
+              <div className="flex justify-between py-1">
+                <span className="text-slate-500 font-medium">Notice Period</span>
+                <span className="text-slate-800 font-bold">
+                  {candidate.notice ? `${candidate.notice} Days` : "Immediate / Negotiable"}
+                </span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-slate-500 font-medium">Preferred Location</span>
+                <span className="text-slate-800 font-bold">
+                  {candidate.prefLocation || candidate.location || "Open"}
+                </span>
+              </div>
             </div>
           </div>
         </NeoCard>

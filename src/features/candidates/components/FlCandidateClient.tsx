@@ -789,12 +789,17 @@ export default function FlCandidateClient({
               <div className="mt-3 pt-3 border-t border-[#e2e8f0]">
                 <div className="text-[12px] font-bold uppercase text-[#6b7a99] mb-2">ESOP Vesting Schedule ({candidate.esopVesting.years} Years)</div>
                 <div className="flex flex-wrap gap-4">
-                  {candidate.esopVesting.distribution.map((pct: number, idx: number) => (
-                    <div key={idx} className="bg-white border border-[#D4E0F0] px-3 py-1.5 rounded flex flex-col items-center min-w-[70px]">
-                      <span className="text-[11px] font-semibold text-[#6b7a99]">Year {idx + 1}</span>
-                      <span className="text-[14px] font-bold text-[#111]">{pct}%</span>
-                    </div>
-                  ))}
+                  {candidate.esopVesting.distribution.map((pct: number, idx: number) => {
+                    const esopValue = candidate.esops ? (candidate.esops * pct) / 100 : null;
+                    return (
+                      <div key={idx} className="bg-white border border-[#D4E0F0] px-3 py-1.5 rounded flex flex-col items-center min-w-[70px]">
+                        <span className="text-[11px] font-semibold text-[#6b7a99]">Year {idx + 1}</span>
+                        <span className="text-[14px] font-bold text-[#111]">
+                          {pct}% {esopValue ? `(${formatCtcValue(esopValue, candidate.currency)})` : ''}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

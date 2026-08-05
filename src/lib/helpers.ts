@@ -72,13 +72,20 @@ export function formatCtcValue(val: number | null | undefined, currencyCode: str
   if (val == null || val === 0) return "—";
   
   const cur = currencyCode || "INR";
+  
+  // Normalize huge absolute values (e.g. 14000000 -> 140 lacs)
+  let normalizedVal = val;
+  if (val > 1000) {
+    normalizedVal = val / 100000;
+  }
+
   let formatted = "";
-  if (val >= 100) {
-    const cr = val / 100;
+  if (normalizedVal >= 100) {
+    const cr = normalizedVal / 100;
     const crStr = Number.isInteger(cr) ? cr.toString() : parseFloat(cr.toFixed(2)).toString();
     formatted = `${crStr} Cr`;
   } else {
-    const lStr = Number.isInteger(val) ? val.toString() : parseFloat(val.toFixed(2)).toString();
+    const lStr = Number.isInteger(normalizedVal) ? normalizedVal.toString() : parseFloat(normalizedVal.toFixed(2)).toString();
     formatted = `${lStr} Lacs`;
   }
 
