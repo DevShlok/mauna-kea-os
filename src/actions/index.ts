@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { db } from "@/db";
 import { mandates, mandateCandidates, frameworks, frameworkCategories, frameworkCriteria, candidates, floats, floatFollowUps, platformUsers, floatReferences, floatActivities, candidateReports, candidateFiles, clients, clientNotifications, clientRemarks, consultantNotifications, candidateNotifications, engagementListItems, userPreferences } from "@/db/schema";
 
-import { eq, sql, inArray, and, desc } from "drizzle-orm";
+import { eq, sql, inArray, and, desc, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { parseCtcInput } from "@/lib/helpers";
@@ -92,6 +92,7 @@ export async function createMandateAction(data: unknown) {
   }
 
   const result = await db.insert(mandates).values({
+    clientId: clientId,
     company: companyName,
     role: d.role,
     ctc: d.ctc,
@@ -793,7 +794,7 @@ export async function deleteClientAction(id: string) {
   const [client] = await db.select().from(clients).where(eq(clients.id, id));
   const deletedBy = await getCurrentUserName();
   if (client) {
-    await db.update(mandates).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(mandates.company, client.name));
+    await db.update(mandates).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(or(eq(mandates.clientId, id), eq(mandates.company, client.name)));
   }
   await db.update(clients).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(clients.id, id));
   return true;
@@ -1209,9 +1210,11 @@ export async function deleteMultipleClientsAction(ids: string[]) {
   const deletedBy = await getCurrentUserName();
   const clientsData = await db.select().from(clients).where(inArray(clients.id, ids));
   const clientNames = clientsData.map(c => c.name);
-  if (clientNames.length > 0) {
-    await db.update(mandates).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(inArray(mandates.company, clientNames));
-  }
+  
+  await db.update(mandates)
+    .set({ isDeleted: true, deletedAt: new Date(), deletedBy })
+    .where(or(inArray(mandates.clientId, ids), clientNames.length > 0 ? inArray(mandates.company, clientNames) : sql`false`));
+
   await db.update(clients).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(inArray(clients.id, ids));
   revalidatePath("/dashboard/clients");
 }
@@ -1239,9 +1242,11 @@ export async function restoreEntityAction(entityType: string, ids: (string|numbe
   if (entityType === 'clients') {
     const clientsData = await db.select().from(clients).where(inArray(clients.id, ids as string[]));
     const clientNames = clientsData.map(c => c.name);
-    if (clientNames.length > 0) {
-      await db.update(mandates).set({ isDeleted: false, deletedAt: null }).where(inArray(mandates.company, clientNames));
-    }
+    
+    await db.update(mandates)
+      .set({ isDeleted: false, deletedAt: null })
+      .where(or(inArray(mandates.clientId, ids as string[]), clientNames.length > 0 ? inArray(mandates.company, clientNames) : sql`false`));
+
     await db.update(clients).set({ isDeleted: false, deletedAt: null }).where(inArray(clients.id, ids as string[]));
   } else if (entityType === 'mandates') {
     await db.update(mandates).set({ isDeleted: false, deletedAt: null }).where(inArray(mandates.id, ids as number[]));

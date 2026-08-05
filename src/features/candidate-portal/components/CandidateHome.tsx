@@ -84,7 +84,7 @@ export function CandidateHome({
   candidateSlug = "",
 }: {
   candidate: any;
-  recentFloats: Float[];
+  recentFloats: any[];
   stats: {
     totalShared: number;
     awaiting: number;

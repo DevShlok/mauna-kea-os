@@ -465,7 +465,7 @@ export function ApplicationsClient({
   candId,
 }: {
   directApps?: any[];
-  consultantFloats?: Float[];
+  consultantFloats?: any[];
   candId: string;
 }) {
   const activeFloats = consultantFloats.filter((f) => !TERMINAL.includes(f.status ?? ""));

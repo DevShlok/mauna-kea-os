@@ -165,6 +165,8 @@ export async function getCandidateFloatsAction(candId: string) {
     .select({
       id: floats.id,
       candId: floats.candId,
+      clientId: floats.clientId,
+      mandateId: floats.mandateId,
       client: floats.client,
       role: floats.role,
       consultant: floats.consultant,
