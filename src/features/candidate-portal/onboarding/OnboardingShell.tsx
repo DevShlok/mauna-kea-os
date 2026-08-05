@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Step1_UploadCV } from "./Step1_UploadCV";
 import { Step2_LinkedInUpload } from "./Step2_LinkedInUpload";
 import { Step3_Conversational } from "./Step3_Conversational";
@@ -15,9 +16,28 @@ interface OnboardingShellProps {
 }
 
 export function OnboardingShell({ candId, candidate }: OnboardingShellProps) {
-  const [currentStep, setCurrentStep] = useState<Step>(1);
+  const router = useRouter();
+
+  // ── Refresh-resilience: restore step from localStorage ─────────────────────
+  const storageKey = `mk_onboarding_step_${candId}`;
+
+  const [currentStep, setCurrentStep] = useState<Step>(() => {
+    if (typeof window !== "undefined") {
+      const saved = parseInt(localStorage.getItem(storageKey) || "1", 10);
+      return (saved >= 1 && saved <= 4 ? saved : 1) as Step;
+    }
+    return 1;
+  });
+
   const [extractedData, setExtractedData] = useState<any>({});
   const [source, setSource] = useState<"cv" | "linkedin" | "manual">("manual");
+
+  // Persist step to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(storageKey, String(currentStep));
+    }
+  }, [currentStep, storageKey]);
 
   const steps = [
     { num: 1, title: "Resume" },
@@ -51,6 +71,16 @@ export function OnboardingShell({ candId, candidate }: OnboardingShellProps) {
     else if (currentStep < 4) {
       setCurrentStep((prev) => (prev + 1) as Step);
     }
+  };
+
+  // ── Called by Step4 after completeOnboardingAction resolves successfully ────
+  const handleComplete = () => {
+    // Clear persisted step — returning users should not see onboarding again
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(storageKey);
+    }
+    // Trigger server re-fetch — [clientSlug]/page.tsx will re-run, isOnboarded=true, → CandidateHome
+    router.refresh();
   };
 
   return (
@@ -102,6 +132,7 @@ export function OnboardingShell({ candId, candidate }: OnboardingShellProps) {
             candidate={candidate}
             initialData={extractedData}
             source={source}
+            onComplete={handleComplete}
           />
         )}
       </div>

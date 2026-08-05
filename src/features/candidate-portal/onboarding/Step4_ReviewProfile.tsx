@@ -8,12 +8,14 @@ export function Step4_ReviewProfile({
   candId, 
   candidate, 
   initialData, 
-  source 
+  source,
+  onComplete,
 }: { 
   candId: string; 
   candidate: any; 
   initialData: any; 
   source: "cv" | "linkedin" | "manual";
+  onComplete?: () => void;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -37,8 +39,15 @@ export function Step4_ReviewProfile({
   const handleFinish = async () => {
     setIsSubmitting(true);
     try {
-      await completeOnboardingAction(candId, formData, source);
-      // The action revalidates the layout, which should cause a redirect to the dashboard
+      const result = await completeOnboardingAction(candId, formData, source);
+      if (result.success) {
+        // Notify shell to clear localStorage + trigger router.refresh()
+        // Button stays in "Finalizing..." — component unmounts on success, no state leak
+        onComplete?.();
+      } else {
+        console.error("Onboarding failed:", result.error);
+        setIsSubmitting(false);
+      }
     } catch (e) {
       console.error(e);
       setIsSubmitting(false);

@@ -10,6 +10,7 @@ import {
   candidateJobs,
   candidateJobInterests,
   dreamCompanyStatus,
+  candidateApplications,
 } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { requireRole } from "@/lib/auth";
@@ -418,5 +419,78 @@ export async function updateDreamCompanyStatusAction(
 
   revalidatePath("/candidate/dream-companies");
   revalidatePath(`/dashboard/candidates/${candId}`);
+  return { success: true };
+}
+
+// ─── Self Apply to Curated Job (Candidate Action) ─────────────────────────────────────
+export async function selfApplyAction(jobId: number) {
+  const { platformUser } = await requireRole(["candidate"]);
+  const candId = platformUser!.linkedCandidateId!;
+
+  // Idempotent: don't create a duplicate application row
+  const existing = await db
+    .select()
+    .from(candidateApplications)
+    .where(and(eq(candidateApplications.candId, candId), eq(candidateApplications.jobId, jobId)))
+    .limit(1);
+
+  if (existing.length > 0) return { success: true, alreadyApplied: true };
+
+  await db.insert(candidateApplications).values({
+    candId,
+    jobId,
+    source: "direct",
+    status: "Profile Submitted",
+  });
+
+  // Notify all consultants
+  const [cand] = await db
+    .select({ name: candidates.name })
+    .from(candidates)
+    .where(eq(candidates.id, candId))
+    .limit(1);
+  const [job] = await db
+    .select({ title: candidateJobs.title })
+    .from(candidateJobs)
+    .where(eq(candidateJobs.id, jobId))
+    .limit(1);
+
+  await db.insert(consultantNotifications).values({
+    userId: null,
+    targetRole: "consultant",
+    message: `${cand?.name || "A candidate"} has applied for: ${job?.title || "#" + jobId}`,
+    link: `/dashboard/candidate-jobs`,
+  });
+
+  revalidatePath("/candidate/jobs");
+  return { success: true };
+}
+
+// ─── Update Application Status (Consultant / Admin Action) ──────────────────────
+export async function updateApplicationStatusAction(applicationId: number, status: string) {
+  await requireRole(["admin", "consultant"]);
+
+  await db
+    .update(candidateApplications)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(candidateApplications.id, applicationId));
+
+  // Notify the candidate of the status change
+  const [app] = await db
+    .select({ candId: candidateApplications.candId })
+    .from(candidateApplications)
+    .where(eq(candidateApplications.id, applicationId))
+    .limit(1);
+
+  if (app) {
+    await db.insert(candidateNotifications).values({
+      candId: app.candId,
+      type: "status_update",
+      message: `Your application status has been updated to: ${status}`,
+      link: "/candidate/jobs",
+    });
+  }
+
+  revalidatePath("/dashboard/candidate-jobs");
   return { success: true };
 }

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { CandidateJob } from "@/db/schema";
-import { markJobInterestAction } from "@/actions/candidate-portal";
+import { markJobInterestAction, selfApplyAction } from "@/actions/candidate-portal";
 import {
   Briefcase,
   Lock,
@@ -15,7 +15,8 @@ import {
   Search,
   Building2,
   Sparkles,
-  ChevronDown,
+  Send,
+  Loader2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -42,16 +43,20 @@ function NeoCard({
 interface Props {
   jobs: CandidateJob[];
   initialInterests: Record<number, string>; // jobId -> status ('Interested' | 'Not Interested')
+  initialApplications: Set<number>;         // jobIds the candidate has already applied to
   sectors: string[];
 }
 
-export function JobsClient({ jobs, initialInterests, sectors }: Props) {
+export function JobsClient({ jobs, initialInterests, initialApplications, sectors }: Props) {
   const [interests, setInterests] = useState<Record<number, string>>(initialInterests);
+  const [applications, setApplications] = useState<Set<number>>(initialApplications);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSector, setSelectedSector] = useState("");
   const [ctcFilter, setCtcFilter] = useState<string>("all"); // 'all' | 'lt50' | '50to100' | 'gt100'
   const [updatingJobId, setUpdatingJobId] = useState<number | null>(null);
+  const [applyingJobId, setApplyingJobId] = useState<number | null>(null);
 
+  // ── Express Interest (soft signal) ────────────────────────────────────────
   const handleInterest = async (jobId: number, status: "Interested" | "Not Interested") => {
     setUpdatingJobId(jobId);
     // Optimistic
@@ -60,13 +65,37 @@ export function JobsClient({ jobs, initialInterests, sectors }: Props) {
       await markJobInterestAction(jobId, status);
       toast.success(
         status === "Interested"
-          ? "Expressed interest! Our consultants have been notified."
+          ? "Interest noted! Our consultants have been notified."
           : "Preference saved."
       );
     } catch {
       toast.error("Failed to update interest");
     } finally {
       setUpdatingJobId(null);
+    }
+  };
+
+  // ── Apply Now (creates candidateApplications row) ─────────────────────────
+  const handleApply = async (jobId: number) => {
+    if (applications.has(jobId)) return; // already applied
+    setApplyingJobId(jobId);
+    // Optimistic update — show "Applied ✓" immediately
+    setApplications((prev) => new Set([...prev, jobId]));
+    try {
+      const result = await selfApplyAction(jobId);
+      if (result.success) {
+        toast.success("Application submitted! Our consultants will review your profile.");
+      }
+    } catch {
+      // Roll back optimistic update on failure
+      setApplications((prev) => {
+        const next = new Set(prev);
+        next.delete(jobId);
+        return next;
+      });
+      toast.error("Failed to submit application. Please try again.");
+    } finally {
+      setApplyingJobId(null);
     }
   };
 
@@ -107,7 +136,7 @@ export function JobsClient({ jobs, initialInterests, sectors }: Props) {
               Executive Jobs Feed
             </h1>
             <p className="text-slate-500 text-xs mt-1 max-w-lg font-medium leading-relaxed">
-              Curated positions handpicked by Mauna Kea consultants tailored for your experience level. Express interest to initiate confidential discussions.
+              Curated positions handpicked by Mauna Kea consultants tailored for your experience level. Express interest or apply directly to initiate confidential discussions.
             </p>
           </div>
 
@@ -199,6 +228,8 @@ export function JobsClient({ jobs, initialInterests, sectors }: Props) {
           {filteredJobs.map((job) => {
             const currentInterest = interests[job.id];
             const isUpdating = updatingJobId === job.id;
+            const isApplied = applications.has(job.id);
+            const isApplying = applyingJobId === job.id;
 
             return (
               <NeoCard key={job.id} className="p-6 sm:p-7 space-y-4">
@@ -210,6 +241,11 @@ export function JobsClient({ jobs, initialInterests, sectors }: Props) {
                       {job.isConfidential && (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-100/80 px-2.5 py-0.5 rounded-full">
                           <Lock className="w-3 h-3" /> Confidential
+                        </span>
+                      )}
+                      {isApplied && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                          <CheckCircle2 className="w-3 h-3" /> Applied
                         </span>
                       )}
                     </div>
@@ -270,32 +306,63 @@ export function JobsClient({ jobs, initialInterests, sectors }: Props) {
                   </div>
                 )}
 
-                {/* Bottom Interest Action Buttons */}
-                <div className="flex items-center gap-3 pt-3 border-t border-slate-200/60">
+                {/* Bottom Action Buttons — 3 buttons */}
+                <div className="flex items-center gap-2 pt-3 border-t border-slate-200/60 flex-wrap">
+
+                  {/* Primary: Apply Now */}
+                  {isApplied ? (
+                    <span className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-bold bg-[#133255] text-white">
+                      <CheckCircle2 className="w-4 h-4" /> Applied ✓
+                    </span>
+                  ) : (
+                    <button
+                      disabled={isApplying || isUpdating}
+                      onClick={() => handleApply(job.id)}
+                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all bg-[#133255] hover:bg-[#133255]/90 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isApplying ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" /> Applying...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" /> Apply Now
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {/* Secondary: Express Interest (soft signal) */}
                   <button
-                    disabled={isUpdating}
-                    onClick={() => handleInterest(job.id, "Interested")}
-                    className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+                    disabled={isUpdating || isApplying}
+                    onClick={() =>
+                      handleInterest(
+                        job.id,
+                        currentInterest === "Interested" ? "Not Interested" : "Interested"
+                      )
+                    }
+                    className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
                       currentInterest === "Interested"
                         ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
                         : "bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200"
                     }`}
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    {currentInterest === "Interested" ? "Interested Registered ✓" : "I'm Interested"}
+                    {currentInterest === "Interested" ? "Interested ✓" : "Express Interest"}
                   </button>
 
+                  {/* Dismiss: Not for me */}
                   <button
-                    disabled={isUpdating}
+                    disabled={isUpdating || isApplying}
                     onClick={() => handleInterest(job.id, "Not Interested")}
-                    className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+                    className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
                       currentInterest === "Not Interested"
                         ? "bg-slate-700 text-white shadow-md"
-                        : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
+                        : "bg-white hover:bg-slate-100 text-slate-500 border border-slate-200"
                     }`}
                   >
                     <XCircle className="w-4 h-4" />
-                    {currentInterest === "Not Interested" ? "Not For Me ✓" : "Not for me"}
+                    {currentInterest === "Not Interested" ? "Dismissed" : "Not for me"}
                   </button>
                 </div>
               </NeoCard>
