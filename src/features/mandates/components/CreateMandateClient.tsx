@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { createMandateAction } from "@/actions";
 import { createClient } from "@/utils/supabase/client";
+import { formatMandateCtc } from "@/lib/helpers";
 import { ClientTypeahead, LocationTypeahead, IndustryTypeahead } from "@/components/shared/Typeaheads";
 
 export default function CreateMandateClient({ frameworks, isClientMode = false, clientName = "", clientSlug = "", consultants = [], currentUser = "System" }: { frameworks: any[], isClientMode?: boolean, clientName?: string, clientSlug?: string, consultants?: string[], currentUser?: string }) {
@@ -212,7 +213,12 @@ export default function CreateMandateClient({ frameworks, isClientMode = false, 
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-600 mb-1.5">CTC Range <span className="text-red-500">*</span></label>
-              <input required value={form.ctc} onChange={(e) => setForm({...form, ctc: e.target.value})} type="text" className={inp} placeholder="e.g. ₹180-240L"/>
+              <input required value={form.ctc} onChange={(e) => setForm({...form, ctc: e.target.value})} type="text" className={inp} placeholder="e.g. 1.8-2.4 Cr, 180-240L, or 35-45 Lacs"/>
+              {form.ctc && formatMandateCtc(form.ctc) !== "-" && (
+                <div className="text-[11px] font-bold text-emerald-600 mt-1">
+                  Preview: {formatMandateCtc(form.ctc)}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-600 mb-1.5">Experience <span className="text-red-500">*</span></label>

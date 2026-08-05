@@ -19,6 +19,7 @@ import { LocationTypeahead, ClientTypeahead } from "@/components/shared/Typeahea
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { addFloatListEntryAction, editFloatListEntryAction, bulkAddSubmissionAction } from "@/actions";
+import { parseCtcInput, formatCtcValue } from "@/lib/helpers";
 
 export default function NewCandidateClient({ initialData, userRole = "consultant", readOnly = false, linkedCandidateId, mandates = [] }: { initialData?: any; userRole?: string; readOnly?: boolean; linkedCandidateId?: string; mandates?: any[] }) {
   const router = useRouter();
@@ -276,12 +277,12 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
         exp: form.exp ? Number(form.exp) : null,
         tenure: form.currentCompanyStartDate ? calculateTenureDecimal(form.currentCompanyStartDate) : (form.tenure ? Number(form.tenure) : null),
         currentCompanyStartDate: form.currentCompanyStartDate || null,
-        ctc: form.ctc ? Number(form.ctc) : null,
-        fixedCtc: form.fixedCtc ? Number(form.fixedCtc) : null,
-        variableCtc: form.variableCtc ? Number(form.variableCtc) : null,
-        esops: form.esops ? Number(form.esops) : null,
+        ctc: parseCtcInput(form.ctc),
+        fixedCtc: parseCtcInput(form.fixedCtc),
+        variableCtc: parseCtcInput(form.variableCtc),
+        esops: parseCtcInput(form.esops),
         esopVesting: esopVesting.years > 0 ? esopVesting : null,
-        expected: form.expected ? Number(form.expected) : null,
+        expected: parseCtcInput(form.expected),
         notice: form.notice ? Number(form.notice) : null,
         status: form.status,
         qual: quals,
@@ -540,28 +541,53 @@ export default function NewCandidateClient({ initialData, userRole = "consultant
                   <select value={form.currency} onChange={e=>setForm({...form, currency:e.target.value})} className="w-20 h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-2 text-[16px] outline-none bg-white focus:border-[#133255]">
                     {currencies.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
-                  <input type="number" value={form.ctc} onChange={e=>setForm({...form, ctc:e.target.value})} className="flex-1 h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
+                  <input type="text" value={form.ctc} onChange={e=>setForm({...form, ctc:e.target.value})} className="flex-1 h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. 14 Lacs, 1.4 Cr, 140" />
                 </div>
+                {form.ctc && parseCtcInput(form.ctc) && (
+                  <div className="text-[11px] font-bold text-emerald-600 mt-1">
+                    Preview: {formatCtcValue(parseCtcInput(form.ctc), form.currency)}
+                  </div>
+                )}
                 <AuditText field="ctc" data={initialData} />
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Fixed CTC</label>
-                <input type="number" value={form.fixedCtc} onChange={e=>setForm({...form, fixedCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
+                <input type="text" value={form.fixedCtc} onChange={e=>setForm({...form, fixedCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. 10 Lacs, 1 Cr" />
+                {form.fixedCtc && parseCtcInput(form.fixedCtc) && (
+                  <div className="text-[11px] font-bold text-emerald-600 mt-1">
+                    Preview: {formatCtcValue(parseCtcInput(form.fixedCtc), form.currency)}
+                  </div>
+                )}
                 <AuditText field="fixedCtc" data={initialData} />
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Variable CTC</label>
-                <input type="number" value={form.variableCtc} onChange={e=>setForm({...form, variableCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
+                <input type="text" value={form.variableCtc} onChange={e=>setForm({...form, variableCtc:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. 4 Lacs" />
+                {form.variableCtc && parseCtcInput(form.variableCtc) && (
+                  <div className="text-[11px] font-bold text-emerald-600 mt-1">
+                    Preview: {formatCtcValue(parseCtcInput(form.variableCtc), form.currency)}
+                  </div>
+                )}
                 <AuditText field="variableCtc" data={initialData} />
               </div>
               <div>
                 <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">Expected CTC</label>
-                <input type="number" value={form.expected} onChange={e=>setForm({...form, expected:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
+                <input type="text" value={form.expected} onChange={e=>setForm({...form, expected:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. 18 Lacs, 1.8 Cr" />
+                {form.expected && parseCtcInput(form.expected) && (
+                  <div className="text-[11px] font-bold text-emerald-600 mt-1">
+                    Preview: {formatCtcValue(parseCtcInput(form.expected), form.currency)}
+                  </div>
+                )}
                 <AuditText field="expected" data={initialData} />
               </div>
               <div>
-                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">ESOPs (in Lacs)</label>
-                <input type="number" value={form.esops} onChange={e=>setForm({...form, esops:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="Amount" />
+                <label className="block text-[14px] font-bold tracking-wide uppercase text-[#6b7a99] mb-1.5">ESOPs (in Lacs / Cr)</label>
+                <input type="text" value={form.esops} onChange={e=>setForm({...form, esops:e.target.value})} className="w-full h-[42px] border-[1.5px] border-[#D4E0F0] rounded-md px-3 text-[16px] outline-none bg-white focus:border-[#133255]" placeholder="e.g. 30 Lacs, 0.3 Cr" />
+                {form.esops && parseCtcInput(form.esops) && (
+                  <div className="text-[11px] font-bold text-emerald-600 mt-1">
+                    Preview: {formatCtcValue(parseCtcInput(form.esops), form.currency)}
+                  </div>
+                )}
                 <AuditText field="esops" data={initialData} />
               </div>
               <div>

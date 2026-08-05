@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { clients, platformUsers, mandates } from "@/db/schema";
 import { revalidatePath } from "next/cache";
 import { eq, sql } from "drizzle-orm";
+import { parseCtcInput } from "@/lib/helpers";
 
 // ─────────────────────────────────────────────────────────
 // CLIENT IMPORTS
@@ -577,6 +578,7 @@ export async function finalizeFloatImportAction(newFloats: any[], resolvedUpdate
         if (payload.name) updates.name = payload.name;
         if (payload.company) updates.company = payload.company;
         if (payload.role || payload.designation) updates.designation = payload.designation || payload.role;
+        if (payload.ctc) updates.ctc = parseCtcInput(payload.ctc);
 
         if (Object.keys(updates).length > 0) {
           await db.update(dbSchema.candidates).set(updates).where(eq(dbSchema.candidates.id, update.id));
@@ -607,6 +609,7 @@ export async function finalizeFloatImportAction(newFloats: any[], resolvedUpdate
         initials,
         qual: f.qualification ? [f.qualification] : [],
         exp: f.yearsOfExp || f.exp || 0,
+        ctc: parseCtcInput(f.ctc),
         updatedBy: currentUser.name || "System",
         metadata: f.metadata || { source: "Import" },
       });

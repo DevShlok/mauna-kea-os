@@ -826,7 +826,12 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">CTC</label>
-                  <input value={editForm.ctc || ""} onChange={e => setEditForm({...editForm, ctc: e.target.value})} className="w-full px-3 py-2 neo-inset text-sm outline-none" />
+                  <input value={editForm.ctc || ""} onChange={e => setEditForm({...editForm, ctc: e.target.value})} placeholder="e.g. 1.8-2.4 Cr, 180-240L" className="w-full px-3 py-2 neo-inset text-sm outline-none" />
+                  {editForm.ctc && formatMandateCtc(editForm.ctc) !== "-" && (
+                    <div className="text-[11px] font-bold text-emerald-600 mt-1">
+                      Preview: {formatMandateCtc(editForm.ctc)}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Experience</label>

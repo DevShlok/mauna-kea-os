@@ -7,6 +7,7 @@ import { mandates, mandateCandidates, frameworks, frameworkCategories, framework
 import { eq, sql, inArray, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
+import { parseCtcInput } from "@/lib/helpers";
 import {
   createMandateSchema,
   editMandateSchema,
@@ -245,10 +246,10 @@ export async function addFloatListEntryAction(data: unknown) {
     location: d.location,
     exp: d.exp ? Number(d.exp) : null,
     tenure: d.tenure ? Number(d.tenure) : null,
-    ctc: d.ctc ? Number(d.ctc) : null,
-    fixedCtc: d.fixedCtc ? Number(d.fixedCtc) : null,
-    variableCtc: d.variableCtc ? Number(d.variableCtc) : null,
-    expected: d.expected ? Number(d.expected) : null,
+    ctc: parseCtcInput(d.ctc),
+    fixedCtc: parseCtcInput(d.fixedCtc),
+    variableCtc: parseCtcInput(d.variableCtc),
+    expected: parseCtcInput(d.expected),
     notice: d.notice ? Number(d.notice) : null,
     status: d.status || "Active",
     qual: d.qual || [],
@@ -263,7 +264,7 @@ export async function addFloatListEntryAction(data: unknown) {
     initials: candidateName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
     cvText: d.cvText || null,
     profilePic: d.profilePic || null,
-    esops: d.esops ? Number(d.esops) : null,
+    esops: parseCtcInput(d.esops),
     esopVesting: d.esopVesting || null,
     dob: d.dob || null,
     hometown: d.hometown || null,
@@ -863,10 +864,10 @@ export async function editFloatListEntryAction(id: string, data: unknown) {
     checkField("location", d.location || null);
     checkField("exp", d.exp ? Number(d.exp) : null);
     checkField("tenure", d.tenure ? Number(d.tenure) : null);
-    checkField("ctc", d.ctc ? Number(d.ctc) : null);
-    checkField("fixedCtc", d.fixedCtc ? Number(d.fixedCtc) : null);
-    checkField("variableCtc", d.variableCtc ? Number(d.variableCtc) : null);
-    checkField("expected", d.expected ? Number(d.expected) : null);
+    checkField("ctc", parseCtcInput(d.ctc));
+    checkField("fixedCtc", parseCtcInput(d.fixedCtc));
+    checkField("variableCtc", parseCtcInput(d.variableCtc));
+    checkField("expected", parseCtcInput(d.expected));
     checkField("notice", d.notice ? Number(d.notice) : null);
     checkField("status", d.status || "Active");
     checkField("qual", d.qual || []);
@@ -881,7 +882,7 @@ export async function editFloatListEntryAction(id: string, data: unknown) {
     checkField("currency", d.currency || "INR");
     checkField("cvFileName", d.cvFileName || null);
     checkField("notes", d.notes || null);
-    checkField("esops", d.esops ? Number(d.esops) : null);
+    checkField("esops", parseCtcInput(d.esops));
     checkField("esopVesting", d.esopVesting || null);
     checkField("dob", d.dob || null);
     checkField("hometown", d.hometown || null);
@@ -905,10 +906,10 @@ export async function editFloatListEntryAction(id: string, data: unknown) {
     location: d.location,
     exp: d.exp ? Number(d.exp) : null,
     tenure: d.tenure ? Number(d.tenure) : null,
-    ctc: d.ctc ? Number(d.ctc) : null,
-    fixedCtc: d.fixedCtc ? Number(d.fixedCtc) : null,
-    variableCtc: d.variableCtc ? Number(d.variableCtc) : null,
-    expected: d.expected ? Number(d.expected) : null,
+    ctc: parseCtcInput(d.ctc),
+    fixedCtc: parseCtcInput(d.fixedCtc),
+    variableCtc: parseCtcInput(d.variableCtc),
+    expected: parseCtcInput(d.expected),
     notice: d.notice ? Number(d.notice) : null,
     status: d.status || "Active",
     qual: d.qual || [],
@@ -925,7 +926,7 @@ export async function editFloatListEntryAction(id: string, data: unknown) {
     notes: d.notes || null,
     initials: candidateName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
     profilePic: d.profilePic || null,
-    esops: d.esops ? Number(d.esops) : null,
+    esops: parseCtcInput(d.esops),
     esopVesting: d.esopVesting || null,
     dob: d.dob || null,
     hometown: d.hometown || null,

@@ -52,15 +52,53 @@ export function getClosurePercent(status: string) {
   return 5;
 }
 
-export function formatMandateCtc(ctcStr: string | null) {
-  if (!ctcStr) return "-";
-  if (ctcStr.toLowerCase().includes('cr')) return ctcStr; 
+export function parseCtcInput(val: string | number | null | undefined): number | null {
+  if (val == null || val === "") return null;
 
-  // Remove any 'L' or 'lakhs' to standardize parsing
-  let clean = ctcStr.replace(/lakhs?|l/ig, '').trim();
-  
-  return clean.replace(/\d+(\.\d+)?/g, (match) => {
+  if (typeof val === "number") {
+    if (isNaN(val) || val <= 0) return null;
+    if (val >= 10000) return parseFloat((val / 100000).toFixed(2));
+    return parseFloat(val.toFixed(2));
+  }
+
+  const str = String(val).trim().toLowerCase();
+  if (!str || str === "—" || str === "-" || str === "null" || str === "undefined") return null;
+
+  const isCr = /cr|crore/.test(str);
+
+  const cleanStr = str.replace(/,/g, '');
+  const match = cleanStr.match(/\d+(\.\d+)?/);
+  if (!match) return null;
+
+  let num = parseFloat(match[0]);
+  if (isNaN(num) || num <= 0) return null;
+
+  if (isCr) {
+    return parseFloat((num * 100).toFixed(2));
+  }
+
+  if (num >= 10000) {
+    return parseFloat((num / 100000).toFixed(2));
+  }
+
+  return parseFloat(num.toFixed(2));
+}
+
+export function formatMandateCtc(ctcStr: string | null | undefined): string {
+  if (!ctcStr || !ctcStr.trim()) return "-";
+  const str = ctcStr.trim();
+
+  if (/cr|lacs|lakhs|lpa/i.test(str)) {
+    return str;
+  }
+
+  return str.replace(/\d+(\.\d+)?/g, (match) => {
     const num = parseFloat(match);
+    if (isNaN(num)) return match;
+    if (num >= 10000) {
+      const lacs = num / 100000;
+      return lacs >= 100 ? `${(lacs / 100).toFixed(1).replace(/\.0$/, '')}Cr` : `${lacs}L`;
+    }
     if (num >= 100) {
       return (num / 100).toFixed(1).replace(/\.0$/, '') + 'Cr';
     }
@@ -68,28 +106,29 @@ export function formatMandateCtc(ctcStr: string | null) {
   });
 }
 
-export function formatCtcValue(val: number | null | undefined, currencyCode: string | null = "INR"): string {
-  if (val == null || val === 0) return "—";
-  
-  const cur = currencyCode || "INR";
-  
-  // Normalize huge absolute values (e.g. 14000000 -> 140 lacs)
-  let normalizedVal = val;
-  if (val > 1000) {
-    normalizedVal = val / 100000;
-  }
+export function formatCtcValue(val: number | string | null | undefined, currencyCode: string | null = "INR"): string {
+  if (val == null || val === "" || val === 0) return "—";
 
-  let formatted = "";
-  if (normalizedVal >= 100) {
-    const cr = normalizedVal / 100;
-    const crStr = Number.isInteger(cr) ? cr.toString() : parseFloat(cr.toFixed(2)).toString();
-    formatted = `${crStr} Cr`;
+  let numVal: number | null = null;
+  if (typeof val === "number") {
+    if (isNaN(val) || val <= 0) return "—";
+    numVal = val >= 10000 ? val / 100000 : val;
   } else {
-    const lStr = Number.isInteger(normalizedVal) ? normalizedVal.toString() : parseFloat(normalizedVal.toFixed(2)).toString();
-    formatted = `${lStr} Lacs`;
+    numVal = parseCtcInput(val);
   }
 
-  return `${cur} ${formatted}`;
+  if (numVal == null || numVal <= 0) return "—";
+
+  const cur = currencyCode || "INR";
+
+  if (numVal >= 100) {
+    const cr = numVal / 100;
+    const crStr = Number.isInteger(cr) ? cr.toString() : parseFloat(cr.toFixed(2)).toString();
+    return `${cur} ${crStr} Cr`;
+  } else {
+    const lStr = Number.isInteger(numVal) ? numVal.toString() : parseFloat(numVal.toFixed(2)).toString();
+    return `${cur} ${lStr} Lacs`;
+  }
 }
 
 export function getCleanLinkedInUrl(val: string | null | undefined, candidateName?: string): string {

@@ -23,7 +23,7 @@ import toast from "react-hot-toast";
 import { VerifiedBadge } from "@/components/ui/StatusBadge";
 import { Camera, Loader2 } from "lucide-react";
 import { updateProfilePhotoAction } from "@/actions/candidate-portal";
-import { formatCtcValue } from "@/lib/helpers";
+import { formatCtcValue, parseCtcInput } from "@/lib/helpers";
 import { CareerTimeline } from "./CareerTimeline";
 
 function NeoCard({
@@ -87,8 +87,8 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
         company: form.company,
         location: form.location,
         linkedin: form.linkedin,
-        fixedCtc: form.fixedCtc ? Number(form.fixedCtc) : undefined,
-        expectedCtc: form.expectedCtc ? Number(form.expectedCtc) : undefined,
+        fixedCtc: form.fixedCtc !== undefined && form.fixedCtc !== null ? (parseCtcInput(form.fixedCtc) ?? undefined) : undefined,
+        expectedCtc: form.expectedCtc !== undefined && form.expectedCtc !== null ? (parseCtcInput(form.expectedCtc) ?? undefined) : undefined,
         notice: form.notice ? Number(form.notice) : undefined,
         expTags: form.expTags,
         pastCompanies: form.pastCompanies,
@@ -729,29 +729,39 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[12px] font-bold text-slate-500 mb-1">
-                        Current Fixed CTC (in LPA)
+                        Current Fixed CTC
                       </label>
                       <input
-                        type="number"
+                        type="text"
                         value={form.fixedCtc}
                         onChange={(e) => setForm({ ...form, fixedCtc: e.target.value })}
-                        placeholder="e.g. 75"
+                        placeholder="e.g. 75 Lacs, 0.75 Cr, 75"
                         className="w-full px-3 py-2 rounded-xl text-slate-800 outline-none font-medium placeholder:text-slate-400"
                         style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)" }}
                       />
+                      {form.fixedCtc && parseCtcInput(form.fixedCtc) && (
+                        <div className="text-[11px] font-bold text-emerald-600 mt-1">
+                          Preview: {formatCtcValue(parseCtcInput(form.fixedCtc))}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className="block text-[12px] font-bold text-slate-500 mb-1">
-                        Expected CTC (in LPA)
+                        Expected CTC
                       </label>
                       <input
-                        type="number"
+                        type="text"
                         value={form.expectedCtc}
                         onChange={(e) => setForm({ ...form, expectedCtc: e.target.value })}
-                        placeholder="e.g. 95"
+                        placeholder="e.g. 95 Lacs, 0.95 Cr, 95"
                         className="w-full px-3 py-2 rounded-xl text-slate-800 outline-none font-medium placeholder:text-slate-400"
                         style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)" }}
                       />
+                      {form.expectedCtc && parseCtcInput(form.expectedCtc) && (
+                        <div className="text-[11px] font-bold text-emerald-600 mt-1">
+                          Preview: {formatCtcValue(parseCtcInput(form.expectedCtc))}
+                        </div>
+                      )}
                     </div>
                   </div>
 
