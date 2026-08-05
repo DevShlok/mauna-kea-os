@@ -5,10 +5,10 @@ import * as schema from './schema';
 const globalForDb = globalThis as unknown as { postgresConnection?: ReturnType<typeof postgres> };
 
 const rawUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
-const dbUrl = rawUrl ? rawUrl.split('?')[0] : '';
 
-const connection = globalForDb.postgresConnection ?? postgres(dbUrl, { 
+const connection = globalForDb.postgresConnection ?? postgres(rawUrl, { 
   prepare: false, 
+  ssl: 'require',
   max: process.env.NODE_ENV === 'development' ? 5 : 20 
 });
 
