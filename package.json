@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node --max-old-space-size=12288 ./node_modules/next/dist/bin/next dev",
     "dev:all": "npx concurrently \"npm run dev\" \"npx inngest-cli@latest dev -u http://127.0.0.1:3000/api/inngest\"",
-    "build": "next build",
+    "build": "node --max-old-space-size=12288 ./node_modules/next/dist/bin/next build",
     "start": "next start",
     "lint": "eslint"
   },
