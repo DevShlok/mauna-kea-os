@@ -117,6 +117,25 @@ export async function saveFloatFeedbackAction(
 }
 
 // ─── Get Candidate Notifications ────────────────────────────────────────────
+export async function submitVerificationDocsAction(candId: string, docsBase64: string) {
+  // Stub for Phase 2 actual doc upload
+  return { success: true };
+}
+
+// ─── Phase 4: Candidate Profile Updates ──────────────────────────────────────
+export async function updateProfilePhotoAction(candId: string, base64: string) {
+  try {
+    await db.update(candidates)
+      .set({ profilePic: base64 })
+      .where(eq(candidates.id, candId));
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to update profile photo:", error);
+    return { success: false, error: "Failed to update profile photo" };
+  }
+}
+
 export async function getCandidateNotificationsAction(candId: string) {
   return await db
     .select()

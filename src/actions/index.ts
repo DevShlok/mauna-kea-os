@@ -274,8 +274,60 @@ export async function addFloatListEntryAction(data: unknown) {
     priorExperiences: d.priorExperiences || [],
     currentCompanyStartDate: d.currentCompanyStartDate || null,
   });
+  
+  await syncPriorExperiencesToCareerTimeline(id, d.priorExperiences || []);
+  
   revalidatePath("/dashboard/float-list/database");
   return id;
+}
+
+async function syncPriorExperiencesToCareerTimeline(candId: string, priorExperiences: any[]) {
+  const { candidateCareerTimeline } = await import("@/db/schema");
+  await db.delete(candidateCareerTimeline).where(eq(candidateCareerTimeline.candId, candId));
+  if (priorExperiences && priorExperiences.length > 0) {
+    const values = priorExperiences.map((pe: any, i: number) => {
+      const dates = (pe.duration || "").split("-").map((s: string) => s.trim());
+      
+      let startDateStr = new Date().toISOString().split('T')[0];
+      if (dates[0]) {
+        const d = new Date(dates[0]);
+        if (!isNaN(d.getTime())) startDateStr = d.toISOString().split('T')[0];
+        else if (dates[0].length === 4 && !isNaN(Number(dates[0]))) {
+          startDateStr = `${dates[0]}-01-01`;
+        }
+      }
+
+      let endDateStr = null;
+      let isCurrent = false;
+      if (dates.length > 1 && dates[1]) {
+        const endLower = dates[1].toLowerCase();
+        if (endLower === 'present' || endLower === 'current') {
+          isCurrent = true;
+        } else {
+          const d = new Date(dates[1]);
+          if (!isNaN(d.getTime())) endDateStr = d.toISOString().split('T')[0];
+          else if (dates[1].length === 4 && !isNaN(Number(dates[1]))) {
+            endDateStr = `${dates[1]}-01-01`;
+          }
+        }
+      } else {
+        isCurrent = true;
+      }
+
+      return {
+        candId,
+        roleTitle: pe.position || "Unknown Role",
+        companyName: pe.companyName || "Unknown Company",
+        startDate: startDateStr,
+        endDate: endDateStr,
+        isCurrent,
+        sortOrder: i
+      };
+    });
+    if (values.length > 0) {
+      await db.insert(candidateCareerTimeline).values(values);
+    }
+  }
 }
 
 export async function addSubmissionAction(data: unknown) {
@@ -523,11 +575,51 @@ export async function addReferenceAction(data: unknown) {
 }
 
 
-export async function updateMandateCandidateStageAction(candId: number, stage: string, mandateId: number) {
+export async function updateMandateCandidateStageAction(candId: number, stage: string, mandateId: number, realCandidateId?: string) {
   await requireRole(["admin", "consultant", "client"]);
   revalidatePath("/dashboard", "layout");
   revalidatePath("/", "layout"); // Revalidate all layouts so client portal updates too
-  await db.update(mandateCandidates).set({ stage }).where(eq(mandateCandidates.id, candId));
+
+  let targetId = candId;
+
+  if (targetId === 0 && realCandidateId) {
+    // Insert fallback candidate into the pipeline if they weren't explicitly added before
+    const [inserted] = await db.insert(mandateCandidates).values({
+      candId: realCandidateId,
+      mandateId: mandateId,
+      stage: stage,
+      isSentToClient: true,
+    }).returning();
+    targetId = inserted.id;
+  }
+
+  // Get current state to see if stage actually changed and trigger notification
+  const [mcInfo] = await db.select({
+    oldStage: mandateCandidates.stage,
+    candidateId: mandateCandidates.candId,
+    company: mandates.company,
+    role: mandates.role,
+  })
+  .from(mandateCandidates)
+  .leftJoin(mandates, eq(mandateCandidates.mandateId, mandates.id))
+  .where(eq(mandateCandidates.id, targetId));
+
+  await db.update(mandateCandidates).set({ stage }).where(eq(mandateCandidates.id, targetId));
+
+  // Trigger candidate notification if stage changed to a significant one
+  if (mcInfo && mcInfo.oldStage !== stage && mcInfo.candidateId) {
+    const significantStages = ["Shared", "Shortlisted", "Interviewing", "Decision", "Hired", "Rejected"];
+    if (significantStages.includes(stage)) {
+      await db.insert(candidateNotifications).values({
+        candId: mcInfo.candidateId,
+        type: "status_update",
+        message: `Your application status for ${mcInfo.company} - ${mcInfo.role} has been updated to: ${stage}`,
+        link: "/candidate/applications",
+        isRead: false,
+      });
+    }
+  }
+
   revalidatePath("/dashboard/candidates");
   revalidatePath(`/dashboard/mandates/${mandateId}`);
 }
@@ -841,6 +933,9 @@ export async function editFloatListEntryAction(id: string, data: unknown) {
     relocationStatus: d.relocationStatus || null,
     relocationPrefs: d.relocationPrefs || null,
   }).where(eq(candidates.id, id));
+  
+  await syncPriorExperiencesToCareerTimeline(id, d.priorExperiences || []);
+  
   revalidatePath("/dashboard/float-list/database");
   revalidatePath("/dashboard/float-list/" + id);
   return id;

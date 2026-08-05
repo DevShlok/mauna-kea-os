@@ -369,16 +369,114 @@ function ApplicationCard({ float, candId }: { float: Float; candId: string }) {
   );
 }
 
-// ─── Main Applications Client ────────────────────────────────────────────────
+// ─── Direct Application Card ───────────────────────────────────────────────────
+function DirectAppCard({ app, candId }: { app: any; candId: string }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  const isRejected = app.status === "Rejected";
+  const isHired = app.status === "Hired";
+
+  return (
+    <NeoCard
+      className={`p-5 transition-all duration-300 ${
+        isHired
+          ? "ring-1 ring-emerald-500/30"
+          : isRejected
+          ? "opacity-70"
+          : ""
+      }`}
+    >
+      {/* Header */}
+      <div className="flex items-start gap-3">
+        <div
+          className="w-11 h-11 rounded-xl flex items-center justify-center text-[#F15A29] font-bold text-[15px] shrink-0 bg-white"
+          style={{ boxShadow: "2px 2px 5px rgba(163,177,198,0.5)" }}
+        >
+          {(app.company || "?").charAt(0).toUpperCase()}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-slate-800 font-bold text-[15px] truncate">
+              {app.company}
+            </h3>
+            <span className="text-[10px] font-bold bg-[#F15A29]/10 text-[#F15A29] px-2 py-0.5 rounded-full uppercase tracking-wider">
+              Direct Application
+            </span>
+            {isHired && (
+              <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">
+                <Trophy className="w-3 h-3" /> Hired
+              </span>
+            )}
+            {isRejected && (
+              <span className="text-[11px] font-bold text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full">
+                Closed
+              </span>
+            )}
+          </div>
+          <p className="text-slate-500 font-medium text-[13px]">{app.roleTitle || "Role not specified"}</p>
+          <div className="flex items-center gap-3 mt-1 text-[12px] text-slate-400 font-medium">
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3 h-3" /> {new Date(app.createdAt).toLocaleDateString()}
+            </span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="p-2 rounded-2xl text-slate-500 hover:text-slate-800 transition-all shrink-0"
+          style={{ background: "#eef2f7", boxShadow: "4px 4px 10px #cbd5e1, -4px -4px 10px #ffffff" }}
+        >
+          {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+      </div>
+
+      <div className="mt-4 px-1">
+        <StageBar status={app.status} />
+      </div>
+
+      <div
+        className={`grid transition-all duration-300 ease-in-out ${
+          expanded ? "grid-rows-[1fr] mt-5 opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="p-4 rounded-2xl bg-white/50 border border-slate-200/50">
+            <div className="flex items-start gap-3">
+              <Building2 className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-[13px] font-bold text-slate-700">Source</p>
+                <p className="text-[13px] text-slate-600 mt-1 leading-relaxed">
+                  {app.source === "curated" ? "Applied from Curated Jobs feed" : "Self-sourced / External"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </NeoCard>
+  );
+}
+
+// ─── Main Client ─────────────────────────────────────────────────────────────
 export function ApplicationsClient({
-  floats: myFloats,
+  directApps = [],
+  consultantFloats = [],
   candId,
 }: {
-  floats: Float[];
+  directApps?: any[];
+  consultantFloats?: Float[];
   candId: string;
 }) {
-  const active = myFloats.filter((f) => !TERMINAL.includes(f.status ?? ""));
-  const closed = myFloats.filter((f) => TERMINAL.includes(f.status ?? ""));
+  const activeFloats = consultantFloats.filter((f) => !TERMINAL.includes(f.status ?? ""));
+  const closedFloats = consultantFloats.filter((f) => TERMINAL.includes(f.status ?? ""));
+  
+  const activeDirect = directApps.filter((a) => !TERMINAL.includes(a.status ?? ""));
+  const closedDirect = directApps.filter((a) => TERMINAL.includes(a.status ?? ""));
+
+  const totalActive = activeFloats.length + activeDirect.length;
+  const totalClosed = closedFloats.length + closedDirect.length;
+  const totalApps = totalActive + totalClosed;
 
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-6">
@@ -387,9 +485,9 @@ export function ApplicationsClient({
         <div>
           <h2 className="text-slate-800 text-[22px] font-bold">My Applications</h2>
           <p className="text-slate-500 font-medium text-[14px] mt-0.5">
-            {myFloats.length === 0
+            {totalApps === 0
               ? "No applications yet"
-              : `${active.length} active · ${closed.length} closed`}
+              : `${totalActive} active · ${totalClosed} closed`}
           </p>
         </div>
         <div
@@ -399,11 +497,11 @@ export function ApplicationsClient({
             boxShadow: "4px 4px 10px #cbd5e1, -4px -4px 10px #ffffff",
           }}
         >
-          {myFloats.length} Total
+          {totalApps} Total
         </div>
       </div>
 
-      {myFloats.length === 0 ? (
+      {totalApps === 0 ? (
         <div
           className="rounded-2xl p-12 flex flex-col items-center justify-center text-center"
           style={{
@@ -419,31 +517,37 @@ export function ApplicationsClient({
           </div>
           <h3 className="text-slate-800 text-[17px] font-bold mb-2">No applications yet</h3>
           <p className="text-slate-500 font-medium text-[14px] max-w-xs">
-            Your profile will appear here when your consultant shares it with a potential employer.
+            Apply to jobs from the Curated feed, or wait for your consultant to share your profile.
           </p>
         </div>
       ) : (
         <>
           {/* Active Applications */}
-          {active.length > 0 && (
+          {totalActive > 0 && (
             <div className="flex flex-col gap-3">
               <p className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">
                 Active
               </p>
-              {active.map((f) => (
-                <ApplicationCard key={f.id} float={f} candId={candId} />
+              {activeFloats.map((f) => (
+                <ApplicationCard key={`float-${f.id}`} float={f} candId={candId} />
+              ))}
+              {activeDirect.map((a) => (
+                <DirectAppCard key={`app-${a.id}`} app={a} candId={candId} />
               ))}
             </div>
           )}
 
           {/* Closed */}
-          {closed.length > 0 && (
-            <div className="flex flex-col gap-3">
+          {totalClosed > 0 && (
+            <div className="flex flex-col gap-3 mt-4">
               <p className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">
                 Closed
               </p>
-              {closed.map((f) => (
-                <ApplicationCard key={f.id} float={f} candId={candId} />
+              {closedFloats.map((f) => (
+                <ApplicationCard key={`float-${f.id}`} float={f} candId={candId} />
+              ))}
+              {closedDirect.map((a) => (
+                <DirectAppCard key={`app-${a.id}`} app={a} candId={candId} />
               ))}
             </div>
           )}

@@ -242,10 +242,10 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
   };
 
   const handleStageChange = async (newStage: string) => {
-    if (!mandateCandidate?.id) return;
+    if (mandateCandidate?.id === undefined) return;
     setIsUpdating(true);
     try {
-      await updateMandateCandidateStageAction(mandateCandidate.id, newStage, mandateId);
+      await updateMandateCandidateStageAction(mandateCandidate.id, newStage, mandateId, candidate.id);
       setCurrentStage(newStage);
     } catch (e) {
       console.error("Failed to update candidate stage", e);
@@ -801,10 +801,10 @@ export default function ClientCandidateProfile({ candidate, mandateCandidate, ma
           </button>
 
           <button
-            onClick={() => handleStageChange("screening")}
+            onClick={() => handleStageChange("longlist")}
             disabled={isUpdating}
             className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl text-[14px] font-bold border transition-all duration-200 ${
-              currentStage === "screening"
+              currentStage === "longlist"
                 ? "bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/25"
                 : "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
             }`}

@@ -7,6 +7,7 @@ import { clients, candidates } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import ClientDashboard from "@/features/client/components/ClientDashboard";
 import { CandidateHome } from "@/features/candidate-portal/components/CandidateHome";
+import { OnboardingShell } from "@/features/candidate-portal/onboarding/OnboardingShell";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +62,16 @@ export default async function DynamicSlugPage(props: PageProps) {
     const feedbackAvailable = myFloats.filter(
       (f) => f.feedbackPositives || f.feedbackImprovements || f.feedbackNextSteps
     ).length;
+
+    const isOnboarded = !!candidate.profileCompletedAt;
+
+    if (!isOnboarded) {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-[#f4f6fb]">Loading...</div>}>
+          <OnboardingShell candId={candId} candidate={candData} />
+        </Suspense>
+      );
+    }
 
     return (
       <CandidateHome

@@ -118,6 +118,10 @@ export const candidates = pgTable('candidates', {
   updatedBy: varchar('updated_by', { length: 255 }),
   auditLog: json('audit_log').$type<Record<string, { updatedBy: string, updatedAt: string }>>().default({}),
   metadata: json('metadata').$type<Record<string, any>>().default({}),
+  // ─── Phase 4: Candidate Onboarding ───
+  profileCompletedAt: datetime('profile_completed_at'),
+  onboardingSource: varchar('onboarding_source', { length: 20 }), // 'cv' | 'linkedin' | 'manual' | 'conversational'
+  certifications: json('certifications').$type<any[]>().default([]),
 }, (table) => ({
   nameIdx: index('candidates_name_idx').on(table.name),
   emailIdx: index('candidates_email_idx').on(table.email),
@@ -650,3 +654,51 @@ export const dreamCompanyStatus = pgTable('dream_company_status', {
 export type CandidateJob = typeof candidateJobs.$inferSelect;
 export type CandidateJobInterest = typeof candidateJobInterests.$inferSelect;
 export type DreamCompanyStatus = typeof dreamCompanyStatus.$inferSelect;
+
+// ─── CANDIDATE CAREER TIMELINE (Phase 4) ──────────────────────
+export const candidateCareerTimeline = pgTable('candidate_career_timeline', {
+  id: serial('id').primaryKey(),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id, { onDelete: 'cascade' }),
+  roleTitle: varchar('role_title', { length: 255 }).notNull(),
+  companyName: varchar('company_name', { length: 255 }).notNull(),
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date'),
+  description: text('description'),
+  isCurrent: boolean('is_current').default(false),
+  sortOrder: int('sort_order').default(0),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  candIdIdx: index('cct_cand_id_idx').on(table.candId),
+  startDateIdx: index('cct_start_date_idx').on(table.candId, table.startDate),
+}));
+
+// ─── CANDIDATE BADGES (Phase 4) ───────────────────────────────
+export const candidateBadges = pgTable('candidate_badges', {
+  id: serial('id').primaryKey(),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id, { onDelete: 'cascade' }),
+  badgeType: varchar('badge_type', { length: 50 }).notNull(),
+  // 'profile_complete' | 'reference_check_complete' | 'assessment_complete' | 'ai_interview_complete'
+  earnedAt: datetime('earned_at').notNull().default(sql`now()`),
+  metadata: json('metadata').$type<Record<string, any>>(),
+}, (table) => ({
+  candIdIdx: index('cb_cand_id_idx').on(table.candId),
+  uniq: unique('cb_cand_badge_uniq').on(table.candId, table.badgeType),
+}));
+
+// ─── CANDIDATE APPLICATIONS (Phase 4) ─────────────────────────
+export const candidateApplications = pgTable('candidate_applications', {
+  id: serial('id').primaryKey(),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id, { onDelete: 'cascade' }),
+  source: varchar('source', { length: 50 }).default('direct'), // 'direct' | 'consultant'
+  jobId: int('job_id').references(() => candidateJobs.id, { onDelete: 'set null' }),
+  mandateId: int('mandate_id').references(() => mandates.id, { onDelete: 'set null' }),
+  status: varchar('status', { length: 50 }).default('Profile Submitted'),
+  appliedAt: datetime('applied_at').default(sql`now()`),
+  updatedAt: datetime('updated_at').default(sql`now()`),
+}, (table) => ({
+  candIdIdx: index('ca_cand_id_idx').on(table.candId),
+}));
+
+export type CandidateCareerEntry = typeof candidateCareerTimeline.$inferSelect;
+export type CandidateBadge = typeof candidateBadges.$inferSelect;
+export type CandidateApplication = typeof candidateApplications.$inferSelect;

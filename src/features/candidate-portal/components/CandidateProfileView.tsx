@@ -21,6 +21,9 @@ import {
 import { updateCandidateSelfProfileAction } from "@/actions/candidate-portal";
 import toast from "react-hot-toast";
 import { VerifiedBadge } from "@/components/ui/StatusBadge";
+import { Camera, Loader2 } from "lucide-react";
+import { updateProfilePhotoAction } from "@/actions/candidate-portal";
+import { CareerTimeline } from "./CareerTimeline";
 
 function NeoCard({
   children,
@@ -65,6 +68,7 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
   const [tagInput, setTagInput] = useState("");
   const [companyInput, setCompanyInput] = useState("");
   const [qualInput, setQualInput] = useState({ degree: "", college: "", year: "" });
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   if (!candidate) {
     return (
@@ -145,29 +149,67 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
       .substring(0, 2)
       .toUpperCase() || "MK";
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const res = await fetch("/api/upload-profile-pic", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Failed to upload photo");
+      const { base64 } = await res.json();
+      
+      await updateProfilePhotoAction(candidate.id, base64);
+      toast.success("Profile photo updated");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upload photo");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
       {/* Top Header Card */}
       <NeoCard className="p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-          {candidate.profilePic ? (
-            <img
-              src={candidate.profilePic}
-              alt={candidate.name}
-              className="w-20 h-20 rounded-2xl object-cover shrink-0"
-              style={{ border: "2px solid #e0e5ec", boxShadow: "4px 4px 8px rgba(163,177,198,0.5)" }}
-            />
-          ) : (
-            <div
-              className="w-20 h-20 rounded-2xl flex items-center justify-center text-white font-serif text-2xl font-bold shrink-0"
-              style={{
-                background: "linear-gradient(135deg, #133255, #1d4d82)",
-                boxShadow: "4px 4px 10px rgba(163,177,198,0.5), -4px -4px 10px rgba(255,255,255,0.8)",
-              }}
-            >
-              {initials}
-            </div>
-          )}
+          <div className="relative shrink-0">
+            {candidate.profilePic ? (
+              <img
+                src={candidate.profilePic}
+                alt={candidate.name}
+                className="w-20 h-20 rounded-2xl object-cover"
+                style={{ border: "2px solid #e0e5ec", boxShadow: "4px 4px 8px rgba(163,177,198,0.5)" }}
+              />
+            ) : (
+              <div
+                className="w-20 h-20 rounded-2xl flex items-center justify-center text-white font-serif text-2xl font-bold"
+                style={{
+                  background: "linear-gradient(135deg, #133255, #1d4d82)",
+                  boxShadow: "4px 4px 10px rgba(163,177,198,0.5), -4px -4px 10px rgba(255,255,255,0.8)",
+                }}
+              >
+                {initials}
+              </div>
+            )}
+            
+            <label htmlFor="photo-upload" className="absolute -bottom-2 -right-2 p-1.5 bg-white rounded-full shadow-md cursor-pointer hover:bg-slate-50 transition-colors z-10 border border-slate-100">
+              {isUploadingPhoto ? (
+                <Loader2 className="w-4 h-4 text-[#F15A29] animate-spin" />
+              ) : (
+                <Camera className="w-4 h-4 text-[#133255]" />
+              )}
+            </label>
+            <input id="photo-upload" type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={isUploadingPhoto} />
+          </div>
+          
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-slate-800 text-2xl font-bold">{candidate.name}</h1>
@@ -245,7 +287,7 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
         <NeoCard className="p-6 flex flex-col gap-4">
           <div className="flex justify-between items-center">
             <h2 className="text-slate-800 text-[16px] font-bold flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-[#133255]" />
+              <Briefcase className="w-5 h-5 text-[#133255]" />
               Career Overview
             </h2>
             <button
@@ -450,6 +492,9 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
             </div>
           )}
         </NeoCard>
+
+        {/* Detailed Career Timeline */}
+        <CareerTimeline candId={candidate.id} timeline={candidate.priorExperiences || []} />
       </div>
 
       {/* ─── EDIT PROFILE MODAL ─────────────────────────────────────── */}
