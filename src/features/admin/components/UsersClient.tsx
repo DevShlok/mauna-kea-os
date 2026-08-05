@@ -5,8 +5,8 @@ import { useState } from "react";
 import { updatePlatformUserAction, deletePlatformUserAction, deleteMultiplePlatformUsersAction } from "@/actions";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { useDataTable } from "@/hooks/useDataTable";
-import { Pagination } from "@/components/DataTable/Pagination";
+import { useColumnPrefs, DEFAULT_USER_COLUMNS, ColumnDef } from "@/hooks/useColumnPrefs";
+import { AdvancedTable } from "@/components/ui/AdvancedTable";
 import { Download, Upload } from "lucide-react";
 import dynamic from "next/dynamic";
 const UserImportModal = dynamic(() => import("./UserImportModal"), { ssr: false });
@@ -83,8 +83,13 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
   };
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
-  const _dt = useDataTable({ data: users, defaultSortKey: "name", defaultSortDir: "asc" });
+  const { columns, visibleColumns, isLoading: isColsLoading, setColumnWidth, reorderColumns } = useColumnPrefs("userListCols", DEFAULT_USER_COLUMNS);
+
+  const totalRows = users.length;
+  const paginatedData = users.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
@@ -118,7 +123,7 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
         </div>
       )}
 
-      <div className="neo-table">
+      <div className="h-full flex flex-col min-h-[400px]">
         <div className="p-4 border-b border-gray-100 flex justify-end gap-3">
           <button 
             onClick={() => setIsImportModalOpen(true)}
@@ -127,66 +132,60 @@ export default function UsersClient({ initialUsers, clients }: { initialUsers: a
             <Upload className="w-3.5 h-3.5" />
             Import Users
           </button>
-          <button onClick={() => {
-            router.push('/dashboard/admin/users/new');
-          }} className="h-9 px-5 neo-btn-primary text-xs font-bold text-white">
+          <button onClick={() => router.push('/dashboard/admin/users/new')} className="h-9 px-5 neo-btn-primary text-xs font-bold text-white">
             + Add User
           </button>
         </div>
         <UserImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-100">
-              <th className="px-4 py-3 text-center w-10">
-                <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Name</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Email</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Role</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Last Active</th>
-            </tr>
-          </thead>
-          <tbody>
-            {_dt.paginatedData.map((u) => (
-              <tr key={u.id} className="border-b border-gray-50 neo-row-hover">
-                <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
-                  <input type="checkbox" checked={selectedIds.has(u.id)} onChange={() => toggleRow(u.id)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
-                </td>
-                <td className="px-4 py-3 cursor-pointer" onClick={() => handleEditClick(u)}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 neo-card-sm text-[#D8B15B] flex items-center justify-center text-xs font-bold font-serif" style={{ background: '#133255' }}>{u.initials}</div>
-                    <span className="font-semibold text-[#111]">{u.name}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-[#6b7a99]">{u.email}</td>
-                <td className="px-4 py-3">
-                  <span className={`px-2.5 py-1 neo-card-sm text-[13px] font-bold uppercase tracking-wider ${
-                    u.role === "admin" ? "text-[#C0392B]" : 
-                    u.role === "consultant" ? "text-blue-800" :
-                    u.role === "client" ? "text-green-800" :
-                    "text-purple-800"
-                  }`}>
-                    {u.role}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-[#6b7a99] text-xs" suppressHydrationWarning>
+        <AdvancedTable
+          data={paginatedData}
+          total={totalRows}
+          columns={columns}
+          page={page}
+          pageSize={pageSize}
+          setPageSize={(s) => { setPageSize(s); setPage(1); }}
+          setPage={setPage}
+          sortKey="name"
+          sortDir="asc"
+          onSort={() => {}}
+          visibleColumns={visibleColumns}
+          setColumnWidth={setColumnWidth}
+          reorderColumns={reorderColumns}
+          isLoadingCols={isColsLoading}
+          selectedIds={selectedIds}
+          onToggleRow={toggleRow}
+          onToggleAll={toggleAll}
+          renderCell={(u: any, col: ColumnDef) => {
+            switch (col.key) {
+              case "name": return (
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleEditClick(u)}>
+                  <div className="w-8 h-8 neo-card-sm text-[#D8B15B] flex items-center justify-center text-xs font-bold font-serif" style={{ background: '#133255' }}>{u.initials}</div>
+                  <span className="font-semibold text-[#111]">{u.name}</span>
+                </div>
+              );
+              case "email": return <div className="text-[#6b7a99]">{u.email}</div>;
+              case "role": return (
+                <span className={`px-2.5 py-1 neo-card-sm text-[13px] font-bold uppercase tracking-wider ${
+                  u.role === "admin" ? "text-[#C0392B]" : 
+                  u.role === "consultant" ? "text-blue-800" :
+                  u.role === "client" ? "text-green-800" :
+                  "text-purple-800"
+                }`}>{u.role}</span>
+              );
+              case "lastActive": return (
+                <div className="text-[#6b7a99] text-xs" suppressHydrationWarning>
                   {u.lastActive ? new Date(u.lastActive).toLocaleString() : "Never"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <Pagination
-          currentPage={_dt.currentPage}
-          totalPages={_dt.totalPages}
-          totalRows={_dt.totalRows}
-          startIndex={_dt.startIndex}
-          endIndex={_dt.endIndex}
-          pageSize={_dt.pageSize}
-          setPageSize={_dt.setPageSize}
-          goToPage={_dt.goToPage}
-          goToNextPage={_dt.goToNextPage}
-          goToPrevPage={_dt.goToPrevPage}
+                </div>
+              );
+              default: return <span className="text-gray-500">{u[col.key] || "-"}</span>;
+            }
+          }}
+          emptyState={
+            <div className="py-16 text-center">
+              <h3 className="text-lg font-bold text-gray-900 mb-1">No users yet</h3>
+              <p className="text-sm text-gray-500">Add your first team member.</p>
+            </div>
+          }
         />
       </div>
 

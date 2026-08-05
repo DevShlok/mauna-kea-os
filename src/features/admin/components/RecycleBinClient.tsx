@@ -3,8 +3,8 @@ import { useState } from "react";
 import { restoreEntityAction, hardDeleteEntityAction } from "@/actions";
 import toast from "react-hot-toast";
 import { confirmDialog } from "@/components/ConfirmDialog";
-import { useDataTable } from "@/hooks/useDataTable";
-import { Pagination } from "@/components/DataTable/Pagination";
+import { useColumnPrefs, DEFAULT_RECYCLE_COLUMNS, ColumnDef } from "@/hooks/useColumnPrefs";
+import { AdvancedTable } from "@/components/ui/AdvancedTable";
 
 
 export default function RecycleBinClient({ items }: { items: any[] }) {
@@ -13,9 +13,14 @@ export default function RecycleBinClient({ items }: { items: any[] }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const filteredItems = localItems.filter(i => filterType === "All" || i.type === filterType);
+  const { columns, visibleColumns, isLoading: isColsLoading, setColumnWidth, reorderColumns } = useColumnPrefs("recycleListCols", DEFAULT_RECYCLE_COLUMNS);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
-  const _dt = useDataTable({ data: filteredItems, defaultSortKey: "deletedAt", defaultSortDir: "desc" });
+  const filteredItems = localItems.filter(i => filterType === "All" || i.type === filterType);
+  const totalRows = filteredItems.length;
+  const paginatedData = filteredItems.slice((page - 1) * pageSize, page * pageSize);
+
   const allSelected = filteredItems.length > 0 && selectedIds.size === filteredItems.length;
 
   const toggleAll = () => {
@@ -131,59 +136,44 @@ export default function RecycleBinClient({ items }: { items: any[] }) {
         </div>
       )}
 
-      <div className="neo-table">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-100">
-              <th className="px-4 py-3 text-center w-10">
-                <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Type</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Name / Details</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Deleted By</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Deleted At</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Expires In</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredItems.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">Trash is empty.</td>
-              </tr>
-            ) : filteredItems.map((item: any) => {
-              const d = new Date(item.deletedAt);
-              const expires = new Date(d.getTime() + 30 * 24 * 60 * 60 * 1000);
-              const daysLeft = Math.max(0, Math.ceil((expires.getTime() - new Date().getTime()) / (1000 * 3600 * 24)));
-              return (
-                <tr key={item.id} className="border-b border-gray-50 neo-row-hover">
-                  <td className="px-4 py-3 text-center">
-                    <input type="checkbox" checked={selectedIds.has(item.id.toString())} onChange={() => toggleRow(item.id.toString())} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-gray-600">{item.type}</td>
-                  <td className="px-4 py-3 font-semibold text-[#133255]">{item.name}</td>
-                  <td className="px-4 py-3 text-gray-600">{item.deletedBy || "Unknown"}</td>
-                  <td className="px-4 py-3 text-gray-500">{d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-bold ${daysLeft <= 3 ? 'text-red-500' : 'text-gray-500'}`}>
-                      {daysLeft} days
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        <Pagination
-          currentPage={_dt.currentPage}
-          totalPages={_dt.totalPages}
-          totalRows={_dt.totalRows}
-          startIndex={_dt.startIndex}
-          endIndex={_dt.endIndex}
-          pageSize={_dt.pageSize}
-          setPageSize={_dt.setPageSize}
-          goToPage={_dt.goToPage}
-          goToNextPage={_dt.goToNextPage}
-          goToPrevPage={_dt.goToPrevPage}
+      <div className="h-full flex flex-col min-h-[400px]">
+        <AdvancedTable
+          data={paginatedData}
+          total={totalRows}
+          columns={columns}
+          page={page}
+          pageSize={pageSize}
+          setPageSize={(s) => { setPageSize(s); setPage(1); }}
+          setPage={setPage}
+          sortKey="deletedAt"
+          sortDir="desc"
+          onSort={() => {}}
+          visibleColumns={visibleColumns}
+          setColumnWidth={setColumnWidth}
+          reorderColumns={reorderColumns}
+          isLoadingCols={isColsLoading}
+          selectedIds={selectedIds}
+          onToggleRow={toggleRow}
+          onToggleAll={toggleAll}
+          renderCell={(item: any, col: ColumnDef) => {
+            const d = new Date(item.deletedAt);
+            const expires = new Date(d.getTime() + 30 * 24 * 60 * 60 * 1000);
+            const daysLeft = Math.max(0, Math.ceil((expires.getTime() - new Date().getTime()) / (1000 * 3600 * 24)));
+            switch (col.key) {
+              case "type": return <span className="font-semibold text-gray-600">{item.type}</span>;
+              case "name": return <span className="font-semibold text-[#133255]">{item.name}</span>;
+              case "deletedBy": return <span className="text-gray-600">{item.deletedBy || "Unknown"}</span>;
+              case "deletedAt": return <span className="text-gray-500">{d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>;
+              case "expiresIn": return <span className={`text-xs font-bold ${daysLeft <= 3 ? 'text-red-500' : 'text-gray-500'}`}>{daysLeft} days</span>;
+              default: return <span className="text-gray-500">{item[col.key] || "-"}</span>;
+            }
+          }}
+          emptyState={
+            <div className="py-16 text-center">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">🗑️ Trash is empty</h3>
+              <p className="text-sm text-gray-500">Deleted items appear here for 30 days before permanent removal.</p>
+            </div>
+          }
         />
       </div>
     </div>

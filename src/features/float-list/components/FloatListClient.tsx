@@ -5,7 +5,8 @@ import { useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { deleteMultipleCandidatesAction } from "@/actions";
 import toast from "react-hot-toast";
-import { Pagination } from "@/components/DataTable/Pagination";
+import { AdvancedTable } from "@/components/ui/AdvancedTable";
+import { useColumnPrefs, DEFAULT_FLOAT_COLUMNS, ColumnDef } from "@/hooks/useColumnPrefs";
 import { Download, Upload } from "lucide-react";
 import dynamic from "next/dynamic";
 import { FloatStageDropdown } from "@/components/ui/FloatStageDropdown";
@@ -30,6 +31,14 @@ export default function FloatListClient({
 
   const sortKey = searchParams.get("sortKey") || "createdAt";
   const sortDir = searchParams.get("sortDir") || "desc";
+
+  const {
+    columns,
+    visibleColumns,
+    isLoading: isColsLoading,
+    setColumnWidth,
+    reorderColumns,
+  } = useColumnPrefs("floatListCols", DEFAULT_FLOAT_COLUMNS);
 
   const { uniqueMandates, uniqueCompanies, uniqueDesignations, totalCount: totalRows, totalPages, currentPage } = metadata;
   
@@ -194,47 +203,58 @@ export default function FloatListClient({
         </div>
       )}
 
-      <div className="neo-table">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className="px-4 py-3 text-center w-10">
-                  <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase cursor-pointer" onClick={() => toggleSort("name")}>Name {sortKey === "name" && (sortDir === "asc" ? "↑" : "↓")}</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase cursor-pointer" onClick={() => toggleSort("company")}>Company {sortKey === "company" && (sortDir === "asc" ? "↑" : "↓")}</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase cursor-pointer" onClick={() => toggleSort("role")}>Designation {sortKey === "role" && (sortDir === "asc" ? "↑" : "↓")}</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Mandate</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase cursor-pointer" onClick={() => toggleSort("stage")}>Stage {sortKey === "stage" && (sortDir === "asc" ? "↑" : "↓")}</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase cursor-pointer" onClick={() => toggleSort("score")}>Score {sortKey === "score" && (sortDir === "asc" ? "↑" : "↓")}</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedData.map((c: any, i: number) => (
-                <tr key={i} className="border-b border-gray-50 neo-row-hover cursor-pointer" onClick={() => c.isFloatOnly ? router.push("/dashboard/candidates/" + c.externalId) : router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId)}>
-                  <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
-                    <input type="checkbox" checked={selectedIds.has(c.externalId)} onChange={() => toggleRow(c.externalId)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded bg-[#133255] text-white flex items-center justify-center text-xs font-bold">{c.initials}</div>
-                      <span className="font-semibold text-[#133255]">{c.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">{c.company}</td>
-                  <td className="px-4 py-3 text-gray-600">{c.role}</td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{c.mandateRole} @ {c.mandateCompany}</td>
-                  <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+      {/* Table */}
+      <div className="h-full flex flex-col min-h-[500px]">
+        <AdvancedTable
+          data={paginatedData}
+          total={totalRows}
+          columns={columns}
+          page={currentPage}
+          pageSize={pageSize}
+          setPageSize={handlePageSizeChange}
+          setPage={goToPage}
+          sortKey={sortKey}
+          sortDir={sortDir as "asc" | "desc"}
+          onSort={toggleSort}
+          visibleColumns={visibleColumns}
+          setColumnWidth={setColumnWidth}
+          reorderColumns={reorderColumns}
+          isLoadingCols={isColsLoading}
+          selectedIds={selectedIds}
+          onToggleRow={toggleRow}
+          onToggleAll={toggleAll}
+          renderCell={(c: any, col: ColumnDef) => {
+            switch (col.key) {
+              case "name":
+                return (
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-[#133255] text-white flex items-center justify-center text-xs font-bold">{c.initials}</div>
+                    <span className="font-semibold text-[#133255]">{c.name}</span>
+                  </div>
+                );
+              case "company":
+                return <div className="text-gray-600">{c.company}</div>;
+              case "role":
+                return <div className="text-gray-600">{c.role}</div>;
+              case "mandate":
+                return <div className="text-gray-500 text-xs">{c.mandateRole} @ {c.mandateCompany}</div>;
+              case "stage":
+                return (
+                  <div onClick={e => e.stopPropagation()}>
                     <FloatStageDropdown id={c.id} currentStage={c.stage} />
-                  </td>
-                  <td className="px-4 py-3">
+                  </div>
+                );
+              case "score":
+                return (
+                  <div>
                     {c.score ? (
                       <span className={"px-2 py-0.5 rounded-full text-xs font-bold " + (c.score >= 8 ? "bg-green-100 text-green-800" : c.score >= 6.5 ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-700")}>{c.score}/10</span>
                     ) : <span className="text-gray-300">-</span>}
-                  </td>
-                  <td className="px-4 py-3">
+                  </div>
+                );
+              case "actions":
+                return (
+                  <div onClick={e => e.stopPropagation()}>
                     <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={(e) => { 
                       e.stopPropagation(); 
                       if (c.isFloatOnly) {
@@ -243,24 +263,40 @@ export default function FloatListClient({
                         router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId);
                       }
                     }}>View</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-        </table>
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalRows={totalRows}
-          startIndex={startIndex}
-          endIndex={endIndex}
-          pageSize={pageSize}
-          setPageSize={handlePageSizeChange}
-          goToPage={goToPage}
-          goToNextPage={goToNextPage}
-          goToPrevPage={goToPrevPage}
+                  </div>
+                );
+              default:
+                return <span className="text-[13px] text-gray-500">{c[col.key] || "-"}</span>;
+            }
+          }}
+          onRowClick={(c: any) => {
+            if (c.isFloatOnly) {
+              router.push("/dashboard/candidates/" + c.externalId);
+            } else {
+              router.push("/dashboard/float-list/" + c.id + "?mandateId=" + c.mandateId);
+            }
+          }}
+          emptyState={
+            <div className="py-16 text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="text-gray-400 mb-2">
+                <svg className="w-12 h-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">No entries found</h3>
+              <p className="text-sm text-gray-500 mb-4">Try adjusting your filters or search query.</p>
+              <button 
+                onClick={() => {
+                  setSearch(""); setStageFilter(""); setMandateFilter(""); setCompanyFilter(""); setDesignationFilter("");
+                  updateURL({ search: "", stage: "", mandate: "", company: "", designation: "" });
+                }}
+                className="px-4 py-2 neo-btn text-sm font-bold text-[#133255]"
+              >
+                Clear Filters
+              </button>
+            </div>
+          }
         />
-        </div>
       </div>
 
       {/* Delete Confirmation Modal */}

@@ -4,25 +4,31 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { deleteMultipleFrameworksAction } from "@/actions";
 import toast from "react-hot-toast";
-import { useDataTable } from "@/hooks/useDataTable";
-import { Pagination } from "@/components/DataTable/Pagination";
+import { AdvancedTable } from "@/components/ui/AdvancedTable";
+import { useColumnPrefs, DEFAULT_FRAMEWORK_COLUMNS, ColumnDef } from "@/hooks/useColumnPrefs";
 
 
 export default function FrameworksClient({ initialFrameworks }: { initialFrameworks: any[] }) {
   const router = useRouter();
   const [localFrameworks, setLocalFrameworks] = useState(initialFrameworks);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
-  const _dt = useDataTable({ data: localFrameworks, defaultSortKey: "name", defaultSortDir: "asc" });
+  const { columns, visibleColumns, isLoading: isColsLoading, setColumnWidth, reorderColumns } = useColumnPrefs("frameworkListCols", DEFAULT_FRAMEWORK_COLUMNS);
+
+  const totalRows = localFrameworks.length;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+  const paginatedData = localFrameworks.slice((page - 1) * pageSize, page * pageSize);
 
   // Bulk Delete State
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allSelected = _dt.paginatedData.length > 0 && selectedIds.size === _dt.paginatedData.length;
+  const allSelected = paginatedData.length > 0 && selectedIds.size === paginatedData.length;
   const toggleAll = () => {
     if (allSelected) setSelectedIds(new Set());
-    else setSelectedIds(new Set(_dt.paginatedData.map((f: any) => f.id)));
+    else setSelectedIds(new Set(paginatedData.map((f: any) => f.id)));
   };
   const toggleRow = (id: string) => {
     const next = new Set(selectedIds);
@@ -76,57 +82,49 @@ export default function FrameworksClient({ initialFrameworks }: { initialFramewo
         </div>
       )}
 
-      <div className="neo-table">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-100">
-              <th className="px-4 py-3 text-center w-10">
-                <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Name</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Industry</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Criteria #</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Used In</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Last Modified</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {_dt.paginatedData.map((fw: any) => {
-              const totalCriteria = fw.categories.reduce((s: number, c: any) => s + c.criteria.length, 0);
-              return (
-                <tr key={fw.id} className="border-b border-gray-50 neo-row-hover cursor-pointer" onClick={() => router.push("/dashboard/frameworks/" + fw.id)}>
-                  <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
-                    <input type="checkbox" checked={selectedIds.has(fw.id)} onChange={() => toggleRow(fw.id)} className="w-[18px] h-[18px] accent-[#133255] cursor-pointer" />
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-[#133255]">{fw.name}</td>
-                  <td className="px-4 py-3 text-gray-600">{fw.industry}</td>
-                  <td className="px-4 py-3 text-gray-500">{totalCriteria}</td>
-                  <td className="px-4 py-3 text-gray-500">{fw.usedIn} mandates</td>
-                  <td className="px-4 py-3 text-gray-400 text-xs">{fw.lastModified}</td>
-                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex gap-2">
-                      <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]" onClick={() => router.push("/dashboard/frameworks/" + fw.id)}>Edit</button>
-                      <button className="px-3 py-1 neo-btn text-gray-500 text-xs font-bold">Clone</button>
-                    </div>
-                  </td>
-                </tr>
+      <div className="h-full flex flex-col min-h-[400px]">
+        <AdvancedTable
+          data={paginatedData}
+          total={totalRows}
+          columns={columns}
+          page={page}
+          pageSize={pageSize}
+          setPageSize={(s) => { setPageSize(s); setPage(1); }}
+          setPage={setPage}
+          sortKey="name"
+          sortDir="asc"
+          onSort={() => {}}
+          visibleColumns={visibleColumns}
+          setColumnWidth={setColumnWidth}
+          reorderColumns={reorderColumns}
+          isLoadingCols={isColsLoading}
+          selectedIds={selectedIds}
+          onToggleRow={toggleRow}
+          onToggleAll={toggleAll}
+          renderCell={(fw: any, col: ColumnDef) => {
+            const totalCriteria = fw.categories?.reduce((s: number, c: any) => s + c.criteria.length, 0) ?? 0;
+            switch (col.key) {
+              case "name": return <div className="font-semibold text-[#133255]">{fw.name}</div>;
+              case "industry": return <div className="text-gray-600">{fw.industry}</div>;
+              case "criteria": return <div className="text-gray-500">{totalCriteria}</div>;
+              case "usedIn": return <div className="text-gray-500">{fw.usedIn} mandates</div>;
+              case "lastModified": return <div className="text-gray-400 text-xs">{fw.lastModified}</div>;
+              case "actions": return (
+                <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                  <button className="px-3 py-1 bg-[#133255] text-white rounded text-xs font-bold" onClick={() => router.push("/dashboard/frameworks/" + fw.id)}>Edit</button>
+                  <button className="px-3 py-1 neo-btn text-gray-500 text-xs font-bold">Clone</button>
+                </div>
               );
-            })}
-          </tbody>
-        </table>
-
-        <Pagination
-          currentPage={_dt.currentPage}
-          totalPages={_dt.totalPages}
-          totalRows={_dt.totalRows}
-          startIndex={_dt.startIndex}
-          endIndex={_dt.endIndex}
-          pageSize={_dt.pageSize}
-          setPageSize={_dt.setPageSize}
-          goToPage={_dt.goToPage}
-          goToNextPage={_dt.goToNextPage}
-          goToPrevPage={_dt.goToPrevPage}
+              default: return <span className="text-gray-500">{fw[col.key] || "-"}</span>;
+            }
+          }}
+          onRowClick={(fw: any) => router.push("/dashboard/frameworks/" + fw.id)}
+          emptyState={
+            <div className="py-16 text-center">
+              <h3 className="text-lg font-bold text-gray-900 mb-1">No frameworks yet</h3>
+              <p className="text-sm text-gray-500">Create your first framework template.</p>
+            </div>
+          }
         />
       </div>
 

@@ -115,6 +115,30 @@ export const DEFAULT_FLOAT_COLUMNS: Omit<ColumnDef, "visible" | "order">[] = [
   { key: "actions",    label: "Actions",        category: "metadata",  defaultVisible: true,  width: 120, sortable: false, renderer: "text" },
 ];
 
+export const DEFAULT_FRAMEWORK_COLUMNS: Omit<ColumnDef, "visible" | "order">[] = [
+  { key: "name",         label: "Framework Name", category: "identity",  defaultVisible: true,  width: 220, sortable: true,  renderer: "text" },
+  { key: "industry",     label: "Industry",       category: "background", defaultVisible: true, width: 180, sortable: true,  renderer: "text" },
+  { key: "criteria",     label: "Criteria #",     category: "metadata",  defaultVisible: true,  width: 120, sortable: false, renderer: "text" },
+  { key: "usedIn",       label: "Used In",        category: "metadata",  defaultVisible: true,  width: 130, sortable: false, renderer: "text" },
+  { key: "lastModified", label: "Last Modified",  category: "metadata",  defaultVisible: true,  width: 160, sortable: true,  renderer: "text" },
+  { key: "actions",      label: "Actions",        category: "metadata",  defaultVisible: true,  width: 140, sortable: false, renderer: "text" },
+];
+
+export const DEFAULT_USER_COLUMNS: Omit<ColumnDef, "visible" | "order">[] = [
+  { key: "name",       label: "Name",        category: "identity",  defaultVisible: true,  width: 220, sortable: true,  renderer: "avatar" },
+  { key: "email",      label: "Email",       category: "contact",   defaultVisible: true,  width: 260, sortable: true,  renderer: "text" },
+  { key: "role",       label: "Role",        category: "metadata",  defaultVisible: true,  width: 140, sortable: true,  renderer: "badge" },
+  { key: "lastActive", label: "Last Active", category: "metadata",  defaultVisible: true,  width: 180, sortable: true,  renderer: "text" },
+];
+
+export const DEFAULT_RECYCLE_COLUMNS: Omit<ColumnDef, "visible" | "order">[] = [
+  { key: "type",      label: "Type",       category: "identity",  defaultVisible: true,  width: 140, sortable: true,  renderer: "badge" },
+  { key: "name",      label: "Name",       category: "identity",  defaultVisible: true,  width: 280, sortable: true,  renderer: "text" },
+  { key: "deletedBy", label: "Deleted By", category: "metadata",  defaultVisible: true,  width: 180, sortable: false, renderer: "text" },
+  { key: "deletedAt", label: "Deleted At", category: "metadata",  defaultVisible: true,  width: 160, sortable: true,  renderer: "text" },
+  { key: "expiresIn", label: "Expires In", category: "metadata",  defaultVisible: true,  width: 120, sortable: false, renderer: "badge" },
+];
+
 export const COLUMN_CATEGORIES: { key: ColumnCategory; label: string; icon: string }[] = [
   { key: "identity",     label: "Core Identity",           icon: "👤" },
   { key: "contact",      label: "Contact",                 icon: "📞" },
