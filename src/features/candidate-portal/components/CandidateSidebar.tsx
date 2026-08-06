@@ -18,14 +18,23 @@ import {
 import { createClient } from "@/utils/supabase/client";
 import { useState, useEffect } from "react";
 
-const NAV_ITEMS = [
+type NavItem = {
+  label: string;
+  href: string;
+  icon: any;
+  exact?: boolean;
+  skeleton?: boolean;
+  comingSoon?: boolean;
+};
+
+const NAV_ITEMS: NavItem[] = [
   { label: "Home", href: "/candidate", icon: Home, exact: true },
   { label: "My Applications", href: "/candidate/applications", icon: ClipboardList },
   { label: "My Profile", href: "/candidate/profile", icon: User },
   { label: "My Consultants", href: "/candidate/consultants", icon: Users },
   { label: "Verification", href: "/candidate/verification", icon: ShieldCheck, skeleton: true },
-  { label: "Jobs", href: "/candidate/jobs", icon: Briefcase, comingSoon: true },
-  { label: "Dream Companies", href: "/candidate/dream-companies", icon: Star, comingSoon: true },
+  { label: "Jobs", href: "/candidate/jobs", icon: Briefcase },
+  { label: "Dream Companies", href: "/candidate/dream-companies", icon: Star },
 ];
 
 export function CandidateSidebar({
@@ -41,14 +50,14 @@ export function CandidateSidebar({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const prefix = candidateSlug ? `/${candidateSlug}` : "/candidate";
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { label: "Home", href: prefix, icon: Home, exact: true },
     { label: "My Applications", href: `${prefix}/applications`, icon: ClipboardList },
     { label: "My Profile", href: `${prefix}/profile`, icon: User },
     { label: "My Consultants", href: `${prefix}/consultants`, icon: Users },
     { label: "Verification", href: `${prefix}/verification`, icon: ShieldCheck, skeleton: true },
-    { label: "Jobs", href: `${prefix}/jobs`, icon: Briefcase, comingSoon: true },
-    { label: "Dream Companies", href: `${prefix}/dream-companies`, icon: Star, comingSoon: true },
+    { label: "Jobs", href: `${prefix}/jobs`, icon: Briefcase },
+    { label: "Dream Companies", href: `${prefix}/dream-companies`, icon: Star },
   ];
 
   const initials = userName
