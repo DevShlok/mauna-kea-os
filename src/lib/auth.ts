@@ -130,7 +130,7 @@ const getAuthenticatedUser = cache(async () => {
 
 export async function requireRole(allowedRoles: string[]) {
   const authData = await getAuthenticatedUser();
-  if (!authData || !authData.user || !authData.email) {
+  if (!authData || !authData.user || !authData.email || !authData.platformUser) {
     redirect("/sign-in");
   }
 
