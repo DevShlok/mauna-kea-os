@@ -58,8 +58,12 @@ export async function createMandateAction(data: unknown) {
   // Auto-initialize client and portal user if not found
   if (!clientId && companyName) {
     clientId = newClientId();
+    const { slugify } = await import("@/lib/slug");
+    let baseSlug = slugify(companyName);
+    let slug = baseSlug || `client-${clientId.toLowerCase()}`;
     await db.insert(clients).values({
       id: clientId,
+      slug,
       name: companyName,
       owner: d.consultant || "System",
       status: "Active",
@@ -551,9 +555,9 @@ export async function updatePlatformUserAction(id: string, data: {
     email: data.email,
     role: data.role,
     initials: data.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase(),
-    linkedClientId: data.linkedClientId || null,
-    linkedCandidateId: data.linkedCandidateId || null,
-    reportingManagerId: data.reportingManagerId || null,
+    ...(data.linkedClientId !== undefined && { linkedClientId: data.linkedClientId || null }),
+    ...(data.linkedCandidateId !== undefined && { linkedCandidateId: data.linkedCandidateId || null }),
+    ...(data.reportingManagerId !== undefined && { reportingManagerId: data.reportingManagerId || null }),
     bio: data.bio !== undefined ? data.bio : undefined,
     vertical: data.vertical !== undefined ? data.vertical : undefined,
     expertiseTags: data.expertiseTags !== undefined ? data.expertiseTags : undefined,

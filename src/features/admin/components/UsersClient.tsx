@@ -330,8 +330,8 @@ export default function UsersClient({ initialUsers, clients, metadata }: { initi
                 consultantProfilePic: form.consultantProfilePic,
               };
 
-              if (form.role === "client" && form.linkedClientId) {
-                payload.linkedClientId = form.linkedClientId;
+              if (form.role === "client") {
+                payload.linkedClientId = form.linkedClientId || (clients[0]?.id || null);
               }
               
               await updatePlatformUserAction(editingUserId, payload);

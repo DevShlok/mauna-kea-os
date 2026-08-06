@@ -39,6 +39,7 @@ export default function SignInPage() {
 
   const handleGoogleSignIn = async () => {
     setError(null);
+    setIsLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -47,6 +48,7 @@ export default function SignInPage() {
     });
     if (error) {
       setError(error.message);
+      setIsLoading(false);
     }
   };
 
@@ -165,7 +167,8 @@ export default function SignInPage() {
               {/* Google Sign In */}
               <button 
                 onClick={handleGoogleSignIn}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white/[0.06] border border-white/[0.1] rounded-xl hover:bg-white/[0.1] hover:border-white/[0.18] transition-all duration-300 group cursor-pointer"
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white/[0.06] border border-white/[0.1] rounded-xl hover:bg-white/[0.1] hover:border-white/[0.18] transition-all duration-300 group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>

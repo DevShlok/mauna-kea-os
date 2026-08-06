@@ -29,13 +29,13 @@ export default async function DynamicSlugLayout({
   if (!client) {
     if (platformUser?.linkedClientId) {
       [client] = await db.select().from(clients).where(eq(clients.id, platformUser.linkedClientId));
-    } else if (slug === "client" || platformUser?.role === "admin" || platformUser?.role === "consultant") {
+    } else if (slug === "client" || platformUser?.role === "client" || platformUser?.role === "admin" || platformUser?.role === "consultant") {
       const allClients = await db.select().from(clients).limit(1);
       client = allClients[0] || { id: "client", name: "Client Portal", slug: "client" };
     }
   }
 
-  if (client && platformUser?.role !== "candidate") {
+  if (platformUser?.role === "client" || (client && platformUser?.role !== "candidate")) {
     if (platformUser.role === "client" && platformUser.linkedClientId && platformUser.linkedClientId !== client.id) {
       const [ownClient] = await db.select().from(clients).where(eq(clients.id, platformUser.linkedClientId));
       if (ownClient?.slug) {

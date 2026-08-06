@@ -5,7 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getUserByEmail } from "@/db/queries";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { getOrCreateCandidateSlug, slugify } from "@/lib/slug";
+import { getOrCreateCandidateSlug, getOrCreateClientSlug, slugify } from "@/lib/slug";
 import { newUserId, newCandId } from "@/lib/ids";
 
 // Helper function to safely find or create a candidate record by email
@@ -57,17 +57,15 @@ async function findOrCreateCandidateId(email: string, name: string): Promise<str
   }
 }
 
-export const requireRole = cache(async (allowedRoles: string[]) => {
+const getAuthenticatedUser = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const email = user?.email;
 
-  if (!email || !user) {
-    redirect("/sign-in");
-  }
+  if (!user || !user.email) return null;
 
+  const email = user.email.toLowerCase().trim();
   let platformUser = await getUserByEmail(email);
 
   if (!platformUser) {
@@ -127,18 +125,39 @@ export const requireRole = cache(async (allowedRoles: string[]) => {
     platformUser.linkedCandidateId = candId;
   }
 
+  return { platformUser, email, user };
+});
+
+export async function requireRole(allowedRoles: string[]) {
+  const authData = await getAuthenticatedUser();
+  if (!authData || !authData.user || !authData.email) {
+    redirect("/sign-in");
+  }
+
+  const { platformUser, email, user } = authData;
   const userRole = platformUser?.role || "candidate";
 
   if (!allowedRoles.includes(userRole)) {
     // Route user to their designated portal based on role
     if (userRole === "client") {
-      if (platformUser?.linkedClientId) {
-        const [clientRecord] = await db
-          .select()
-          .from(clients)
-          .where(eq(clients.id, platformUser.linkedClientId));
-        if (clientRecord?.slug) {
-          redirect(`/${clientRecord.slug}`);
+      let clientId = platformUser?.linkedClientId;
+      if (!clientId) {
+        const allClients = await db.select().from(clients).limit(1);
+        if (allClients.length > 0) {
+          clientId = allClients[0].id;
+          if (platformUser?.id) {
+            await db.update(platformUsers).set({ linkedClientId: clientId }).where(eq(platformUsers.id, platformUser.id));
+          }
+        }
+      }
+
+      if (clientId) {
+        const slug = await getOrCreateClientSlug(
+          clientId,
+          platformUser?.name
+        );
+        if (slug) {
+          redirect(`/${slug}`);
         }
       }
       redirect("/sign-in");
@@ -159,5 +178,5 @@ export const requireRole = cache(async (allowedRoles: string[]) => {
   }
 
   return { platformUser, userRole, email, supabaseUser: user };
-});
+}
 

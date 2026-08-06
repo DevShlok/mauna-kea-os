@@ -6,6 +6,11 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  // Skip auth checks on auth API routes so PKCE code_verifier cookie is not modified before callback exchange
+  if (request.nextUrl.pathname.startsWith('/api/auth')) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -29,7 +34,16 @@ export async function updateSession(request: NextRequest) {
 
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser()
+
+  if (error && (error.status === 400 || error.code === 'refresh_token_not_found')) {
+    try {
+      await supabase.auth.signOut({ scope: 'local' })
+    } catch {
+      // ignore
+    }
+  }
 
   const isProtectedRoute = 
     request.nextUrl.pathname.startsWith('/dashboard') || 

@@ -914,7 +914,17 @@ export const getPlatformUsers = cache(async () => {
 });
 
 export const getUserByEmail = cache(async (email: string) => {
-  const [user] = await db.select().from(platformUsers).where(and(eq(platformUsers.email, email), eq(platformUsers.isDeleted, false)));
+  if (!email) return null;
+  const [user] = await db
+    .select()
+    .from(platformUsers)
+    .where(
+      and(
+        eq(sql`LOWER(${platformUsers.email})`, email.toLowerCase().trim()),
+        eq(platformUsers.isDeleted, false)
+      )
+    )
+    .orderBy(desc(platformUsers.createdAt));
   return user || null;
 });
 
