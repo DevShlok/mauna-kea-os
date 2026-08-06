@@ -138,6 +138,11 @@ export async function updateProfilePhotoAction(candId: string, base64: string) {
 }
 
 export async function getCandidateNotificationsAction(candId: string) {
+  const { platformUser } = await requireRole(["candidate", "admin", "consultant"]);
+  // Candidates can only read their own notifications; admins/consultants can read any
+  if (platformUser.role === "candidate" && platformUser.linkedCandidateId !== candId) {
+    return [];
+  }
   return await db
     .select()
     .from(candidateNotifications)

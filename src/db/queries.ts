@@ -678,8 +678,8 @@ export const getCandidateById = cache(async (id: string) => {
   const actualId = cand.id;
 
   const [activities, floatSubmissions, mCands, followUps, references, files] = await Promise.all([
-    db.select().from(floatActivities).where(eq(floatActivities.candId, id)),
-    db.select().from(floats).where(and(eq(floats.candId, id), eq(floats.isDeleted, false))),
+    db.select().from(floatActivities).where(eq(floatActivities.candId, actualId)),
+    db.select().from(floats).where(and(eq(floats.candId, actualId), eq(floats.isDeleted, false))),
     db.select({
       id: mandateCandidates.id,
       dateShared: mandateCandidates.createdAt,
@@ -690,10 +690,10 @@ export const getCandidateById = cache(async (id: string) => {
     })
     .from(mandateCandidates)
     .innerJoin(mandates, eq(mandateCandidates.mandateId, mandates.id))
-    .where(and(eq(mandateCandidates.candId, id), eq(mandates.isDeleted, false))),
-    db.select().from(floatFollowUps).where(eq(floatFollowUps.candId, id)),
-    db.select().from(floatReferences).where(eq(floatReferences.candId, id)),
-    db.select().from(candidateFiles).where(eq(candidateFiles.candId, id))
+    .where(and(eq(mandateCandidates.candId, actualId), eq(mandates.isDeleted, false))),
+    db.select().from(floatFollowUps).where(eq(floatFollowUps.candId, actualId)),
+    db.select().from(floatReferences).where(eq(floatReferences.candId, actualId)),
+    db.select().from(candidateFiles).where(eq(candidateFiles.candId, actualId))
   ]);
 
   const submissionsMap = new Map();

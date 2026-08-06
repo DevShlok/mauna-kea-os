@@ -8,6 +8,7 @@ import { eq, sql, inArray, and, desc, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { parseCtcInput } from "@/lib/helpers";
+import { newUserId, newFloatId, newFollowUpId } from "@/lib/ids";
 import {
   createMandateSchema,
   editMandateSchema,
@@ -42,7 +43,9 @@ export async function getCurrentUserName(): Promise<string> {
       if (dbUser.length > 0) return dbUser[0].name;
       return user.email;
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error("[getCurrentUserName] failed to fetch user name:", e);
+  }
   return "Unknown";
 }
 
@@ -79,7 +82,7 @@ export async function createMandateAction(data: unknown) {
     if (d.pocEmail && d.clientPOC) {
       const initials = d.clientPOC.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
       await db.insert(platformUsers).values({
-        id: "U-" + Math.floor(Math.random() * 10000).toString(),
+        id: newUserId(),
         name: d.clientPOC,
         email: d.pocEmail,
         role: "client",
@@ -175,8 +178,9 @@ export async function updateMandateFieldAction(id: number, field: string, value:
   await requireRole(["admin", "consultant"]);
   if (field === "status") {
     await db.update(mandates).set({ status: value }).where(eq(mandates.id, id));
-    // Also bulk-update all candidates in this mandate
-    await db.update(mandateCandidates).set({ stage: value }).where(eq(mandateCandidates.mandateId, id));
+    // NOTE: Do NOT cascade to mandate_candidates.stage — the mandate status and each
+    // candidate's pipeline stage are independent. Cascading would destroy individual
+    // candidate journey history (e.g. a candidate in 'Offer Sent' would be reset to 'closed').
     revalidatePath("/dashboard/candidates");
     revalidatePath("/dashboard/float-list");
     revalidatePath(`/dashboard/mandates/${id}`);
@@ -348,7 +352,7 @@ export async function addSubmissionAction(data: unknown) {
     });
   }
 
-  const id = "SUB-" + Date.now();
+  const id = newFloatId();
   await db.insert(floats).values({
     id,
     candId,
@@ -363,7 +367,10 @@ export async function addSubmissionAction(data: unknown) {
   if (d.mandateId) {
     // Check if they are already in the pipeline to prevent duplicates
     const existing = await db.select().from(mandateCandidates).where(
-      sql`${mandateCandidates.candId} = ${candId} AND ${mandateCandidates.mandateId} = ${d.mandateId}`
+      and(
+        eq(mandateCandidates.candId, candId),
+        eq(mandateCandidates.mandateId, Number(d.mandateId))
+      )
     );
     if (existing.length === 0) {
       await db.insert(mandateCandidates).values({
@@ -500,7 +507,7 @@ export async function addFollowUpAction(data: unknown) {
     });
   }
 
-  const id = "FU-" + Date.now();
+  const id = newFollowUpId();
   await db.insert(floatFollowUps).values({
     id,
     candId,
@@ -519,7 +526,7 @@ export async function addFollowUpAction(data: unknown) {
 export async function addPlatformUserAction(data: { name: string; email: string; role: string; linkedClientId?: string; linkedCandidateId?: string; reportingManagerId?: string }) {
   await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
-  const id = "U-" + Math.floor(Math.random() * 10000);
+  const id = newUserId();
   await db.insert(platformUsers).values({
     id,
     name: data.name,
@@ -957,7 +964,10 @@ export async function bulkAssignToMandateAction(data: { mandateId: number; candI
   
   for (const c of cands) {
     const existing = await db.select().from(mandateCandidates).where(
-      sql`${mandateCandidates.candId} = ${c.id} AND ${mandateCandidates.mandateId} = ${data.mandateId}`
+      and(
+        eq(mandateCandidates.candId, c.id),
+        eq(mandateCandidates.mandateId, Number(data.mandateId))
+      )
     );
     if (existing.length === 0) {
       await db.insert(mandateCandidates).values({
@@ -972,7 +982,7 @@ export async function bulkAssignToMandateAction(data: { mandateId: number; candI
       const mandateRows = await db.select().from(mandates).where(eq(mandates.id, data.mandateId));
       const mandate = mandateRows[0];
       if (mandate) {
-        const subId = "SUB-" + Date.now() + Math.floor(Math.random() * 1000);
+        const subId = newFloatId();
         await db.insert(floats).values({
           id: subId,
           candId: c.id,
@@ -996,7 +1006,7 @@ export async function bulkAddSubmissionAction(data: { candIds: string[]; client:
   const cands = await db.select().from(candidates).where(inArray(candidates.id, data.candIds));
 
   for (const c of cands) {
-    const subId = "S-" + Date.now().toString() + "-" + Math.floor(Math.random() * 1000);
+    const subId = newFloatId();
     await db.insert(floats).values({
       id: subId,
       candId: c.id,
@@ -1068,12 +1078,17 @@ export async function sendCandidatesToClientAction(mandateId: number, candidateI
   if (candidateIds.length === 0) return;
   await db.update(mandateCandidates).set({ isSentToClient: true }).where(inArray(mandateCandidates.id, candidateIds));
 
-  // Find mandate and client to notify
+  // Use the direct FK (clientId) to look up the client, falling back to a name match
+  // only when the FK is null (legacy records created before clientId was enforced).
   const [mandate] = await db.select().from(mandates).where(eq(mandates.id, mandateId));
   if (mandate) {
-    const existingClient = await db.select().from(clients).where(eq(sql`LOWER(${clients.name})`, mandate.company.toLowerCase()));
-    if (existingClient.length > 0) {
-      const clientId = existingClient[0].id;
+    let clientId = mandate.clientId;
+    if (!clientId) {
+      // Legacy fallback: try to resolve by company name
+      const [foundClient] = await db.select().from(clients).where(eq(sql`LOWER(${clients.name})`, mandate.company.toLowerCase()));
+      clientId = foundClient?.id ?? null;
+    }
+    if (clientId) {
       const message = `You have received ${candidateIds.length} new profile(s) for the ${mandate.role} position.`;
       await db.insert(clientNotifications).values({
         clientId,
@@ -1236,6 +1251,7 @@ export async function deleteMultipleFrameworksAction(ids: string[]) {
 }
 
 export async function restoreEntityAction(entityType: string, ids: (string|number)[]) {
+  await requireRole(["admin"]);
   revalidatePath('/dashboard', 'layout');
   if (ids.length === 0) return;
   
@@ -1262,6 +1278,7 @@ export async function restoreEntityAction(entityType: string, ids: (string|numbe
 }
 
 export async function hardDeleteEntityAction(entityType: string, ids: (string|number)[]) {
+  await requireRole(["admin"]);
   revalidatePath('/dashboard', 'layout');
   if (ids.length === 0) return;
   
@@ -1270,6 +1287,9 @@ export async function hardDeleteEntityAction(entityType: string, ids: (string|nu
   } else if (entityType === 'mandates') {
     await db.delete(mandates).where(inArray(mandates.id, ids as number[]));
   } else if (entityType === 'candidates') {
+    // These tables have no ON DELETE CASCADE — clean them up explicitly before hard-deleting
+    await db.delete(candidateNotifications).where(inArray(candidateNotifications.candId, ids as string[]));
+    await db.delete(engagementListItems).where(inArray(engagementListItems.candId, ids as string[]));
     await db.delete(candidates).where(inArray(candidates.id, ids as string[]));
   } else if (entityType === 'floats') {
     await db.delete(floats).where(inArray(floats.id, ids as string[]));

@@ -6,6 +6,7 @@ import { getUserByEmail } from "@/db/queries";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getOrCreateCandidateSlug, slugify } from "@/lib/slug";
+import { newUserId, newCandId } from "@/lib/ids";
 
 // Helper function to safely find or create a candidate record by email
 async function findOrCreateCandidateId(email: string, name: string): Promise<string> {
@@ -24,7 +25,7 @@ async function findOrCreateCandidateId(email: string, name: string): Promise<str
   }
 
   // 2. Generate robust unique ID
-  const candId = `CAND-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const candId = newCandId();
   const initials = (name || "User")
     .split(" ")
     .map((n: string) => n[0])
@@ -74,7 +75,7 @@ export const requireRole = cache(async (allowedRoles: string[]) => {
       user.user_metadata?.full_name || email.split("@")[0] || "User";
     const isMaunaKea = email.endsWith("@maunakea.co.in");
     const role = isMaunaKea ? "consultant" : "candidate";
-    const userId = "U-" + Math.floor(Math.random() * 10000);
+    const userId = newUserId();
     const initials = fullName
       .split(" ")
       .map((n: string) => n[0])

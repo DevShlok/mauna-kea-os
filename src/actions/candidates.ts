@@ -25,7 +25,9 @@ async function getCurrentUserName(): Promise<string> {
       if (dbUser.length > 0) return dbUser[0].name;
       return user.email;
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error("[getCurrentUserName candidates.ts] failed:", e);
+  }
   return "Unknown";
 }
 
@@ -68,11 +70,19 @@ ${JSON.stringify(sampleData, null, 2)}`
 export async function checkCandidateDuplicatesAction(mappedCandidates: any[]) {
   if (!mappedCandidates || mappedCandidates.length === 0) return { duplicates: [], newCandidates: [] };
 
-  const existingCandidates = await db.select().from(candidates).where(eq(candidates.isDeleted, false));
+  // Only fetch the columns actually needed for duplicate matching — avoids loading
+  // multi-MB of CV text / profile pics for every candidate on each bulk import check.
+  const existingCandidates = await db.select({
+    id: candidates.id,
+    name: candidates.name,
+    email: candidates.email,
+    mobile: candidates.mobile,
+    company: candidates.company,
+  }).from(candidates).where(eq(candidates.isDeleted, false));
   const existingFiles = await db.select().from(candidateFiles);
   
   // Attach files to candidates for date checking
-  existingCandidates.forEach((c: any) => {
+  (existingCandidates as any[]).forEach((c: any) => {
     c.files = existingFiles.filter(f => f.candId === c.id);
   });
   const duplicates = [];

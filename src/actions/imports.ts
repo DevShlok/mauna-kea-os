@@ -7,6 +7,7 @@ import { clients, platformUsers, mandates } from "@/db/schema";
 import { revalidatePath } from "next/cache";
 import { eq, sql } from "drizzle-orm";
 import { parseCtcInput } from "@/lib/helpers";
+import { newUserId, newCandId, newFloatId } from "@/lib/ids";
 
 // ─────────────────────────────────────────────────────────
 // CLIENT IMPORTS
@@ -96,7 +97,7 @@ export async function finalizeClientsImportAction(newClients: any[], resolvedUpd
         const initials = c.pocName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
         const existingUser = await db.select().from(platformUsers).where(eq(platformUsers.email, c.pocEmail));
         if (existingUser.length === 0) {
-          const uId = "U-" + Math.floor(Math.random() * 9999999).toString().padStart(7, '0');
+          const uId = newUserId();
           await db.insert(platformUsers).values({
             id: uId,
             name: c.pocName,
@@ -446,7 +447,7 @@ export async function finalizeUserImportAction(newUsers: any[], resolvedUpdates:
   // 2. Insert truly new users
   for (const u of newUsers) {
     try {
-      const uId = "U-" + Math.floor(Math.random() * 9999999).toString().padStart(7, '0');
+      const uId = newUserId();
       const initials = u.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
 
       await db.insert(platformUsers).values({
@@ -553,7 +554,7 @@ export async function finalizeFloatImportAction(newFloats: any[], resolvedUpdate
   async function linkToFloat(candId: string, f: any) {
     if (!allExistingFloats.some(fl => fl.candId === candId)) {
       await db.insert(dbSchema.floats).values({
-        id: `float-${Math.random().toString(36).substring(2, 9)}`,
+        id: newFloatId(),
         candId: candId,
         client: f.company || "General",
         role: f.role || "",
@@ -594,7 +595,7 @@ export async function finalizeFloatImportAction(newFloats: any[], resolvedUpdate
   // 2. Process Truly New Floats (creating candidates first)
   for (const f of newFloats) {
     try {
-      const masterCandidateId = `CAND-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+      const masterCandidateId = newCandId();
       let initials = f.name ? f.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase() : "FL";
 
       await db.insert(dbSchema.candidates).values({
@@ -752,7 +753,7 @@ export async function finalizePipelineImportAction(newCandidates: any[], resolve
   // 2. Process Truly New Candidates
   for (const c of newCandidates) {
     try {
-      const masterCandidateId = `CAND-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+      const masterCandidateId = newCandId();
       let initials = c.name ? c.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase() : "CN";
 
       await db.insert(dbSchema.candidates).values({
