@@ -9,7 +9,9 @@ const rawUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
 const connection = globalForDb.postgresConnection ?? postgres(rawUrl, { 
   prepare: false, 
   ssl: 'require',
-  max: process.env.NODE_ENV === 'development' ? 5 : 20 
+  connect_timeout: 30,
+  idle_timeout: 20,
+  max: process.env.NODE_ENV === 'development' ? 10 : 20 
 });
 
 if (process.env.NODE_ENV !== 'production') {
