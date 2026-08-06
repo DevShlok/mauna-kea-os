@@ -55,8 +55,8 @@ export default function CallLogModal({ candId, listType, onClose, onSuccess }: C
   };
 
   return (
-    <div className="fixed inset-0 bg-[#111]/30 flex items-center justify-center z-50 backdrop-blur-sm">
-      <div className="neo-card w-[500px] overflow-hidden p-0">
+    <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: 'rgba(11,31,54,0.6)', backdropFilter: 'blur(4px)' }}>
+      <div className="neo-card w-[500px] overflow-hidden p-0" style={{ borderTop: '4px solid #D8B15B' }}>
         {/* Header */}
         <div className="px-7 py-5 border-b border-gray-100 flex justify-between items-center">
           <h2 className="font-serif text-[19px] font-bold text-[#133255]">Log Conversation & Activity</h2>
@@ -98,12 +98,16 @@ export default function CallLogModal({ candId, listType, onClose, onSuccess }: C
           )}
 
           <div>
-            <label className="block text-[12px] font-bold tracking-widest uppercase text-[#6b7a99] mb-2">
-              Notes / Description <span className="text-red-500">*</span>
-            </label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-[12px] font-bold tracking-widest uppercase text-[#6b7a99]">
+                Notes / Description <span className="text-red-500">*</span>
+              </label>
+              <span className="text-[11px] text-slate-400 tabular-nums">{form.note.length}/500</span>
+            </div>
             <textarea 
               required 
               rows={4} 
+              maxLength={500}
               value={form.note} 
               onChange={e => setForm({...form, note: e.target.value})} 
               className="w-full neo-inset px-4 py-3 text-[14px] text-slate-800 outline-none resize-none" 
@@ -112,14 +116,13 @@ export default function CallLogModal({ candId, listType, onClose, onSuccess }: C
           </div>
 
           <div className="flex gap-3 justify-end mt-1">
-            <button type="button" onClick={onClose} className="px-5 py-2.5 neo-btn text-[14px] font-semibold text-gray-600">
+            <button type="button" onClick={onClose} className="neo-btn px-5 py-2.5 text-[14px] font-semibold text-gray-600">
               Cancel
             </button>
             <button 
               type="submit" 
               disabled={isSubmitting} 
-              className="px-5 py-2.5 neo-btn text-[14px] font-bold"
-              style={{ color: '#ffffff', background: 'linear-gradient(135deg, #133255, #1d4d82)' }}
+              className="neo-btn-primary px-5 py-2.5 text-[14px] font-bold disabled:opacity-60"
             >
               {isSubmitting ? "Saving..." : "Log Activity"}
             </button>

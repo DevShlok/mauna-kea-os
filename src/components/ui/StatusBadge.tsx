@@ -1,25 +1,26 @@
 import { STAGE_LABELS, INTERNAL_LABELS } from '@/lib/helpers';
+import { ShieldCheck } from 'lucide-react';
 
-const STAGE_COLORS: Record<string, string> = {
-  universe: 'bg-gray-100 text-gray-700',
-  mapping: 'bg-purple-100 text-purple-800',
-  longlist: 'bg-orange-100 text-orange-800',
-  calllist: 'bg-amber-100 text-amber-800',
-  shortlist: 'bg-blue-100 text-[#133255]',
-  interview: 'bg-emerald-100 text-emerald-800',
-  'client-shortlisted': 'bg-emerald-100 text-emerald-800',
-  'offer-sent': 'bg-indigo-100 text-indigo-800',
-  'offer-accepted': 'bg-teal-100 text-teal-800',
-  closed: 'bg-red-100 text-red-800',
-  'position-closed': 'bg-rose-100 text-rose-800',
+const STAGE_CONFIG: Record<string, { color: string; bg: string; dot: string }> = {
+  universe:             { color: '#64748b', bg: '#f1f5f9', dot: '#94a3b8' },
+  mapping:              { color: '#7c3aed', bg: '#f5f3ff', dot: '#a78bfa' },
+  longlist:             { color: '#c2410c', bg: '#fff7ed', dot: '#fb923c' },
+  calllist:             { color: '#b45309', bg: '#fefce8', dot: '#fbbf24' },
+  shortlist:            { color: '#1d4ed8', bg: '#eff6ff', dot: '#60a5fa' },
+  interview:            { color: '#047857', bg: '#ecfdf5', dot: '#34d399' },
+  'client-shortlisted': { color: '#047857', bg: '#ecfdf5', dot: '#34d399' },
+  'offer-sent':         { color: '#4338ca', bg: '#eef2ff', dot: '#818cf8' },
+  'offer-accepted':     { color: '#0f766e', bg: '#f0fdfa', dot: '#2dd4bf' },
+  closed:               { color: '#b91c1c', bg: '#fef2f2', dot: '#f87171' },
+  'position-closed':    { color: '#9f1239', bg: '#fff1f2', dot: '#fb7185' },
 };
 
-const INTERNAL_COLORS: Record<string, string> = {
-  contractsent: 'bg-yellow-100 text-yellow-800',
-  contractsigned: 'bg-green-100 text-green-800',
-  invoicesent: 'bg-sky-100 text-sky-800',
-  paymentreceived: 'bg-teal-100 text-teal-800',
-  followup: 'bg-fuchsia-100 text-fuchsia-800',
+const INTERNAL_CONFIG: Record<string, { color: string; bg: string; dot: string }> = {
+  contractsent:     { color: '#92400e', bg: '#fefce8', dot: '#fbbf24' },
+  contractsigned:   { color: '#166534', bg: '#f0fdf4', dot: '#4ade80' },
+  invoicesent:      { color: '#0369a1', bg: '#f0f9ff', dot: '#38bdf8' },
+  paymentreceived:  { color: '#0f766e', bg: '#f0fdfa', dot: '#2dd4bf' },
+  followup:         { color: '#7e22ce', bg: '#faf5ff', dot: '#c084fc' },
 };
 
 interface StatusBadgeProps {
@@ -33,21 +34,28 @@ export function StatusBadge({ status, type = 'stage' }: StatusBadgeProps) {
       ? STAGE_LABELS[status.toLowerCase()] || status
       : INTERNAL_LABELS[status.toLowerCase()] || status;
 
-  const colorClass =
+  const config =
     type === 'stage'
-      ? STAGE_COLORS[status.toLowerCase()] || 'bg-gray-100 text-gray-600'
-      : INTERNAL_COLORS[status.toLowerCase()] || 'bg-gray-100 text-gray-600';
+      ? STAGE_CONFIG[status.toLowerCase()] || { color: '#64748b', bg: '#f1f5f9', dot: '#94a3b8' }
+      : INTERNAL_CONFIG[status.toLowerCase()] || { color: '#64748b', bg: '#f1f5f9', dot: '#94a3b8' };
 
   return (
     <span
-      className={`inline-block px-2 py-0.5 rounded-full text-[13px] font-bold uppercase tracking-wider ${colorClass}`}
+      className="neo-card-xs inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider border-l-2"
+      style={{
+        color: config.color,
+        backgroundColor: config.bg,
+        borderLeftColor: config.dot,
+      }}
     >
+      <span
+        className="w-1.5 h-1.5 rounded-full shrink-0"
+        style={{ backgroundColor: config.dot }}
+      />
       {label}
     </span>
   );
 }
-
-import { ShieldCheck } from 'lucide-react';
 
 export function VerifiedBadge({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg'; className?: string }) {
   const iconSizes = {
@@ -65,7 +73,8 @@ export function VerifiedBadge({ size = 'md', className = '' }: { size?: 'sm' | '
   return (
     <span
       title="Verified Profile"
-      className={`inline-flex items-center font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 neo-btn-sm shadow-sm ${badgeSizes[size]} ${className}`}
+      className={`neo-card-xs inline-flex items-center font-bold border-l-2 ${badgeSizes[size]} ${className}`}
+      style={{ color: '#047857', backgroundColor: '#ecfdf5', borderLeftColor: '#34d399' }}
     >
       <ShieldCheck className={`${iconSizes[size]} text-emerald-600`} />
       <span>Verified</span>

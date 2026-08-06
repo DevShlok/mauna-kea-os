@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Bell, X } from "lucide-react";
+import { Search, Bell, X, Coffee, Monitor } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { getConsultantNotificationsAction, markConsultantNotificationsAsReadAction } from "@/actions";
@@ -112,60 +112,122 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
     }
   };
 
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
   return (
-    <div className="h-[77px] bg-[#0b1f3a] border-b border-[#133255] flex items-center px-6 gap-4 shrink-0 shadow-sm text-white">
+    <div
+      className="h-[76px] flex items-center px-6 gap-4 shrink-0 text-white"
+      style={{
+        background: "linear-gradient(90deg, #133255 0%, #1a4270 100%)",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.18)",
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
+      }}
+    >
+      {/* Page Title */}
       <div className="flex-1">
-        <span className="font-serif text-base font-bold text-white block">{title}</span>
-        <span className="text-[12px] text-white/60 block">{subtitle}</span>
+        <span className="font-serif text-[17px] font-bold text-white block leading-tight">{title}</span>
+        <span className="text-[12px] text-[#D8B15B]/80 block font-medium">{subtitle}</span>
       </div>
       
+      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
         <input 
           type="text" 
           placeholder="Search candidates..." 
           onKeyDown={handleSearch}
-          className="w-[200px] h-[34px] rounded-full pl-9 pr-3 text-[14px] text-white outline-none transition-all focus:w-[240px] placeholder-white/50"
-          style={{ background: 'rgba(255,255,255,0.1)', boxShadow: 'inset 3px 3px 8px rgba(0,0,0,0.2), inset -2px -2px 5px rgba(255,255,255,0.06)' }}
+          className="w-[200px] h-[38px] rounded-full pl-9 pr-4 text-[13px] text-white outline-none transition-all duration-200 focus:w-[260px] placeholder-white/40 focus:ring-1 focus:ring-[#D8B15B]/50"
+          style={{ background: 'rgba(255,255,255,0.1)', boxShadow: 'inset 2px 2px 6px rgba(0,0,0,0.2), inset -1px -1px 4px rgba(255,255,255,0.06)' }}
         />
       </div>
 
+      {/* Break Toggle */}
+      {(userRole === 'admin' || userRole === 'consultant') && (
+        <div>
+          {clockStatus === 'Loading' ? (
+            <div className="w-[110px] h-[32px] rounded-full animate-pulse" style={{ background: 'rgba(255,255,255,0.12)' }} />
+          ) : clockStatus === 'On Break' ? (
+            <button
+              onClick={handleBreakToggle}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full text-[12px] font-bold text-white transition-all hover:opacity-90"
+              style={{ background: "linear-gradient(135deg, #d97706, #b45309)", boxShadow: "0 2px 8px rgba(217,119,6,0.4)" }}
+            >
+              <span className="w-1.5 h-1.5 bg-white rounded-full neo-status-active" />
+              Return to Work
+            </button>
+          ) : (
+            <button
+              onClick={handleBreakToggle}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full text-[12px] font-semibold text-white/80 hover:text-white transition-all hover:bg-white/10"
+              style={{ border: "1px solid rgba(255,255,255,0.18)" }}
+            >
+              <Coffee className="w-3.5 h-3.5" />
+              Take a Break
+            </button>
+          )}
+        </div>
+      )}
 
-
+      {/* Notifications */}
       <div className="relative">
         <button 
           onClick={handleNotificationsClick}
-          className="relative w-[34px] h-[34px] flex items-center justify-center rounded-full hover:bg-white/10 text-white/70 transition-colors"
+          className="relative w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200"
+          style={{
+            background: showNotifications ? "rgba(216,177,91,0.2)" : "rgba(255,255,255,0.1)",
+            border: "1px solid rgba(216,177,91,0.25)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+          }}
         >
-          <Bell className="w-[18px] h-[18px]" />
-          {notifications.some(n => !n.isRead) && (
-            <div className="absolute top-[5px] right-[5px] w-2 h-2 bg-[#C0392B] rounded-full border-2 border-[#0b1f3a]"></div>
+          <Bell className="w-[17px] h-[17px] text-[#D8B15B]" />
+          {unreadCount > 0 && (
+            <span
+              className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold rounded-full text-white px-1 border-2 border-[#133255]"
+              style={{ background: "linear-gradient(135deg, #e74c3c, #c0392b)", boxShadow: "0 2px 6px rgba(0,0,0,0.4)" }}
+            >
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
           )}
         </button>
 
         {showNotifications && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
-            <div className="absolute right-0 top-11 neo-card w-80 z-50 overflow-hidden flex flex-col text-gray-900 p-0">
-              <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="font-bold text-[14px] text-slate-800">Notifications</h3>
-                <button onClick={() => setShowNotifications(false)} className="w-6 h-6 neo-card-sm flex items-center justify-center text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
+            <div
+              className="absolute right-0 top-12 w-80 z-50 rounded-2xl overflow-hidden"
+              style={{
+                background: "#0f2744",
+                border: "1px solid rgba(255,255,255,0.15)",
+                boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+              }}
+            >
+              <div className="px-4 py-3 flex justify-between items-center border-b border-white/10">
+                <h3 className="font-bold text-[13px] text-white">Notifications</h3>
+                {unreadCount === 0 && <span className="text-[11px] text-white/50">All caught up</span>}
+                <button onClick={() => setShowNotifications(false)} className="text-white/40 hover:text-white transition-colors ml-auto">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <div className="max-h-[300px] overflow-y-auto">
+              <div className="max-h-[320px] overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div className="px-4 py-6 text-center text-sm text-gray-500">No new notifications</div>
+                  <div className="px-4 py-8 text-center">
+                    <Bell className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                    <p className="text-[13px] text-white/50">No notifications yet</p>
+                  </div>
                 ) : (
                   notifications.map(notif => (
-                    <div 
-                      key={notif.id} 
+                    <div
+                      key={notif.id}
                       onClick={() => {
                         setShowNotifications(false);
                         if (notif.link) router.push(notif.link);
                       }}
-                      className={`px-4 py-3 border-b border-gray-50 last:border-b-0 cursor-pointer neo-row-hover ${notif.isRead ? 'bg-white' : 'bg-indigo-50/30'}`}
+                      className={`px-4 py-3 border-b border-white/10 last:border-b-0 cursor-pointer transition-all duration-150 hover:bg-white/5 ${!notif.isRead ? "border-l-2 border-l-[#D8B15B] bg-white/5" : ""}`}
                     >
-                      <p className="text-[13px] text-gray-800 leading-relaxed">{notif.message}</p>
-                      <span className="text-[11px] text-gray-400 mt-1 block">{new Date(notif.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                      <p className="text-[13px] text-white/90 leading-relaxed">{notif.message}</p>
+                      <span className="text-[11px] text-[#D8B15B]/80 mt-1 block font-medium">
+                        {new Date(notif.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </span>
                     </div>
                   ))
                 )}
@@ -175,40 +237,23 @@ export function Topbar({ userRole = "candidate" }: { userRole?: string }) {
         )}
       </div>
 
-      {(userRole === 'admin' || userRole === 'consultant') && (
-        <div className="mr-2">
-          {clockStatus === 'Loading' ? (
-            <div className="w-[100px] h-[30px] bg-white/10 animate-pulse rounded-full" />
-          ) : clockStatus === 'On Break' ? (
-            <button onClick={handleBreakToggle} className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-full transition-colors flex items-center gap-1.5 shadow-sm">
-              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> Return to Work
-            </button>
-          ) : (
-            <button onClick={handleBreakToggle} className="px-4 py-1.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-bold rounded-full transition-colors">
-              Take a Break
-            </button>
-          )}
-        </div>
-      )}
-
+      {/* Role Badge */}
       {userRole === "admin" && (
-        <span className="px-2.5 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider bg-[#fde8e8] text-[#C0392B]">
+        <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
+          style={{ background: "rgba(239,68,68,0.2)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.3)" }}>
           Admin
         </span>
       )}
       {userRole === "consultant" && (
-        <span className="px-2.5 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800">
+        <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
+          style={{ background: "rgba(96,165,250,0.2)", color: "#93c5fd", border: "1px solid rgba(96,165,250,0.25)" }}>
           Consultant
         </span>
       )}
       {userRole === "client" && (
-        <span className="px-2.5 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider bg-green-100 text-green-800">
+        <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
+          style={{ background: "rgba(52,211,153,0.2)", color: "#6ee7b7", border: "1px solid rgba(52,211,153,0.25)" }}>
           Client
-        </span>
-      )}
-      {userRole === "candidate" && (
-        <span className="px-2.5 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800">
-          Candidate
         </span>
       )}
     </div>

@@ -16,7 +16,8 @@ export default async function CandidateJobsPage() {
         and(
           eq(candidateJobs.isActive, true),
           or(
-            sql`${candidateJobs.targetCandIds} = '[]'::json`,
+            sql`${candidateJobs.targetCandIds} IS NULL`,
+            sql`${candidateJobs.targetCandIds}::text = '[]'`,
             sql`${candidateJobs.targetCandIds}::text LIKE ${"%" + candId + "%"}`
           )
         )

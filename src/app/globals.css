@@ -391,4 +391,100 @@
   will-change: transform, box-shadow !important;
   transform: translateZ(0) !important;
 }
+
+/* ── Extra-small inline card (chips, avatar badges, status pills) ── */
+.neo-card-xs {
+  background: #ffffff !important;
+  box-shadow: 3px 3px 8px #d1d9e6, -3px -3px 8px #ffffff !important;
+  border-radius: 10px !important;
+  border: none !important;
+  will-change: transform, box-shadow !important;
+  transform: translateZ(0) !important;
+}
+
+/* ── Input field with gold focus ring ── */
+.neo-input {
+  background: #f4f6fa !important;
+  box-shadow: inset 3px 3px 8px #d1d9e6, inset -3px -3px 8px #ffffff !important;
+  border-radius: 10px !important;
+  border: none !important;
+  transition: box-shadow 0.2s ease !important;
+  outline: none !important;
+}
+.neo-input:focus,
+.neo-input:focus-within {
+  box-shadow: inset 3px 3px 8px #d1d9e6, inset -3px -3px 8px #ffffff, 0 0 0 2px rgba(216,177,91,0.4) !important;
+}
+
+/* ── Sliding drawer/sheet panel ── */
+.neo-drawer {
+  background: #f8fafc !important;
+  box-shadow: -24px 0 60px rgba(19,50,85,0.14) !important;
+}
+
+/* ── Floating glass dropdown/popover ── */
+.neo-popover {
+  background: #ffffff !important;
+  box-shadow: 0 16px 48px rgba(19,50,85,0.14), 0 4px 12px rgba(0,0,0,0.06) !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(226,232,240,0.8) !important;
+}
+
+/* ── Active-status pulse animation ── */
+@keyframes neo-pulse-active {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+.neo-status-active {
+  animation: neo-pulse-active 2s ease-in-out infinite;
+}
+
+/* ── OS Shell gradient colors (matching candidate portal) ── */
+.os-sidebar-bg {
+  background: linear-gradient(180deg, #133255 0%, #0b1f36 100%) !important;
+}
+.os-topbar-bg {
+  background: linear-gradient(90deg, #133255 0%, #1a4270 100%) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+/* ── Edge-to-edge table container (Q2 choice: B) ── */
+.neo-table-edge {
+  background: #ffffff !important;
+  border-radius: 0 !important;
+  border: none !important;
+}
+.neo-table-row {
+  transition: background 0.15s ease, box-shadow 0.15s ease !important;
+}
+.neo-table-row:hover {
+  background: #f0f4f8 !important;
+  box-shadow: inset 4px 0 0 #D8B15B !important;
+}
+
+/* ── Stepper component (Q3 choice: B) ── */
+.neo-stepper-track {
+  background: #f0f4f8 !important;
+  box-shadow: inset 3px 3px 8px #d1d9e6, inset -3px -3px 8px #ffffff !important;
+  border-radius: 50px !important;
+}
+.neo-stepper-active {
+  background: linear-gradient(135deg, #133255, #1d4d82) !important;
+  color: #ffffff !important;
+  box-shadow: 3px 3px 8px #d1d9e6, -3px -3px 8px #ffffff !important;
+  border-radius: 50px !important;
+}
+.neo-stepper-done {
+  background: linear-gradient(135deg, #D8B15B, #f0c96a) !important;
+  color: #133255 !important;
+  box-shadow: 3px 3px 8px #d1d9e6, -3px -3px 8px #ffffff !important;
+  border-radius: 50px !important;
+}
+.neo-stepper-future {
+  background: #ffffff !important;
+  color: #94a3b8 !important;
+  box-shadow: 3px 3px 8px #d1d9e6, -3px -3px 8px #ffffff !important;
+  border-radius: 50px !important;
+}
 
