@@ -45,14 +45,7 @@ function NeoCard({
   className?: string;
 }) {
   return (
-    <div
-      className={`rounded-3xl border border-white/60 transition-all duration-200 ${className}`}
-      style={{
-        background: "#e0e5ec",
-        boxShadow:
-          "9px 9px 18px rgba(163,177,198,0.6), -9px -9px 18px rgba(255,255,255,0.8)",
-      }}
-    >
+    <div className={`neo-card relative overflow-hidden ${className}`}>
       {children}
     </div>
   );
@@ -423,19 +416,12 @@ export function CandidateProfileView({
     return (
       <div className="max-w-5xl mx-auto w-full flex flex-col gap-6 pb-16">
         {/* Sticky Header */}
-        <div
-          className="sticky top-0 z-40 p-4 rounded-3xl border border-white/80 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-          style={{
-            background: "#e0e5ec",
-            boxShadow:
-              "9px 9px 18px rgba(163,177,198,0.6), -9px -9px 18px rgba(255,255,255,0.8)",
-          }}
-        >
+        <div className="neo-card p-5 sticky top-0 z-40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="p-2.5 rounded-2xl bg-white/70 hover:bg-white text-slate-700 font-bold transition-all shadow-sm flex items-center justify-center"
+              className="neo-btn p-2.5 text-slate-700 font-bold flex items-center justify-center"
               title="Back to profile"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -453,7 +439,7 @@ export function CandidateProfileView({
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 transition-all"
+              className="neo-btn px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-all"
             >
               Cancel
             </button>
@@ -461,7 +447,7 @@ export function CandidateProfileView({
               type="button"
               disabled={isSaving}
               onClick={handleSave}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#133255] hover:bg-[#1a4270] shadow-md transition-all disabled:opacity-50"
+              className="neo-btn-primary flex items-center gap-2 px-6 py-2.5 text-xs font-bold disabled:opacity-50"
             >
               {isSaving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -474,7 +460,7 @@ export function CandidateProfileView({
         </div>
 
         {/* Section Navigation Tabs Bar */}
-        <div className="flex border-b border-slate-300/60 text-[13px] font-bold overflow-x-auto bg-[#d1d9e6] rounded-2xl p-1.5 gap-1.5 shadow-inner">
+        <div className="flex text-[13px] font-bold overflow-x-auto neo-inset p-2 gap-2">
           {[
             ["primary", "Primary & Contact"],
             ["currentRole", "Current Role"],
@@ -488,10 +474,10 @@ export function CandidateProfileView({
               key={tabKey}
               type="button"
               onClick={() => setActiveTab(tabKey as any)}
-              className={`py-2.5 px-4 rounded-xl whitespace-nowrap transition-all ${
+              className={`py-2 px-4 whitespace-nowrap transition-all rounded-xl ${
                 activeTab === tabKey
-                  ? "text-[#133255] bg-[#e0e5ec] shadow-sm font-extrabold"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/40 font-semibold"
+                  ? "neo-btn-primary font-extrabold text-white"
+                  : "text-slate-600 hover:text-slate-900 font-semibold hover:bg-slate-200/50"
               }`}
             >
               {tabLabel}
@@ -519,12 +505,7 @@ export function CandidateProfileView({
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                   required
                 />
               </div>
@@ -537,12 +518,7 @@ export function CandidateProfileView({
                   value={form.linkedin}
                   onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
                   placeholder="https://linkedin.com/in/username"
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
               </div>
             </div>
@@ -557,12 +533,7 @@ export function CandidateProfileView({
                   value={form.mobile}
                   onChange={(e) => setForm({ ...form, mobile: e.target.value })}
                   placeholder="e.g. 9876543210"
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
               </div>
               <div>
@@ -574,12 +545,7 @@ export function CandidateProfileView({
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="email@example.com"
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
               </div>
               <div>
@@ -591,12 +557,7 @@ export function CandidateProfileView({
                   value={form.location}
                   onChange={(e) => setForm({ ...form, location: e.target.value })}
                   placeholder="e.g. Mumbai, India"
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
               </div>
             </div>
@@ -624,12 +585,7 @@ export function CandidateProfileView({
                   value={form.designation}
                   onChange={(e) => setForm({ ...form, designation: e.target.value })}
                   placeholder="e.g. Finance Lead"
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
               </div>
               <div>
@@ -641,12 +597,7 @@ export function CandidateProfileView({
                   value={form.company}
                   onChange={(e) => setForm({ ...form, company: e.target.value })}
                   placeholder="e.g. HDFC Bank"
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
               </div>
             </div>
@@ -660,12 +611,7 @@ export function CandidateProfileView({
                   type="month"
                   value={form.currentCompanyStartDate}
                   onChange={(e) => setForm({ ...form, currentCompanyStartDate: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
                 {form.currentCompanyStartDate && (
                   <span className="text-xs text-emerald-600 font-bold mt-1 block">
@@ -682,12 +628,7 @@ export function CandidateProfileView({
                   value={form.exp}
                   onChange={(e) => setForm({ ...form, exp: e.target.value })}
                   placeholder="e.g. 15"
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
               </div>
               <div>
@@ -699,12 +640,7 @@ export function CandidateProfileView({
                   value={form.notice}
                   onChange={(e) => setForm({ ...form, notice: e.target.value })}
                   placeholder="e.g. 90"
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
               </div>
             </div>
@@ -774,12 +710,7 @@ export function CandidateProfileView({
                     onChange={(e) =>
                       setPriorInput({ ...priorInput, position: e.target.value })
                     }
-                    className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
-                    style={{
-                      background: "#e0e5ec",
-                      boxShadow:
-                        "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none neo-inset"
                   />
                 </div>
                 <div>
@@ -793,12 +724,7 @@ export function CandidateProfileView({
                     onChange={(e) =>
                       setPriorInput({ ...priorInput, companyName: e.target.value })
                     }
-                    className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
-                    style={{
-                      background: "#e0e5ec",
-                      boxShadow:
-                        "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none neo-inset"
                   />
                 </div>
                 <div>
@@ -813,12 +739,7 @@ export function CandidateProfileView({
                       onChange={(e) =>
                         setPriorInput({ ...priorInput, duration: e.target.value })
                       }
-                      className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
-                      style={{
-                        background: "#e0e5ec",
-                        boxShadow:
-                          "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                      }}
+                      className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none neo-inset"
                     />
                     <button
                       type="button"
@@ -854,12 +775,7 @@ export function CandidateProfileView({
                   type="date"
                   value={form.dob}
                   onChange={(e) => setForm({ ...form, dob: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
                 {form.dob && (
                   <span className="text-xs text-emerald-600 font-bold mt-1 block">
@@ -876,12 +792,7 @@ export function CandidateProfileView({
                   value={form.hometown}
                   onChange={(e) => setForm({ ...form, hometown: e.target.value })}
                   placeholder="e.g. Lucknow, UP"
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
               </div>
             </div>
@@ -893,12 +804,7 @@ export function CandidateProfileView({
               <select
                 value={form.relocationStatus}
                 onChange={(e) => setForm({ ...form, relocationStatus: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                style={{
-                  background: "#e0e5ec",
-                  boxShadow:
-                    "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                }}
+                className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
               >
                 <option value="Open to relocation">Open to relocation</option>
                 <option value="Not open to relocation">Not open to relocation</option>
@@ -930,12 +836,7 @@ export function CandidateProfileView({
                   value={form.fixedCtc}
                   onChange={(e) => setForm({ ...form, fixedCtc: e.target.value })}
                   placeholder="e.g. 100 or 1 Cr"
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
                 {form.fixedCtc && parseCtcInput(form.fixedCtc) !== null && (
                   <span className="text-xs text-emerald-600 font-bold mt-1 block">
@@ -952,12 +853,7 @@ export function CandidateProfileView({
                   value={form.variableCtc}
                   onChange={(e) => setForm({ ...form, variableCtc: e.target.value })}
                   placeholder="e.g. 40"
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
                 {form.variableCtc && parseCtcInput(form.variableCtc) !== null && (
                   <span className="text-xs text-emerald-600 font-bold mt-1 block">
@@ -977,12 +873,7 @@ export function CandidateProfileView({
                   value={form.ctc}
                   onChange={(e) => setForm({ ...form, ctc: e.target.value })}
                   placeholder="e.g. 140 or 1.4 Cr"
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
                 {form.ctc && parseCtcInput(form.ctc) !== null && (
                   <span className="text-xs text-emerald-600 font-bold mt-1 block">
@@ -999,12 +890,7 @@ export function CandidateProfileView({
                   value={form.expectedCtc}
                   onChange={(e) => setForm({ ...form, expectedCtc: e.target.value })}
                   placeholder="e.g. 160 or 1.6 Cr"
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
                 {form.expectedCtc && parseCtcInput(form.expectedCtc) !== null && (
                   <span className="text-xs text-emerald-600 font-bold mt-1 block">
@@ -1021,12 +907,7 @@ export function CandidateProfileView({
                   value={form.esops}
                   onChange={(e) => setForm({ ...form, esops: e.target.value })}
                   placeholder="e.g. 30"
-                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium neo-inset"
                 />
               </div>
             </div>
@@ -1087,24 +968,14 @@ export function CandidateProfileView({
                   placeholder="Degree (e.g. MBA / B.Tech)"
                   value={qualInput.degree}
                   onChange={(e) => setQualInput({ ...qualInput, degree: e.target.value })}
-                  className="px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none neo-inset"
                 />
                 <input
                   type="text"
                   placeholder="Institute (e.g. ISB / IIT Delhi)"
                   value={qualInput.college}
                   onChange={(e) => setQualInput({ ...qualInput, college: e.target.value })}
-                  className="px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none neo-inset"
                 />
                 <div className="flex gap-2">
                   <input
@@ -1112,12 +983,7 @@ export function CandidateProfileView({
                     placeholder="Year (e.g. 2015)"
                     value={qualInput.year}
                     onChange={(e) => setQualInput({ ...qualInput, year: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
-                    style={{
-                      background: "#e0e5ec",
-                      boxShadow:
-                        "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none neo-inset"
                   />
                   <button
                     type="button"
@@ -1152,12 +1018,7 @@ export function CandidateProfileView({
                   placeholder="e.g. CFO, VP Finance..."
                   value={dreamRoleInput}
                   onChange={(e) => setDreamRoleInput(e.target.value)}
-                  className="flex-1 px-4 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="flex-1 px-4 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none neo-inset"
                 />
                 <button
                   type="button"
@@ -1196,12 +1057,7 @@ export function CandidateProfileView({
                   placeholder="e.g. Kotak, Axis Bank..."
                   value={dreamCoInput}
                   onChange={(e) => setDreamCoInput(e.target.value)}
-                  className="flex-1 px-4 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow:
-                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                  }}
+                  className="flex-1 px-4 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none neo-inset"
                 />
                 <button
                   type="button"
@@ -1338,13 +1194,7 @@ export function CandidateProfileView({
           <div className="flex items-center gap-3.5 mt-3 sm:mt-0 shrink-0">
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-all hover:-translate-y-0.5"
-              style={{
-                background: "#e0e5ec",
-                boxShadow:
-                  "4px 4px 8px rgba(163,177,198,0.5), -4px -4px 8px rgba(255,255,255,0.7)",
-                color: "#133255",
-              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-all hover:-translate-y-0.5 neo-inset"
             >
               <Edit3 className="w-4 h-4 text-[#133255]" /> Edit Profile
             </button>
@@ -1354,12 +1204,7 @@ export function CandidateProfileView({
                 href={`/api/candidates/${candidate.id}/cv`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all hover:-translate-y-0.5"
-                style={{
-                  background: "linear-gradient(135deg, #133255, #1d4d82)",
-                  boxShadow:
-                    "4px 4px 8px rgba(163,177,198,0.5), -2px -2px 6px rgba(255,255,255,0.6)",
-                }}
+                className="neo-btn-primary flex items-center gap-2 px-4 py-2.5 text-[13px] font-bold"
               >
                 <Download className="w-4 h-4" /> Download CV
               </a>
@@ -1372,12 +1217,7 @@ export function CandidateProfileView({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <NeoCard className="p-5 flex items-center gap-4">
           <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-[#133255] shrink-0"
-            style={{
-              background: "#e0e5ec",
-              boxShadow:
-                "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-            }}
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-[#133255] shrink-0 neo-inset"
           >
             <Calendar className="w-5 h-5" />
           </div>
@@ -1398,12 +1238,7 @@ export function CandidateProfileView({
 
         <NeoCard className="p-5 flex items-center gap-4">
           <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-[#133255] shrink-0"
-            style={{
-              background: "#e0e5ec",
-              boxShadow:
-                "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-            }}
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-[#133255] shrink-0 neo-inset"
           >
             <HomeIcon className="w-5 h-5" />
           </div>
@@ -1419,12 +1254,7 @@ export function CandidateProfileView({
 
         <NeoCard className="p-5 flex items-center gap-4">
           <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-[#133255] shrink-0"
-            style={{
-              background: "#e0e5ec",
-              boxShadow:
-                "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-            }}
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-[#133255] shrink-0 neo-inset"
           >
             <Compass className="w-5 h-5" />
           </div>

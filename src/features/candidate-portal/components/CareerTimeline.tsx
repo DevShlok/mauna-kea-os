@@ -5,13 +5,7 @@ import { Plus, Edit3, Trash2, Calendar, MapPin, Briefcase } from "lucide-react";
 
 function NeoCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div
-      className={`rounded-2xl relative overflow-hidden ${className}`}
-      style={{
-        background: "#eef2f7",
-        boxShadow: "6px 6px 12px #cbd5e1, -6px -6px 12px #ffffff",
-      }}
-    >
+    <div className={`neo-card-sm relative overflow-hidden ${className}`}>
       {children}
     </div>
   );
@@ -37,11 +31,7 @@ export function CareerTimeline({
         </h2>
         {onEdit && (
           <button
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all hover:-translate-y-0.5 text-[#133255]"
-            style={{
-              background: "#eef2f7",
-              boxShadow: "3px 3px 6px #cbd5e1, -3px -3px 6px #ffffff",
-            }}
+            className="neo-btn flex items-center gap-2 px-4 py-2 text-xs font-bold text-[#133255]"
             onClick={onEdit}
           >
             <Plus className="w-4 h-4" /> Add Experience / Edit History
