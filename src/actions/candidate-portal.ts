@@ -213,16 +213,33 @@ export async function updateCandidateSelfProfileAction(
   candId: string,
   data: {
     name?: string;
+    mobile?: string;
+    email?: string;
     designation?: string;
     company?: string;
     location?: string;
+    hometown?: string;
+    dob?: string;
+    relocationStatus?: string;
+    relocationPrefs?: string[];
     linkedin?: string;
+    exp?: number;
+    currentCompanyStartDate?: string;
+    ctc?: number;
     fixedCtc?: number;
+    variableCtc?: number;
     expectedCtc?: number;
+    esops?: number;
+    esopVesting?: any;
     notice?: number;
+    stability?: any;
     expTags?: string[];
     pastCompanies?: string[];
+    priorExperiences?: any[];
     qual?: any[];
+    dreamRoles?: string[];
+    dreamCos?: string[];
+    notes?: string;
   }
 ) {
   const { platformUser } = await requireRole(["candidate"]);
@@ -234,15 +251,29 @@ export async function updateCandidateSelfProfileAction(
     .update(candidates)
     .set({
       ...(data.name && { name: data.name }),
+      ...(data.mobile !== undefined && { mobile: data.mobile }),
+      ...(data.email !== undefined && { email: data.email }),
       ...(data.designation !== undefined && { designation: data.designation }),
       ...(data.company !== undefined && { company: data.company }),
       ...(data.location !== undefined && { location: data.location }),
+      ...(data.hometown !== undefined && { hometown: data.hometown }),
+      ...(data.dob !== undefined && { dob: data.dob }),
+      ...(data.relocationStatus !== undefined && { relocationStatus: data.relocationStatus }),
+      ...(data.relocationPrefs !== undefined && { relocationPrefs: data.relocationPrefs }),
       ...(data.linkedin !== undefined && { linkedin: data.linkedin }),
-      ...(data.fixedCtc !== undefined && { fixedCtc: data.fixedCtc, ctc: data.fixedCtc }),
-      ...(data.expectedCtc !== undefined && { expected: data.expectedCtc }),
+      ...(data.exp !== undefined && { exp: data.exp }),
+      ...(data.currentCompanyStartDate !== undefined && { currentCompanyStartDate: data.currentCompanyStartDate }),
+      ...(data.ctc !== undefined && { ctc: data.ctc }),
+      ...(data.fixedCtc !== undefined && { fixedCtc: data.fixedCtc }),
+      ...(data.variableCtc !== undefined && { variableCtc: data.variableCtc }),
+      ...(data.expectedCtc !== undefined && { expectedCtc: data.expectedCtc }),
+      ...(data.esops !== undefined && { esops: data.esops }),
+      ...(data.esopVesting !== undefined && { esopVesting: data.esopVesting }),
       ...(data.notice !== undefined && { notice: data.notice }),
+      ...(data.stability !== undefined && { stability: data.stability }),
       ...(data.expTags !== undefined && { expTags: data.expTags }),
       ...(data.pastCompanies !== undefined && { pastCompanies: data.pastCompanies }),
+      ...(data.priorExperiences !== undefined && { priorExperiences: data.priorExperiences }),
       ...(data.qual !== undefined && { qual: data.qual }),
       updatedAt: new Date(),
     })

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Building2,
@@ -9,6 +9,7 @@ import {
   GraduationCap,
   Tag,
   Download,
+  Upload,
   Globe,
   DollarSign,
   Edit3,
@@ -17,12 +18,21 @@ import {
   Trash2,
   Save,
   Check,
+  Phone,
+  Mail,
+  Calendar,
+  Home as HomeIcon,
+  Compass,
+  Star,
+  FileText,
+  Clock,
+  Sparkles,
+  Camera,
+  Loader2,
 } from "lucide-react";
-import { updateCandidateSelfProfileAction } from "@/actions/candidate-portal";
+import { updateCandidateSelfProfileAction, updateProfilePhotoAction } from "@/actions/candidate-portal";
 import toast from "react-hot-toast";
 import { VerifiedBadge } from "@/components/ui/StatusBadge";
-import { Camera, Loader2 } from "lucide-react";
-import { updateProfilePhotoAction } from "@/actions/candidate-portal";
 import { formatCtcValue, parseCtcInput } from "@/lib/helpers";
 import { CareerTimeline } from "./CareerTimeline";
 
@@ -35,10 +45,11 @@ function NeoCard({
 }) {
   return (
     <div
-      className={`rounded-[36px] relative overflow-hidden ${className}`}
+      className={`rounded-3xl border border-white/60 transition-all duration-200 ${className}`}
       style={{
-        background: "#eef2f7",
-        boxShadow: "12px 12px 24px #cbd5e1, -12px -12px 24px #ffffff",
+        background: "#e0e5ec",
+        boxShadow:
+          "9px 9px 18px rgba(163,177,198,0.6), -9px -9px 18px rgba(255,255,255,0.8)",
       }}
     >
       {children}
@@ -46,54 +57,134 @@ function NeoCard({
   );
 }
 
-export function CandidateProfileView({ candidate, isVerified = false }: { candidate: any, isVerified?: boolean }) {
+function calculateAge(dobStr?: string | null): string {
+  if (!dobStr) return "N/A";
+  const dob = new Date(dobStr);
+  if (isNaN(dob.getTime())) return dobStr;
+  const diffMs = Date.now() - dob.getTime();
+  const ageDate = new Date(diffMs);
+  const age = Math.abs(ageDate.getUTCFullYear() - 1970);
+  return `${age} yrs`;
+}
+
+function calculateTenure(startDateStr?: string | null): string {
+  if (!startDateStr) return "N/A";
+  const start = new Date(startDateStr);
+  if (isNaN(start.getTime())) return startDateStr;
+  const now = new Date();
+  let years = now.getFullYear() - start.getFullYear();
+  let months = now.getMonth() - start.getMonth();
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  if (years === 0 && months === 0) return "Just started";
+  const yearText = years > 0 ? `${years} year${years > 1 ? "s" : ""}` : "";
+  const monthText = months > 0 ? `${months} month${months > 1 ? "s" : ""}` : "";
+  return [yearText, monthText].filter(Boolean).join(", ");
+}
+
+export function CandidateProfileView({
+  candidate,
+  isVerified = false,
+}: {
+  candidate: any;
+  isVerified?: boolean;
+}) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"general" | "career" | "tags" | "history">("general");
+  const [activeTab, setActiveTab] = useState<"primary" | "demographics" | "financials" | "education" | "tags" | "career">("primary");
   const [isSaving, setIsSaving] = useState(false);
+
+  // Resume upload state
+  const cvInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingCv, setIsUploadingCv] = useState(false);
 
   // Editable state initialized from candidate
   const [form, setForm] = useState({
+    name: candidate?.name || "",
+    mobile: candidate?.mobile || "",
+    email: candidate?.email || "",
     designation: candidate?.designation || "",
     company: candidate?.company || "",
     location: candidate?.location || "",
+    hometown: candidate?.hometown || "",
+    dob: candidate?.dob || "",
+    relocationStatus: candidate?.relocationStatus || "Open to relocation",
+    relocationPrefs: candidate?.relocationPrefs || "",
     linkedin: candidate?.linkedin || "",
+    exp: candidate?.exp || candidate?.expYears || "",
+    currentCompanyStartDate: candidate?.currentCompanyStartDate || "",
+    ctc: candidate?.ctc || "",
     fixedCtc: candidate?.fixedCtc || candidate?.ctc || "",
+    variableCtc: candidate?.variableCtc || "",
     expectedCtc: candidate?.expected || candidate?.expectedCtc || "",
+    esops: candidate?.esops || "",
+    esopVesting: candidate?.esopVesting || { years: 3, distribution: [20, 30, 50] },
     notice: candidate?.notice || "",
+    stability: typeof candidate?.stability === "object" ? candidate?.stability?.current || "" : candidate?.stability || "",
     expTags: Array.isArray(candidate?.expTags) ? candidate.expTags : [],
     pastCompanies: Array.isArray(candidate?.pastCompanies) ? candidate.pastCompanies : [],
     qual: Array.isArray(candidate?.qual) ? candidate.qual : [],
+    priorExperiences: Array.isArray(candidate?.priorExperiences) ? candidate.priorExperiences : [],
+    dreamRoles: Array.isArray(candidate?.dreamRoles) ? candidate.dreamRoles : [],
+    dreamCos: Array.isArray(candidate?.dreamCos) ? candidate.dreamCos : [],
+    notes: candidate?.notes || "",
   });
 
   const [tagInput, setTagInput] = useState("");
   const [companyInput, setCompanyInput] = useState("");
+  const [dreamRoleInput, setDreamRoleInput] = useState("");
+  const [dreamCoInput, setDreamCoInput] = useState("");
   const [qualInput, setQualInput] = useState({ degree: "", college: "", year: "" });
+  const [priorInput, setPriorInput] = useState({ companyName: "", position: "", duration: "" });
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   if (!candidate) {
     return (
-      <div className="max-w-3xl mx-auto py-12 text-center text-white/50">
+      <div className="max-w-3xl mx-auto py-12 text-center text-slate-500 font-medium">
         Candidate profile not found.
       </div>
     );
   }
 
+  const age = calculateAge(candidate.dob);
+  const tenureCalc = calculateTenure(candidate.currentCompanyStartDate);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
       await updateCandidateSelfProfileAction(candidate.id, {
+        name: form.name,
+        mobile: form.mobile,
+        email: form.email,
         designation: form.designation,
         company: form.company,
         location: form.location,
+        hometown: form.hometown,
+        dob: form.dob,
+        relocationStatus: form.relocationStatus,
+        relocationPrefs: Array.isArray(form.relocationPrefs) ? form.relocationPrefs : [form.relocationStatus],
         linkedin: form.linkedin,
-        fixedCtc: form.fixedCtc !== undefined && form.fixedCtc !== null ? (parseCtcInput(form.fixedCtc) ?? undefined) : undefined,
-        expectedCtc: form.expectedCtc !== undefined && form.expectedCtc !== null ? (parseCtcInput(form.expectedCtc) ?? undefined) : undefined,
+        exp: form.exp ? Number(form.exp) : undefined,
+        currentCompanyStartDate: form.currentCompanyStartDate,
+        ctc: form.ctc !== "" ? (parseCtcInput(form.ctc) ?? undefined) : undefined,
+        fixedCtc: form.fixedCtc !== "" ? (parseCtcInput(form.fixedCtc) ?? undefined) : undefined,
+        variableCtc: form.variableCtc !== "" ? (parseCtcInput(form.variableCtc) ?? undefined) : undefined,
+        expectedCtc: form.expectedCtc !== "" ? (parseCtcInput(form.expectedCtc) ?? undefined) : undefined,
+        esops: form.esops !== "" ? (parseCtcInput(form.esops) ?? undefined) : undefined,
+        esopVesting: form.esopVesting,
         notice: form.notice ? Number(form.notice) : undefined,
+        stability: form.stability ? { current: String(form.stability), previous: typeof candidate?.stability === "object" ? candidate?.stability?.previous || "" : "" } : undefined,
         expTags: form.expTags,
         pastCompanies: form.pastCompanies,
+        priorExperiences: form.priorExperiences,
         qual: form.qual,
+        dreamRoles: form.dreamRoles,
+        dreamCos: form.dreamCos,
+        notes: form.notes,
       });
+
       toast.success("Profile updated successfully!");
       setIsEditing(false);
       router.refresh();
@@ -103,6 +194,120 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
       setIsSaving(false);
     }
   };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload-profile-pic", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Failed to upload photo");
+      const { base64 } = await res.json();
+
+      await updateProfilePhotoAction(candidate.id, base64);
+      toast.success("Profile photo updated");
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upload photo");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleCvUploadClick = () => {
+    cvInputRef.current?.click();
+  };
+
+  const handleCvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(pdf|doc|docx)$/i)) {
+      toast.error("Please upload a PDF or DOCX file.");
+      return;
+    }
+
+    setIsUploadingCv(true);
+    try {
+      const formData = new FormData();
+      const filename = file.name || `${candidate.name || "Candidate"} - CV.pdf`;
+      formData.append("file", file, filename);
+      formData.append("candId", candidate.id);
+
+      const res = await fetch("/api/upload-cv", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Failed to upload resume");
+      }
+
+      toast.success("Resume updated successfully!");
+      router.refresh();
+    } catch (err: any) {
+      console.error("CV Upload error:", err);
+      toast.error(err.message || "Failed to upload resume");
+    } finally {
+      setIsUploadingCv(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
+  // Only return the single latest uploaded resume / CV for candidate view
+  const getLatestResume = () => {
+    const files = candidate.files ? [...candidate.files] : [];
+    const cvFiles = files.filter(
+      (f: any) =>
+        f.fileType &&
+        (f.fileType.toLowerCase().includes("cv") ||
+          f.fileType.toLowerCase().includes("resume"))
+    );
+
+    if (cvFiles.length > 0) {
+      cvFiles.sort((a: any, b: any) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA;
+      });
+      return cvFiles[0];
+    }
+
+    if (candidate.hasCv && candidate.cvFileName) {
+      return {
+        id: -1,
+        fileType: "CV / Resume",
+        fileName: candidate.cvFileName.split("/").pop() || `${candidate.name || "Candidate"} - CV.pdf`,
+        fileUrl: candidate.cvFileName.startsWith("http")
+          ? candidate.cvFileName
+          : `/api/candidates/${candidate.id}/cv`,
+        createdAt: candidate.updatedAt || candidate.createdAt || new Date().toISOString(),
+      };
+    }
+
+    return null;
+  };
+
+  const latestResume = getLatestResume();
 
   const addTag = () => {
     const val = tagInput.trim();
@@ -116,19 +321,28 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
     setForm({ ...form, expTags: form.expTags.filter((t: string) => t !== tagToRemove) });
   };
 
-  const addCompany = () => {
-    const val = companyInput.trim();
-    if (val && !form.pastCompanies.includes(val)) {
-      setForm({ ...form, pastCompanies: [...form.pastCompanies, val] });
-      setCompanyInput("");
+  const addDreamRole = () => {
+    const val = dreamRoleInput.trim();
+    if (val && !form.dreamRoles.includes(val)) {
+      setForm({ ...form, dreamRoles: [...form.dreamRoles, val] });
+      setDreamRoleInput("");
     }
   };
 
-  const removeCompany = (coToRemove: string) => {
-    setForm({
-      ...form,
-      pastCompanies: form.pastCompanies.filter((c: string) => c !== coToRemove),
-    });
+  const removeDreamRole = (roleToRemove: string) => {
+    setForm({ ...form, dreamRoles: form.dreamRoles.filter((r: string) => r !== roleToRemove) });
+  };
+
+  const addDreamCo = () => {
+    const val = dreamCoInput.trim();
+    if (val && !form.dreamCos.includes(val)) {
+      setForm({ ...form, dreamCos: [...form.dreamCos, val] });
+      setDreamCoInput("");
+    }
+  };
+
+  const removeDreamCo = (coToRemove: string) => {
+    setForm({ ...form, dreamCos: form.dreamCos.filter((c: string) => c !== coToRemove) });
   };
 
   const addQual = () => {
@@ -142,6 +356,23 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
     setForm({ ...form, qual: form.qual.filter((_: any, i: number) => i !== index) });
   };
 
+  const addPriorExp = () => {
+    if (priorInput.companyName.trim() && priorInput.position.trim()) {
+      setForm({
+        ...form,
+        priorExperiences: [...form.priorExperiences, { ...priorInput }],
+        pastCompanies: form.pastCompanies.includes(priorInput.companyName.trim())
+          ? form.pastCompanies
+          : [...form.pastCompanies, priorInput.companyName.trim()],
+      });
+      setPriorInput({ companyName: "", position: "", duration: "" });
+    }
+  };
+
+  const removePriorExp = (index: number) => {
+    setForm({ ...form, priorExperiences: form.priorExperiences.filter((_: any, i: number) => i !== index) });
+  };
+
   const initials =
     candidate.name
       ?.split(" ")
@@ -150,70 +381,99 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
       .substring(0, 2)
       .toUpperCase() || "MK";
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploadingPhoto(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      
-      const res = await fetch("/api/upload-profile-pic", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) throw new Error("Failed to upload photo");
-      const { base64 } = await res.json();
-      
-      await updateProfilePhotoAction(candidate.id, base64);
-      toast.success("Profile photo updated");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to upload photo");
-    } finally {
-      setIsUploadingPhoto(false);
+  const getFilesList = () => {
+    let files = candidate.files ? [...candidate.files] : [];
+    if (candidate.hasCv && candidate.cvFileName?.startsWith("http")) {
+      const hasCvInFiles = files.some(
+        (f: any) =>
+          f.fileType.toLowerCase().includes("cv") ||
+          f.fileType.toLowerCase().includes("resume")
+      );
+      if (!hasCvInFiles) {
+        files.push({
+          id: -1,
+          fileType: "CV / Resume",
+          fileName: candidate.cvFileName.split("/").pop() || "Legacy_CV.pdf",
+          fileUrl: candidate.cvFileName,
+          createdAt: candidate.createdAt || new Date().toISOString(),
+        });
+      }
     }
+    if (candidate.linkedinPdf && candidate.linkedinPdf.startsWith("http")) {
+      const hasLiInFiles = files.some((f: any) =>
+        f.fileType.toLowerCase().includes("linkedin")
+      );
+      if (!hasLiInFiles) {
+        files.push({
+          id: -2,
+          fileType: "LinkedIn Profile",
+          fileName: "LinkedIn_Profile.pdf",
+          fileUrl: candidate.linkedinPdf,
+          createdAt: candidate.createdAt || new Date().toISOString(),
+        });
+      }
+    }
+    return files;
   };
 
+  const allFiles = getFilesList();
+
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
-      {/* Top Header Card */}
-      <NeoCard className="p-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+    <div className="max-w-5xl mx-auto flex flex-col gap-6 pb-12">
+      {/* ─── Top Header Card ────────────────────────────────────────── */}
+      <NeoCard className="p-7">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
           <div className="relative shrink-0">
             {candidate.profilePic ? (
               <img
                 src={candidate.profilePic}
                 alt={candidate.name}
-                className="w-20 h-20 rounded-2xl object-cover"
-                style={{ border: "2px solid #e0e5ec", boxShadow: "4px 4px 8px rgba(163,177,198,0.5)" }}
+                className="w-24 h-24 rounded-2xl object-cover"
+                style={{
+                  border: "2px solid #e0e5ec",
+                  boxShadow: "4px 4px 10px rgba(163,177,198,0.5)",
+                }}
               />
             ) : (
               <div
-                className="w-20 h-20 rounded-2xl flex items-center justify-center text-white font-serif text-2xl font-bold"
+                className="w-24 h-24 rounded-2xl flex items-center justify-center text-white font-serif text-3xl font-bold"
                 style={{
                   background: "linear-gradient(135deg, #133255, #1d4d82)",
-                  boxShadow: "4px 4px 10px rgba(163,177,198,0.5), -4px -4px 10px rgba(255,255,255,0.8)",
+                  boxShadow:
+                    "4px 4px 12px rgba(163,177,198,0.5), -4px -4px 12px rgba(255,255,255,0.8)",
                 }}
               >
                 {initials}
               </div>
             )}
-            
-            <label htmlFor="photo-upload" className="absolute -bottom-2 -right-2 p-1.5 bg-white rounded-full shadow-md cursor-pointer hover:bg-slate-50 transition-colors z-10 border border-slate-100">
+
+            <label
+              htmlFor="photo-upload"
+              className="absolute -bottom-2 -right-2 p-2 bg-white rounded-full shadow-md cursor-pointer hover:bg-slate-50 transition-all z-10 border border-slate-100"
+              title="Change Profile Photo"
+            >
               {isUploadingPhoto ? (
                 <Loader2 className="w-4 h-4 text-[#F15A29] animate-spin" />
               ) : (
                 <Camera className="w-4 h-4 text-[#133255]" />
               )}
             </label>
-            <input id="photo-upload" type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={isUploadingPhoto} />
+            <input
+              id="photo-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoUpload}
+              disabled={isUploadingPhoto}
+            />
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-slate-800 text-2xl font-bold">{candidate.name}</h1>
+              <h1 className="text-slate-800 text-2xl md:text-3xl font-bold">
+                {candidate.name}
+              </h1>
+              {candidate.isVerified && <VerifiedBadge size="lg" />}
               {candidate.linkedin && (
                 <a
                   href={candidate.linkedin}
@@ -226,10 +486,11 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
                 </a>
               )}
             </div>
-            <p className="text-[#133255] text-[15px] font-bold mt-1">
-              {candidate.designation || "Executive Designation"}
+            <p className="text-[#133255] text-[16px] font-bold mt-1">
+              {candidate.designation || "Executive Leadership"}
             </p>
-            <div className="flex items-center gap-4 text-slate-500 font-medium text-[13px] mt-2 flex-wrap">
+
+            <div className="flex items-center gap-4 text-slate-500 font-medium text-[13px] mt-2.5 flex-wrap">
               {candidate.company && (
                 <span className="flex items-center gap-1.5">
                   <Building2 className="w-4 h-4 text-slate-400" />
@@ -242,26 +503,33 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
                   {candidate.location}
                 </span>
               )}
-              {candidate.expYears && (
+              {candidate.mobile && (
                 <span className="flex items-center gap-1.5">
-                  <Briefcase className="w-4 h-4 text-slate-400" />
-                  {candidate.expYears} Years Exp
+                  <Phone className="w-4 h-4 text-slate-400" />
+                  {candidate.mobile}
+                </span>
+              )}
+              {candidate.email && (
+                <span className="flex items-center gap-1.5">
+                  <Mail className="w-4 h-4 text-slate-400" />
+                  {candidate.email}
                 </span>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mt-2 sm:mt-0 shrink-0">
+          <div className="flex items-center gap-3.5 mt-3 sm:mt-0 shrink-0">
             <button
               onClick={() => setIsEditing(true)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-all hover:-translate-y-0.5"
               style={{
                 background: "#e0e5ec",
-                boxShadow: "3px 3px 6px rgba(163,177,198,0.5), -3px -3px 6px rgba(255,255,255,0.7)",
+                boxShadow:
+                  "4px 4px 8px rgba(163,177,198,0.5), -4px -4px 8px rgba(255,255,255,0.7)",
                 color: "#133255",
               }}
             >
-              <Edit3 className="w-4 h-4" /> Edit Profile
+              <Edit3 className="w-4 h-4 text-[#133255]" /> Edit Profile
             </button>
 
             {candidate.hasCv && (
@@ -272,7 +540,8 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all hover:-translate-y-0.5"
                 style={{
                   background: "linear-gradient(135deg, #133255, #1d4d82)",
-                  boxShadow: "4px 4px 8px rgba(163,177,198,0.5), -2px -2px 6px rgba(255,255,255,0.6)",
+                  boxShadow:
+                    "4px 4px 8px rgba(163,177,198,0.5), -2px -2px 6px rgba(255,255,255,0.6)",
                 }}
               >
                 <Download className="w-4 h-4" /> Download CV
@@ -282,151 +551,246 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
         </div>
       </NeoCard>
 
-      {/* Grid Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Career & Compensation */}
-        <NeoCard className="p-6 flex flex-col gap-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-slate-800 text-[16px] font-bold flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-[#133255]" />
-              Career Overview
-            </h2>
-            <button
-              onClick={() => {
-                setActiveTab("career");
-                setIsEditing(true);
-              }}
-              className="text-[12px] text-slate-500 hover:text-[#133255] font-medium transition-colors flex items-center gap-1"
-            >
-              <Edit3 className="w-3.5 h-3.5" /> Edit
-            </button>
+      {/* ─── Demographics & Relocation Summary ────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <NeoCard className="p-5 flex items-center gap-4">
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-[#133255] shrink-0"
+            style={{
+              background: "#e0e5ec",
+              boxShadow:
+                "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+            }}
+          >
+            <Calendar className="w-5 h-5" />
           </div>
-
-          <div className="flex flex-col gap-4 mt-2">
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                ['Current Fixed', formatCtcValue(candidate.fixedCtc, candidate.currency)],
-                ['Variable', formatCtcValue(candidate.variableCtc, candidate.currency)],
-                ['Total Current', formatCtcValue(candidate.ctc, candidate.currency)],
-                ['Expected', formatCtcValue(candidate.expected, candidate.currency)]
-              ].map(([l, v]) => (
-                <div key={l} className="text-center p-3 bg-[#f4f7fd] rounded-lg border border-[#e4e8f0]">
-                  <div className="text-[11px] font-bold uppercase text-[#6b7a99] tracking-wide mb-1">{l}</div>
-                  <div className="font-serif text-[15px] md:text-[17px] font-bold text-[#133255]">{v}</div>
-                </div>
-              ))}
-            </div>
-
-            {candidate.esops > 0 && candidate.esopVesting && candidate.esopVesting.years > 0 && (
-              <div className="pt-3 border-t border-[#e2e8f0]">
-                <div className="text-[12px] font-bold uppercase text-[#6b7a99] mb-2">ESOP Vesting Schedule ({candidate.esopVesting.years} Years)</div>
-                <div className="flex flex-wrap gap-3">
-                  {candidate.esopVesting.distribution.map((pct: number, idx: number) => {
-                    const esopValue = candidate.esops ? (candidate.esops * pct) / 100 : null;
-                    return (
-                      <div key={idx} className="bg-white border border-[#D4E0F0] px-3 py-1.5 rounded flex flex-col items-center flex-1 min-w-[70px]">
-                        <span className="text-[11px] font-semibold text-[#6b7a99]">Year {idx + 1}</span>
-                        <span className="text-[13px] font-bold text-[#111]">
-                          {pct}% {esopValue ? `(${formatCtcValue(esopValue, candidate.currency)})` : ''}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            
-            <div className="flex flex-col gap-3 text-[14px] mt-2 border-t border-[#e2e8f0] pt-3">
-              <div className="flex justify-between py-1">
-                <span className="text-slate-500 font-medium">Notice Period</span>
-                <span className="text-slate-800 font-bold">
-                  {candidate.notice ? `${candidate.notice} Days` : "Immediate / Negotiable"}
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+              Date of Birth / Age
+            </span>
+            <div className="text-[15px] font-bold text-slate-800 mt-0.5">
+              {candidate.dob || "Not specified"}{" "}
+              {age !== null && (
+                <span className="text-xs text-slate-500 font-semibold ml-1">
+                  ({age} yrs)
                 </span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className="text-slate-500 font-medium">Preferred Location</span>
-                <span className="text-slate-800 font-bold">
-                  {candidate.prefLocation || candidate.location || "Open"}
-                </span>
-              </div>
+              )}
             </div>
           </div>
         </NeoCard>
 
-        {/* Education & Qualifications */}
-        <NeoCard className="p-6 flex flex-col gap-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-slate-800 text-[16px] font-bold flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-[#133255]" />
-              Education & Certifications
-            </h2>
-            <button
-              onClick={() => {
-                setActiveTab("general");
-                setIsEditing(true);
-              }}
-              className="text-[12px] text-slate-500 hover:text-[#133255] font-medium transition-colors flex items-center gap-1"
-            >
-              <Plus className="w-3.5 h-3.5" /> Add
-            </button>
+        <NeoCard className="p-5 flex items-center gap-4">
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-[#133255] shrink-0"
+            style={{
+              background: "#e0e5ec",
+              boxShadow:
+                "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+            }}
+          >
+            <HomeIcon className="w-5 h-5" />
           </div>
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+              Hometown
+            </span>
+            <div className="text-[15px] font-bold text-slate-800 mt-0.5">
+              {candidate.hometown || "Not specified"}
+            </div>
+          </div>
+        </NeoCard>
 
-          {Array.isArray(candidate.qual) && candidate.qual.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              {candidate.qual.map((q: any, i: number) => (
-                <div
-                  key={i}
-                  className="p-3 rounded-xl transition-all"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow: "inset 2px 2px 5px rgba(163,177,198,0.5), inset -2px -2px 5px rgba(255,255,255,0.7)",
-                  }}
-                >
-                  <span className="text-slate-800 font-bold text-[14px] block">
-                    {typeof q === "string" ? q : q.degree || q.title}
-                  </span>
-                  {q.college && (
-                    <span className="text-slate-500 text-[12px] font-medium block">{q.college}</span>
-                  )}
-                  {q.year && (
-                    <span className="text-[#133255] font-bold text-[11px] mt-1 block">{q.year}</span>
-                  )}
-                </div>
-              ))}
+        <NeoCard className="p-5 flex items-center gap-4">
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-[#133255] shrink-0"
+            style={{
+              background: "#e0e5ec",
+              boxShadow:
+                "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+            }}
+          >
+            <Compass className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+              Relocation Preference
+            </span>
+            <div className="text-[15px] font-bold text-slate-800 mt-0.5">
+              {candidate.relocationStatus || candidate.relocationPrefs || "Open to relocation"}
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <GraduationCap className="w-8 h-8 text-slate-300 mb-2" />
-              <p className="text-slate-500 text-[13px] font-medium">No education details listed.</p>
-              <button
-                onClick={() => {
-                  setActiveTab("general");
-                  setIsEditing(true);
-                }}
-                className="mt-2 text-[12px] text-[#133255] font-bold hover:underline"
-              >
-                + Add Education
-              </button>
-            </div>
-          )}
+          </div>
         </NeoCard>
       </div>
 
-      {/* Expertise & Past Companies */}
+      {/* ─── Compensation & Status Grid ──────────────────────────── */}
+      <NeoCard className="p-6 flex flex-col gap-5">
+        <div className="flex justify-between items-center border-b border-slate-200/60 pb-4">
+          <h2 className="text-slate-800 text-[17px] font-bold flex items-center gap-2">
+            <DollarSign className="w-5 h-5 text-[#133255]" />
+            Compensation & Financial Overview
+          </h2>
+          <button
+            onClick={() => {
+              setActiveTab("financials");
+              setIsEditing(true);
+            }}
+            className="text-[12px] text-[#133255] font-bold hover:underline flex items-center gap-1"
+          >
+            <Edit3 className="w-3.5 h-3.5" /> Edit Compensation
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            ["Fixed CTC", candidate.fixedCtc || candidate.ctc],
+            ["Variable CTC", candidate.variableCtc],
+            ["Total Current CTC", candidate.ctc],
+            ["Expected CTC", candidate.expected || candidate.expectedCtc],
+          ].map(([label, value]) => (
+            <div
+              key={label as string}
+              className="p-4 rounded-2xl bg-white border border-slate-200/70 shadow-sm flex flex-col justify-between"
+            >
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                {label}
+              </span>
+              <div className="font-serif text-[18px] md:text-[20px] font-bold text-[#133255] mt-1">
+                {formatCtcValue(value as number | string, candidate.currency)}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ESOPs & Vesting Schedule */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/70 shadow-sm">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+              ESOPs Value
+            </span>
+            <div className="font-serif text-[18px] font-bold text-[#133255] mt-1">
+              {candidate.esops
+                ? formatCtcValue(candidate.esops, candidate.currency)
+                : "None"}
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/70 shadow-sm">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+              Notice Period
+            </span>
+            <div className="text-[16px] font-bold text-slate-800 mt-1">
+              {candidate.notice ? `${candidate.notice} Days` : "Immediate / Negotiable"}
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/70 shadow-sm">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+              Current Company Tenure
+            </span>
+            <div className="text-[15px] font-bold text-slate-800 mt-1">
+              {tenureCalc || (candidate.stability ? `${candidate.stability} Years` : "Not specified")}
+            </div>
+          </div>
+        </div>
+
+        {candidate.esopVesting && candidate.esopVesting.distribution?.length > 0 && (
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 mt-1">
+            <span className="text-[12px] font-bold text-[#133255] uppercase tracking-wider block mb-2">
+              ESOP Vesting Schedule ({candidate.esopVesting.years || candidate.esopVesting.distribution.length} Years)
+            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {candidate.esopVesting.distribution.map((pct: number, idx: number) => {
+                const esopVal = candidate.esops ? (candidate.esops * pct) / 100 : null;
+                return (
+                  <div
+                    key={idx}
+                    className="p-3 bg-white rounded-xl border border-slate-200 flex flex-col items-center"
+                  >
+                    <span className="text-[11px] font-semibold text-slate-400">
+                      Year {idx + 1}
+                    </span>
+                    <span className="text-[14px] font-bold text-slate-800 mt-0.5">
+                      {pct}%
+                    </span>
+                    {esopVal && (
+                      <span className="text-[11px] text-emerald-600 font-bold mt-0.5">
+                        {formatCtcValue(esopVal, candidate.currency)}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </NeoCard>
+
+      {/* ─── Qualifications & Education ──────────────────────────── */}
+      <NeoCard className="p-6 flex flex-col gap-4">
+        <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
+          <h2 className="text-slate-800 text-[17px] font-bold flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-[#133255]" />
+            Qualifications & Education
+          </h2>
+          <button
+            onClick={() => {
+              setActiveTab("education");
+              setIsEditing(true);
+            }}
+            className="text-[12px] text-[#133255] font-bold hover:underline flex items-center gap-1"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add Qualification
+          </button>
+        </div>
+
+        {Array.isArray(candidate.qual) && candidate.qual.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {candidate.qual.map((q: any, i: number) => (
+              <div
+                key={i}
+                className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between"
+              >
+                <span className="text-slate-800 font-bold text-[15px] block">
+                  {typeof q === "string" ? q : q.degree || q.title}
+                </span>
+                {q.college && (
+                  <span className="text-slate-500 text-[12px] font-medium mt-1 block">
+                    {q.college}
+                  </span>
+                )}
+                {q.year && (
+                  <span className="text-[#133255] font-bold text-[12px] mt-2 block">
+                    Passout Year: {q.year}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-6 text-center text-slate-400 text-sm font-medium">
+            No education details listed yet. Click "+ Add Qualification" to add your degrees.
+          </div>
+        )}
+      </NeoCard>
+
+      {/* ─── Career Timeline & Past Companies ──────────────────────── */}
+      <CareerTimeline candId={candidate.id} timeline={candidate.priorExperiences || []} />
+
+      {/* ─── Competencies & Career Aspirations ────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Expertise Tags */}
+        {/* Core Competencies & Experience Tags */}
         <NeoCard className="p-6 flex flex-col gap-4">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
             <h2 className="text-slate-800 text-[16px] font-bold flex items-center gap-2">
               <Tag className="w-5 h-5 text-[#133255]" />
-              Core Competencies & Sector Tags
+              Experience Tags & Competencies
             </h2>
             <button
               onClick={() => {
                 setActiveTab("tags");
                 setIsEditing(true);
               }}
-              className="text-[12px] text-slate-500 hover:text-[#133255] font-medium transition-colors flex items-center gap-1"
+              className="text-[12px] text-[#133255] font-bold hover:underline flex items-center gap-1"
             >
               <Edit3 className="w-3.5 h-3.5" /> Edit Tags
             </button>
@@ -437,207 +801,255 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
               {candidate.expTags.map((tag: string, i: number) => (
                 <span
                   key={i}
-                  className="px-3 py-1.5 rounded-xl text-[12px] font-bold text-slate-700 shadow-sm"
-                  style={{
-                    background: "#e0e5ec",
-                    boxShadow: "inset 2px 2px 4px rgba(163,177,198,0.5), inset -2px -2px 4px rgba(255,255,255,0.7)",
-                  }}
+                  className="px-3 py-1.5 rounded-xl text-[12.5px] font-bold text-[#133255] bg-white border border-slate-200 shadow-sm"
                 >
                   {tag}
                 </span>
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <Tag className="w-8 h-8 text-slate-300 mb-2" />
-              <p className="text-slate-500 text-[13px] font-medium">No tags listed yet.</p>
-              <button
-                onClick={() => {
-                  setActiveTab("tags");
-                  setIsEditing(true);
-                }}
-                className="mt-2 text-[12px] text-[#133255] hover:underline font-bold"
-              >
-                + Add your key skills & industry tags
-              </button>
-            </div>
+            <p className="text-slate-400 text-xs font-medium py-4 text-center">
+              No experience tags listed yet. (e.g. CFO - HDFC Bank, Finance Lead - Kotak)
+            </p>
           )}
         </NeoCard>
 
-        {/* Past Companies */}
+        {/* Career Aspirations (Dream Roles & Companies) */}
         <NeoCard className="p-6 flex flex-col gap-4">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
             <h2 className="text-slate-800 text-[16px] font-bold flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-[#133255]" />
-              Career History / Past Companies
+              <Star className="w-5 h-5 text-[#D8B15B]" />
+              Career Aspirations
             </h2>
             <button
               onClick={() => {
-                setActiveTab("history");
+                setActiveTab("career");
                 setIsEditing(true);
               }}
-              className="text-[12px] text-slate-500 hover:text-[#133255] font-medium transition-colors flex items-center gap-1"
+              className="text-[12px] text-[#133255] font-bold hover:underline flex items-center gap-1"
             >
-              <Edit3 className="w-3.5 h-3.5" /> Edit History
+              <Edit3 className="w-3.5 h-3.5" /> Edit Aspirations
             </button>
           </div>
 
-          {Array.isArray(candidate.pastCompanies) &&
-          candidate.pastCompanies.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {candidate.pastCompanies.map((co: string, i: number) => (
-                <span
-                  key={i}
-                  className="px-3 py-1.5 rounded-xl text-[13px] font-bold text-white shadow-sm"
-                  style={{
-                    background: "linear-gradient(135deg, #133255, #1d4d82)",
-                    boxShadow: "2px 2px 5px rgba(163,177,198,0.5)",
-                  }}
-                >
-                  {co}
-                </span>
-              ))}
+          <div className="space-y-3">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
+                Dream Roles
+              </span>
+              {Array.isArray(candidate.dreamRoles) && candidate.dreamRoles.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {candidate.dreamRoles.map((r: string, i: number) => (
+                    <span
+                      key={i}
+                      className="px-3 py-1.5 rounded-xl text-[12px] font-bold text-slate-800 bg-amber-50 border border-amber-200"
+                    >
+                      {r}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-xs text-slate-400 italic">No dream roles added yet.</span>
+              )}
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <Building2 className="w-8 h-8 text-slate-300 mb-2" />
-              <p className="text-slate-500 text-[13px] font-medium">No past companies listed yet.</p>
-              <button
-                onClick={() => {
-                  setActiveTab("history");
-                  setIsEditing(true);
-                }}
-                className="mt-2 text-[12px] text-[#133255] hover:underline font-bold"
-              >
-                + Add previous organizations you worked at
-              </button>
-            </div>
-          )}
-        </NeoCard>
 
-        {/* Detailed Career Timeline */}
-        <CareerTimeline candId={candidate.id} timeline={candidate.priorExperiences || []} />
+            <div className="pt-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
+                Target / Dream Companies
+              </span>
+              {Array.isArray(candidate.dreamCos) && candidate.dreamCos.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {candidate.dreamCos.map((c: string, i: number) => (
+                    <span
+                      key={i}
+                      className="px-3 py-1.5 rounded-xl text-[12px] font-bold text-white bg-[#133255] shadow-sm"
+                    >
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-xs text-slate-400 italic">No target companies added yet.</span>
+              )}
+            </div>
+          </div>
+        </NeoCard>
       </div>
+
+      {/* ─── Uploaded Resume Section ──────────────────────── */}
+      <NeoCard className="p-6 flex flex-col gap-4">
+        <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
+          <h2 className="text-slate-800 text-[17px] font-bold flex items-center gap-2">
+            <FileText className="w-5 h-5 text-[#133255]" />
+            Your Resume / CV
+          </h2>
+          <input
+            type="file"
+            ref={cvInputRef}
+            onChange={handleCvUpload}
+            accept=".pdf,.doc,.docx"
+            className="hidden"
+          />
+          <button
+            onClick={handleCvUploadClick}
+            disabled={isUploadingCv}
+            className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#133255] hover:bg-[#1a4270] transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+          >
+            {isUploadingCv ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Upload className="w-3.5 h-3.5" />
+            )}
+            {isUploadingCv
+              ? "Uploading..."
+              : latestResume
+              ? "Upload New Version"
+              : "Upload Resume"}
+          </button>
+        </div>
+
+        {latestResume ? (
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#133255] shrink-0">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-800 text-sm truncate">
+                    {latestResume.fileName}
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
+                    Latest Version
+                  </span>
+                </div>
+                <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
+                  <span>
+                    Uploaded on{" "}
+                    {new Date(latestResume.createdAt).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {latestResume.fileUrl && (
+                <a
+                  href={latestResume.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#133255] bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200/60 transition-all flex items-center gap-1.5"
+                >
+                  <Download className="w-4 h-4" /> Download Resume
+                </a>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="py-8 text-center flex flex-col items-center gap-3 bg-white/50 rounded-2xl border border-dashed border-slate-300/80 p-6">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#133255]">
+              <FileText className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-slate-700 text-sm font-bold">No resume uploaded yet</p>
+              <p className="text-slate-400 text-xs mt-1">
+                Upload your CV to keep your executive profile up-to-date.
+              </p>
+            </div>
+            <button
+              onClick={handleCvUploadClick}
+              disabled={isUploadingCv}
+              className="mt-1 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#133255] hover:bg-[#1a4270] transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+            >
+              {isUploadingCv ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Upload className="w-3.5 h-3.5" />
+              )}
+              {isUploadingCv ? "Uploading..." : "Upload Resume (PDF/DOCX)"}
+            </button>
+          </div>
+        )}
+      </NeoCard>
 
       {/* ─── EDIT PROFILE MODAL ─────────────────────────────────────── */}
       {isEditing && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div
-            className="w-full max-w-2xl rounded-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            className="w-full max-w-3xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh] my-6"
             style={{
               background: "#e0e5ec",
-              boxShadow: "0 25px 50px -12px rgba(163,177,198,0.6)",
-              border: "1px solid rgba(255,255,255,0.6)",
+              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)",
+              border: "1px solid rgba(255,255,255,0.7)",
             }}
           >
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-300/50 flex justify-between items-center" style={{ background: "#e0e5ec" }}>
-              <h3 className="text-slate-800 font-bold text-[17px] flex items-center gap-2">
+            <div className="p-5 border-b border-slate-300/50 flex justify-between items-center bg-[#e0e5ec]">
+              <h3 className="text-slate-800 font-bold text-[18px] flex items-center gap-2">
                 <Edit3 className="w-5 h-5 text-[#133255]" />
-                Edit Profile Information
+                Edit Profile Details
               </h3>
               <button
                 onClick={() => setIsEditing(false)}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
+                className="text-slate-400 hover:text-slate-600 transition-colors p-1"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Nav Tabs */}
-            <div className="flex border-b border-slate-300/50 text-[13px]" style={{ background: "#d1d9e6" }}>
-              <button
-                onClick={() => setActiveTab("general")}
-                className={`flex-1 py-3 font-bold transition-colors border-b-2 ${
-                  activeTab === "general"
-                    ? "text-[#133255] border-[#133255] bg-[#e0e5ec]"
-                    : "text-slate-500 border-transparent hover:text-slate-700"
-                }`}
-              >
-                General & Education
-              </button>
-              <button
-                onClick={() => setActiveTab("career")}
-                className={`flex-1 py-3 font-bold transition-colors border-b-2 ${
-                  activeTab === "career"
-                    ? "text-[#133255] border-[#133255] bg-[#e0e5ec]"
-                    : "text-slate-500 border-transparent hover:text-slate-700"
-                }`}
-              >
-                Compensation
-              </button>
-              <button
-                onClick={() => setActiveTab("tags")}
-                className={`flex-1 py-3 font-bold transition-colors border-b-2 ${
-                  activeTab === "tags"
-                    ? "text-[#133255] border-[#133255] bg-[#e0e5ec]"
-                    : "text-slate-500 border-transparent hover:text-slate-700"
-                }`}
-              >
-                Skills & Tags ({form.expTags.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("history")}
-                className={`flex-1 py-3 font-bold transition-colors border-b-2 ${
-                  activeTab === "history"
-                    ? "text-[#133255] border-[#133255] bg-[#e0e5ec]"
-                    : "text-slate-500 border-transparent hover:text-slate-700"
-                }`}
-              >
-                Past Companies ({form.pastCompanies.length})
-              </button>
+            <div className="flex border-b border-slate-300/50 text-[12px] font-bold overflow-x-auto bg-[#d1d9e6]">
+              {[
+                ["primary", "Primary & Contact"],
+                ["demographics", "Demographics"],
+                ["financials", "Compensation"],
+                ["education", "Education"],
+                ["tags", `Tags (${form.expTags.length})`],
+                ["career", "Experience & Aspirations"],
+              ].map(([tabKey, tabLabel]) => (
+                <button
+                  key={tabKey}
+                  onClick={() => setActiveTab(tabKey as any)}
+                  className={`flex-1 py-3 px-3 text-center whitespace-nowrap transition-all border-b-2 ${
+                    activeTab === tabKey
+                      ? "text-[#133255] border-[#133255] bg-[#e0e5ec]"
+                      : "text-slate-500 border-transparent hover:text-slate-700"
+                  }`}
+                >
+                  {tabLabel}
+                </button>
+              ))}
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto flex-1 flex flex-col gap-4 text-sm bg-[#e0e5ec]">
-              {/* Tab 1: General & Education */}
-              {activeTab === "general" && (
+            <div className="p-6 overflow-y-auto flex-1 flex flex-col gap-5 text-sm bg-[#e0e5ec]">
+              {/* Tab: Primary & Contact */}
+              {activeTab === "primary" && (
                 <div className="flex flex-col gap-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[12px] font-bold text-slate-500 mb-1">
-                        Current Designation
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                        Full Name
                       </label>
                       <input
                         type="text"
-                        value={form.designation}
-                        onChange={(e) => setForm({ ...form, designation: e.target.value })}
-                        placeholder="e.g. Chief Financial Officer"
-                        className="w-full px-3 py-2 rounded-xl text-slate-800 outline-none font-medium placeholder:text-slate-400"
-                        style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)" }}
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
+                        required
                       />
                     </div>
                     <div>
-                      <label className="block text-[12px] font-bold text-slate-500 mb-1">
-                        Current Company
-                      </label>
-                      <input
-                        type="text"
-                        value={form.company}
-                        onChange={(e) => setForm({ ...form, company: e.target.value })}
-                        placeholder="e.g. Hindustan Unilever"
-                        className="w-full px-3 py-2 rounded-xl text-slate-800 outline-none font-medium placeholder:text-slate-400"
-                        style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)" }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-500 mb-1">
-                        Location / City
-                      </label>
-                      <input
-                        type="text"
-                        value={form.location}
-                        onChange={(e) => setForm({ ...form, location: e.target.value })}
-                        placeholder="e.g. Mumbai, India"
-                        className="w-full px-3 py-2 rounded-xl text-slate-800 outline-none font-medium placeholder:text-slate-400"
-                        style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)" }}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-500 mb-1">
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
                         LinkedIn Profile URL
                       </label>
                       <input
@@ -645,155 +1057,427 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
                         value={form.linkedin}
                         onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
                         placeholder="https://linkedin.com/in/username"
-                        className="w-full px-3 py-2 rounded-xl text-slate-800 outline-none font-medium placeholder:text-slate-400"
-                        style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)" }}
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
                       />
                     </div>
                   </div>
 
-                  {/* Add Education Section */}
-                  <div className="mt-2 pt-4 border-t border-slate-300/40">
-                    <label className="block text-[12px] font-bold text-[#133255] uppercase tracking-wider mb-2">
-                      Education / Qualifications
-                    </label>
-                    
-                    {/* List current qualifications */}
-                    {form.qual.length > 0 && (
-                      <div className="flex flex-col gap-2 mb-3">
-                        {form.qual.map((q: any, idx: number) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between p-2.5 rounded-xl text-[13px]"
-                            style={{ background: "#e0e5ec", boxShadow: "3px 3px 6px rgba(163,177,198,0.4), -3px -3px 6px rgba(255,255,255,0.6)" }}
-                          >
-                            <div>
-                              <span className="text-slate-800 font-bold">
-                                {typeof q === "string" ? q : q.degree}
-                              </span>
-                              {q.college && <span className="text-slate-500 font-medium ml-2">({q.college})</span>}
-                              {q.year && <span className="text-[#133255] font-bold ml-2">{q.year}</span>}
-                            </div>
-                            <button
-                              onClick={() => removeQual(idx)}
-                              className="text-rose-400 hover:text-rose-600 transition-colors p-1"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                        Mobile Number
+                      </label>
+                      <input
+                        type="text"
+                        value={form.mobile}
+                        onChange={(e) => setForm({ ...form, mobile: e.target.value })}
+                        placeholder="e.g. 9876543210"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        placeholder="email@example.com"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                        Location / Current City
+                      </label>
+                      <input
+                        type="text"
+                        value={form.location}
+                        onChange={(e) => setForm({ ...form, location: e.target.value })}
+                        placeholder="e.g. Mumbai, India"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
+                      />
+                    </div>
+                  </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                        Current Designation
+                      </label>
                       <input
                         type="text"
-                        placeholder="Degree / Qualification"
-                        value={qualInput.degree}
-                        onChange={(e) => setQualInput({ ...qualInput, degree: e.target.value })}
-                        className="px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none placeholder:text-slate-400"
-                        style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)" }}
+                        value={form.designation}
+                        onChange={(e) => setForm({ ...form, designation: e.target.value })}
+                        placeholder="e.g. Finance Lead"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
                       />
+                    </div>
+                    <div>
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                        Current Company
+                      </label>
                       <input
                         type="text"
-                        placeholder="Institute / College"
-                        value={qualInput.college}
-                        onChange={(e) => setQualInput({ ...qualInput, college: e.target.value })}
-                        className="px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none placeholder:text-slate-400"
-                        style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)" }}
+                        value={form.company}
+                        onChange={(e) => setForm({ ...form, company: e.target.value })}
+                        placeholder="e.g. HDFC Bank"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
                       />
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Year (e.g. 2015)"
-                          value={qualInput.year}
-                          onChange={(e) => setQualInput({ ...qualInput, year: e.target.value })}
-                          className="w-full px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none placeholder:text-slate-400"
-                          style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)" }}
-                        />
-                        <button
-                          onClick={addQual}
-                          className="px-3 py-2 text-white rounded-xl text-xs font-bold shrink-0 transition-transform hover:-translate-y-0.5"
-                          style={{ background: "linear-gradient(135deg, #133255, #1d4d82)", boxShadow: "2px 2px 5px rgba(163,177,198,0.5)" }}
-                        >
-                          Add
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Tab 2: Compensation */}
-              {activeTab === "career" && (
+              {/* Tab: Demographics & Relocation */}
+              {activeTab === "demographics" && (
                 <div className="flex flex-col gap-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[12px] font-bold text-slate-500 mb-1">
-                        Current Fixed CTC
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                        Date of Birth (YYYY-MM-DD)
+                      </label>
+                      <input
+                        type="date"
+                        value={form.dob}
+                        onChange={(e) => setForm({ ...form, dob: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
+                      />
+                      {form.dob && calculateAge(form.dob) !== null && (
+                        <span className="text-xs text-emerald-600 font-bold mt-1 block">
+                          Calculated Age: {calculateAge(form.dob)} yrs
+                        </span>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                        Hometown
+                      </label>
+                      <input
+                        type="text"
+                        value={form.hometown}
+                        onChange={(e) => setForm({ ...form, hometown: e.target.value })}
+                        placeholder="e.g. Lucknow, UP"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                      Relocation Preference
+                    </label>
+                    <select
+                      value={form.relocationStatus}
+                      onChange={(e) => setForm({ ...form, relocationStatus: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                      style={{
+                        background: "#e0e5ec",
+                        boxShadow:
+                          "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                      }}
+                    >
+                      <option value="Open to relocation">Open to relocation</option>
+                      <option value="Not open to relocation">Not open to relocation</option>
+                      <option value="Open to hybrid/remote only">Open to hybrid/remote only</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Financials & Compensation */}
+              {activeTab === "financials" && (
+                <div className="flex flex-col gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                        Fixed CTC (in Lacs / Cr)
                       </label>
                       <input
                         type="text"
                         value={form.fixedCtc}
                         onChange={(e) => setForm({ ...form, fixedCtc: e.target.value })}
-                        placeholder="e.g. 75 Lacs, 0.75 Cr, 75"
-                        className="w-full px-3 py-2 rounded-xl text-slate-800 outline-none font-medium placeholder:text-slate-400"
-                        style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)" }}
+                        placeholder="e.g. 100 or 1 Cr"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
                       />
-                      {form.fixedCtc && parseCtcInput(form.fixedCtc) && (
-                        <div className="text-[11px] font-bold text-emerald-600 mt-1">
+                      {form.fixedCtc && parseCtcInput(form.fixedCtc) !== null && (
+                        <span className="text-xs text-emerald-600 font-bold mt-1 block">
                           Preview: {formatCtcValue(parseCtcInput(form.fixedCtc))}
-                        </div>
+                        </span>
                       )}
                     </div>
+
                     <div>
-                      <label className="block text-[12px] font-bold text-slate-500 mb-1">
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                        Variable CTC (in Lacs)
+                      </label>
+                      <input
+                        type="text"
+                        value={form.variableCtc}
+                        onChange={(e) => setForm({ ...form, variableCtc: e.target.value })}
+                        placeholder="e.g. 40"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
+                      />
+                      {form.variableCtc && parseCtcInput(form.variableCtc) !== null && (
+                        <span className="text-xs text-emerald-600 font-bold mt-1 block">
+                          Preview: {formatCtcValue(parseCtcInput(form.variableCtc))}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                        Total Current CTC
+                      </label>
+                      <input
+                        type="text"
+                        value={form.ctc}
+                        onChange={(e) => setForm({ ...form, ctc: e.target.value })}
+                        placeholder="e.g. 140 or 1.4 Cr"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
+                      />
+                      {form.ctc && parseCtcInput(form.ctc) !== null && (
+                        <span className="text-xs text-emerald-600 font-bold mt-1 block">
+                          Preview: {formatCtcValue(parseCtcInput(form.ctc))}
+                        </span>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
                         Expected CTC
                       </label>
                       <input
                         type="text"
                         value={form.expectedCtc}
                         onChange={(e) => setForm({ ...form, expectedCtc: e.target.value })}
-                        placeholder="e.g. 95 Lacs, 0.95 Cr, 95"
-                        className="w-full px-3 py-2 rounded-xl text-slate-800 outline-none font-medium placeholder:text-slate-400"
-                        style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)" }}
+                        placeholder="e.g. 160 or 1.6 Cr"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
                       />
-                      {form.expectedCtc && parseCtcInput(form.expectedCtc) && (
-                        <div className="text-[11px] font-bold text-emerald-600 mt-1">
+                      {form.expectedCtc && parseCtcInput(form.expectedCtc) !== null && (
+                        <span className="text-xs text-emerald-600 font-bold mt-1 block">
                           Preview: {formatCtcValue(parseCtcInput(form.expectedCtc))}
-                        </div>
+                        </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-[12px] font-bold text-slate-500 mb-1">
-                        Notice Period (in Days)
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                        ESOPs Value (Lacs/Cr)
+                      </label>
+                      <input
+                        type="text"
+                        value={form.esops}
+                        onChange={(e) => setForm({ ...form, esops: e.target.value })}
+                        placeholder="e.g. 30"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                        Notice Period (days)
                       </label>
                       <input
                         type="number"
                         value={form.notice}
                         onChange={(e) => setForm({ ...form, notice: e.target.value })}
-                        placeholder="e.g. 60 or 90"
-                        className="w-full px-3 py-2 rounded-xl text-slate-800 outline-none font-medium placeholder:text-slate-400"
-                        style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)" }}
+                        placeholder="e.g. 90"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
+                        Tenure / Stability (yrs)
+                      </label>
+                      <input
+                        type="number"
+                        value={form.stability}
+                        onChange={(e) => setForm({ ...form, stability: e.target.value })}
+                        placeholder="e.g. 7"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
                       />
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Tab 3: Core Competencies & Sector Tags */}
+              {/* Tab: Education */}
+              {activeTab === "education" && (
+                <div className="flex flex-col gap-4">
+                  {form.qual.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      {form.qual.map((q: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200"
+                        >
+                          <div>
+                            <span className="text-slate-800 font-bold">
+                              {typeof q === "string" ? q : q.degree}
+                            </span>
+                            {q.college && (
+                              <span className="text-slate-500 text-xs font-medium ml-2">
+                                ({q.college})
+                              </span>
+                            )}
+                            {q.year && (
+                              <span className="text-[#133255] text-xs font-bold ml-2">
+                                {q.year}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeQual(idx)}
+                            className="text-rose-400 hover:text-rose-600 p-1"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 border-t border-slate-300/40 pt-3">
+                    <input
+                      type="text"
+                      placeholder="Degree (e.g. MBA)"
+                      value={qualInput.degree}
+                      onChange={(e) => setQualInput({ ...qualInput, degree: e.target.value })}
+                      className="px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none"
+                      style={{
+                        background: "#e0e5ec",
+                        boxShadow:
+                          "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                      }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Institute (e.g. ISB)"
+                      value={qualInput.college}
+                      onChange={(e) => setQualInput({ ...qualInput, college: e.target.value })}
+                      className="px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none"
+                      style={{
+                        background: "#e0e5ec",
+                        boxShadow:
+                          "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Year (e.g. 2012)"
+                        value={qualInput.year}
+                        onChange={(e) => setQualInput({ ...qualInput, year: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={addQual}
+                        className="px-3 py-2 text-white rounded-xl text-xs font-bold shrink-0 bg-[#133255]"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Skills & Experience Tags */}
               {activeTab === "tags" && (
                 <div className="flex flex-col gap-4">
-                  <p className="text-[13px] text-slate-500 font-medium">
-                    Add tags for your primary industry sectors, functions, and key executive competencies (e.g., FMCG, BFSI, M&A, Board Governance).
-                  </p>
-
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="Type a tag (e.g. FMCG, CFO, M&A) and press Add..."
+                      placeholder='Add experience tag (e.g. "CFO - HDFC Bank")...'
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={(e) => {
@@ -802,33 +1486,38 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
                           addTag();
                         }
                       }}
-                      className="flex-1 px-3 py-2 rounded-xl text-slate-800 font-medium outline-none placeholder:text-slate-400"
-                      style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)" }}
+                      className="flex-1 px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none"
+                      style={{
+                        background: "#e0e5ec",
+                        boxShadow:
+                          "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                      }}
                     />
                     <button
                       type="button"
                       onClick={addTag}
-                      className="px-4 py-2 text-white font-bold rounded-xl text-xs transition-transform hover:-translate-y-0.5"
-                      style={{ background: "linear-gradient(135deg, #133255, #1d4d82)", boxShadow: "2px 2px 5px rgba(163,177,198,0.5)" }}
+                      className="px-4 py-2 text-white font-bold rounded-xl text-xs bg-[#133255]"
                     >
                       Add Tag
                     </button>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 mt-2 min-h-[100px] p-4 rounded-xl items-start" style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.3), inset -3px -3px 6px rgba(255,255,255,0.6)" }}>
+                  <div className="flex flex-wrap gap-2 p-4 rounded-xl min-h-[100px] items-start bg-slate-200/50">
                     {form.expTags.length === 0 ? (
-                      <span className="text-slate-400 text-xs font-medium">No tags added yet. Type a tag above and click Add.</span>
+                      <span className="text-slate-400 text-xs font-medium">
+                        No tags added.
+                      </span>
                     ) : (
                       form.expTags.map((tag: string) => (
                         <span
                           key={tag}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#133255]"
-                          style={{ background: "#e0e5ec", boxShadow: "2px 2px 4px rgba(163,177,198,0.4), -2px -2px 4px rgba(255,255,255,0.8)" }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#133255] bg-white border border-slate-200"
                         >
                           {tag}
                           <button
+                            type="button"
                             onClick={() => removeTag(tag)}
-                            className="text-slate-400 hover:text-rose-500 transition-colors ml-1"
+                            className="text-slate-400 hover:text-rose-500 ml-1"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -839,70 +1528,98 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
                 </div>
               )}
 
-              {/* Tab 4: Past Companies */}
-              {activeTab === "history" && (
-                <div className="flex flex-col gap-4">
-                  <p className="text-[13px] text-slate-500 font-medium">
-                    Add organizations you have previously worked at. This helps our suggestion engine connect you to relevant leadership mandates.
-                  </p>
-
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Type company name (e.g. Marico, Procter & Gamble) and press Add..."
-                      value={companyInput}
-                      onChange={(e) => setCompanyInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addCompany();
-                        }
-                      }}
-                      className="flex-1 px-3 py-2 rounded-xl text-slate-800 font-medium outline-none placeholder:text-slate-400"
-                      style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)" }}
-                    />
-                    <button
-                      type="button"
-                      onClick={addCompany}
-                      className="px-4 py-2 text-white font-bold rounded-xl text-xs transition-transform hover:-translate-y-0.5"
-                      style={{ background: "linear-gradient(135deg, #133255, #1d4d82)", boxShadow: "2px 2px 5px rgba(163,177,198,0.5)" }}
-                    >
-                      Add Company
-                    </button>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 mt-2 min-h-[100px] p-4 rounded-xl items-start" style={{ background: "#e0e5ec", boxShadow: "inset 3px 3px 6px rgba(163,177,198,0.3), inset -3px -3px 6px rgba(255,255,255,0.6)" }}>
-                    {form.pastCompanies.length === 0 ? (
-                      <span className="text-slate-400 text-xs font-medium">No past companies added yet. Type a company above and click Add.</span>
-                    ) : (
-                      form.pastCompanies.map((co: string) => (
+              {/* Tab: Career & Aspirations */}
+              {activeTab === "career" && (
+                <div className="flex flex-col gap-5">
+                  <div>
+                    <label className="block text-[12px] font-bold text-slate-600 uppercase tracking-wider mb-2">
+                      Dream Roles
+                    </label>
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        placeholder="e.g. CFO, VP Finance..."
+                        value={dreamRoleInput}
+                        onChange={(e) => setDreamRoleInput(e.target.value)}
+                        className="flex-1 px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={addDreamRole}
+                        className="px-3.5 py-2 text-white font-bold rounded-xl text-xs bg-[#133255]"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {form.dreamRoles.map((r: string) => (
                         <span
-                          key={co}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm"
-                          style={{ background: "linear-gradient(135deg, #133255, #1d4d82)" }}
+                          key={r}
+                          className="flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-amber-100 text-amber-900"
                         >
-                          <Building2 className="w-3.5 h-3.5" />
-                          {co}
-                          <button
-                            onClick={() => removeCompany(co)}
-                            className="text-white/60 hover:text-white transition-colors ml-1"
-                          >
+                          {r}
+                          <button type="button" onClick={() => removeDreamRole(r)}>
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </span>
-                      ))
-                    )}
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[12px] font-bold text-slate-600 uppercase tracking-wider mb-2">
+                      Dream / Target Companies
+                    </label>
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        placeholder="e.g. Kotak, Axis Bank..."
+                        value={dreamCoInput}
+                        onChange={(e) => setDreamCoInput(e.target.value)}
+                        className="flex-1 px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none"
+                        style={{
+                          background: "#e0e5ec",
+                          boxShadow:
+                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={addDreamCo}
+                        className="px-3.5 py-2 text-white font-bold rounded-xl text-xs bg-[#133255]"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {form.dreamCos.map((c: string) => (
+                        <span
+                          key={c}
+                          className="flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-[#133255] text-white"
+                        >
+                          {c}
+                          <button type="button" onClick={() => removeDreamCo(c)}>
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-300/50 flex justify-end gap-3" style={{ background: "#e0e5ec" }}>
+            <div className="p-4 border-t border-slate-300/50 flex justify-end gap-3 bg-[#e0e5ec]">
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-700"
               >
                 Cancel
               </button>
@@ -910,11 +1627,7 @@ export function CandidateProfileView({ candidate, isVerified = false }: { candid
                 type="button"
                 disabled={isSaving}
                 onClick={handleSave}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white transition-transform hover:-translate-y-0.5 disabled:opacity-50"
-                style={{
-                  background: "linear-gradient(135deg, #133255, #1d4d82)",
-                  boxShadow: "3px 3px 8px rgba(163,177,198,0.6)",
-                }}
+                className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#133255] hover:bg-[#0e2744] disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
                 {isSaving ? "Saving..." : "Save Changes"}
