@@ -19,16 +19,14 @@ function NeoCard({ children, className = "" }: { children: React.ReactNode; clas
 
 export function CareerTimeline({ 
   candId, 
-  timeline 
+  timeline,
+  onEdit,
 }: { 
   candId: string; 
   timeline: any[]; 
+  onEdit?: () => void;
 }) {
   const [entries, setEntries] = useState(timeline || []);
-  
-  // Future enhancements: 
-  // 1. Add/Edit modal connected to `upsertCareerEntryAction`
-  // 2. Delete confirmation connected to `deleteCareerEntryAction`
   
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -37,16 +35,18 @@ export function CareerTimeline({
           <Briefcase className="w-5 h-5 text-[#133255]" />
           Career Timeline
         </h2>
-        <button
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all hover:-translate-y-0.5 text-[#F15A29]"
-          style={{
-            background: "#eef2f7",
-            boxShadow: "3px 3px 6px #cbd5e1, -3px -3px 6px #ffffff",
-          }}
-          onClick={() => alert("Add career entry modal coming soon")}
-        >
-          <Plus className="w-4 h-4" /> Add Experience
-        </button>
+        {onEdit && (
+          <button
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all hover:-translate-y-0.5 text-[#133255]"
+            style={{
+              background: "#eef2f7",
+              boxShadow: "3px 3px 6px #cbd5e1, -3px -3px 6px #ffffff",
+            }}
+            onClick={onEdit}
+          >
+            <Plus className="w-4 h-4" /> Add Experience / Edit History
+          </button>
+        )}
       </div>
 
       <div className="relative border-l-2 border-[#133255]/20 ml-3 md:ml-4 space-y-8 pb-4">

@@ -29,6 +29,7 @@ import {
   Sparkles,
   Camera,
   Loader2,
+  ArrowLeft,
 } from "lucide-react";
 import { updateCandidateSelfProfileAction, updateProfilePhotoAction } from "@/actions/candidate-portal";
 import toast from "react-hot-toast";
@@ -93,7 +94,7 @@ export function CandidateProfileView({
 }) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"primary" | "demographics" | "financials" | "education" | "tags" | "career">("primary");
+  const [activeTab, setActiveTab] = useState<"primary" | "currentRole" | "workHistory" | "demographics" | "financials" | "education" | "career">("primary");
   const [isSaving, setIsSaving] = useState(false);
 
   // Resume upload state
@@ -417,6 +418,822 @@ export function CandidateProfileView({
   };
 
   const allFiles = getFilesList();
+
+  if (isEditing) {
+    return (
+      <div className="max-w-5xl mx-auto w-full flex flex-col gap-6 pb-16">
+        {/* Sticky Header */}
+        <div
+          className="sticky top-0 z-40 p-4 rounded-3xl border border-white/80 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+          style={{
+            background: "#e0e5ec",
+            boxShadow:
+              "9px 9px 18px rgba(163,177,198,0.6), -9px -9px 18px rgba(255,255,255,0.8)",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              className="p-2.5 rounded-2xl bg-white/70 hover:bg-white text-slate-700 font-bold transition-all shadow-sm flex items-center justify-center"
+              title="Back to profile"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-[19px] font-bold text-slate-800 flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-[#133255]" /> Edit Candidate Profile
+              </h1>
+              <p className="text-xs text-slate-500 font-medium">
+                Update your professional details, work history, and compensation
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={handleSave}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#133255] hover:bg-[#1a4270] shadow-md transition-all disabled:opacity-50"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {isSaving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </div>
+
+        {/* Section Navigation Tabs Bar */}
+        <div className="flex border-b border-slate-300/60 text-[13px] font-bold overflow-x-auto bg-[#d1d9e6] rounded-2xl p-1.5 gap-1.5 shadow-inner">
+          {[
+            ["primary", "Primary & Contact"],
+            ["currentRole", "Current Role"],
+            ["workHistory", `Work History (${form.priorExperiences.length})`],
+            ["demographics", "Demographics"],
+            ["financials", "Compensation"],
+            ["education", "Education"],
+            ["career", "Career Aspirations"],
+          ].map(([tabKey, tabLabel]) => (
+            <button
+              key={tabKey}
+              type="button"
+              onClick={() => setActiveTab(tabKey as any)}
+              className={`py-2.5 px-4 rounded-xl whitespace-nowrap transition-all ${
+                activeTab === tabKey
+                  ? "text-[#133255] bg-[#e0e5ec] shadow-sm font-extrabold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-white/40 font-semibold"
+              }`}
+            >
+              {tabLabel}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab 1: Primary & Contact */}
+        {activeTab === "primary" && (
+          <NeoCard className="p-7 flex flex-col gap-6">
+            <div className="border-b border-slate-200/60 pb-3">
+              <h2 className="text-[17px] font-bold text-slate-800 flex items-center gap-2">
+                <Mail className="w-5 h-5 text-[#133255]" /> Primary & Contact Details
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Basic profile details and contact information.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  LinkedIn Profile URL
+                </label>
+                <input
+                  type="url"
+                  value={form.linkedin}
+                  onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
+                  placeholder="https://linkedin.com/in/username"
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Mobile Number
+                </label>
+                <input
+                  type="text"
+                  value={form.mobile}
+                  onChange={(e) => setForm({ ...form, mobile: e.target.value })}
+                  placeholder="e.g. 9876543210"
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="email@example.com"
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Location / Current City
+                </label>
+                <input
+                  type="text"
+                  value={form.location}
+                  onChange={(e) => setForm({ ...form, location: e.target.value })}
+                  placeholder="e.g. Mumbai, India"
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+              </div>
+            </div>
+          </NeoCard>
+        )}
+
+        {/* Tab 2: Current Role */}
+        {activeTab === "currentRole" && (
+          <NeoCard className="p-7 flex flex-col gap-6">
+            <div className="border-b border-slate-200/60 pb-3">
+              <h2 className="text-[17px] font-bold text-slate-800 flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-[#133255]" /> Current Role & Overall Experience
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Details regarding your present job and total experience.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Current Designation
+                </label>
+                <input
+                  type="text"
+                  value={form.designation}
+                  onChange={(e) => setForm({ ...form, designation: e.target.value })}
+                  placeholder="e.g. Finance Lead"
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Current Company
+                </label>
+                <input
+                  type="text"
+                  value={form.company}
+                  onChange={(e) => setForm({ ...form, company: e.target.value })}
+                  placeholder="e.g. HDFC Bank"
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Start Date in Current Company
+                </label>
+                <input
+                  type="month"
+                  value={form.currentCompanyStartDate}
+                  onChange={(e) => setForm({ ...form, currentCompanyStartDate: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+                {form.currentCompanyStartDate && (
+                  <span className="text-xs text-emerald-600 font-bold mt-1 block">
+                    Tenure: {calculateTenure(form.currentCompanyStartDate)}
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Total Experience (yrs)
+                </label>
+                <input
+                  type="number"
+                  value={form.exp}
+                  onChange={(e) => setForm({ ...form, exp: e.target.value })}
+                  placeholder="e.g. 15"
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Notice Period (days)
+                </label>
+                <input
+                  type="number"
+                  value={form.notice}
+                  onChange={(e) => setForm({ ...form, notice: e.target.value })}
+                  placeholder="e.g. 90"
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+              </div>
+            </div>
+          </NeoCard>
+        )}
+
+        {/* Tab 3: Work History */}
+        {activeTab === "workHistory" && (
+          <NeoCard className="p-7 flex flex-col gap-6">
+            <div className="border-b border-slate-200/60 pb-3">
+              <h2 className="text-[17px] font-bold text-slate-800 flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-[#133255]" /> Prior Work Experience History
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Add your previous companies, roles held, and employment time periods.
+              </p>
+            </div>
+
+            {form.priorExperiences.length > 0 ? (
+              <div className="space-y-3">
+                {form.priorExperiences.map((exp: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm"
+                  >
+                    <div>
+                      <span className="font-bold text-slate-800 text-sm block">
+                        {exp.position || exp.role || "Role / Title"}
+                      </span>
+                      <div className="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-2">
+                        <span className="text-[#133255] font-bold">
+                          {exp.companyName || exp.company}
+                        </span>
+                        {exp.duration && <span>• {exp.duration}</span>}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removePriorExp(idx)}
+                      className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                      title="Remove experience"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic py-2">
+                No prior work experience added yet.
+              </p>
+            )}
+
+            <div className="p-5 rounded-2xl bg-white/70 border border-slate-200 flex flex-col gap-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Add Past Work Experience
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                    Role / Position *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Finance Lead / VP"
+                    value={priorInput.position}
+                    onChange={(e) =>
+                      setPriorInput({ ...priorInput, position: e.target.value })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
+                    style={{
+                      background: "#e0e5ec",
+                      boxShadow:
+                        "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                    Company Name *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Kotak Mahindra Bank"
+                    value={priorInput.companyName}
+                    onChange={(e) =>
+                      setPriorInput({ ...priorInput, companyName: e.target.value })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
+                    style={{
+                      background: "#e0e5ec",
+                      boxShadow:
+                        "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                    Time Period / Duration
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. 2018 - 2022"
+                      value={priorInput.duration}
+                      onChange={(e) =>
+                        setPriorInput({ ...priorInput, duration: e.target.value })
+                      }
+                      className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
+                      style={{
+                        background: "#e0e5ec",
+                        boxShadow:
+                          "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={addPriorExp}
+                      className="px-4 py-2.5 bg-[#133255] hover:bg-[#1a4270] text-white font-bold rounded-xl text-xs shrink-0 transition-all shadow-sm"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </NeoCard>
+        )}
+
+        {/* Tab 4: Demographics */}
+        {activeTab === "demographics" && (
+          <NeoCard className="p-7 flex flex-col gap-6">
+            <div className="border-b border-slate-200/60 pb-3">
+              <h2 className="text-[17px] font-bold text-slate-800 flex items-center gap-2">
+                <HomeIcon className="w-5 h-5 text-[#133255]" /> Demographics & Relocation Preferences
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Date of birth, hometown, and relocation choices.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  value={form.dob}
+                  onChange={(e) => setForm({ ...form, dob: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+                {form.dob && (
+                  <span className="text-xs text-emerald-600 font-bold mt-1 block">
+                    Calculated Age: {calculateAge(form.dob)}
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Hometown
+                </label>
+                <input
+                  type="text"
+                  value={form.hometown}
+                  onChange={(e) => setForm({ ...form, hometown: e.target.value })}
+                  placeholder="e.g. Lucknow, UP"
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                Relocation Preference
+              </label>
+              <select
+                value={form.relocationStatus}
+                onChange={(e) => setForm({ ...form, relocationStatus: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                style={{
+                  background: "#e0e5ec",
+                  boxShadow:
+                    "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                }}
+              >
+                <option value="Open to relocation">Open to relocation</option>
+                <option value="Not open to relocation">Not open to relocation</option>
+                <option value="Open to hybrid/remote only">Open to hybrid/remote only</option>
+              </select>
+            </div>
+          </NeoCard>
+        )}
+
+        {/* Tab 5: Compensation */}
+        {activeTab === "financials" && (
+          <NeoCard className="p-7 flex flex-col gap-6">
+            <div className="border-b border-slate-200/60 pb-3">
+              <h2 className="text-[17px] font-bold text-slate-800 flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-[#133255]" /> Compensation & Financial Details
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Fixed, variable, expected CTC and ESOP details.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Fixed CTC (Lacs / Cr)
+                </label>
+                <input
+                  type="text"
+                  value={form.fixedCtc}
+                  onChange={(e) => setForm({ ...form, fixedCtc: e.target.value })}
+                  placeholder="e.g. 100 or 1 Cr"
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+                {form.fixedCtc && parseCtcInput(form.fixedCtc) !== null && (
+                  <span className="text-xs text-emerald-600 font-bold mt-1 block">
+                    Preview: {formatCtcValue(parseCtcInput(form.fixedCtc))}
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Variable CTC (Lacs)
+                </label>
+                <input
+                  type="text"
+                  value={form.variableCtc}
+                  onChange={(e) => setForm({ ...form, variableCtc: e.target.value })}
+                  placeholder="e.g. 40"
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+                {form.variableCtc && parseCtcInput(form.variableCtc) !== null && (
+                  <span className="text-xs text-emerald-600 font-bold mt-1 block">
+                    Preview: {formatCtcValue(parseCtcInput(form.variableCtc))}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Total Current CTC
+                </label>
+                <input
+                  type="text"
+                  value={form.ctc}
+                  onChange={(e) => setForm({ ...form, ctc: e.target.value })}
+                  placeholder="e.g. 140 or 1.4 Cr"
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+                {form.ctc && parseCtcInput(form.ctc) !== null && (
+                  <span className="text-xs text-emerald-600 font-bold mt-1 block">
+                    Preview: {formatCtcValue(parseCtcInput(form.ctc))}
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  Expected CTC
+                </label>
+                <input
+                  type="text"
+                  value={form.expectedCtc}
+                  onChange={(e) => setForm({ ...form, expectedCtc: e.target.value })}
+                  placeholder="e.g. 160 or 1.6 Cr"
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+                {form.expectedCtc && parseCtcInput(form.expectedCtc) !== null && (
+                  <span className="text-xs text-emerald-600 font-bold mt-1 block">
+                    Preview: {formatCtcValue(parseCtcInput(form.expectedCtc))}
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-slate-600 mb-1.5">
+                  ESOPs Value (Lacs/Cr)
+                </label>
+                <input
+                  type="text"
+                  value={form.esops}
+                  onChange={(e) => setForm({ ...form, esops: e.target.value })}
+                  placeholder="e.g. 30"
+                  className="w-full px-4 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+              </div>
+            </div>
+          </NeoCard>
+        )}
+
+        {/* Tab 6: Education */}
+        {activeTab === "education" && (
+          <NeoCard className="p-7 flex flex-col gap-6">
+            <div className="border-b border-slate-200/60 pb-3">
+              <h2 className="text-[17px] font-bold text-slate-800 flex items-center gap-2">
+                <GraduationCap className="w-5 h-5 text-[#133255]" /> Education & Qualifications
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">Degrees, institutes, and graduation years.</p>
+            </div>
+
+            {form.qual.length > 0 ? (
+              <div className="space-y-3">
+                {form.qual.map((q: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm"
+                  >
+                    <div>
+                      <span className="font-bold text-slate-800 text-sm">
+                        {typeof q === "string" ? q : q.degree}
+                      </span>
+                      {q.college && (
+                        <span className="text-slate-500 text-xs font-medium ml-2">
+                          ({q.college})
+                        </span>
+                      )}
+                      {q.year && (
+                        <span className="text-[#133255] text-xs font-bold ml-2">• {q.year}</span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeQual(idx)}
+                      className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic py-2">No qualifications added yet.</p>
+            )}
+
+            <div className="p-5 rounded-2xl bg-white/70 border border-slate-200 flex flex-col gap-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Add Qualification
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <input
+                  type="text"
+                  placeholder="Degree (e.g. MBA / B.Tech)"
+                  value={qualInput.degree}
+                  onChange={(e) => setQualInput({ ...qualInput, degree: e.target.value })}
+                  className="px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Institute (e.g. ISB / IIT Delhi)"
+                  value={qualInput.college}
+                  onChange={(e) => setQualInput({ ...qualInput, college: e.target.value })}
+                  className="px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Year (e.g. 2015)"
+                    value={qualInput.year}
+                    onChange={(e) => setQualInput({ ...qualInput, year: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
+                    style={{
+                      background: "#e0e5ec",
+                      boxShadow:
+                        "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={addQual}
+                    className="px-4 py-2.5 bg-[#133255] hover:bg-[#1a4270] text-white font-bold rounded-xl text-xs shrink-0 transition-all shadow-sm"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            </div>
+          </NeoCard>
+        )}
+
+        {/* Tab 7: Career Aspirations */}
+        {activeTab === "career" && (
+          <NeoCard className="p-7 flex flex-col gap-6">
+            <div className="border-b border-slate-200/60 pb-3">
+              <h2 className="text-[17px] font-bold text-slate-800 flex items-center gap-2">
+                <Star className="w-5 h-5 text-[#D8B15B]" /> Career Aspirations
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">Dream roles and target companies.</p>
+            </div>
+
+            <div>
+              <label className="block text-[12px] font-bold text-slate-600 uppercase tracking-wider mb-2">
+                Dream Roles
+              </label>
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  placeholder="e.g. CFO, VP Finance..."
+                  value={dreamRoleInput}
+                  onChange={(e) => setDreamRoleInput(e.target.value)}
+                  className="flex-1 px-4 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={addDreamRole}
+                  className="px-4 py-2.5 text-white font-bold rounded-xl text-xs bg-[#133255] hover:bg-[#1a4270] transition-all"
+                >
+                  Add Role
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {form.dreamRoles.map((r: string) => (
+                  <span
+                    key={r}
+                    className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-100 text-amber-900 shadow-sm"
+                  >
+                    {r}
+                    <button
+                      type="button"
+                      onClick={() => removeDreamRole(r)}
+                      className="hover:text-rose-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <label className="block text-[12px] font-bold text-slate-600 uppercase tracking-wider mb-2">
+                Target / Dream Companies
+              </label>
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  placeholder="e.g. Kotak, Axis Bank..."
+                  value={dreamCoInput}
+                  onChange={(e) => setDreamCoInput(e.target.value)}
+                  className="flex-1 px-4 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none"
+                  style={{
+                    background: "#e0e5ec",
+                    boxShadow:
+                      "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={addDreamCo}
+                  className="px-4 py-2.5 text-white font-bold rounded-xl text-xs bg-[#133255] hover:bg-[#1a4270] transition-all"
+                >
+                  Add Company
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {form.dreamCos.map((c: string) => (
+                  <span
+                    key={c}
+                    className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#133255] text-white shadow-sm"
+                  >
+                    {c}
+                    <button
+                      type="button"
+                      onClick={() => removeDreamCo(c)}
+                      className="hover:text-rose-300"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </NeoCard>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-6 pb-12">
@@ -787,12 +1604,12 @@ export function CandidateProfileView({
             </h2>
             <button
               onClick={() => {
-                setActiveTab("tags");
+                setActiveTab("workHistory");
                 setIsEditing(true);
               }}
               className="text-[12px] text-[#133255] font-bold hover:underline flex items-center gap-1"
             >
-              <Edit3 className="w-3.5 h-3.5" /> Edit Tags
+              <Edit3 className="w-3.5 h-3.5" /> Edit Profile
             </button>
           </div>
 
@@ -976,666 +1793,6 @@ export function CandidateProfileView({
         )}
       </NeoCard>
 
-      {/* ─── EDIT PROFILE MODAL ─────────────────────────────────────── */}
-      {isEditing && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div
-            className="w-full max-w-3xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh] my-6"
-            style={{
-              background: "#e0e5ec",
-              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)",
-              border: "1px solid rgba(255,255,255,0.7)",
-            }}
-          >
-            {/* Modal Header */}
-            <div className="p-5 border-b border-slate-300/50 flex justify-between items-center bg-[#e0e5ec]">
-              <h3 className="text-slate-800 font-bold text-[18px] flex items-center gap-2">
-                <Edit3 className="w-5 h-5 text-[#133255]" />
-                Edit Profile Details
-              </h3>
-              <button
-                onClick={() => setIsEditing(false)}
-                className="text-slate-400 hover:text-slate-600 transition-colors p-1"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Modal Nav Tabs */}
-            <div className="flex border-b border-slate-300/50 text-[12px] font-bold overflow-x-auto bg-[#d1d9e6]">
-              {[
-                ["primary", "Primary & Contact"],
-                ["demographics", "Demographics"],
-                ["financials", "Compensation"],
-                ["education", "Education"],
-                ["tags", `Tags (${form.expTags.length})`],
-                ["career", "Experience & Aspirations"],
-              ].map(([tabKey, tabLabel]) => (
-                <button
-                  key={tabKey}
-                  onClick={() => setActiveTab(tabKey as any)}
-                  className={`flex-1 py-3 px-3 text-center whitespace-nowrap transition-all border-b-2 ${
-                    activeTab === tabKey
-                      ? "text-[#133255] border-[#133255] bg-[#e0e5ec]"
-                      : "text-slate-500 border-transparent hover:text-slate-700"
-                  }`}
-                >
-                  {tabLabel}
-                </button>
-              ))}
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 overflow-y-auto flex-1 flex flex-col gap-5 text-sm bg-[#e0e5ec]">
-              {/* Tab: Primary & Contact */}
-              {activeTab === "primary" && (
-                <div className="flex flex-col gap-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        value={form.name}
-                        onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        LinkedIn Profile URL
-                      </label>
-                      <input
-                        type="url"
-                        value={form.linkedin}
-                        onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
-                        placeholder="https://linkedin.com/in/username"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        Mobile Number
-                      </label>
-                      <input
-                        type="text"
-                        value={form.mobile}
-                        onChange={(e) => setForm({ ...form, mobile: e.target.value })}
-                        placeholder="e.g. 9876543210"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        placeholder="email@example.com"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        Location / Current City
-                      </label>
-                      <input
-                        type="text"
-                        value={form.location}
-                        onChange={(e) => setForm({ ...form, location: e.target.value })}
-                        placeholder="e.g. Mumbai, India"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        Current Designation
-                      </label>
-                      <input
-                        type="text"
-                        value={form.designation}
-                        onChange={(e) => setForm({ ...form, designation: e.target.value })}
-                        placeholder="e.g. Finance Lead"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        Current Company
-                      </label>
-                      <input
-                        type="text"
-                        value={form.company}
-                        onChange={(e) => setForm({ ...form, company: e.target.value })}
-                        placeholder="e.g. HDFC Bank"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab: Demographics & Relocation */}
-              {activeTab === "demographics" && (
-                <div className="flex flex-col gap-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        Date of Birth (YYYY-MM-DD)
-                      </label>
-                      <input
-                        type="date"
-                        value={form.dob}
-                        onChange={(e) => setForm({ ...form, dob: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                      {form.dob && calculateAge(form.dob) !== null && (
-                        <span className="text-xs text-emerald-600 font-bold mt-1 block">
-                          Calculated Age: {calculateAge(form.dob)} yrs
-                        </span>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        Hometown
-                      </label>
-                      <input
-                        type="text"
-                        value={form.hometown}
-                        onChange={(e) => setForm({ ...form, hometown: e.target.value })}
-                        placeholder="e.g. Lucknow, UP"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                      Relocation Preference
-                    </label>
-                    <select
-                      value={form.relocationStatus}
-                      onChange={(e) => setForm({ ...form, relocationStatus: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                      style={{
-                        background: "#e0e5ec",
-                        boxShadow:
-                          "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                      }}
-                    >
-                      <option value="Open to relocation">Open to relocation</option>
-                      <option value="Not open to relocation">Not open to relocation</option>
-                      <option value="Open to hybrid/remote only">Open to hybrid/remote only</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab: Financials & Compensation */}
-              {activeTab === "financials" && (
-                <div className="flex flex-col gap-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        Fixed CTC (in Lacs / Cr)
-                      </label>
-                      <input
-                        type="text"
-                        value={form.fixedCtc}
-                        onChange={(e) => setForm({ ...form, fixedCtc: e.target.value })}
-                        placeholder="e.g. 100 or 1 Cr"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                      {form.fixedCtc && parseCtcInput(form.fixedCtc) !== null && (
-                        <span className="text-xs text-emerald-600 font-bold mt-1 block">
-                          Preview: {formatCtcValue(parseCtcInput(form.fixedCtc))}
-                        </span>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        Variable CTC (in Lacs)
-                      </label>
-                      <input
-                        type="text"
-                        value={form.variableCtc}
-                        onChange={(e) => setForm({ ...form, variableCtc: e.target.value })}
-                        placeholder="e.g. 40"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                      {form.variableCtc && parseCtcInput(form.variableCtc) !== null && (
-                        <span className="text-xs text-emerald-600 font-bold mt-1 block">
-                          Preview: {formatCtcValue(parseCtcInput(form.variableCtc))}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        Total Current CTC
-                      </label>
-                      <input
-                        type="text"
-                        value={form.ctc}
-                        onChange={(e) => setForm({ ...form, ctc: e.target.value })}
-                        placeholder="e.g. 140 or 1.4 Cr"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                      {form.ctc && parseCtcInput(form.ctc) !== null && (
-                        <span className="text-xs text-emerald-600 font-bold mt-1 block">
-                          Preview: {formatCtcValue(parseCtcInput(form.ctc))}
-                        </span>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        Expected CTC
-                      </label>
-                      <input
-                        type="text"
-                        value={form.expectedCtc}
-                        onChange={(e) => setForm({ ...form, expectedCtc: e.target.value })}
-                        placeholder="e.g. 160 or 1.6 Cr"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                      {form.expectedCtc && parseCtcInput(form.expectedCtc) !== null && (
-                        <span className="text-xs text-emerald-600 font-bold mt-1 block">
-                          Preview: {formatCtcValue(parseCtcInput(form.expectedCtc))}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        ESOPs Value (Lacs/Cr)
-                      </label>
-                      <input
-                        type="text"
-                        value={form.esops}
-                        onChange={(e) => setForm({ ...form, esops: e.target.value })}
-                        placeholder="e.g. 30"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        Notice Period (days)
-                      </label>
-                      <input
-                        type="number"
-                        value={form.notice}
-                        onChange={(e) => setForm({ ...form, notice: e.target.value })}
-                        placeholder="e.g. 90"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[12px] font-bold text-slate-600 mb-1">
-                        Tenure / Stability (yrs)
-                      </label>
-                      <input
-                        type="number"
-                        value={form.stability}
-                        onChange={(e) => setForm({ ...form, stability: e.target.value })}
-                        placeholder="e.g. 7"
-                        className="w-full px-3.5 py-2.5 rounded-xl text-slate-800 outline-none font-medium"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab: Education */}
-              {activeTab === "education" && (
-                <div className="flex flex-col gap-4">
-                  {form.qual.length > 0 && (
-                    <div className="flex flex-col gap-2">
-                      {form.qual.map((q: any, idx: number) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200"
-                        >
-                          <div>
-                            <span className="text-slate-800 font-bold">
-                              {typeof q === "string" ? q : q.degree}
-                            </span>
-                            {q.college && (
-                              <span className="text-slate-500 text-xs font-medium ml-2">
-                                ({q.college})
-                              </span>
-                            )}
-                            {q.year && (
-                              <span className="text-[#133255] text-xs font-bold ml-2">
-                                {q.year}
-                              </span>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeQual(idx)}
-                            className="text-rose-400 hover:text-rose-600 p-1"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 border-t border-slate-300/40 pt-3">
-                    <input
-                      type="text"
-                      placeholder="Degree (e.g. MBA)"
-                      value={qualInput.degree}
-                      onChange={(e) => setQualInput({ ...qualInput, degree: e.target.value })}
-                      className="px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none"
-                      style={{
-                        background: "#e0e5ec",
-                        boxShadow:
-                          "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                      }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Institute (e.g. ISB)"
-                      value={qualInput.college}
-                      onChange={(e) => setQualInput({ ...qualInput, college: e.target.value })}
-                      className="px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none"
-                      style={{
-                        background: "#e0e5ec",
-                        boxShadow:
-                          "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                      }}
-                    />
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="Year (e.g. 2012)"
-                        value={qualInput.year}
-                        onChange={(e) => setQualInput({ ...qualInput, year: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={addQual}
-                        className="px-3 py-2 text-white rounded-xl text-xs font-bold shrink-0 bg-[#133255]"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab: Skills & Experience Tags */}
-              {activeTab === "tags" && (
-                <div className="flex flex-col gap-4">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder='Add experience tag (e.g. "CFO - HDFC Bank")...'
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addTag();
-                        }
-                      }}
-                      className="flex-1 px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none"
-                      style={{
-                        background: "#e0e5ec",
-                        boxShadow:
-                          "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={addTag}
-                      className="px-4 py-2 text-white font-bold rounded-xl text-xs bg-[#133255]"
-                    >
-                      Add Tag
-                    </button>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 p-4 rounded-xl min-h-[100px] items-start bg-slate-200/50">
-                    {form.expTags.length === 0 ? (
-                      <span className="text-slate-400 text-xs font-medium">
-                        No tags added.
-                      </span>
-                    ) : (
-                      form.expTags.map((tag: string) => (
-                        <span
-                          key={tag}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#133255] bg-white border border-slate-200"
-                        >
-                          {tag}
-                          <button
-                            type="button"
-                            onClick={() => removeTag(tag)}
-                            className="text-slate-400 hover:text-rose-500 ml-1"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </span>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Tab: Career & Aspirations */}
-              {activeTab === "career" && (
-                <div className="flex flex-col gap-5">
-                  <div>
-                    <label className="block text-[12px] font-bold text-slate-600 uppercase tracking-wider mb-2">
-                      Dream Roles
-                    </label>
-                    <div className="flex gap-2 mb-2">
-                      <input
-                        type="text"
-                        placeholder="e.g. CFO, VP Finance..."
-                        value={dreamRoleInput}
-                        onChange={(e) => setDreamRoleInput(e.target.value)}
-                        className="flex-1 px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={addDreamRole}
-                        className="px-3.5 py-2 text-white font-bold rounded-xl text-xs bg-[#133255]"
-                      >
-                        Add
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {form.dreamRoles.map((r: string) => (
-                        <span
-                          key={r}
-                          className="flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-amber-100 text-amber-900"
-                        >
-                          {r}
-                          <button type="button" onClick={() => removeDreamRole(r)}>
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[12px] font-bold text-slate-600 uppercase tracking-wider mb-2">
-                      Dream / Target Companies
-                    </label>
-                    <div className="flex gap-2 mb-2">
-                      <input
-                        type="text"
-                        placeholder="e.g. Kotak, Axis Bank..."
-                        value={dreamCoInput}
-                        onChange={(e) => setDreamCoInput(e.target.value)}
-                        className="flex-1 px-3 py-2 rounded-xl text-slate-800 text-xs font-medium outline-none"
-                        style={{
-                          background: "#e0e5ec",
-                          boxShadow:
-                            "inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.7)",
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={addDreamCo}
-                        className="px-3.5 py-2 text-white font-bold rounded-xl text-xs bg-[#133255]"
-                      >
-                        Add
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {form.dreamCos.map((c: string) => (
-                        <span
-                          key={c}
-                          className="flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-[#133255] text-white"
-                        >
-                          {c}
-                          <button type="button" onClick={() => removeDreamCo(c)}>
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-300/50 flex justify-end gap-3 bg-[#e0e5ec]">
-              <button
-                type="button"
-                onClick={() => setIsEditing(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-700"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isSaving}
-                onClick={handleSave}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#133255] hover:bg-[#0e2744] disabled:opacity-50"
-              >
-                <Save className="w-4 h-4" />
-                {isSaving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
