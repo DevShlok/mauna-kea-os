@@ -51,10 +51,30 @@ export default function UsersClient({ initialUsers, clients, metadata }: { initi
   const [users, setUsers] = useState(initialUsers);
   const [isAdding, setIsAdding] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", email: "", role: "consultant", linkedClientId: "" });
+  const [form, setForm] = useState({ 
+    name: "", 
+    email: "", 
+    role: "consultant", 
+    linkedClientId: "",
+    bio: "",
+    vertical: "",
+    expertiseTags: "",
+    linkedinUrl: "",
+    consultantProfilePic: "",
+  });
 
   const handleEditClick = (u: any) => {
-    setForm({ name: u.name, email: u.email, role: u.role, linkedClientId: u.linkedClientId || "" });
+    setForm({ 
+      name: u.name || "", 
+      email: u.email || "", 
+      role: u.role || "consultant", 
+      linkedClientId: u.linkedClientId || "",
+      bio: u.bio || "",
+      vertical: u.vertical || "",
+      expertiseTags: Array.isArray(u.expertiseTags) ? u.expertiseTags.join(", ") : "",
+      linkedinUrl: u.linkedinUrl || "",
+      consultantProfilePic: u.consultantProfilePic || "",
+    });
     setEditingUserId(u.id);
     setIsAdding(true);
   };
@@ -286,19 +306,28 @@ export default function UsersClient({ initialUsers, clients, metadata }: { initi
       </div>
 
       {isAdding && (
-        <div className="fixed inset-0 bg-[#0a1628]/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-[400px] border border-[#D4E0F0] overflow-hidden">
+        <div className="fixed inset-0 bg-[#0a1628]/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-[500px] border border-[#D4E0F0] overflow-hidden my-8">
             <div className="px-5 py-4 border-b border-[#D4E0F0] font-serif text-[19px] font-bold text-[#111]">
-              Edit User
+              Edit User Profile
             </div>
             <form onSubmit={async (e) => {
               e.preventDefault();
               if (!form.name || !form.email || !editingUserId) return;
               
+              const parsedTags = form.expertiseTags
+                ? form.expertiseTags.split(",").map(t => t.trim()).filter(Boolean)
+                : [];
+
               const payload: any = {
                 name: form.name,
                 email: form.email,
                 role: form.role,
+                bio: form.bio,
+                vertical: form.vertical,
+                expertiseTags: parsedTags,
+                linkedinUrl: form.linkedinUrl,
+                consultantProfilePic: form.consultantProfilePic,
               };
 
               if (form.role === "client" && form.linkedClientId) {
@@ -310,9 +339,20 @@ export default function UsersClient({ initialUsers, clients, metadata }: { initi
               
               setIsAdding(false);
               setEditingUserId(null);
-              setForm({ name: "", email: "", role: "consultant", linkedClientId: "" });
+              setForm({ 
+                name: "", 
+                email: "", 
+                role: "consultant", 
+                linkedClientId: "",
+                bio: "",
+                vertical: "",
+                expertiseTags: "",
+                linkedinUrl: "",
+                consultantProfilePic: "",
+              });
+              toast.success("User profile updated successfully");
             }}>
-              <div className="p-5 space-y-4">
+              <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
                 <div>
                   <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">Full Name</label>
                   <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" placeholder="John Doe" required />
@@ -330,6 +370,39 @@ export default function UsersClient({ initialUsers, clients, metadata }: { initi
                     <option value="candidate">Candidate</option>
                   </select>
                 </div>
+
+                {(form.role === "consultant" || form.role === "admin") && (
+                  <div className="border-t border-slate-200 pt-4 space-y-4">
+                    <div className="text-xs font-bold text-[#133255] uppercase tracking-wider">
+                      Consultant Public Directory Profile
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">Industry Vertical</label>
+                      <input type="text" value={form.vertical} onChange={e => setForm({...form, vertical: e.target.value})} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" placeholder="e.g. BFSI & FinTech, Tech Leadership" />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">Expertise Tags (comma-separated)</label>
+                      <input type="text" value={form.expertiseTags} onChange={e => setForm({...form, expertiseTags: e.target.value})} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" placeholder="C-Suite Search, Board Services, Private Equity" />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">Bio / Executive Summary</label>
+                      <textarea rows={3} value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" placeholder="Lead consultant with 10+ years executive search experience..." />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">LinkedIn Profile URL</label>
+                      <input type="url" value={form.linkedinUrl} onChange={e => setForm({...form, linkedinUrl: e.target.value})} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" placeholder="https://linkedin.com/in/..." />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-[#6b7a99] uppercase tracking-wider mb-1">Profile Picture URL</label>
+                      <input type="text" value={form.consultantProfilePic} onChange={e => setForm({...form, consultantProfilePic: e.target.value})} className="w-full px-3 py-2 border-[1.5px] border-[#D4E0F0] rounded-md text-sm outline-none focus:border-[#133255]" placeholder="https://... or base64 image string" />
+                    </div>
+                  </div>
+                )}
 
                 {form.role === "client" && (
                   <div>

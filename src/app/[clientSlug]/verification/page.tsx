@@ -21,7 +21,7 @@ export default async function CandidateVerificationPage() {
         }).from(referenceChecks)
         .where(and(
           eq(referenceChecks.candId, candId),
-          eq(referenceChecks.status, 'Completed')
+          eq(referenceChecks.isSharedWithClient, true)
         )),
         db.select().from(candidateVerifications).where(eq(candidateVerifications.candId, candId)).limit(1),
         db.select().from(candidateBadges).where(eq(candidateBadges.candId, candId))

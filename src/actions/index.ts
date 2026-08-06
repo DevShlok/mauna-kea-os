@@ -531,7 +531,19 @@ export async function addPlatformUserAction(data: { name: string; email: string;
   return id;
 }
 
-export async function updatePlatformUserAction(id: string, data: { name: string; email: string; role: string; linkedClientId?: string; linkedCandidateId?: string; reportingManagerId?: string }) {
+export async function updatePlatformUserAction(id: string, data: {
+  name: string;
+  email: string;
+  role: string;
+  linkedClientId?: string;
+  linkedCandidateId?: string;
+  reportingManagerId?: string;
+  bio?: string;
+  vertical?: string;
+  expertiseTags?: string[];
+  linkedinUrl?: string;
+  consultantProfilePic?: string;
+}) {
   await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   await db.update(platformUsers).set({
@@ -542,8 +554,28 @@ export async function updatePlatformUserAction(id: string, data: { name: string;
     linkedClientId: data.linkedClientId || null,
     linkedCandidateId: data.linkedCandidateId || null,
     reportingManagerId: data.reportingManagerId || null,
+    bio: data.bio !== undefined ? data.bio : undefined,
+    vertical: data.vertical !== undefined ? data.vertical : undefined,
+    expertiseTags: data.expertiseTags !== undefined ? data.expertiseTags : undefined,
+    linkedinUrl: data.linkedinUrl !== undefined ? data.linkedinUrl : undefined,
+    consultantProfilePic: data.consultantProfilePic !== undefined ? data.consultantProfilePic : undefined,
   }).where(eq(platformUsers.id, id));
   revalidatePath("/dashboard/admin/users");
+  revalidatePath("/candidate/consultants");
+}
+
+export async function updateConsultantProfileAction(userId: string, data: {
+  bio?: string;
+  vertical?: string;
+  expertiseTags?: string[];
+  linkedinUrl?: string;
+  consultantProfilePic?: string;
+}) {
+  await requireRole(["admin"]);
+  await db.update(platformUsers).set(data).where(eq(platformUsers.id, userId));
+  revalidatePath("/dashboard/admin/users");
+  revalidatePath("/candidate/consultants");
+  return { success: true };
 }
 
 export async function deletePlatformUserAction(id: string) {
