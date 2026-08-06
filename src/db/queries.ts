@@ -864,15 +864,6 @@ export const getFrameworksPaginated = cache(async ({
     }
   });
 
-  // Join usedIn count from mandates
-  const fwIds = fws.map(fw => fw.id);
-  const mandateCounts = fwIds.length > 0
-    ? await db
-        .select({ frameworkId: mandates.frameworkId, count: sql<number>`count(*)` })
-        .from(mandates)
-        .where(and(eq(mandates.isDeleted, false), sql`${mandates.frameworkId} = ANY(${sql.raw(`ARRAY[${fwIds.map(() => '?').join(',')}]`)})`  ))
-        .groupBy(mandates.frameworkId)
-    : [];
 
   // Simpler: just fetch all mandate counts and filter in JS (small overhead for frameworks page)
   const allMandateCounts = await db
