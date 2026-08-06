@@ -6,9 +6,9 @@ import { mandates, mandateCandidates, frameworks, frameworkCategories, framework
 
 import { eq, sql, inArray, and, desc, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/utils/supabase/server";
 import { parseCtcInput } from "@/lib/helpers";
-import { newUserId, newFloatId, newFollowUpId } from "@/lib/ids";
+import { newUserId, newCandId, newClientId, newFloatId, newFollowUpId } from "@/lib/ids";
+import { getCurrentUserName } from "@/lib/server-session";
 import {
   createMandateSchema,
   editMandateSchema,
@@ -34,20 +34,7 @@ export async function saveCandidateAssessmentAction(candId: number, data: { rank
   revalidatePath("/dashboard", "layout");
 }
 
-export async function getCurrentUserName(): Promise<string> {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user?.email) {
-      const dbUser = await db.select().from(platformUsers).where(eq(platformUsers.email, user.email));
-      if (dbUser.length > 0) return dbUser[0].name;
-      return user.email;
-    }
-  } catch(e) {
-    console.error("[getCurrentUserName] failed to fetch user name:", e);
-  }
-  return "Unknown";
-}
+
 
 export async function createMandateAction(data: unknown) {
   const { platformUser } = await requireRole(["admin", "consultant", "client"]);
@@ -70,7 +57,7 @@ export async function createMandateAction(data: unknown) {
 
   // Auto-initialize client and portal user if not found
   if (!clientId && companyName) {
-    clientId = "CLI-" + Date.now().toString();
+    clientId = newClientId();
     await db.insert(clients).values({
       id: clientId,
       name: companyName,
@@ -239,7 +226,7 @@ export async function addFloatListEntryAction(data: unknown) {
   await requireRole(["admin", "consultant"]);
   const d = candidateUpsertSchema.parse(data);
   revalidatePath("/dashboard", "layout");
-  const id = "CAND-" + Date.now();
+  const id = newCandId();
   const candidateName = d.name || "Unknown Candidate";
   await db.insert(candidates).values({
     id,
@@ -343,7 +330,7 @@ export async function addSubmissionAction(data: unknown) {
   let candId = d.candId;
   
   if (!candId) {
-    candId = "CAND-" + Date.now();
+    candId = newCandId();
     await db.insert(candidates).values({
       id: candId,
       name: d.candName,
@@ -498,7 +485,7 @@ export async function addFollowUpAction(data: unknown) {
   let candId = d.candId;
   
   if (!candId) {
-    candId = "CAND-" + Date.now();
+    candId = newCandId();
     await db.insert(candidates).values({
       id: candId,
       name: d.candName,
@@ -820,7 +807,19 @@ export async function deleteFloatListEntryAction(id: string) {
   await requireRole(["admin", "consultant"]);
   revalidatePath("/dashboard", "layout");
   const deletedBy = await getCurrentUserName();
-  await db.update(candidates).set({ isDeleted: true, deletedAt: new Date(), deletedBy }).where(eq(candidates.id, id));
+  const now = new Date();
+
+  // Soft-delete the candidate + all their related submissions and mandate pipeline entries
+  // so behavior is consistent with deleteMultipleCandidatesAction (bulk path).
+  await db.update(candidates)
+    .set({ isDeleted: true, deletedAt: now, deletedBy })
+    .where(eq(candidates.id, id));
+  await db.update(floats)
+    .set({ isDeleted: true, deletedAt: now, deletedBy })
+    .where(eq(floats.candId, id));
+  // Note: mandateCandidates has no isDeleted — physically remove from pipeline
+  await db.delete(mandateCandidates).where(eq(mandateCandidates.candId, id));
+
   revalidatePath("/dashboard/float-list/database");
   revalidatePath("/dashboard/mandates");
   revalidatePath("/dashboard/float-list/submissions");
@@ -1301,23 +1300,21 @@ export async function hardDeleteEntityAction(entityType: string, ids: (string|nu
 }
 
 export async function bulkAddToEngagementListAction(candIds: string[], listType: "Calling" | "BD") {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user?.email) throw new Error("Unauthorized");
-  
-  const dbUser = await db.select().from(platformUsers).where(eq(platformUsers.email, user.email));
-  if (dbUser.length === 0) throw new Error("User not found");
-  const userId = dbUser[0].id;
+  const { platformUser } = await requireRole(["admin", "consultant"]);
+  const userId = platformUser.id;
 
   let addedCount = 0;
   let duplicateCount = 0;
 
   for (const candId of candIds) {
-    // Check if already in list
-    const existing = await db.select().from(engagementListItems).where(
-      sql`${engagementListItems.userId} = ${userId} AND ${engagementListItems.candId} = ${candId} AND ${engagementListItems.listType} = ${listType}`
+    const [existing] = await db.select().from(engagementListItems).where(
+      and(
+        eq(engagementListItems.userId, userId),
+        eq(engagementListItems.candId, candId),
+        eq(engagementListItems.listType, listType)
+      )
     );
-    if (existing.length === 0) {
+    if (!existing) {
       await db.insert(engagementListItems).values({
         userId,
         candId,
@@ -1325,10 +1322,10 @@ export async function bulkAddToEngagementListAction(candIds: string[], listType:
       });
       addedCount++;
     } else {
-      // If already in list, move them back to Today's view by resetting nextFollowUp and status
+      // Already in list — move back to Today's view by resetting nextFollowUp
       await db.update(engagementListItems)
         .set({ nextFollowUp: null, status: 'Pending' })
-        .where(eq(engagementListItems.id, existing[0].id));
+        .where(eq(engagementListItems.id, existing.id));
       duplicateCount++;
     }
   }

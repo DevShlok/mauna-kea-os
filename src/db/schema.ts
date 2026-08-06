@@ -376,13 +376,17 @@ export const candidateNotifications = pgTable('candidate_notifications', {
 // ─── CONSULTANT NOTIFICATIONS ────────────────────────────
 export const consultantNotifications = pgTable('consultant_notifications', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id', { length: 50 }),
+  // FK to platform_users — SET NULL on delete so notifications survive user removal
+  userId: varchar('user_id', { length: 50 }).references(() => platformUsers.id, { onDelete: 'set null' }),
   targetRole: varchar('target_role', { length: 20 }),
   message: text('message').notNull(),
   link: varchar('link', { length: 255 }),
   isRead: boolean('is_read').default(false),
   createdAt: datetime('created_at').default(sql`now()`),
-});
+}, (table) => ({
+  userIdIdx: index('cn_user_id_idx').on(table.userId),
+  targetRoleIdx: index('cn_target_role_idx').on(table.targetRole),
+}));
 
 // ─── REFERENCE CHECKS (Phase 2) ─────────────────────────
 export const referenceChecks = pgTable('reference_checks', {

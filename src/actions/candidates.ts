@@ -3,33 +3,16 @@
 import { generateObjectWithFallback } from "@/lib/gemini-fallback";
 import { z } from "zod";
 import { db } from "@/db";
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { platformUsers } from "@/db/schema";
 import { candidates, candidateFiles, clients } from "@/db/schema";
 import { revalidatePath } from "next/cache";
 import { inngest } from "@/lib/inngest/client";
 import crypto from "crypto";
-
-
+import { getCurrentUserName } from "@/lib/server-session";
 
 import { evaluateCandidateMatch } from "@/utils/fuzzy-match";
 import { eq } from "drizzle-orm";
 
-async function getCurrentUserName(): Promise<string> {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user?.email) {
-      const dbUser = await db.select().from(platformUsers).where(eq(platformUsers.email, user.email));
-      if (dbUser.length > 0) return dbUser[0].name;
-      return user.email;
-    }
-  } catch(e) {
-    console.error("[getCurrentUserName candidates.ts] failed:", e);
-  }
-  return "Unknown";
-}
 
 export async function mapCandidatesAction(headers: string[], sampleData: any[]) {
   const schema = z.object({

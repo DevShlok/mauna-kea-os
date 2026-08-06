@@ -137,7 +137,7 @@ export async function POST(
       docs: { additionalDocsText: extractedText || textContent }
     };
 
-    const { getCurrentUserName } = require("@/actions");
+    const { getCurrentUserName } = await import("@/lib/server-session");
     const updatedBy = await getCurrentUserName();
     const existingLog = mandate?.auditLog || {};
     existingLog[docType] = { updatedBy, updatedAt: new Date().toISOString() };
