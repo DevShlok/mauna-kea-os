@@ -4,8 +4,25 @@ import { timeLogs, platformUsers, leaveRequests } from "@/db/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { createClient } from "@/utils/supabase/server";
 import { getUserByEmail } from "@/db/queries";
+import { z } from "zod";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { validateBody } from "@/lib/api-guard";
+
+// Validated action enum — only these values are accepted for clock-in/out
+const timeLogActionSchema = z.object({
+  action: z.enum(["clock_in", "clock_out", "break_start", "break_end"], {
+    errorMap: () => ({
+      message: "action must be one of: clock_in, clock_out, break_start, break_end",
+    }),
+  }),
+});
+
 
 export async function GET(request: Request) {
+  // Rate limit: 30 requests per minute per IP
+  const rl = rateLimit(request, "time-logs-get", { limit: 30, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.retryAfter);
+
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -106,6 +123,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  // Rate limit: 30 requests per minute per IP
+  const rl = rateLimit(request, "time-logs-post", { limit: 30, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.retryAfter);
+
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -115,12 +136,11 @@ export async function POST(request: Request) {
     const platformUser = await getUserByEmail(email);
     if (!platformUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-    const body = await request.json();
-    const { action } = body;
+    // Validate action enum — strips all other body fields
+    const parsed = validateBody(timeLogActionSchema, await request.json());
+    if ("error" in parsed) return parsed.error;
 
-    if (!['break_start', 'break_end'].includes(action)) {
-      return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-    }
+    const { action } = parsed.data;
 
     // A bug could happen with timezones, let's use JS native Date but parse out the YYYY-MM-DD
     const now = new Date();

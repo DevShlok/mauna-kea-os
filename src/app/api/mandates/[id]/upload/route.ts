@@ -3,19 +3,31 @@ import { revalidateTag } from "next/cache";
 import { db } from "@/db";
 import { mandates } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { createClient } from "@supabase/supabase-js";
+import {
+  createSupabaseAdmin,
+  validateFileUpload,
+  ALLOWED_DOCUMENT_TYPES,
+  MAX_DOCUMENT_SIZE_BYTES,
+} from "@/lib/api-guard";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 const pdfParse = require("pdf-parse-new");
 const mammoth = require("mammoth");
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! || ""
-);
+// Allowed docType values — only these map to real DB columns
+const ALLOWED_DOC_TYPES = new Set(["jd", "notes", "docs"]);
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Rate limit: 10 requests per minute per IP
+  const rl = rateLimit(req, "mandate-upload", { limit: 10, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.retryAfter);
+
+  // Service role key is required for storage uploads — fail loudly if missing.
+  // Never fall back to the public NEXT_PUBLIC_ key on server-side operations.
+  const supabase = createSupabaseAdmin();
+
   try {
     const resolvedParams = await params;
     const mandateId = Number(resolvedParams.id);
@@ -25,8 +37,25 @@ export async function POST(
     const textContent = formData.get("textContent") as string | null;
     const mandateName = formData.get("mandateName") as string | null;
 
-    if ((!file && !textContent) || !docType) {
-      return NextResponse.json({ error: "File/Text or docType missing" }, { status: 400 });
+    // Validate docType against the allowed set to prevent arbitrary column writes
+    if (!docType || !ALLOWED_DOC_TYPES.has(docType)) {
+      return NextResponse.json(
+        { error: `Invalid docType. Allowed values: ${Array.from(ALLOWED_DOC_TYPES).join(", ")}` },
+        { status: 400 }
+      );
+    }
+
+    if (!file && !textContent) {
+      return NextResponse.json({ error: "File or textContent is required" }, { status: 400 });
+    }
+
+    // If a file is provided, validate MIME type (PDF + Word) and size (max 10 MB)
+    if (file) {
+      const check = validateFileUpload(file, {
+        allowedTypes: ALLOWED_DOCUMENT_TYPES,
+        maxBytes: MAX_DOCUMENT_SIZE_BYTES,
+      });
+      if (!check.ok) return check.error;
     }
 
     const webhookUrl = process.env.OS_DRIVE_WEBHOOK_URL;

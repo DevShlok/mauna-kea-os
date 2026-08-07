@@ -4,14 +4,39 @@ import { eq, and, ne, inArray } from "drizzle-orm";
 import { generateObjectWithFallback } from "@/lib/gemini-fallback";
 import { z } from "zod";
 import { NextResponse } from "next/server";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { validateBody } from "@/lib/api-guard";
+
+// ─── Request schema ───────────────────────────────────────────────────────────
+
+const generateReportSchema = z.object({
+  candidateId: z.string({ required_error: "candidateId is required" }).min(1).max(100),
+  frameworkId: z.union([z.string(), z.number()], {
+    required_error: "frameworkId is required",
+  }),
+  mandateId: z.union([z.string(), z.number()]).optional().nullable(),
+  /** Interview transcript — primary AI input. Capped at 100 000 chars. */
+  transcript: z
+    .string({ required_error: "transcript is required" })
+    .min(10, "transcript must be at least 10 characters")
+    .max(100_000, "transcript must not exceed 100 000 characters"),
+  interviewNotes: z.string().max(20_000).optional().nullable(),
+  feedback: z.string().max(10_000).optional().nullable(),
+  selectedFileIds: z.array(z.union([z.string(), z.number()])).optional().default([]),
+  manualScores: z.record(z.string(), z.any()).optional().nullable(),
+});
 
 export async function POST(req: Request) {
-  try {
-    const { candidateId, frameworkId, mandateId, transcript, interviewNotes, feedback, selectedFileIds, manualScores } = await req.json();
+  // Rate limit: 5 requests per minute per IP (Gemini is expensive on this route)
+  const rl = rateLimit(req, "generate-report", { limit: 5, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.retryAfter);
 
-    if (!candidateId || !frameworkId || !transcript) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
+  try {
+    // Validate and strip unknown fields from the request body
+    const parsed = validateBody(generateReportSchema, await req.json());
+    if ("error" in parsed) return parsed.error;
+
+    const { candidateId, frameworkId, mandateId, transcript, interviewNotes, feedback, selectedFileIds, manualScores } = parsed.data;
 
     // 0. Fetch Mandate and Candidate details for extended AI context
     let enrichedContext = "";

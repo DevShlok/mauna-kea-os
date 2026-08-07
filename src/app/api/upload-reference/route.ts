@@ -3,24 +3,57 @@ import { db } from "@/db";
 import { candidates, candidateFiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import * as mammoth from "mammoth";
-import { createClient } from "@supabase/supabase-js";
+import {
+  createSupabaseAdmin,
+  validateFileUpload,
+  ALLOWED_DOCUMENT_TYPES,
+  MAX_DOCUMENT_SIZE_BYTES,
+} from "@/lib/api-guard";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 const pdfParse = require("pdf-parse-new");
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! || ""
-);
+// Allowed reference document types — validated against this list
+const ALLOWED_REFERENCE_TYPES = new Set([
+  "Interview Notes",
+  "Superior Reference",
+  "Peer Reference",
+  "Background Check",
+  "Other",
+]);
 
 export async function POST(req: Request) {
+  // Rate limit: 10 requests per minute per IP
+  const rl = rateLimit(req, "upload-reference", { limit: 10, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.retryAfter);
+
+  // Service role key is required for storage uploads — fail loudly if missing.
+  // Never fall back to the public NEXT_PUBLIC_ key on server-side operations.
+  const supabase = createSupabaseAdmin();
+
   try {
     const formData = await req.formData();
-    const file = formData.get("file") as File;
+    const file = formData.get("file") as File | null;
     const candId = formData.get("candId") as string;
-    const type = formData.get("type") as string; // 'Interview Notes', 'Superior Reference', 'Peer Reference'
+    const type = formData.get("type") as string; // e.g. 'Interview Notes', 'Superior Reference'
 
     if (!file || !candId || !type) {
       return NextResponse.json({ error: "File, CandId, or Type missing" }, { status: 400 });
     }
+
+    // Validate the reference type against the allowed set
+    if (!ALLOWED_REFERENCE_TYPES.has(type)) {
+      return NextResponse.json(
+        { error: `Invalid type. Allowed: ${Array.from(ALLOWED_REFERENCE_TYPES).join(", ")}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate MIME type (PDF + Word documents only) and file size (max 10 MB)
+    const check = validateFileUpload(file, {
+      allowedTypes: ALLOWED_DOCUMENT_TYPES,
+      maxBytes: MAX_DOCUMENT_SIZE_BYTES,
+    });
+    if (!check.ok) return check.error;
 
     const buffer = await file.arrayBuffer();
     const nodeBuffer = Buffer.from(buffer);

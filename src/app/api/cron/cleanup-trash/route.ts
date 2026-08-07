@@ -7,8 +7,16 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
+    // Security: fail closed — if CRON_SECRET is not configured this route
+    // refuses all requests. Never skip the check on a missing env var.
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+      console.error("CRON_SECRET env var is not set. Refusing cron request.");
+      return new NextResponse("Unauthorized — CRON_SECRET not configured", { status: 401 });
+    }
+
     const authHeader = request.headers.get("authorization");
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (authHeader !== `Bearer ${cronSecret}`) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
