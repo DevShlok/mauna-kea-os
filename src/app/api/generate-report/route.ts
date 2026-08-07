@@ -10,19 +10,23 @@ import { validateBody } from "@/lib/api-guard";
 // ─── Request schema ───────────────────────────────────────────────────────────
 
 const generateReportSchema = z.object({
-  candidateId: z.string({ required_error: "candidateId is required" }).min(1).max(100),
-  frameworkId: z.union([z.string(), z.number()], {
-    required_error: "frameworkId is required",
-  }),
-  mandateId: z.union([z.string(), z.number()]).optional().nullable(),
+  candidateId: z.coerce.string({ message: "candidateId is required" }).min(1).max(100),
+  frameworkId: z.coerce.string({ message: "frameworkId is required" }).min(1).max(100),
+  mandateId: z.coerce.string().optional().nullable(),
   /** Interview transcript — primary AI input. Capped at 100 000 chars. */
   transcript: z
-    .string({ required_error: "transcript is required" })
+    .string({ message: "transcript is required" })
     .min(10, "transcript must be at least 10 characters")
     .max(100_000, "transcript must not exceed 100 000 characters"),
   interviewNotes: z.string().max(20_000).optional().nullable(),
-  feedback: z.string().max(10_000).optional().nullable(),
-  selectedFileIds: z.array(z.union([z.string(), z.number()])).optional().default([]),
+  feedback: z
+    .object({
+      superior: z.string().max(10_000).optional().nullable(),
+      peer: z.string().max(10_000).optional().nullable(),
+    })
+    .optional()
+    .nullable(),
+  selectedFileIds: z.array(z.coerce.number()).optional().default([]),
   manualScores: z.record(z.string(), z.any()).optional().nullable(),
 });
 

@@ -9,7 +9,7 @@ import { validateBody } from "@/lib/api-guard";
 const requestSchema = z.object({
   /** Raw text from CV or LinkedIn PDF. Trimmed and capped at 50 000 chars. */
   text: z
-    .string({ required_error: "text is required" })
+    .string({ message: "text is required" })
     .min(10, "text must be at least 10 characters")
     .max(50_000, "text must not exceed 50 000 characters")
     .trim(),

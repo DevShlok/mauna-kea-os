@@ -13,7 +13,7 @@ const requestSchema = z.object({
    * Apify credit burn on non-LinkedIn URLs.
    */
   url: z
-    .string({ required_error: "url is required" })
+    .string({ message: "url is required" })
     .url("url must be a valid URL")
     .refine(
       (u) => u.includes("linkedin.com/in/"),

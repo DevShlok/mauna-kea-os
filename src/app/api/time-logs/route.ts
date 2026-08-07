@@ -11,9 +11,7 @@ import { validateBody } from "@/lib/api-guard";
 // Validated action enum — only these values are accepted for clock-in/out
 const timeLogActionSchema = z.object({
   action: z.enum(["clock_in", "clock_out", "break_start", "break_end"], {
-    errorMap: () => ({
-      message: "action must be one of: clock_in, clock_out, break_start, break_end",
-    }),
+    message: "action must be one of: clock_in, clock_out, break_start, break_end",
   }),
 });
 
