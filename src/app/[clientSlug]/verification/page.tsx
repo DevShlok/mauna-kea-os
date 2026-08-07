@@ -28,6 +28,8 @@ export default async function CandidateVerificationPage() {
       ])
     : [[], [], []];
 
+  const assessmentBadge = badges.find((b) => b.badgeType === "assessment_complete") ?? null;
+
   return (
     <div className="max-w-4xl mx-auto py-8">
       <h1 className="text-2xl font-bold text-slate-800 mb-6">Verification & Badges</h1>
@@ -35,7 +37,7 @@ export default async function CandidateVerificationPage() {
       
       <div className="mt-12">
         <h2 className="text-xl font-bold text-slate-800 mb-6">Network Feedback</h2>
-        <VerificationStatusClient candId={candId} checks={checks} verificationStatus={verification || null} />
+        <VerificationStatusClient candId={candId} checks={checks} verificationStatus={verification || null} assessmentBadge={assessmentBadge} />
       </div>
     </div>
   );

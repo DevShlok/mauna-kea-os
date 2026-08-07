@@ -25,14 +25,23 @@ function NeoCard({
 export function VerificationStatusClient({
   candId,
   checks = [],
-  verificationStatus
+  verificationStatus,
+  assessmentBadge = null,
 }: {
   candId: string;
   checks?: any[];
   verificationStatus?: any | null;
+  assessmentBadge?: any | null;
 }) {
   const isVerified = verificationStatus?.status === "Verified";
+  const tier = assessmentBadge?.metadata?.tier as "A" | "B" | "C" | undefined;
+  const assessTotal = assessmentBadge?.metadata?.total as number | undefined;
 
+  const TIER_CONFIG: Record<"A" | "B" | "C", { label: string; color: string; bg: string; desc: string }> = {
+    A: { label: "Tier A", color: "text-emerald-700", bg: "bg-emerald-100", desc: "Exceptional profile across all dimensions." },
+    B: { label: "Tier B", color: "text-amber-700",   bg: "bg-amber-100",   desc: "Solid profile with strong fundamentals." },
+    C: { label: "Tier C", color: "text-red-700",     bg: "bg-red-100",     desc: "Profile under active development." },
+  };
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-6 pb-12">
       {/* Banner */}
@@ -112,7 +121,30 @@ export function VerificationStatusClient({
         </NeoCard>
       </div>
 
-      {/* Structured Constructive Feedback */}
+      {/* Your Assessment Tier */}
+      {tier && (
+        <>
+          <h2 className="text-lg font-bold text-slate-800 mt-4 mb-2 px-2">Your Assessment Tier</h2>
+          <NeoCard className="p-6">
+            <div className="flex items-center gap-4">
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black ${TIER_CONFIG[tier].bg} ${TIER_CONFIG[tier].color} border-2`}>
+                {tier}
+              </div>
+              <div>
+                <div className={`text-xl font-black ${TIER_CONFIG[tier].color}`}>
+                  {TIER_CONFIG[tier].label}{assessTotal !== undefined ? ` — ${assessTotal}/100` : ""}
+                </div>
+                <p className="text-sm text-slate-500 font-medium mt-0.5">{TIER_CONFIG[tier].desc}</p>
+                <p className="text-xs text-slate-400 mt-1 font-medium">
+                  Your profile has been reviewed by the Mauna Kea team across behavioral, psychometric, and cultural dimensions.
+                </p>
+              </div>
+            </div>
+          </NeoCard>
+        </>
+      )}
+
+      {/* Reference Check Summaries */}
       <h2 className="text-lg font-bold text-slate-800 mt-4 mb-2 px-2">What your professional network says about you</h2>
       
       {checks.length === 0 ? (
