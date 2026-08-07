@@ -521,7 +521,9 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
   
   const conditions: any[] = [
     sql`COALESCE(${candidates.isDeleted}, false) = false`,
-    sql`COALESCE(metadata->>'isPlaceholder', 'false') != 'true'`
+    sql`(metadata IS NULL OR NOT (metadata::text LIKE '%"isPlaceholder":true%' OR metadata::text LIKE '%"isPlaceholder":"true"%'))`,
+    sql`COALESCE(${candidates.name}, 'Unknown') != 'Unknown'`,
+    sql`length(trim(COALESCE(${candidates.name}, ''))) > 0`
   ];
   
   if (search && search.trim()) {
@@ -621,7 +623,7 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
       COUNT(*) FILTER (WHERE status = 'Placed') as placed_count,
       AVG(ctc) as avg_ctc
     FROM candidates
-    WHERE is_deleted = false AND COALESCE(metadata->>'isPlaceholder', 'false') != 'true'
+    WHERE is_deleted = false AND (metadata IS NULL OR NOT (metadata::text LIKE '%"isPlaceholder":true%' OR metadata::text LIKE '%"isPlaceholder":"true"%'))
   `);
   
   const meta = uniqueMetadata[0] as any;
