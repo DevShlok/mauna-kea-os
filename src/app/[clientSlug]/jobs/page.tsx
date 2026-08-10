@@ -1,4 +1,5 @@
 import { requireRole } from "@/lib/auth";
+import { getCandidateById } from "@/db/queries";
 import { db } from "@/db";
 import { candidateJobs, candidateJobInterests, candidateApplications, masterIndustries } from "@/db/schema";
 import { eq, and, or, sql, desc } from "drizzle-orm";
@@ -8,7 +9,7 @@ export default async function CandidateJobsPage() {
   const { platformUser } = await requireRole(["candidate"]);
   const candId = platformUser!.linkedCandidateId!;
 
-  const [jobs, interestRows, applicationRows, sectorsList] = await Promise.all([
+  const [jobs, interestRows, applicationRows, sectorsList, candidate] = await Promise.all([
     db
       .select()
       .from(candidateJobs)
@@ -34,6 +35,7 @@ export default async function CandidateJobsPage() {
     db
       .select({ name: masterIndustries.sectorName })
       .from(masterIndustries),
+    getCandidateById(candId),
   ]);
 
   const initialInterests: Record<number, string> = {};
@@ -46,6 +48,11 @@ export default async function CandidateJobsPage() {
   );
 
   const sectors = Array.from(new Set(sectorsList.map((s) => s.name).filter(Boolean)));
+  const candidateTags = {
+    expTags: (candidate?.expTags as string[]) ?? [],
+    dreamRoles: (candidate?.dreamRoles as string[]) ?? [],
+    candId,
+  };
 
   return (
     <JobsClient
@@ -53,6 +60,8 @@ export default async function CandidateJobsPage() {
       initialInterests={initialInterests}
       initialApplications={initialApplications}
       sectors={sectors}
+      candidateTags={candidateTags}
     />
   );
 }
+

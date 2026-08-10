@@ -45,9 +45,10 @@ interface Props {
   initialInterests: Record<number, string>; // jobId -> status ('Interested' | 'Not Interested')
   initialApplications: Set<number>;         // jobIds the candidate has already applied to
   sectors: string[];
+  candidateTags?: { expTags: string[]; dreamRoles: string[]; candId: string };
 }
 
-export function JobsClient({ jobs, initialInterests, initialApplications, sectors }: Props) {
+export function JobsClient({ jobs, initialInterests, initialApplications, sectors, candidateTags }: Props) {
   const [interests, setInterests] = useState<Record<number, string>>(initialInterests);
   const [applications, setApplications] = useState<Set<number>>(initialApplications);
   const [searchQuery, setSearchQuery] = useState("");
@@ -122,6 +123,189 @@ export function JobsClient({ jobs, initialInterests, initialApplications, sector
 
     return true;
   });
+
+  const computeJobMatchScore = (job: CandidateJob): number => {
+    if (!candidateTags) return 0;
+    const candId = candidateTags.candId;
+    if ((job.targetCandIds as string[])?.includes(candId)) return 999;
+
+    const candTags = new Set([
+      ...(candidateTags.expTags || []).map((t) => t.toLowerCase()),
+      ...(candidateTags.dreamRoles || []).map((t) => t.toLowerCase()),
+    ]);
+    const jobTags = new Set([
+      ...(job.highlights || []).map((h) => h.toLowerCase()),
+      job.sector?.toLowerCase() ?? "",
+    ]);
+
+    let overlap = 0;
+    for (const tag of candTags) {
+      if (tag && jobTags.has(tag)) overlap++;
+    }
+    return overlap;
+  };
+
+  const scoredJobs = filteredJobs.map((j) => ({
+    job: j,
+    score: computeJobMatchScore(j),
+  }));
+
+  const recommendedJobs = scoredJobs
+    .filter((s) => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((s) => s.job);
+
+  const recommendedJobIds = new Set(recommendedJobs.map((j) => j.id));
+  const remainingJobs = filteredJobs.filter((j) => !recommendedJobIds.has(j.id));
+
+  const renderJobCard = (job: CandidateJob, isRecommended = false) => {
+    const currentInterest = interests[job.id];
+    const isUpdating = updatingJobId === job.id;
+    const isApplied = applications.has(job.id);
+    const isApplying = applyingJobId === job.id;
+
+    return (
+      <NeoCard key={job.id} className="p-6 sm:p-7 space-y-4">
+        {/* Top Title & Badges Header */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-200/60 pb-4">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-slate-800 font-bold text-lg">{job.title}</h2>
+              {isRecommended && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-100/90 px-2.5 py-0.5 rounded-full border border-amber-200">
+                  <Sparkles className="w-3 h-3 text-[#D8B15B]" /> Recommended
+                </span>
+              )}
+              {job.isConfidential && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-100/80 px-2.5 py-0.5 rounded-full">
+                  <Lock className="w-3 h-3" /> Confidential
+                </span>
+              )}
+              {isApplied && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                  <CheckCircle2 className="w-3 h-3" /> Applied
+                </span>
+              )}
+            </div>
+            <p className="text-slate-600 font-semibold text-xs mt-1 flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-slate-400" />
+              {job.companyDisplay || "Leading Organization"}
+            </p>
+          </div>
+
+          {job.sector && (
+            <span
+              className="px-3 py-1 rounded-full text-[11px] font-bold text-[#133255] self-start"
+              style={{
+                background: "#eef2f7",
+                boxShadow: "inset 2px 2px 4px #cbd5e1, inset -2px -2px 4px #ffffff",
+              }}
+            >
+              {job.sector}
+            </span>
+          )}
+        </div>
+
+        {/* Meta Badges Row */}
+        <div className="flex items-center gap-4 text-xs font-semibold text-slate-600 flex-wrap">
+          {job.location && (
+            <span className="flex items-center gap-1 bg-white/60 px-2.5 py-1 rounded-lg border border-slate-200/50">
+              <MapPin className="w-3.5 h-3.5 text-slate-400" /> {job.location}
+            </span>
+          )}
+          {(job.experienceMin || job.experienceMax) && (
+            <span className="flex items-center gap-1 bg-white/60 px-2.5 py-1 rounded-lg border border-slate-200/50">
+              <Clock className="w-3.5 h-3.5 text-slate-400" /> {job.experienceMin || 0}–{job.experienceMax || 0} yrs exp
+            </span>
+          )}
+          {(job.ctcRangeMin || job.ctcRangeMax) && (
+            <span className="flex items-center gap-1 bg-white/60 px-2.5 py-1 rounded-lg border border-slate-200/50 text-emerald-700 font-bold">
+              <IndianRupee className="w-3.5 h-3.5 text-emerald-600" /> ₹{job.ctcRangeMin || 0}L – ₹{job.ctcRangeMax || 0}L
+            </span>
+          )}
+        </div>
+
+        {/* Description */}
+        {job.description && (
+          <p className="text-xs text-slate-600 leading-relaxed font-medium">
+            {job.description}
+          </p>
+        )}
+
+        {/* Highlights Bullet List */}
+        {job.highlights && (job.highlights as string[]).length > 0 && (
+          <div className="space-y-1.5 pt-1">
+            {(job.highlights as string[]).map((hl, idx) => (
+              <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 font-medium">
+                <span className="text-[#D8B15B] font-bold mt-0.5">✦</span>
+                <span>{hl}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Bottom Action Buttons */}
+        <div className="flex items-center gap-2 pt-3 border-t border-slate-200/60 flex-wrap">
+          {/* Primary: Apply Now */}
+          {isApplied ? (
+            <span className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-bold bg-[#133255] text-white">
+              <CheckCircle2 className="w-4 h-4" /> Applied ✓
+            </span>
+          ) : (
+            <button
+              disabled={isApplying || isUpdating}
+              onClick={() => handleApply(job.id)}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all bg-[#133255] hover:bg-[#133255]/90 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isApplying ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Applying...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" /> Apply Now
+                </>
+              )}
+            </button>
+          )}
+
+          {/* Secondary: Express Interest */}
+          <button
+            disabled={isUpdating || isApplying}
+            onClick={() =>
+              handleInterest(
+                job.id,
+                currentInterest === "Interested" ? "Not Interested" : "Interested"
+              )
+            }
+            className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+              currentInterest === "Interested"
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+                : "bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200"
+            }`}
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            {currentInterest === "Interested" ? "Interested ✓" : "Express Interest"}
+          </button>
+
+          {/* Dismiss */}
+          <button
+            disabled={isUpdating || isApplying}
+            onClick={() => handleInterest(job.id, "Not Interested")}
+            className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+              currentInterest === "Not Interested"
+                ? "bg-slate-700 text-white shadow-md"
+                : "bg-white hover:bg-slate-100 text-slate-500 border border-slate-200"
+            }`}
+          >
+            <XCircle className="w-4 h-4" />
+            {currentInterest === "Not Interested" ? "Dismissed" : "Not for me"}
+          </button>
+        </div>
+      </NeoCard>
+    );
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-16">
@@ -224,150 +408,32 @@ export function JobsClient({ jobs, initialInterests, initialApplications, sector
           </p>
         </NeoCard>
       ) : (
-        <div className="space-y-5">
-          {filteredJobs.map((job) => {
-            const currentInterest = interests[job.id];
-            const isUpdating = updatingJobId === job.id;
-            const isApplied = applications.has(job.id);
-            const isApplying = applyingJobId === job.id;
+        <div className="space-y-8">
+          {/* Recommended Section */}
+          {recommendedJobs.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#133255] uppercase tracking-wider px-1">
+                <Sparkles className="w-4 h-4 text-[#D8B15B]" /> Recommended for You
+              </div>
+              <div className="space-y-5">
+                {recommendedJobs.map((job) => renderJobCard(job, true))}
+              </div>
+            </div>
+          )}
 
-            return (
-              <NeoCard key={job.id} className="p-6 sm:p-7 space-y-4">
-                {/* Top Title & Badges Header */}
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-200/60 pb-4">
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-slate-800 font-bold text-lg">{job.title}</h2>
-                      {job.isConfidential && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-100/80 px-2.5 py-0.5 rounded-full">
-                          <Lock className="w-3 h-3" /> Confidential
-                        </span>
-                      )}
-                      {isApplied && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                          <CheckCircle2 className="w-3 h-3" /> Applied
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-slate-600 font-semibold text-xs mt-1 flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                      {job.companyDisplay || "Leading Organization"}
-                    </p>
-                  </div>
-
-                  {job.sector && (
-                    <span
-                      className="px-3 py-1 rounded-full text-[11px] font-bold text-[#133255] self-start"
-                      style={{
-                        background: "#eef2f7",
-                        boxShadow: "inset 2px 2px 4px #cbd5e1, inset -2px -2px 4px #ffffff",
-                      }}
-                    >
-                      {job.sector}
-                    </span>
-                  )}
+          {/* All / Remaining Opportunities Section */}
+          {remainingJobs.length > 0 && (
+            <div className="space-y-4">
+              {recommendedJobs.length > 0 && (
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider px-1 pt-2">
+                  <Briefcase className="w-4 h-4 text-slate-400" /> All Opportunities
                 </div>
-
-                {/* Meta Badges Row */}
-                <div className="flex items-center gap-4 text-xs font-semibold text-slate-600 flex-wrap">
-                  {job.location && (
-                    <span className="flex items-center gap-1 bg-white/60 px-2.5 py-1 rounded-lg border border-slate-200/50">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400" /> {job.location}
-                    </span>
-                  )}
-                  {(job.experienceMin || job.experienceMax) && (
-                    <span className="flex items-center gap-1 bg-white/60 px-2.5 py-1 rounded-lg border border-slate-200/50">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" /> {job.experienceMin || 0}–{job.experienceMax || 0} yrs exp
-                    </span>
-                  )}
-                  {(job.ctcRangeMin || job.ctcRangeMax) && (
-                    <span className="flex items-center gap-1 bg-white/60 px-2.5 py-1 rounded-lg border border-slate-200/50 text-emerald-700 font-bold">
-                      <IndianRupee className="w-3.5 h-3.5 text-emerald-600" /> ₹{job.ctcRangeMin || 0}L – ₹{job.ctcRangeMax || 0}L
-                    </span>
-                  )}
-                </div>
-
-                {/* Description */}
-                {job.description && (
-                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    {job.description}
-                  </p>
-                )}
-
-                {/* Highlights Bullet List */}
-                {job.highlights && (job.highlights as string[]).length > 0 && (
-                  <div className="space-y-1.5 pt-1">
-                    {(job.highlights as string[]).map((hl, idx) => (
-                      <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 font-medium">
-                        <span className="text-[#D8B15B] font-bold mt-0.5">✦</span>
-                        <span>{hl}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Bottom Action Buttons — 3 buttons */}
-                <div className="flex items-center gap-2 pt-3 border-t border-slate-200/60 flex-wrap">
-
-                  {/* Primary: Apply Now */}
-                  {isApplied ? (
-                    <span className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-bold bg-[#133255] text-white">
-                      <CheckCircle2 className="w-4 h-4" /> Applied ✓
-                    </span>
-                  ) : (
-                    <button
-                      disabled={isApplying || isUpdating}
-                      onClick={() => handleApply(job.id)}
-                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all bg-[#133255] hover:bg-[#133255]/90 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isApplying ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" /> Applying...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4" /> Apply Now
-                        </>
-                      )}
-                    </button>
-                  )}
-
-                  {/* Secondary: Express Interest (soft signal) */}
-                  <button
-                    disabled={isUpdating || isApplying}
-                    onClick={() =>
-                      handleInterest(
-                        job.id,
-                        currentInterest === "Interested" ? "Not Interested" : "Interested"
-                      )
-                    }
-                    className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
-                      currentInterest === "Interested"
-                        ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
-                        : "bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200"
-                    }`}
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    {currentInterest === "Interested" ? "Interested ✓" : "Express Interest"}
-                  </button>
-
-                  {/* Dismiss: Not for me */}
-                  <button
-                    disabled={isUpdating || isApplying}
-                    onClick={() => handleInterest(job.id, "Not Interested")}
-                    className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
-                      currentInterest === "Not Interested"
-                        ? "bg-slate-700 text-white shadow-md"
-                        : "bg-white hover:bg-slate-100 text-slate-500 border border-slate-200"
-                    }`}
-                  >
-                    <XCircle className="w-4 h-4" />
-                    {currentInterest === "Not Interested" ? "Dismissed" : "Not for me"}
-                  </button>
-                </div>
-              </NeoCard>
-            );
-          })}
+              )}
+              <div className="space-y-5">
+                {remainingJobs.map((job) => renderJobCard(job, false))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

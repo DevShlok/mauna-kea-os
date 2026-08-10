@@ -1,0 +1,182 @@
+{
+  "settings": {
+    "apiBaseUrl": "https://api.unabyss.com",
+    "vaultId": "04b14a29-acab-4860-8494-e079bc03ba16",
+    "includeFolders": [],
+    "exportTargetFolder": "Unabyss Exports",
+    "exportDeleteBehaviour": "leave",
+    "outboundEnabled": true,
+    "inboundEnabled": true,
+    "auth": {
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg2MzQwNzQ3LCJpYXQiOjE3ODYzMzcxNDcsImp0aSI6IjlkNjIzMjc0ZGM3NjQ3NTM5ZWM0ZDc4ZmM1M2Y5YWE3IiwidXNlcl9pZCI6IjE1OWE3OWJjLWFlMzYtNDc1Mi05MDg3LTU1Y2IyNTJiZDE1NiIsImNsaWVudF90eXBlIjoib2F1dGhfY2xpZW50Iiwib2F1dGhfY2xpZW50X2lkIjoib2JzaWRpYW4ifQ.J6QXh7Gm5_YxFSMd-2QKYlY7dM4zsBtYCxRMN1xrLHQ",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODkyOTE0NywiaWF0IjoxNzg2MzM3MTQ3LCJqdGkiOiIyOThmZmFkOTJhYmE0ZDYyOTY0ODU3MWQ2Mzk2NDljNCIsInVzZXJfaWQiOiIxNTlhNzliYy1hZTM2LTQ3NTItOTA4Ny01NWNiMjUyYmQxNTYiLCJjbGllbnRfdHlwZSI6Im9hdXRoX2NsaWVudCIsIm9hdXRoX2NsaWVudF9pZCI6Im9ic2lkaWFuIn0.UOUs_ARKfCYoci84_jC3Ij5QYGZt1bMe21aYvU2UbRQ",
+      "userEmail": "shlokshukla1469@gmail.com"
+    },
+    "bannerDismissed": true
+  },
+  "manifestCache": {
+    "paths": {
+      "Changelog.md": {
+        "contentHash": "637b2ca25f41f4aa0f9528d203faccb9c620da45b793037878b5b74d22088cfc",
+        "mtime": 1786147971223
+      },
+      "Decisions/no-raw-scores-to-candidates.md": {
+        "contentHash": "596b889a55301ec6a7604faaf24e10b7b186b8c18d6459feb7115c13b0cdef6f",
+        "mtime": 1786147963063
+      },
+      "Decisions/rbac-model.md": {
+        "contentHash": "a225cde1a18b852c07769c534db697c1b980744e1f1417c75d7cec485871436a",
+        "mtime": 1786147949253
+      },
+      "Decisions/advanced-table-abstraction.md": {
+        "contentHash": "4da567f4ac4d88d8fb1a39d0ce9dab590671855c8f87b58c5e22b2f5973595f5",
+        "mtime": 1786147928254
+      },
+      "Decisions/floats-vs-candidates.md": {
+        "contentHash": "4bafafa5dcb80e7582457c8f62296a2785b5ecf472934f5814e0434abaa5ed63",
+        "mtime": 1786147913359
+      },
+      "Decisions/field-level-audit-log.md": {
+        "contentHash": "1fe0fc03d792be28397ed201fd744d3794f7497875e288b06026b0019e1b999c",
+        "mtime": 1786147898353
+      },
+      "API/index.md": {
+        "contentHash": "3ef505b25f342dd3613707b70991b192f4e9170ccf45deb485cf1e43cb481153",
+        "mtime": 1786147882078
+      },
+      "Features/mandate-pipeline.md": {
+        "contentHash": "5097b65f14396aaade8296900a0c778d78d1df5003f06d2da8615d3a550ee51f",
+        "mtime": 1786147867333
+      },
+      "Features/client-portal.md": {
+        "contentHash": "4f1bc9c66e8d9b034e7563987294af88530fdf2c8e0e9bc02c3d2750cacfdf60",
+        "mtime": 1786147848674
+      },
+      "Features/verification.md": {
+        "contentHash": "c46925fc4eb308f90f5c642e2053b2845d19777d1cff3748ddb355e00a66fb4f",
+        "mtime": 1786147836908
+      },
+      "Features/jobs-board.md": {
+        "contentHash": "d5700df64e334bb895fcaddcffde643d4daae4ba9bb5c812e88dd2b530d05a4d",
+        "mtime": 1786147823158
+      },
+      "Features/dream-10.md": {
+        "contentHash": "1fc5ae4c44984a1e3fbc66fed62565f2322e75046e405896df2d44642fc3a400",
+        "mtime": 1786147807683
+      },
+      "Features/candidate-onboarding.md": {
+        "contentHash": "ef03326fe716a3ff494b395673aa6c04635452cf5087c13255431898772718d0",
+        "mtime": 1786147794422
+      },
+      "Features/candidate-portal.md": {
+        "contentHash": "f07b173c3a0e1dcf4e068dfab2b5b975d53d5c98446a614b63e2ed77cbdd643b",
+        "mtime": 1786147781840
+      },
+      "Features/assessment-rubric.md": {
+        "contentHash": "2387cabf48f02ce51ac82b21e6876f949f768f741a955965594f79a8e784ea0d",
+        "mtime": 1786147766176
+      },
+      "Features/ai-workbench.md": {
+        "contentHash": "cbbd42a92601ff502ddd305025cbeab97d46f32f624055f82ec08d0ee3c3df7a",
+        "mtime": 1786147750119
+      },
+      "Features/float-list.md": {
+        "contentHash": "8ed257fc2a01acba28566c1430d3cf061b2462f14a3561d541cb236897f4019a",
+        "mtime": 1786147733162
+      },
+      "Features/internal-os.md": {
+        "contentHash": "b3e49b3a1149b9c760f7c21fc0052b05b7f0974fc92992ef43953e75ce632e37",
+        "mtime": 1786147720142
+      },
+      "Features/index.md": {
+        "contentHash": "eaeb0a3d9bb245dc8c90e8f0a384abed4d3992f60974c167ef595bb04e48691e",
+        "mtime": 1786147709479
+      },
+      "Architecture/scripts.md": {
+        "contentHash": "83c89ffeb3f216b0bc1c7467ea032f02f86cde4b7cf6e480b461b48c437212ba",
+        "mtime": 1786147986085
+      },
+      "Architecture/scoring.md": {
+        "contentHash": "aa0fc4ba8f081fc9b43a51566fa5afa3599c5569fdb463c8074c9c0daa0d3747",
+        "mtime": 1786147698826
+      },
+      "Architecture/id-scheme.md": {
+        "contentHash": "d6baf618aa571d61c3fb378dc863a443aabf991d09cb123aa64c0943a44865f5",
+        "mtime": 1786147686958
+      },
+      "Architecture/integrations.md": {
+        "contentHash": "0d96ed75d66a60b4eee81361344c0f9be5ad038c8b9c76f1f2a85a8830df4155",
+        "mtime": 1786147674365
+      },
+      "Architecture/advanced-table.md": {
+        "contentHash": "a30c84995d169eabcf63a0346947780fed44314a05386e64eb50e37ec8a21076",
+        "mtime": 1786147658937
+      },
+      "Architecture/background-jobs.md": {
+        "contentHash": "c75dbe77a7358354672fff33c5fbbbed94655e498e6bab8fab0c21d5b94b4ade",
+        "mtime": 1786147643259
+      },
+      "Architecture/api-security.md": {
+        "contentHash": "7470db0b8e582467bd049fa4ebab8958c06a88c4b6cccfb2d680fbc8c8140f57",
+        "mtime": 1786147629115
+      },
+      "Architecture/rate-limiting.md": {
+        "contentHash": "18c77d665a0ae38b660d17643c0cba9cd050beb6d18b64b82fbc93831c33d2a3",
+        "mtime": 1786147616345
+      },
+      "Architecture/auth-and-rbac.md": {
+        "contentHash": "cc4bd128ac41a71bf0650f53d859559cd1f94298edf80d86e555429986a5d67e",
+        "mtime": 1786147602719
+      },
+      "Architecture/index.md": {
+        "contentHash": "65668141e3e956585a8d6c21d0ac888428be79dd0b8eb0b9e1f4cd93c6a778af",
+        "mtime": 1786147586540
+      },
+      "Database/migrations.md": {
+        "contentHash": "f4aea6ed5fa689cd0ca14ac619f80e026ac0d23cb144aaab56b410e0364fb45c",
+        "mtime": 1786147577578
+      },
+      "Database/other-tables.md": {
+        "contentHash": "e8281d1296085468df0aaa38899391d0dcf49a7a5392bb17dc7488288ab88e7f",
+        "mtime": 1786147562289
+      },
+      "Database/frameworks.md": {
+        "contentHash": "58a13db399c89fcb186dbff1f50f562136e00c73b32a6ddf44067eb0fb83db9e",
+        "mtime": 1786147531900
+      },
+      "Database/candidate_badges.md": {
+        "contentHash": "6c28a21dd62ae9faf2aba79739a959a24a507a7b681782e0f4e190c09135d041",
+        "mtime": 1786147521574
+      },
+      "Database/candidate_reports.md": {
+        "contentHash": "a47d33b6f901df2bce439767388e2809c028a90a23fe547b8a80d5979aaecb93",
+        "mtime": 1786147510338
+      },
+      "Database/platform_users.md": {
+        "contentHash": "f1e88b7ab851419730f9fc9d4c75146f3c799016d695637f521e8e9504f7c291",
+        "mtime": 1786147496552
+      },
+      "Database/floats.md": {
+        "contentHash": "12afceff8ac948f39c752e3e94df9aa38a29ae321de34eda3ffde8e84760116d",
+        "mtime": 1786147482313
+      },
+      "Database/mandates.md": {
+        "contentHash": "15d71966421c5bc204bc16648bf59b3b5b9bc7fbb9c4c31d6f665ab313e3cad5",
+        "mtime": 1786147469545
+      },
+      "Database/candidates.md": {
+        "contentHash": "3963c677cff43b234c43f8b460c436f5f55313fc9a44cec31f2ff41f6e5aba0a",
+        "mtime": 1786147456596
+      },
+      "Database/index.md": {
+        "contentHash": "4ef133751643bf08592b2b0c2395047eef19f16ac68df5fe2293aa2d2b6a5319",
+        "mtime": 1786147440120
+      },
+      "00-Overview/README.md": {
+        "contentHash": "f54e2df6661f36ef845b76dbeb458cdccb6754fffdbcd97b2b06e7082166fe54",
+        "mtime": 1786147417177
+      }
+    },
+    "exportsUpdatedAfter": ""
+  }
+}

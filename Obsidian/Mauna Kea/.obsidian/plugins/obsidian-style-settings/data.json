@@ -1,0 +1,9 @@
+{
+  "anuppuccin-theme-settings@@anuppuccin-theme-accents": "ctp-accent-yellow",
+  "anuppuccin-theme-settings@@anuppuccin-theme-dark": "ctp-mocha-old",
+  "anuppuccin-theme-settings-extended@@anp-theme-ext-dark": true,
+  "anuppuccin-theme-settings-extended@@catppuccin-theme-dark-extended": "ctp-nord-darker",
+  "anuppuccin-theme-settings-extended@@anp-theme-ext-amoled": true,
+  "anuppuccin-theme-settings-extended@@anp-theme-ext-light": false,
+  "anuppuccin-theme-settings@@anuppuccin-theme-light": "ctp-rosepine-light"
+}

@@ -48,6 +48,25 @@ interface Props {
   statuses: DreamCompanyStatus[];
   suggestions: string[];
   masterClientNames: string[];
+  tier?: "A" | "B" | "C" | null;
+}
+
+function LockedState() {
+  return (
+    <div className="max-w-xl mx-auto py-24 flex flex-col items-center gap-4 text-center">
+      <div
+        className="w-16 h-16 rounded-2xl flex items-center justify-center bg-[#eef2f7]"
+        style={{ boxShadow: "4px 4px 10px #cbd5e1, -4px -4px 10px #ffffff" }}
+      >
+        <Lock className="w-8 h-8 text-[#133255]" />
+      </div>
+      <h2 className="text-slate-800 font-bold text-xl">Dream 10 — Locked</h2>
+      <p className="text-slate-500 text-[14px] max-w-sm">
+        Complete your Mauna Kea Assessment to unlock Dream 10 Executive Tracking.
+        Tier B or above gives you access.
+      </p>
+    </div>
+  );
 }
 
 const STATUS_CONFIG: Record<
@@ -88,9 +107,9 @@ const STATUS_CONFIG: Record<
   },
   Rejected: {
     label: "Rejected",
-    colorClass: "text-rose-700",
-    bgClass: "bg-rose-100/80",
-    borderClass: "border-rose-200",
+    colorClass: "text-slate-500",
+    bgClass: "bg-slate-100",
+    borderClass: "border-slate-200",
     icon: AlertCircle,
     subtext: "No immediate fit found for current openings",
   },
@@ -109,7 +128,11 @@ export function DreamCompaniesClient({
   statuses: initialStatuses,
   suggestions: initialSuggestions,
   masterClientNames,
+  tier,
 }: Props) {
+  if (!tier || tier === "C") {
+    return <LockedState />;
+  }
   const [dreamCos, setDreamCos] = useState<string[]>(initialDreamCos);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");

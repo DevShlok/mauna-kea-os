@@ -35,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Verification", href: "/candidate/verification", icon: ShieldCheck, skeleton: true },
   { label: "Jobs", href: "/candidate/jobs", icon: Briefcase },
   { label: "Dream Companies", href: "/candidate/dream-companies", icon: Star },
+  { label: "Guidance", href: "/candidate/guidance", icon: BookOpen },
 ];
 
 export function CandidateSidebar({
@@ -58,6 +59,7 @@ export function CandidateSidebar({
     { label: "Verification", href: `${prefix}/verification`, icon: ShieldCheck, skeleton: true },
     { label: "Jobs", href: `${prefix}/jobs`, icon: Briefcase },
     { label: "Dream Companies", href: `${prefix}/dream-companies`, icon: Star },
+    { label: "Guidance", href: `${prefix}/guidance`, icon: BookOpen },
   ];
 
   const initials = userName

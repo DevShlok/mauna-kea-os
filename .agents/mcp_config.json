@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "unabyss": {
+      "serverUrl": "https://mcp.unabyss.com/",
+      "headers": {
+        "Authorization": "Bearer unby_mcp_MDn0FGsPbInCI0VfK1fCGOTAtEZz9RoTpMul-FbLcd4HUVmu8mkfseCpAqU3_VQM"
+      }
+    }
+  }
+}

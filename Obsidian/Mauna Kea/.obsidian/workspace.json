@@ -1,0 +1,239 @@
+{
+  "main": {
+    "id": "86ded80dbf8297c6",
+    "type": "split",
+    "children": [
+      {
+        "id": "963f7db1521e845e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ef4a57a16ec56532",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "29a8efa9614cd043",
+    "type": "split",
+    "children": [
+      {
+        "id": "3de831044b3e7b01",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ff8b88cdd5f872bf",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "826b07f9043d901b",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "09a4aa456f21c3c9",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 224.83334350585938
+  },
+  "right": {
+    "id": "0fc22bf501727bc5",
+    "type": "split",
+    "children": [
+      {
+        "id": "fa6b77b64ca4a305",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "8dff7af1aa72c001",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "679740cb603a6f6e",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "72155a86cf65e0fa",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "171fd3f7aea2a569",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "5dd174a5168d4785",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          },
+          {
+            "id": "16ffa9b3e09806bc",
+            "type": "leaf",
+            "state": {
+              "type": "calendar",
+              "state": {},
+              "icon": "calendar-with-checkmark",
+              "title": "Calendar"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false,
+      "unabyss:Unabyss": false,
+      "obsidian-git:Open Git source control": false,
+      "obsidian-importer:Import notes": false,
+      "terminal:Open terminal": false,
+      "templater-obsidian:Templater": false
+    }
+  },
+  "active": "ef4a57a16ec56532",
+  "lastOpenFiles": [
+    "Database/mandates.md",
+    "reference_checks.md",
+    "Database/floats.md",
+    "Database/candidates.md",
+    "Features/index.md",
+    "Database/index.md",
+    "Database/other-tables.md",
+    "Untitled.base",
+    "2026-08-08.md",
+    "Changelog.md",
+    "Features/client-portal.md",
+    "Unabyss Exports",
+    "Architecture/scripts.md",
+    "Decisions/no-raw-scores-to-candidates.md",
+    "Decisions/rbac-model.md",
+    "Decisions/advanced-table-abstraction.md",
+    "Decisions/floats-vs-candidates.md",
+    "Decisions/field-level-audit-log.md",
+    "API/index.md",
+    "Features/mandate-pipeline.md",
+    "Features/verification.md",
+    "Features/jobs-board.md",
+    "Features/dream-10.md",
+    "Features/candidate-onboarding.md",
+    "Features/candidate-portal.md",
+    "Features/assessment-rubric.md",
+    "Features/ai-workbench.md",
+    "Features/float-list.md",
+    "Untitled 2.canvas",
+    "Untitled 1.canvas",
+    "Untitled.canvas",
+    "Decisions",
+    "API",
+    "Features",
+    "Architecture",
+    "Database",
+    "00-Overview"
+  ]
+}

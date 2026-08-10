@@ -773,3 +773,21 @@ export const candidateApplications = pgTable('candidate_applications', {
 export type CandidateCareerEntry = typeof candidateCareerTimeline.$inferSelect;
 export type CandidateBadge = typeof candidateBadges.$inferSelect;
 export type CandidateApplication = typeof candidateApplications.$inferSelect;
+
+// ─── GUIDANCE CONTENT BLOCKS (Phase 3) ───────────────────
+export const guidanceBlocks = pgTable('guidance_blocks', {
+  id: serial('id').primaryKey(),
+  tier: varchar('tier', { length: 5 }).notNull(), // 'A' | 'B' | 'C' | '*' (wildcard)
+  targetRole: varchar('target_role', { length: 100 }).default('*'), // 'CFO' | 'CHRO' | '*'
+  title: varchar('title', { length: 255 }).notNull(),
+  body: text('body').notNull(),
+  isActive: boolean('is_active').default(true),
+  createdBy: varchar('created_by', { length: 255 }),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  tierIdx: index('gb_tier_idx').on(table.tier),
+  targetRoleIdx: index('gb_target_role_idx').on(table.targetRole),
+}));
+
+export type GuidanceBlock = typeof guidanceBlocks.$inferSelect;
+

@@ -132,7 +132,7 @@ export function VerificationStatusClient({
               </div>
               <div>
                 <div className={`text-xl font-black ${TIER_CONFIG[tier].color}`}>
-                  {TIER_CONFIG[tier].label}{assessTotal !== undefined ? ` — ${assessTotal}/100` : ""}
+                  {TIER_CONFIG[tier].label}
                 </div>
                 <p className="text-sm text-slate-500 font-medium mt-0.5">{TIER_CONFIG[tier].desc}</p>
                 <p className="text-xs text-slate-400 mt-1 font-medium">
