@@ -16,7 +16,7 @@ import {
   bulkAddToEngagementListAction 
 } from "@/actions";
 import { convertToClientContactAction, updatePastCompaniesAction, updateCandidateTargetCompaniesAction } from "@/actions/candidates";
-import { updateDreamCompanyStatusAction } from "@/actions/candidate-portal";
+import { updateDreamCompanyStatusAction, approveProfileChangeRequestAction, rejectProfileChangeRequestAction } from "@/actions/candidate-portal";
 import { removeFromEngagementListAction } from "@/actions/calls";
 import { formatCtcValue, getCleanLinkedInUrl } from "@/lib/helpers";
 import { createClient } from "@/utils/supabase/client";
@@ -58,7 +58,8 @@ export default function FlCandidateClient({
   clientRemarks = [], 
   allClients = [],
   initialEngagementLists = [],
-  dreamStatuses = []
+  dreamStatuses = [],
+  pendingChangeRequest = null
 }: { 
   candidate: any; 
   mandates?: any[]; 
@@ -68,10 +69,50 @@ export default function FlCandidateClient({
   allClients?: any[];
   initialEngagementLists?: string[];
   dreamStatuses?: any[];
+  pendingChangeRequest?: any;
 }) {
   const router = useRouter();
   const [localDreamStatuses, setLocalDreamStatuses] = useState<any[]>(dreamStatuses);
   const [user, setUser] = useState<any>(null);
+  const [isProcessingApproval, setIsProcessingApproval] = useState(false);
+
+  const handleApprovePendingRequest = async () => {
+    if (!pendingChangeRequest) return;
+    setIsProcessingApproval(true);
+    try {
+      const res = await approveProfileChangeRequestAction(pendingChangeRequest.id);
+      if (res.success) {
+        toast.success("Profile change request approved and published to database!");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to approve changes");
+      }
+    } catch {
+      toast.error("Error approving profile changes");
+    } finally {
+      setIsProcessingApproval(false);
+    }
+  };
+
+  const handleRejectPendingRequest = async () => {
+    if (!pendingChangeRequest) return;
+    const reason = prompt("Enter optional rejection reason for candidate:", "Profile details do not match verification records.");
+    if (reason === null) return;
+    setIsProcessingApproval(true);
+    try {
+      const res = await rejectProfileChangeRequestAction(pendingChangeRequest.id, reason);
+      if (res.success) {
+        toast.success("Profile change request rejected.");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to reject changes");
+      }
+    } catch {
+      toast.error("Error rejecting profile changes");
+    } finally {
+      setIsProcessingApproval(false);
+    }
+  };
 
   // Layout hook
   const {
@@ -1383,6 +1424,77 @@ export default function FlCandidateClient({
           )}
         </div>
       </div>
+      {/* ── Pending Profile Changes Review Card (Consultant Approval) ── */}
+      {pendingChangeRequest && (
+        <div className="max-w-[1400px] mx-auto px-6 mb-6">
+          <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-6 shadow-md flex flex-col gap-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-lg shrink-0">
+                  ⚠️
+                </div>
+                <div>
+                  <h3 className="text-amber-950 font-bold text-[16px]">
+                    Pending Profile Change Request Submitted by Candidate
+                  </h3>
+                  <p className="text-amber-800 text-xs font-medium mt-0.5">
+                    The candidate requested changes to sensitive fields (Compensation, Notice Period, Role, Experience, or Education). Review proposed values below before approving.
+                  </p>
+                </div>
+              </div>
+              <span className="bg-amber-200 text-amber-900 font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider shrink-0">
+                Action Required
+              </span>
+            </div>
+
+            {/* Side-by-Side Diff Table */}
+            <div className="border border-amber-200/80 rounded-xl overflow-hidden bg-white">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-amber-100/60 text-amber-900 font-bold uppercase tracking-wider border-b border-amber-200">
+                  <tr>
+                    <th className="px-4 py-2.5">Field Name</th>
+                    <th className="px-4 py-2.5">Current Value in Database</th>
+                    <th className="px-4 py-2.5">Candidate Proposed Value</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-amber-100 font-medium">
+                  {Object.entries(pendingChangeRequest.sensitiveChanges || {}).map(([key, change]: [string, any]) => (
+                    <tr key={key} className="hover:bg-amber-50/50">
+                      <td className="px-4 py-3 font-bold text-slate-800">{change.label || key}</td>
+                      <td className="px-4 py-3 text-slate-600 bg-slate-50/50 font-mono">
+                        {typeof change.current === "object" ? JSON.stringify(change.current) : String(change.current ?? "N/A")}
+                      </td>
+                      <td className="px-4 py-3 text-emerald-800 font-bold bg-emerald-50/40 font-mono">
+                        {typeof change.proposed === "object" ? JSON.stringify(change.proposed) : String(change.proposed ?? "N/A")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-3 pt-1">
+              <button
+                type="button"
+                onClick={handleRejectPendingRequest}
+                disabled={isProcessingApproval}
+                className="px-5 py-2.5 rounded-xl font-bold text-xs bg-rose-100 text-rose-800 hover:bg-rose-200 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Reject Changes
+              </button>
+              <button
+                type="button"
+                onClick={handleApprovePendingRequest}
+                disabled={isProcessingApproval}
+                className="px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-md disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Check size={15} /> Approve & Update Database
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-[1400px] mx-auto px-6 min-h-[500px]">
         {/* ── Widget Grid ────────────────────────────────────── */}

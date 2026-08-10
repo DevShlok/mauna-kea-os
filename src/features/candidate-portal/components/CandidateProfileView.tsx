@@ -81,9 +81,11 @@ function calculateTenure(startDateStr?: string | null): string {
 export function CandidateProfileView({
   candidate,
   isVerified = false,
+  pendingRequest = null,
 }: {
   candidate: any;
   isVerified?: boolean;
+  pendingRequest?: any;
 }) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
@@ -148,7 +150,7 @@ export function CandidateProfileView({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await updateCandidateSelfProfileAction(candidate.id, {
+      const res = await updateCandidateSelfProfileAction(candidate.id, {
         name: form.name,
         mobile: form.mobile,
         email: form.email,
@@ -179,7 +181,14 @@ export function CandidateProfileView({
         notes: form.notes,
       });
 
-      toast.success("Profile updated successfully!");
+      if (res?.pendingApproval) {
+        toast.success(
+          `Profile saved! Updates to ${res.pendingFields?.join(", ") || "sensitive fields"} are pending consultant review before publishing to database.`,
+          { duration: 6000 }
+        );
+      } else {
+        toast.success("Profile updated successfully!");
+      }
       setIsEditing(false);
       router.refresh();
     } catch (err: any) {
@@ -1093,6 +1102,23 @@ export function CandidateProfileView({
 
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-6 pb-12">
+      {/* ─── Pending Change Request Banner ──────────────────────────── */}
+      {pendingRequest && (
+        <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start gap-4 shadow-sm">
+          <Clock className="w-6 h-6 text-amber-600 mt-0.5 shrink-0 animate-pulse" />
+          <div className="flex-1 text-xs">
+            <h4 className="font-bold text-amber-900 text-sm">Profile Updates Pending Consultant Review</h4>
+            <p className="mt-1 font-medium text-amber-800 leading-relaxed">
+              Your recent edits to sensitive fields (
+              <span className="font-bold">
+                {Object.values(pendingRequest.sensitiveChanges || {}).map((s: any) => s.label).join(", ")}
+              </span>
+              ) are currently undergoing consultant verification. Once approved by the Mauna Kea team, the changes will be published to your master profile.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ─── Top Header Card ────────────────────────────────────────── */}
       <NeoCard className="p-7">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">

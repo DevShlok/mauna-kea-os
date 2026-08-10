@@ -1,5 +1,6 @@
 import { requireRole } from "@/lib/auth";
 import { getCandidateById, getMandates, getUserByEmail } from "@/db/queries";
+import { getPendingProfileChangeRequestAction } from "@/actions/candidate-portal";
 import { db } from "@/db";
 import { clientRemarks, clients, engagementListItems, dreamCompanyStatus } from "@/db/schema";
 import { eq, asc, and } from "drizzle-orm";
@@ -25,7 +26,7 @@ export default async function FlCandidateProfilePage({ params }: { params: Promi
     }
   }
 
-  const [candidate, mandates, remarks, allClientsList, userLists, dreamStatuses] = await Promise.all([
+  const [candidate, mandates, remarks, allClientsList, userLists, dreamStatuses, pendingChangeRequest] = await Promise.all([
     getCandidateById(id),
     getMandates(),
     db.select().from(clientRemarks).where(eq(clientRemarks.candId, id)).orderBy(asc(clientRemarks.createdAt)),
@@ -36,7 +37,8 @@ export default async function FlCandidateProfilePage({ params }: { params: Promi
         eq(engagementListItems.userId, pUser.id)
       )
     ) : Promise.resolve([]),
-    db.select().from(dreamCompanyStatus).where(eq(dreamCompanyStatus.candId, id))
+    db.select().from(dreamCompanyStatus).where(eq(dreamCompanyStatus.candId, id)),
+    getPendingProfileChangeRequestAction(id),
   ]);
 
   if (!candidate) {
@@ -55,7 +57,7 @@ export default async function FlCandidateProfilePage({ params }: { params: Promi
       allClients={allClientsList}
       initialEngagementLists={initialEngagementLists}
       dreamStatuses={dreamStatuses}
+      pendingChangeRequest={pendingChangeRequest}
     />
   );
 }
-// Triggering HMR rebuild

@@ -792,3 +792,20 @@ export const guidanceBlocks = pgTable('guidance_blocks', {
 
 export type GuidanceBlock = typeof guidanceBlocks.$inferSelect;
 
+// ─── CANDIDATE PROFILE CHANGE REQUESTS (Sensitive Fields Approval) ───
+export const candidateProfileChangeRequests = pgTable('candidate_profile_change_requests', {
+  id: serial('id').primaryKey(),
+  candId: varchar('cand_id', { length: 50 }).notNull().references(() => candidates.id, { onDelete: 'cascade' }),
+  status: varchar('status', { length: 20 }).default('Pending'), // 'Pending' | 'Approved' | 'Rejected'
+  sensitiveChanges: json('sensitive_changes').$type<Record<string, { label: string; current: any; proposed: any }>>().notNull(),
+  reviewNotes: text('review_notes'),
+  reviewedBy: varchar('reviewed_by', { length: 255 }),
+  reviewedAt: datetime('reviewed_at'),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  candIdIdx: index('cpcr_cand_id_idx').on(table.candId),
+  statusIdx: index('cpcr_status_idx').on(table.status),
+}));
+
+export type CandidateProfileChangeRequest = typeof candidateProfileChangeRequests.$inferSelect;
+

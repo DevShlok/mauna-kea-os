@@ -11,6 +11,7 @@ import {
   candidateJobInterests,
   dreamCompanyStatus,
   candidateApplications,
+  candidateProfileChangeRequests,
 } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { requireRole } from "@/lib/auth";
@@ -208,6 +209,26 @@ export async function getCandidateFloatsAction(candId: string) {
   }));
 }
 
+// ─── Sensitive Field Configuration (Requires Consultant Approval) ─────────────
+const SENSITIVE_FIELDS_CONFIG: Record<string, { label: string; keyInDb: keyof typeof candidates.$inferSelect }> = {
+  designation: { label: "Current Designation", keyInDb: "designation" },
+  company: { label: "Current Company", keyInDb: "company" },
+  currentCompanyStartDate: { label: "Current Company Start Date", keyInDb: "currentCompanyStartDate" },
+  exp: { label: "Total Overall Experience (Years)", keyInDb: "exp" },
+  expTags: { label: "Experience Tags / Focus Areas", keyInDb: "expTags" },
+  pastCompanies: { label: "Past Companies", keyInDb: "pastCompanies" },
+  priorExperiences: { label: "Prior Work History", keyInDb: "priorExperiences" },
+  ctc: { label: "Current Total CTC", keyInDb: "ctc" },
+  fixedCtc: { label: "Fixed CTC Component", keyInDb: "fixedCtc" },
+  variableCtc: { label: "Variable CTC Component", keyInDb: "variableCtc" },
+  expectedCtc: { label: "Expected CTC", keyInDb: "expected" },
+  esops: { label: "ESOPs Value", keyInDb: "esops" },
+  esopVesting: { label: "ESOP Vesting Schedule", keyInDb: "esopVesting" },
+  notice: { label: "Notice Period (Days)", keyInDb: "notice" },
+  stability: { label: "Career Stability Metric", keyInDb: "stability" },
+  qual: { label: "Educational Qualifications", keyInDb: "qual" },
+};
+
 // ─── Update Candidate Self-Profile ──────────────────────────────────────────
 export async function updateCandidateSelfProfileAction(
   candId: string,
@@ -247,40 +268,180 @@ export async function updateCandidateSelfProfileAction(
     throw new Error("Unauthorized to edit this profile");
   }
 
-  await db
-    .update(candidates)
-    .set({
-      ...(data.name && { name: data.name }),
-      ...(data.mobile !== undefined && { mobile: data.mobile }),
-      ...(data.email !== undefined && { email: data.email }),
-      ...(data.designation !== undefined && { designation: data.designation }),
-      ...(data.company !== undefined && { company: data.company }),
-      ...(data.location !== undefined && { location: data.location }),
-      ...(data.hometown !== undefined && { hometown: data.hometown }),
-      ...(data.dob !== undefined && { dob: data.dob }),
-      ...(data.relocationStatus !== undefined && { relocationStatus: data.relocationStatus }),
-      ...(data.relocationPrefs !== undefined && { relocationPrefs: data.relocationPrefs }),
-      ...(data.linkedin !== undefined && { linkedin: data.linkedin }),
-      ...(data.exp !== undefined && { exp: data.exp }),
-      ...(data.currentCompanyStartDate !== undefined && { currentCompanyStartDate: data.currentCompanyStartDate }),
-      ...(data.ctc !== undefined && { ctc: data.ctc }),
-      ...(data.fixedCtc !== undefined && { fixedCtc: data.fixedCtc }),
-      ...(data.variableCtc !== undefined && { variableCtc: data.variableCtc }),
-      ...(data.expectedCtc !== undefined && { expectedCtc: data.expectedCtc }),
-      ...(data.esops !== undefined && { esops: data.esops }),
-      ...(data.esopVesting !== undefined && { esopVesting: data.esopVesting }),
-      ...(data.notice !== undefined && { notice: data.notice }),
-      ...(data.stability !== undefined && { stability: data.stability }),
-      ...(data.expTags !== undefined && { expTags: data.expTags }),
-      ...(data.pastCompanies !== undefined && { pastCompanies: data.pastCompanies }),
-      ...(data.priorExperiences !== undefined && { priorExperiences: data.priorExperiences }),
-      ...(data.qual !== undefined && { qual: data.qual }),
-      updatedAt: new Date(),
-    })
-    .where(eq(candidates.id, candId));
+  // Fetch current DB values to perform field-by-field diff
+  const [curr] = await db.select().from(candidates).where(eq(candidates.id, candId)).limit(1);
+  if (!curr) throw new Error("Candidate profile not found");
+
+  const immediateUpdates: Record<string, any> = {};
+  const sensitiveChanges: Record<string, { label: string; current: any; proposed: any }> = {};
+
+  // Non-sensitive fields (Update Immediately)
+  if (data.name !== undefined && data.name !== curr.name) immediateUpdates.name = data.name;
+  if (data.mobile !== undefined && data.mobile !== curr.mobile) immediateUpdates.mobile = data.mobile;
+  if (data.email !== undefined && data.email !== curr.email) immediateUpdates.email = data.email;
+  if (data.location !== undefined && data.location !== curr.location) immediateUpdates.location = data.location;
+  if (data.hometown !== undefined && data.hometown !== curr.hometown) immediateUpdates.hometown = data.hometown;
+  if (data.dob !== undefined && data.dob !== curr.dob) immediateUpdates.dob = data.dob;
+  if (data.relocationStatus !== undefined && data.relocationStatus !== curr.relocationStatus) immediateUpdates.relocationStatus = data.relocationStatus;
+  if (data.relocationPrefs !== undefined) immediateUpdates.relocationPrefs = data.relocationPrefs;
+  if (data.linkedin !== undefined && data.linkedin !== curr.linkedin) immediateUpdates.linkedin = data.linkedin;
+  if (data.dreamRoles !== undefined) immediateUpdates.dreamRoles = data.dreamRoles;
+  if (data.dreamCos !== undefined) immediateUpdates.dreamCos = data.dreamCos;
+  if (data.notes !== undefined && data.notes !== curr.notes) immediateUpdates.notes = data.notes;
+
+  // Sensitive fields (Diff & Require Approval)
+  for (const [fieldKey, fieldMeta] of Object.entries(SENSITIVE_FIELDS_CONFIG)) {
+    const proposedVal = (data as any)[fieldKey];
+    if (proposedVal !== undefined) {
+      const currentVal = (curr as any)[fieldMeta.keyInDb];
+      const stringifiedProp = JSON.stringify(proposedVal);
+      const stringifiedCurr = JSON.stringify(currentVal ?? null);
+
+      if (stringifiedProp !== stringifiedCurr) {
+        sensitiveChanges[fieldKey] = {
+          label: fieldMeta.label,
+          current: currentVal ?? null,
+          proposed: proposedVal,
+        };
+      }
+    }
+  }
+
+  // Execute Immediate Updates
+  if (Object.keys(immediateUpdates).length > 0) {
+    immediateUpdates.updatedAt = new Date();
+    await db.update(candidates).set(immediateUpdates).where(eq(candidates.id, candId));
+  }
+
+  // Create Change Request if Sensitive Fields were modified
+  let pendingApprovalCreated = false;
+  if (Object.keys(sensitiveChanges).length > 0) {
+    await db.insert(candidateProfileChangeRequests).values({
+      candId,
+      status: "Pending",
+      sensitiveChanges,
+      createdAt: new Date(),
+    });
+
+    pendingApprovalCreated = true;
+
+    // Trigger alert notification for consultants
+    await db.insert(consultantNotifications).values({
+      userId: null,
+      targetRole: "consultant",
+      message: `Candidate ${curr.name || candId} submitted profile updates (${Object.values(sensitiveChanges).map(s => s.label).join(", ")}) pending review.`,
+      link: `/dashboard/candidates/${candId}`,
+    });
+  }
 
   revalidatePath("/candidate/profile");
   revalidatePath("/candidate");
+  revalidatePath(`/${curr.slug || candId}`);
+
+  return {
+    success: true,
+    pendingApproval: pendingApprovalCreated,
+    pendingFields: Object.values(sensitiveChanges).map(s => s.label),
+  };
+}
+
+// ─── Get Pending Profile Change Request ────────────────────────────────────
+export async function getPendingProfileChangeRequestAction(candId: string) {
+  const [request] = await db
+    .select()
+    .from(candidateProfileChangeRequests)
+    .where(and(eq(candidateProfileChangeRequests.candId, candId), eq(candidateProfileChangeRequests.status, "Pending")))
+    .orderBy(desc(candidateProfileChangeRequests.createdAt))
+    .limit(1);
+
+  return request || null;
+}
+
+// ─── Approve Candidate Profile Change Request (Consultant / Admin) ─────────
+export async function approveProfileChangeRequestAction(requestId: number) {
+  const { platformUser } = await requireRole(["admin", "consultant"]);
+
+  const [request] = await db
+    .select()
+    .from(candidateProfileChangeRequests)
+    .where(eq(candidateProfileChangeRequests.id, requestId))
+    .limit(1);
+
+  if (!request || request.status !== "Pending") {
+    return { success: false, error: "Pending request not found" };
+  }
+
+  const sensitiveChanges = request.sensitiveChanges as Record<string, { label: string; current: any; proposed: any }>;
+  const updatesToApply: Record<string, any> = { updatedAt: new Date() };
+
+  for (const [fieldKey, change] of Object.entries(sensitiveChanges)) {
+    const fieldMeta = SENSITIVE_FIELDS_CONFIG[fieldKey];
+    if (fieldMeta) {
+      updatesToApply[fieldMeta.keyInDb] = change.proposed;
+    }
+  }
+
+  // 1. Update Candidate record in Master DB
+  await db.update(candidates).set(updatesToApply).where(eq(candidates.id, request.candId));
+
+  // 2. Mark Request as Approved
+  await db
+    .update(candidateProfileChangeRequests)
+    .set({
+      status: "Approved",
+      reviewedBy: platformUser?.name || "Consultant",
+      reviewedAt: new Date(),
+    })
+    .where(eq(candidateProfileChangeRequests.id, requestId));
+
+  // 3. Notify Candidate
+  await db.insert(candidateNotifications).values({
+    candId: request.candId,
+    type: "status_update",
+    message: "Your requested profile updates (compensation, experience, or role details) have been approved and updated.",
+    link: "/candidate/profile",
+  });
+
+  revalidatePath(`/dashboard/candidates/${request.candId}`);
+  revalidatePath("/candidate/profile");
+  return { success: true };
+}
+
+// ─── Reject Candidate Profile Change Request (Consultant / Admin) ──────────
+export async function rejectProfileChangeRequestAction(requestId: number, reason?: string) {
+  const { platformUser } = await requireRole(["admin", "consultant"]);
+
+  const [request] = await db
+    .select()
+    .from(candidateProfileChangeRequests)
+    .where(eq(candidateProfileChangeRequests.id, requestId))
+    .limit(1);
+
+  if (!request || request.status !== "Pending") {
+    return { success: false, error: "Pending request not found" };
+  }
+
+  // 1. Mark Request as Rejected
+  await db
+    .update(candidateProfileChangeRequests)
+    .set({
+      status: "Rejected",
+      reviewNotes: reason || "Profile changes do not match verification records.",
+      reviewedBy: platformUser?.name || "Consultant",
+      reviewedAt: new Date(),
+    })
+    .where(eq(candidateProfileChangeRequests.id, requestId));
+
+  // 2. Notify Candidate
+  await db.insert(candidateNotifications).values({
+    candId: request.candId,
+    type: "status_update",
+    message: `Your requested profile updates were not approved. ${reason ? "Reason: " + reason : ""}`,
+    link: "/candidate/profile",
+  });
+
+  revalidatePath(`/dashboard/candidates/${request.candId}`);
+  revalidatePath("/candidate/profile");
   return { success: true };
 }
 
