@@ -198,8 +198,9 @@
   },
   "active": "ef4a57a16ec56532",
   "lastOpenFiles": [
-    "Database/mandates.md",
     "reference_checks.md",
+    "Changelog.md",
+    "Database/mandates.md",
     "Database/floats.md",
     "Database/candidates.md",
     "Features/index.md",
@@ -207,7 +208,6 @@
     "Database/other-tables.md",
     "Untitled.base",
     "2026-08-08.md",
-    "Changelog.md",
     "Features/client-portal.md",
     "Unabyss Exports",
     "Architecture/scripts.md",

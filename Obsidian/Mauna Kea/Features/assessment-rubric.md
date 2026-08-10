@@ -29,6 +29,9 @@ From the candidate detail page (`/dashboard/candidates/[id]`), there is an "Asse
 ## Draft vs Complete
 The form can be saved as `Draft` (status stored in `candidate_reports.status = 'Draft'`) or `Complete` (fires all the above). Drafts do not update the candidate score or badge.
 
+## Strict Data Isolation
+Because manual assessments share the `candidate_reports` table with AI Workbench reports, they must be rigorously isolated by their frameworkId (`rubric-assessment`). AI Workbench operations (generate, fetch latest, delete) must explicitly exclude `rubric-assessment` from their queries, and manual assessment operations must explicitly include it.
+
 ## Candidate Visibility
 Candidates see only their tier (A/B/C) and a description on the Verification page. Raw scores are never shown to candidates.
 

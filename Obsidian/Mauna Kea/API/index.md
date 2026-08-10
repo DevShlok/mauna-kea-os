@@ -36,6 +36,7 @@ All API routes live under `src/app/api/`. All apply rate limiting (`src/lib/rate
 | `/api/time-logs` | Clock in/out (rate limited, auth required) |
 | `/api/leave-requests` | Leave request management |
 | `/api/auth` | Auth helpers |
+| `/api/sync-candidates` | Backfill/sync route for updating candidate badges and pipeline status retroactively |
 
 ## Background / Automation
 | Route | Purpose |

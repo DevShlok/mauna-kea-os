@@ -16,6 +16,9 @@ The AI Workbench allows consultants to generate structured candidate reports usi
 5. `status` = `Generating → Completed | Failed`
 6. `sharedWithClient` flag controls client portal visibility
 
+## Strict Data Isolation
+AI Workbench reports share the `candidate_reports` table with Manual Rubric Assessments (`frameworkId: 'rubric-assessment'`). It is critical that all AI Workbench operations (generate, fetch latest, delete) strictly filter by `frameworkId`. A past bug caused AI generation to indiscriminately delete manual assessments or leak assessment scores into AI forms. Workbench APIs must never touch `rubric-assessment` frameworks.
+
 ## Profile Extraction
 `/api/extract-profile` — takes raw text (LinkedIn scrape or CV text), calls Gemini to extract structured fields, returns JSON for consultant to review before saving.
 
