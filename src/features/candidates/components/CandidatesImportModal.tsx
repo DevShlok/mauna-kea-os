@@ -4,13 +4,14 @@ import React, { useState, useRef } from "react";
 import { X, Upload, CheckCircle2, AlertCircle, ChevronRight, FileSpreadsheet } from "lucide-react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { mapCandidatesAction, checkCandidateDuplicatesAction, finalizeCandidatesImportAction } from "@/actions/candidates";
+import { mapCandidatesAction, checkCandidateDuplicatesAction, finalizeCandidatesImportAction, importCandidateDocumentAction } from "@/actions/candidates";
 
 export function CandidatesImportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const router = useRouter();
   
   const [step, setStep] = useState<"upload" | "mapping" | "duplicates">("upload");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStatusText, setProcessingStatusText] = useState("Processing Data...");
   
   const [importMapping, setImportMapping] = useState<any>(null);
   const [importFileData, setImportFileData] = useState<any[]>([]);
@@ -38,6 +39,7 @@ export function CandidatesImportModal({ isOpen, onClose }: { isOpen: boolean; on
     setNewCandidatesQueue([]);
     setFieldSelections({});
     setIsProcessing(false);
+    setProcessingStatusText("Processing Data...");
   };
 
   const handleClose = () => {
@@ -49,9 +51,48 @@ export function CandidatesImportModal({ isOpen, onClose }: { isOpen: boolean; on
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+    const isDocument = ['pdf', 'doc', 'docx', 'txt'].includes(fileExt);
+
+    // ─────────────────────────────────────────────────────────────
+    // BRANCH 1: DOCUMENT / RESUME FILE (.pdf, .doc, .docx, .txt)
+    // IDENTIFIED AS: Update Database Table + Attach CV File
+    // ─────────────────────────────────────────────────────────────
+    if (isDocument) {
+      setIsProcessing(true);
+      setProcessingStatusText("Parsing resume text with AI, updating database table & attaching CV...");
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await importCandidateDocumentAction(formData);
+        if (res.success) {
+          toast.success(
+            `Imported Resume for ${res.candidateName}! ${res.isUpdate ? "Updated existing database record" : "Created new candidate"} & attached CV.`,
+            { duration: 5000 }
+          );
+          handleClose();
+          router.refresh();
+        } else {
+          toast.error(res.error || "Failed to process CV document import");
+        }
+      } catch (err: any) {
+        console.error("Resume Import Error:", err);
+        toast.error("Error importing resume document.");
+      } finally {
+        setIsProcessing(false);
+        if (e.target) e.target.value = '';
+      }
+      return;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // BRANCH 2: TABULAR DATA FILE (.csv, .xlsx, .xls)
+    // IDENTIFIED AS: Update Database Table Only
+    // ─────────────────────────────────────────────────────────────
     setIsProcessing(true);
+    setProcessingStatusText("Parsing spreadsheet rows for Database Table Update...");
     try {
-      const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
       const isCsv = fileExt === 'csv' || file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv');
       let rows: any[] = [];
 
@@ -317,8 +358,8 @@ export function CandidatesImportModal({ isOpen, onClose }: { isOpen: boolean; on
               Import Candidates
             </h3>
             <p className="text-[#64748b] text-sm mt-1 ml-9">
-              {step === "upload" && "Upload your Excel or CSV file to begin"}
-              {step === "mapping" && "Review AI-generated column mapping"}
+              {step === "upload" && "Upload any file format (.xlsx, .csv, .pdf, .doc, .docx, .txt) — auto-detected"}
+              {step === "mapping" && "Review AI-generated column mapping for Database Table Update"}
               {step === "duplicates" && "Resolve duplicate entries found in your database"}
             </p>
           </div>
@@ -334,9 +375,9 @@ export function CandidatesImportModal({ isOpen, onClose }: { isOpen: boolean; on
         {/* Content */}
         <div className="p-8 overflow-y-auto custom-scrollbar flex-1 relative bg-[#fafbfd]">
           {isProcessing && (
-            <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
+            <div className="absolute inset-0 bg-white/70 backdrop-blur-xs z-20 flex flex-col items-center justify-center p-6 text-center">
               <div className="w-12 h-12 border-4 border-[#133255]/20 border-t-[#D8B15B] rounded-full animate-spin mb-4" />
-              <p className="text-[#133255] font-semibold">Processing Data...</p>
+              <p className="text-[#133255] font-bold text-base">{processingStatusText}</p>
             </div>
           )}
 
@@ -349,15 +390,23 @@ export function CandidatesImportModal({ isOpen, onClose }: { isOpen: boolean; on
                 <div className="w-20 h-20 bg-[#133255]/5 text-[#133255] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-[#133255] group-hover:text-white transition-all duration-300">
                   <Upload size={36} strokeWidth={1.5} />
                 </div>
-                <h4 className="text-[19px] font-bold text-[#133255] mb-2">Click to Upload File</h4>
-                <p className="text-[#64748b] text-center max-w-[280px]">
-                  Support for .xlsx and .csv formats. Our AI will automatically map your columns.
+                <h4 className="text-[19px] font-bold text-[#133255] mb-2">Upload Candidate File</h4>
+                <p className="text-[#64748b] text-center max-w-[340px] text-xs leading-relaxed mb-3">
+                  Upload any format: <span className="font-bold text-[#133255]">.xlsx, .csv</span> (updates Database Table) or <span className="font-bold text-[#133255]">.pdf, .doc, .docx, .txt</span> (updates Database Table & attaches CV).
                 </p>
+                <div className="flex gap-2 flex-wrap justify-center">
+                  <span className="text-[11px] font-bold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full border border-slate-200">
+                    Table Only: XLSX, CSV
+                  </span>
+                  <span className="text-[11px] font-bold px-2.5 py-1 bg-amber-50 text-amber-800 rounded-full border border-amber-200">
+                    Table + CV: PDF, DOC, DOCX
+                  </span>
+                </div>
                 <input
                   type="file"
                   ref={fileInputRef}
                   className="hidden"
-                  accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                  accept=".csv, .xlsx, .xls, .pdf, .doc, .docx, .txt, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, text/plain"
                   onChange={handleFileUpload}
                 />
               </div>

@@ -75,7 +75,8 @@
               "title": "Bookmarks"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
@@ -198,9 +199,10 @@
   },
   "active": "ef4a57a16ec56532",
   "lastOpenFiles": [
+    "Features/candidate-imports.md",
+    "Changelog.md",
     "Database/candidate_profile_change_requests.md",
     "reference_checks.md",
-    "Changelog.md",
     "Database/mandates.md",
     "Database/floats.md",
     "Database/candidates.md",
@@ -225,7 +227,6 @@
     "Features/candidate-onboarding.md",
     "Features/candidate-portal.md",
     "Features/assessment-rubric.md",
-    "Features/ai-workbench.md",
     "Untitled 2.canvas",
     "Untitled 1.canvas",
     "Untitled.canvas",

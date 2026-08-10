@@ -1,30 +1,27 @@
 # Verification
 
-**Route:** `/${slug}/verification`
-**Component:** `src/features/candidate-portal/components/VerificationStatusClient.tsx`
-**Tables:** [[Database/other-tables#candidate_verifications]], [[Database/other-tables#reference_checks]], [[Database/candidate_badges]]
+**Route:** `/${slug}/verification`  
+**Component:** `src/features/candidate-portal/components/VerificationStatusClient.tsx`  
+**Tables:** [[Database/other-tables#candidate_verifications]], [[Database/other-tables#reference_checks]], [[Database/candidate_badges]], [[Database/other-tables#candidate_reports]]
 
 ## What It Is
 The verification page is the candidate's trust and credential hub. It surfaces:
-1. Overall verification status (Not Started → In Progress → Verified)
-2. Earned badges (profile_complete, reference_check_complete, assessment_complete)
-3. Reference check summaries (shared ones only)
-4. Assessment tier (A/B/C) — if `assessment_complete` badge exists
+1. Overall verification status (Not Started → In Progress → Verified) with shield double-tick badge.
+2. Candidate Self-Assessment Launcher (`CandidateAssessmentWidget.tsx`) featuring 10 psychometric Likert-scale indicators and 2 situational scenario questions.
+3. Assessment Outcome & Tier Rating (A/B/C) with evaluation total score (out of 100) and constructive takeaways.
+4. Assessment Outcome Clarification Query modal (`requestAssessmentClarificationAction`) logging candidate queries into `consultantNotifications`.
+5. Earned badges (`profile_complete`, `reference_check_complete`, `assessment_complete`, `ai_interview_complete`).
+6. Reference check summaries (shared ones only).
 
-## Badge Display
-`src/features/candidate-portal/components/VerificationBadgesPanel.tsx` renders all earned badges. Data comes from `candidate_badges` table.
-
-## Tier Card
-If `assessment_complete` badge is present:
-- Shows tier (A/B/C) with description
-- Raw score (0–100) is NOT shown to candidates (by design)
-- See [[Decisions/no-raw-scores-to-candidates]]
+## Components & Modules
+- `CandidateAssessmentWidget.tsx`: Multi-step interactive evaluation modal triggering `submitCandidateSelfAssessmentAction`.
+- `VerificationBadgesPanel.tsx`: Renders earned badges from `candidate_badges` table.
+- Clarification Request Modal: Allows candidates to inquire about assessment results without altering official scores.
 
 ## Reference Checks Shown
-Only `reference_checks` rows where `isSharedWithClient = true` (yes the column is named isSharedWithClient but also governs candidate visibility — the naming is a minor inconsistency). Renders: referee name, relationship, summary positives/improvements.
+Only `reference_checks` rows where `isSharedWithClient = true` render referee name, relationship, and constructive summary positives/improvements.
 
-## Empty State Handling
-If no badges or references exist yet, shows appropriate empty state prompts rather than blank sections.
-
-## Server Page
-`src/app/[clientSlug]/verification/page.tsx` — fetches verification status, reference checks, and assessment badge in parallel.
+## Related Notes
+- [[Features/candidate-portal]]
+- [[Features/ai-workbench]]
+- [[Database/candidate_badges]]

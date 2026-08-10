@@ -23,8 +23,12 @@ export default async function DashboardLayout({
         await db.update(platformUsers)
           .set({ lastActive: new Date() })
           .where(eq(platformUsers.id, platformUser.id));
-      } catch(e) {
-        console.error("Failed to update lastActive", e);
+      } catch (e: any) {
+        if (e?.code === "ENOTFOUND" || e?.cause?.code === "ENOTFOUND" || e?.message?.includes("ENOTFOUND")) {
+          console.warn("[Database Offline/DNS Glitch] Unable to reach Supabase pooler for lastActive update.");
+        } else {
+          console.error("Failed to update lastActive:", e?.message || e);
+        }
       }
     });
   }

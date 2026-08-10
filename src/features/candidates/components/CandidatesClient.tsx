@@ -651,16 +651,10 @@ export default function CandidatesClient({
             </button>
             <button
               onClick={() => setIsImportModalOpen(true)}
-              className="h-10 px-4 neo-btn text-[#475569] text-[13.5px] font-semibold transition-all flex items-center gap-2"
+              className="h-10 px-4.5 bg-[#133255] text-white rounded-xl text-[13.5px] font-bold transition-all hover:bg-[#1a4473] flex items-center gap-2 shadow-sm cursor-pointer"
             >
-              <Download size={15} className="rotate-180" /> Import Candidates
+              <Upload size={15} /> Import Candidate
             </button>
-            <Link
-              href="/dashboard/candidates/bulk-import"
-              className="h-10 px-4 neo-btn text-[#475569] text-[13.5px] font-semibold transition-all flex items-center gap-2"
-            >
-              <Upload size={15} /> Import CVs
-            </Link>
             <Link
               href="/dashboard/candidates/new"
               className="h-10 px-5 neo-btn text-[#133255] text-[13.5px] font-bold transition-all flex items-center gap-2"

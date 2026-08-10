@@ -371,3 +371,168 @@ export async function appendTargetCompanyOnSubmissionAction(candId: string, clie
     await updateCandidateTargetCompaniesAction(candId, [...existing, clientCompany]);
   }
 }
+
+/**
+ * Single-button Smart Document Import Action (#2):
+ * Accepts CV Document Formats (.pdf, .doc, .docx, .txt), parses candidate profile details,
+ * updates/creates Database Table record AND attaches CV file.
+ */
+export async function importCandidateDocumentAction(formData: FormData) {
+  const file = formData.get("file") as File | null;
+  if (!file) return { success: false, error: "No file provided" };
+
+  const ext = file.name.split(".").pop()?.toLowerCase() || "pdf";
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  // 1. Extract Text
+  let extractedText = "";
+  try {
+    if (ext === "docx" || ext === "doc") {
+      const mammoth = await import("mammoth");
+      const result = await mammoth.extractRawText({ buffer });
+      extractedText = result.value;
+    } else if (ext === "txt") {
+      extractedText = buffer.toString("utf-8");
+    } else {
+      const pdfParse = require("pdf-parse-new");
+      const parsed = await pdfParse(buffer);
+      extractedText = parsed.text;
+    }
+  } catch (err) {
+    console.warn("Text extraction error:", err);
+    extractedText = file.name;
+  }
+
+  // 2. AI Extraction of Candidate Profile Fields
+  const schema = z.object({
+    name: z.string().describe("Candidate full name"),
+    email: z.string().nullable().describe("Candidate email address"),
+    mobile: z.string().nullable().describe("Candidate phone/mobile number"),
+    designation: z.string().nullable().describe("Current job title/designation"),
+    company: z.string().nullable().describe("Current company name"),
+    location: z.string().nullable().describe("Current city/location"),
+    linkedin: z.string().nullable().describe("LinkedIn profile URL"),
+    ctc: z.string().nullable().describe("Current annual CTC/salary"),
+    totalExperience: z.number().nullable().describe("Total work experience in years"),
+    qualification: z.string().nullable().describe("Highest degree/qualification"),
+  });
+
+  let extractedData: any = {};
+  try {
+    const { object } = await generateObjectWithFallback({
+      schema,
+      prompt: `Extract structured candidate profile details from the following resume text. Return null for missing fields.
+Resume Text:
+${extractedText.substring(0, 4000)}`
+    });
+    extractedData = object;
+  } catch (aiErr) {
+    console.warn("AI resume parsing fallback to basic name", aiErr);
+    extractedData = { name: file.name.replace(/\.[^/.]+$/, "") };
+  }
+
+  const name = extractedData.name || file.name.replace(/\.[^/.]+$/, "");
+  const email = extractedData.email || "";
+  const mobile = extractedData.mobile || "";
+  const designation = extractedData.designation || "";
+  const company = extractedData.company || "";
+
+  // 3. Upload Document to Supabase Storage
+  let cvUrl = "";
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const filename = `cvs/import-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+    const { error: uploadError } = await supabase.storage
+      .from("mauna-kea-documents")
+      .upload(filename, buffer, { contentType: file.type || "application/pdf", upsert: true });
+
+    if (!uploadError) {
+      const { data } = supabase.storage.from("mauna-kea-documents").getPublicUrl(filename);
+      cvUrl = data.publicUrl;
+    }
+  } catch (stErr) {
+    console.warn("Supabase document storage upload fallback", stErr);
+  }
+
+  // 4. Duplicate Match & DB Table Update + CV Attachment
+  const { newCandId } = await import("@/lib/ids");
+  const { or, eq, and } = await import("drizzle-orm");
+  const orConditions = [];
+  if (email) orConditions.push(eq(candidates.email, email));
+  if (mobile) orConditions.push(eq(candidates.mobile, mobile));
+  if (name && company) orConditions.push(and(eq(candidates.name, name), eq(candidates.company, company)));
+
+  let existingCandidate = null;
+  if (orConditions.length > 0) {
+    const found = await db.select().from(candidates).where(or(...orConditions));
+    if (found.length > 0) existingCandidate = found[0];
+  }
+
+  const currentUser = await getCurrentUserName();
+  let candidateId = "";
+
+  if (existingCandidate) {
+    candidateId = existingCandidate.id;
+    await db.update(candidates).set({
+      name: name || existingCandidate.name,
+      email: email || existingCandidate.email,
+      mobile: mobile || existingCandidate.mobile,
+      designation: designation || existingCandidate.designation,
+      company: company || existingCandidate.company,
+      location: extractedData.location || existingCandidate.location,
+      linkedin: extractedData.linkedin || existingCandidate.linkedin,
+      exp: extractedData.totalExperience || existingCandidate.exp,
+      ctc: extractedData.ctc || existingCandidate.ctc,
+      hasCv: true,
+      cvFileName: cvUrl || existingCandidate.cvFileName,
+      cvText: extractedText || existingCandidate.cvText,
+      updatedBy: currentUser,
+    }).where(eq(candidates.id, candidateId));
+  } else {
+    candidateId = newCandId();
+    const initials = name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase() || "CN";
+    await db.insert(candidates).values({
+      id: candidateId,
+      name,
+      email,
+      mobile,
+      designation,
+      company,
+      location: extractedData.location || "",
+      linkedin: extractedData.linkedin || "",
+      initials,
+      qual: extractedData.qualification ? [extractedData.qualification] : [],
+      exp: extractedData.totalExperience || 0,
+      ctc: extractedData.ctc || "",
+      hasCv: true,
+      cvFileName: cvUrl,
+      cvText: extractedText,
+      updatedBy: currentUser,
+      metadata: { source: "CV Document Import" },
+    });
+  }
+
+  // Attach CV to candidateFiles
+  if (cvUrl) {
+    await db.insert(candidateFiles).values({
+      candId: candidateId,
+      fileType: "CV / Resume",
+      fileName: file.name,
+      fileUrl: cvUrl,
+      extractedText: extractedText.substring(0, 5000),
+    });
+  }
+
+  revalidatePath("/dashboard/candidates", "layout");
+  return {
+    success: true,
+    candidateId,
+    candidateName: name,
+    isUpdate: !!existingCandidate,
+    hasCv: true,
+  };
+}

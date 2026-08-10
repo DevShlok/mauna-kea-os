@@ -8,8 +8,8 @@
     "outboundEnabled": true,
     "inboundEnabled": true,
     "auth": {
-      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg2MzczNzQ1LCJpYXQiOjE3ODYzNzAxNDUsImp0aSI6IjU4YmFhODU5M2Y1OTQ4ZDNiMTNmZTJhYjgxZjc2NDkwIiwidXNlcl9pZCI6IjE1OWE3OWJjLWFlMzYtNDc1Mi05MDg3LTU1Y2IyNTJiZDE1NiIsImNsaWVudF90eXBlIjoib2F1dGhfY2xpZW50Iiwib2F1dGhfY2xpZW50X2lkIjoib2JzaWRpYW4ifQ.tkuBm-2toVXsDoze3hrMoBzQuQJrs51PNWRYZB3WICM",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODk2MjE0NSwiaWF0IjoxNzg2MzcwMTQ1LCJqdGkiOiJkOTVlZDg4NTAzYTM0MmMxOTFmNzE5MDlkOWM5ODBlMCIsInVzZXJfaWQiOiIxNTlhNzliYy1hZTM2LTQ3NTItOTA4Ny01NWNiMjUyYmQxNTYiLCJjbGllbnRfdHlwZSI6Im9hdXRoX2NsaWVudCIsIm9hdXRoX2NsaWVudF9pZCI6Im9ic2lkaWFuIn0.CJy84syPBctwVeXWNdCNsFL1pJwU8H0pTFAoptEWRcM",
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg2Mzg5NzQyLCJpYXQiOjE3ODYzODYxNDIsImp0aSI6IjE5N2Q0NzA0MDIwNjQ0OTJhNmJlYjY0N2ZjY2U2ZGI0IiwidXNlcl9pZCI6IjE1OWE3OWJjLWFlMzYtNDc1Mi05MDg3LTU1Y2IyNTJiZDE1NiIsImNsaWVudF90eXBlIjoib2F1dGhfY2xpZW50Iiwib2F1dGhfY2xpZW50X2lkIjoib2JzaWRpYW4ifQ._YNpY9PCeEtEr5GHbQhI225q1STeMRV4dSlDgZqbWx8",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODk3ODE0MiwiaWF0IjoxNzg2Mzg2MTQyLCJqdGkiOiI4YTA3OTY5NmUzODk0YzJhYWVkZDY2OTZlNDdlMDRkNCIsInVzZXJfaWQiOiIxNTlhNzliYy1hZTM2LTQ3NTItOTA4Ny01NWNiMjUyYmQxNTYiLCJjbGllbnRfdHlwZSI6Im9hdXRoX2NsaWVudCIsIm9hdXRoX2NsaWVudF9pZCI6Im9ic2lkaWFuIn0.kcHNinUF6ZFqt8FzYxHVgAP6eRaUEVl-diCiZe91Pt8",
       "userEmail": "shlokshukla1469@gmail.com"
     },
     "bannerDismissed": true
@@ -17,8 +17,8 @@
   "manifestCache": {
     "paths": {
       "Changelog.md": {
-        "contentHash": "19e33aacdbe868a2beef4231c47076d619368870f3b21e6617779c84331c9275",
-        "mtime": 1786370997760
+        "contentHash": "54106646a38041b77c2736fa866049d2a63e4b0c9631dcc07bfc61ee7317fc67",
+        "mtime": 1786386285424
       },
       "Decisions/no-raw-scores-to-candidates.md": {
         "contentHash": "596b889a55301ec6a7604faaf24e10b7b186b8c18d6459feb7115c13b0cdef6f",
@@ -53,12 +53,12 @@
         "mtime": 1786147848674
       },
       "Features/verification.md": {
-        "contentHash": "c46925fc4eb308f90f5c642e2053b2845d19777d1cff3748ddb355e00a66fb4f",
-        "mtime": 1786147836908
+        "contentHash": "dfecbd105a1ffc381ee31654e78b637f3f75ef9c375d3a9ac79122efa4b6003f",
+        "mtime": 1786371637512
       },
       "Features/jobs-board.md": {
-        "contentHash": "d5700df64e334bb895fcaddcffde643d4daae4ba9bb5c812e88dd2b530d05a4d",
-        "mtime": 1786147823158
+        "contentHash": "c4a1e41a0dc22301c66f02d4f241a880cec7c80ae4d9a6e4076d4608ca7589bf",
+        "mtime": 1786371646560
       },
       "Features/dream-10.md": {
         "contentHash": "1fc5ae4c44984a1e3fbc66fed62565f2322e75046e405896df2d44642fc3a400",
@@ -179,6 +179,10 @@
       "Database/candidate_profile_change_requests.md": {
         "contentHash": "74dec38979a9bcdcdafc307e7432c8cabd5132d2635c3245858a0e33e272ae78",
         "mtime": 1786370133815
+      },
+      "Features/candidate-imports.md": {
+        "contentHash": "703a43ce8d0a14237e7d67572e5ec502eb04e005e36ab96732e60c2c8b97a942",
+        "mtime": 1786386378530
       }
     },
     "exportsUpdatedAfter": ""

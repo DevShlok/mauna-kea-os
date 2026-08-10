@@ -4,6 +4,10 @@ Newest entry on top. Format: `YYYY-MM-DD — what changed — why`
 
 ---
 
+2026-08-10 — Unified single-button Smart Candidate Import & auto-detection engine — Merged separate import buttons into a single "Import Candidate" button in `CandidatesClient.tsx` and `CandidatesImportModal.tsx`. Built format auto-detection branching: tabular files (`.xlsx`, `.csv`) update database table records only; document resume files (`.pdf`, `.doc`, `.docx`, `.txt`) invoke `importCandidateDocumentAction` to parse candidate profile details via AI, create/update database records, and attach CV files.
+
+2026-08-10 — Database connection resilience & graceful DNS offline handling — Added `max_lifetime: 60` and `connect_timeout: 10` to `db/index.ts` to reset stale sockets after laptop sleep/wake cycles. Added clean fallback error logging in `dashboard/layout.tsx` for `ENOTFOUND` DNS lookup failures.
+
 2026-08-10 — Full completion of 5 key BRD requirements (#8, #10/#25, #5, #19, #24) — Implemented candidate-facing AI Assessment & Psychometric Questionnaire widget (`CandidateAssessmentWidget.tsx`), Assessment Outcome Clarification Query modal, instant AI Job Match % score engine (`computeJobMatchScore` in `job-matching.ts`), dynamic AI Career Trajectory Roadmap generator (`AICareerRoadmapWidget.tsx`), and Mentor Guidance Session request modal with domain filtering (`ConsultantDirectoryClient.tsx`).
 
 2026-08-10 — Candidate Profile Change Approval System & Candidate Portal BRD completion — Implemented consultant/admin review approval workflow for candidate edits to sensitive fields (compensation, notice period, designation, work history, education) with PostgreSQL table `candidate_profile_change_requests`, candidate pending banner, and consultant side-by-side review panel. Finalized Candidate Portal BRD items including conversational onboarding option pills & progress animation, real-time consultant directory data binding, milestone verification badges, and unified applications tracker with BRD workflow stages. Optimized UI animation performance across sidebar and global CSS.
