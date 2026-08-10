@@ -1,6 +1,7 @@
 import { db } from './index';
 import { eq, sql, getTableColumns, desc, and, ilike, or, inArray, gte, lte, asc, isNull } from 'drizzle-orm';
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import {
   mandates, mandateCandidates, candidates, floats, floatReferences,
   floatFollowUps, floatActivities, frameworks, frameworkCategories,
@@ -10,11 +11,15 @@ import {
 
 
 // ─── PLATFORM USERS ──────────────────────────────────────
-export const getConsultants = cache(async () => {
-  const users = await db.select({ name: platformUsers.name }).from(platformUsers).where(inArray(platformUsers.role, ["admin", "consultant"]));
-  const uniqueNames = Array.from(new Set(users.map(u => u.name).filter(Boolean)));
-  return uniqueNames as string[];
-});
+export const getConsultants = unstable_cache(
+  async () => {
+    const users = await db.select({ name: platformUsers.name }).from(platformUsers).where(inArray(platformUsers.role, ["admin", "consultant"]));
+    const uniqueNames = Array.from(new Set(users.map(u => u.name).filter(Boolean)));
+    return uniqueNames as string[];
+  },
+  ['consultants-list'],
+  { tags: ['consultants-list'], revalidate: 3600 }
+);
 
 // ─── MANDATES ────────────────────────────────────────────
 export const getMandates = cache(async () => {
@@ -71,15 +76,19 @@ export const getMandates = cache(async () => {
   }));
 });
 
-export const getMandatesLight = cache(async () => {
-  return await db.select({
-    id: mandates.id,
-    company: mandates.company,
-    role: mandates.role,
-    status: mandates.status,
-    frameworkId: mandates.frameworkId
-  }).from(mandates).where(eq(mandates.isDeleted, false)).orderBy(desc(mandates.id));
-});
+export const getMandatesLight = unstable_cache(
+  async () => {
+    return await db.select({
+      id: mandates.id,
+      company: mandates.company,
+      role: mandates.role,
+      status: mandates.status,
+      frameworkId: mandates.frameworkId
+    }).from(mandates).where(eq(mandates.isDeleted, false)).orderBy(desc(mandates.id));
+  },
+  ['mandates-light-list'],
+  { tags: ['mandates-light'], revalidate: 300 }
+);
 
 export const getMandatesPaginated = cache(async (params: {
   page: number;
@@ -527,7 +536,8 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
   ];
   
   if (search && search.trim()) {
-    const searchPattern = `%${search.trim()}%`;
+    const trimmed = search.trim();
+    const searchPattern = `%${trimmed}%`;
     conditions.push(or(
       ilike(candidates.id, searchPattern),
       ilike(candidates.name, searchPattern),
@@ -537,7 +547,7 @@ export const getCandidatesPaginated = cache(async (params: CandidateQueryParams)
       ilike(candidates.mobile, searchPattern),
       ilike(candidates.location, searchPattern),
       ilike(candidates.notes, searchPattern),
-      ilike(candidates.cvText, searchPattern)
+      sql`to_tsvector('english', COALESCE(${candidates.cvText}, '')) @@ websearch_to_tsquery('english', ${trimmed})`
     ));
   }
   

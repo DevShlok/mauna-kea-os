@@ -131,6 +131,7 @@ export const candidates = pgTable('candidates', {
   statusIdx: index('candidates_status_idx').on(table.status),
   isDeletedIdx: index('candidates_is_deleted_idx').on(table.isDeleted),
   statusIsDeletedIdx: index('candidates_status_is_deleted_idx').on(table.status, table.isDeleted),
+  companyStatusIdx: index('candidates_company_status_is_deleted_idx').on(table.company, table.status, table.isDeleted),
 }));
 
 // ─── CANDIDATE FILES (HISTORY) ───────────────────────────
