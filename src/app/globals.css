@@ -487,4 +487,34 @@
   box-shadow: 3px 3px 8px #d1d9e6, -3px -3px 8px #ffffff !important;
   border-radius: 50px !important;
 }
+
+/* ── Hardware Acceleration & Animation Performance Tweaks ── */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* Optimize generic transition-all to target GPU-friendly properties */
+.transition-all {
+  transition-property: transform, opacity, background-color, border-color, box-shadow !important;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Smooth font and layout rendering hints */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 

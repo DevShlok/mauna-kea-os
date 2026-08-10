@@ -117,7 +117,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
   ];
 
   return (
-    <div className={`group relative h-screen transition-all duration-300 ease-in-out shrink-0 z-40 ${isCollapsed ? "w-[76px]" : "w-[270px]"}`}>
+    <div className={`group relative h-screen shrink-0 z-40 ${isCollapsed ? "w-[76px]" : "w-[270px]"}`} style={{ transition: 'width 280ms cubic-bezier(0.4, 0, 0.2, 1)', willChange: 'width' }}>
       <div
         className={`absolute inset-0 flex flex-col overflow-y-auto text-white border-r border-white/10 ${isCollapsed ? 'overflow-x-visible' : 'overflow-x-hidden'}`}
         style={{ background: "linear-gradient(180deg, #133255 0%, #0b1f36 100%)", boxShadow: "4px 0 20px rgba(0,0,0,0.18)" }}
@@ -162,7 +162,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                 onMouseLeave={handleMouseLeave}
               >
                 <div
-                  className={`flex items-center gap-3 py-3 cursor-pointer transition-all duration-200 rounded-xl mx-0 ${
+                  className={`flex items-center gap-3 py-3 cursor-pointer rounded-xl mx-0 ${
                     isHighlighted
                       ? "text-white font-semibold"
                       : "text-white/65 hover:text-white"
@@ -173,8 +173,9 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                           background: "rgba(216,177,91,0.12)",
                           border: "1px solid rgba(216,177,91,0.25)",
                           boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                          transition: 'color 150ms ease, background 150ms ease, border-color 150ms ease, box-shadow 150ms ease',
                         }
-                      : { border: "1px solid transparent" }
+                      : { border: "1px solid transparent", transition: 'color 150ms ease, background 150ms ease, border-color 150ms ease, box-shadow 150ms ease' }
                   }
                   onClick={() => {
                     if (isCollapsed) setIsCollapsed(false);
@@ -192,9 +193,14 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
 
                 {!isCollapsed && (
                   <div
-                    className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+                    style={{
+                      overflow: 'hidden',
+                      maxHeight: isExpanded ? `${visibleChildren.length * 44}px` : '0px',
+                      opacity: isExpanded ? 1 : 0,
+                      transition: 'max-height 280ms cubic-bezier(0.4, 0, 0.2, 1), opacity 220ms cubic-bezier(0.4, 0, 0.2, 1)',
+                      willChange: 'max-height, opacity',
+                    }}
                   >
-                  <div className="overflow-hidden min-h-0 flex flex-col">
                     <div className="flex flex-col py-1 pl-3">
                     {visibleChildren.map((child, childIdx) => {
                       const isChildActive = pathname === child.href;
@@ -202,15 +208,16 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                         <Link
                           key={childIdx}
                           href={child.href}
-                          className={`flex items-center gap-2.5 pl-8 pr-4 py-2.5 text-[13px] transition-all duration-200 rounded-lg ${
+                          className={`flex items-center gap-2.5 pl-8 pr-4 py-2.5 text-[13px] rounded-lg ${
                             isChildActive
                               ? "text-[#D8B15B] font-bold bg-[#D8B15B]/10 border border-[#D8B15B]/20"
                               : "text-white/55 hover:text-white hover:bg-white/5 border border-transparent"
                           }`}
                           style={{
-                            transform: isExpanded ? "translateX(0)" : "translateX(-8px)",
+                            transform: isExpanded ? 'translateX(0)' : 'translateX(-8px)',
                             opacity: isExpanded ? 1 : 0,
-                            transitionDelay: isExpanded ? `${childIdx * 30}ms` : "0ms"
+                            transition: `transform 220ms cubic-bezier(0.4, 0, 0.2, 1) ${isExpanded ? childIdx * 25 : 0}ms, opacity 200ms ease ${isExpanded ? childIdx * 25 : 0}ms`,
+                            willChange: 'transform, opacity',
                           }}
                         >
                           {child.icon && <child.icon className="w-3.5 h-3.5 shrink-0 opacity-70" />}
@@ -220,7 +227,6 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                       );
                     })}
                     </div>
-                  </div>
                   </div>
                 )}
 
