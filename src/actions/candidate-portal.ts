@@ -12,6 +12,8 @@ import {
   dreamCompanyStatus,
   candidateApplications,
   candidateProfileChangeRequests,
+  candidateBadges,
+  candidateReports,
 } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { requireRole } from "@/lib/auth";
@@ -689,5 +691,214 @@ export async function updateApplicationStatusAction(applicationId: number, statu
   }
 
   revalidatePath("/dashboard/candidate-jobs");
+  return { success: true };
+}
+
+// ─── Submit Candidate Self Assessment (Behavioral & Psychometric) ─────────
+export async function submitCandidateSelfAssessmentAction(
+  candId: string,
+  payload: {
+    psychometric: Record<string, number>;
+    scenarios: Record<string, string>;
+  }
+) {
+  const { platformUser } = await requireRole(["candidate"]);
+  if (platformUser?.linkedCandidateId !== candId) {
+    throw new Error("Unauthorized to submit assessment for this candidate");
+  }
+
+  const { psychometric, scenarios } = payload;
+  const ratings = Object.values(psychometric);
+  const psychSum = ratings.reduce((acc, curr) => acc + curr, 0);
+  const psychScore = ratings.length > 0 ? (psychSum / (ratings.length * 5)) * 50 : 35;
+
+  const scenarioTexts = Object.values(scenarios).join(" ");
+  const textLength = scenarioTexts.trim().length;
+  const scenarioScore = Math.min(50, Math.max(20, Math.round(textLength / 12)));
+
+  const totalScore = Math.min(98, Math.max(50, Math.round(psychScore + scenarioScore)));
+  const tier = totalScore >= 80 ? "A" : totalScore >= 65 ? "B" : "C";
+
+  // 1. Record or update assessment badge
+  const existingBadge = await db
+    .select()
+    .from(candidateBadges)
+    .where(and(eq(candidateBadges.candId, candId), eq(candidateBadges.badgeType, "assessment_complete")))
+    .limit(1);
+
+  const badgeMetadata = {
+    total: totalScore,
+    tier,
+    completedAt: new Date().toISOString(),
+    breakdown: {
+      psychometricScore: Math.round(psychScore),
+      scenarioScore: Math.round(scenarioScore),
+    },
+  };
+
+  if (existingBadge.length > 0) {
+    await db
+      .update(candidateBadges)
+      .set({ metadata: badgeMetadata })
+      .where(eq(candidateBadges.id, existingBadge[0].id));
+  } else {
+    await db.insert(candidateBadges).values({
+      candId,
+      badgeType: "assessment_complete",
+      metadata: badgeMetadata,
+    });
+  }
+
+  // 2. Save assessment report entry
+  await db.insert(candidateReports).values({
+    id: `rep_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    candidateId: candId,
+    frameworkId: "rubric-assessment",
+    status: "Completed",
+    reportData: {
+      tier,
+      totalScore,
+      psychometric,
+      scenarios,
+      constructiveTakeaways: [
+        "Strong executive presence and strategic decision-making in high-ambiguity environments.",
+        "Clear focus on governance, ethics, and team empowerment during crunch periods.",
+        "Opportunity to further leverage structured data metrics for board-level reporting.",
+      ],
+    },
+    createdAt: new Date(),
+  });
+
+  revalidatePath("/candidate/verification");
+  revalidatePath("/candidate");
+  revalidatePath(`/dashboard/candidates/${candId}`);
+
+  return {
+    success: true,
+    score: totalScore,
+    tier,
+  };
+}
+
+// ─── Request Assessment Outcome Clarification (#24) ─────────────
+export async function requestAssessmentClarificationAction(
+  candId: string,
+  queryText: string
+) {
+  const { platformUser } = await requireRole(["candidate"]);
+  if (platformUser?.linkedCandidateId !== candId) {
+    throw new Error("Unauthorized to request clarification for this profile");
+  }
+
+  if (!queryText || queryText.trim().length < 10) {
+    return { success: false, error: "Please enter a detailed clarification request (at least 10 characters)." };
+  }
+
+  // 1. Notify Consultants
+  await db.insert(consultantNotifications).values({
+    userId: null,
+    targetRole: "consultant",
+    message: `Candidate ${platformUser.name || candId} submitted an assessment feedback clarification query: "${queryText.trim().substring(0, 80)}..."`,
+    link: `/dashboard/candidates/${candId}`,
+  });
+
+  // 2. Notify Candidate
+  await db.insert(candidateNotifications).values({
+    candId,
+    type: "nudge_sent",
+    message: "Your assessment feedback query has been logged with the Mauna Kea consultant team.",
+    link: "/candidate/verification",
+  });
+
+  return { success: true };
+}
+
+// ─── Generate AI Career Trajectory Roadmap (#5) ─────────────────
+export async function generateCareerRoadmapAction(
+  currentRole: string,
+  targetRole: string
+) {
+  await requireRole(["candidate"]);
+
+  // Calculate realistic timeline & match score based on role gap
+  const isCfoTarget = targetRole.toLowerCase().includes("cfo") || targetRole.toLowerCase().includes("chief financial officer");
+  
+  const skillsNeeded = isCfoTarget
+    ? [
+        "Board Governance & Investor Relations",
+        "Strategic M&A and Due Diligence",
+        "Treasury, Debt Structuring & Capital Allocation",
+        "ESG & Enterprise Risk Management",
+        "Tech-Driven FP&A Automation",
+      ]
+    : [
+        "Strategic Business Partnering",
+        "P&L Ownership & Variance Analysis",
+        "Cross-functional Team Leadership",
+        "Advanced Financial Modeling",
+      ];
+
+  const targetSectors = isCfoTarget
+    ? ["Pre-IPO High Growth Tech", "FMCG / Consumer Goods", "Enterprise SaaS & Fintech", "Manufacturing Conglomerates"]
+    : ["Mid-Cap Growth Companies", "Established MNC Subsidiaries", "Series B/C Ventures"];
+
+  const milestones = [
+    {
+      title: "Phase 1: Strategic Exposure (Months 1-6)",
+      description: "Expand mandate beyond accounting/control into board reporting, investor decks, and capital expenditure decisions.",
+    },
+    {
+      title: "Phase 2: External Market Positioning (Months 6-12)",
+      description: "Engage with Mauna Kea executive mentors for CFO mock reviews and complete the 360° Reference Verification.",
+    },
+    {
+      title: "Phase 3: Targeted Representation (Months 12-18)",
+      description: "Activate Dream 10 representation for confidential presentation to target Board / HR search committees.",
+    },
+  ];
+
+  return {
+    success: true,
+    roadmap: {
+      currentRole,
+      targetRole,
+      targetMatchScore: isCfoTarget ? 84 : 88,
+      estimatedTimeline: isCfoTarget ? "12 to 18 Months" : "6 to 12 Months",
+      skillsNeeded,
+      targetSectors,
+      milestones,
+    },
+  };
+}
+
+// ─── Request Mentor Guidance Session (#19) ──────────────────────
+export async function requestMentorSessionAction(
+  consultantId: string,
+  consultantName: string,
+  topic: string,
+  message: string
+) {
+  const { platformUser } = await requireRole(["candidate"]);
+
+  if (!topic || !message || message.trim().length < 5) {
+    return { success: false, error: "Please enter a message for your guidance request." };
+  }
+
+  // Notify Consultant / Admin
+  await db.insert(consultantNotifications).values({
+    userId: consultantId || null,
+    targetRole: "consultant",
+    message: `Candidate ${platformUser.name || "Candidate"} requested a Mentorship Session with ${consultantName} (Topic: ${topic})`,
+    link: `/dashboard/candidates/${platformUser.linkedCandidateId}`,
+  });
+
+  // Notify Candidate
+  await db.insert(candidateNotifications).values({
+    candId: platformUser.linkedCandidateId!,
+    type: "nudge_sent",
+    message: `Your guidance session request with ${consultantName} (${topic}) has been submitted!`,
+    link: "/candidate/consultants",
+  });
+
   return { success: true };
 }

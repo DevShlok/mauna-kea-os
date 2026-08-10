@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { GuidanceBlock } from "@/db/schema";
 import { BookOpen, Sparkles, ChevronDown, ChevronUp, Lock } from "lucide-react";
+import { AICareerRoadmapWidget } from "./AICareerRoadmapWidget";
 
 function NeoCard({
   children,
@@ -27,9 +28,11 @@ function NeoCard({
 interface Props {
   blocks: GuidanceBlock[];
   tier: "A" | "B" | "C" | null;
+  candidateDesignation?: string;
+  candidateDreamRoles?: string[];
 }
 
-export function GuidanceClient({ blocks, tier }: Props) {
+export function GuidanceClient({ blocks, tier, candidateDesignation, candidateDreamRoles }: Props) {
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set(blocks.map((b) => b.id)));
 
   const toggleExpand = (id: number) => {
@@ -44,41 +47,30 @@ export function GuidanceClient({ blocks, tier }: Props) {
     });
   };
 
-  if (!tier) {
-    return (
-      <div className="max-w-4xl mx-auto p-6 md:p-8 space-y-6">
-        <div className="flex items-center gap-3 mb-2">
-          <BookOpen className="w-7 h-7 text-[#133255]" />
-          <h1 className="text-2xl font-bold text-slate-800">Executive Guidance</h1>
-        </div>
-        <NeoCard className="p-8 text-center">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto bg-amber-100/80 border border-amber-200 mb-4">
-            <Lock className="w-7 h-7 text-amber-800" />
-          </div>
-          <h2 className="text-lg font-bold text-slate-800">Assessment Required</h2>
-          <p className="text-sm text-slate-500 max-w-md mx-auto mt-1">
-            Complete your Mauna Kea Assessment to receive personalized consultant-curated guidance notes tailored to your tier and career track.
-          </p>
-        </NeoCard>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-4xl mx-auto p-6 md:p-8 space-y-6">
+    <div className="max-w-4xl mx-auto p-6 md:p-8 space-y-8">
+      {/* Top Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <BookOpen className="w-7 h-7 text-[#133255]" />
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Executive Guidance</h1>
-            <p className="text-xs text-slate-500 font-medium">Curated consultant insights for Tier {tier} candidates</p>
+            <h1 className="text-2xl font-bold text-slate-800">Executive Guidance & AI Career Roadmap</h1>
+            <p className="text-xs text-slate-500 font-medium">Curated consultant playbooks and AI career progression trajectory</p>
           </div>
         </div>
-        <div className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100/80 border border-blue-200 text-blue-800 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5" />
-          Tier {tier} Matched
-        </div>
+        {tier && (
+          <div className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100/80 border border-blue-200 text-blue-800 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" />
+            Tier {tier} Matched
+          </div>
+        )}
       </div>
+
+      {/* AI Career Trajectory Roadmap Generator (#5) */}
+      <AICareerRoadmapWidget
+        currentDesignation={candidateDesignation}
+        dreamRoles={candidateDreamRoles}
+      />
 
       {blocks.length === 0 ? (
         <NeoCard className="p-8 text-center">

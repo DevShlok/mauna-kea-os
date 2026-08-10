@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { CandidateJob } from "@/db/schema";
 import { markJobInterestAction, selfApplyAction } from "@/actions/candidate-portal";
+import { computeJobMatchScore } from "@/lib/job-matching";
 import {
   Briefcase,
   Lock,
@@ -124,30 +125,9 @@ export function JobsClient({ jobs, initialInterests, initialApplications, sector
     return true;
   });
 
-  const computeJobMatchScore = (job: CandidateJob): number => {
-    if (!candidateTags) return 0;
-    const candId = candidateTags.candId;
-    if ((job.targetCandIds as string[])?.includes(candId)) return 999;
-
-    const candTags = new Set([
-      ...(candidateTags.expTags || []).map((t) => t.toLowerCase()),
-      ...(candidateTags.dreamRoles || []).map((t) => t.toLowerCase()),
-    ]);
-    const jobTags = new Set([
-      ...(job.highlights || []).map((h) => h.toLowerCase()),
-      job.sector?.toLowerCase() ?? "",
-    ]);
-
-    let overlap = 0;
-    for (const tag of candTags) {
-      if (tag && jobTags.has(tag)) overlap++;
-    }
-    return overlap;
-  };
-
   const scoredJobs = filteredJobs.map((j) => ({
     job: j,
-    score: computeJobMatchScore(j),
+    score: computeJobMatchScore(candidateTags, j),
   }));
 
   const recommendedJobs = scoredJobs
@@ -164,6 +144,7 @@ export function JobsClient({ jobs, initialInterests, initialApplications, sector
     const isUpdating = updatingJobId === job.id;
     const isApplied = applications.has(job.id);
     const isApplying = applyingJobId === job.id;
+    const matchPct = computeJobMatchScore(candidateTags, job);
 
     return (
       <NeoCard key={job.id} className="p-6 sm:p-7 space-y-4">
@@ -172,9 +153,12 @@ export function JobsClient({ jobs, initialInterests, initialApplications, sector
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-slate-800 font-bold text-lg">{job.title}</h2>
+              <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                <Sparkles className="w-3 h-3 text-emerald-600" /> {matchPct}% Profile Match
+              </span>
               {isRecommended && (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-100/90 px-2.5 py-0.5 rounded-full border border-amber-200">
-                  <Sparkles className="w-3 h-3 text-[#D8B15B]" /> Recommended
+                  Recommended
                 </span>
               )}
               {job.isConfidential && (

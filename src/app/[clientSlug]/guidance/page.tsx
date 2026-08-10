@@ -25,5 +25,12 @@ export default async function CandidateGuidancePage() {
 
   const blocks = tier ? await getGuidanceForCandidateAction(tier, targetRole) : [];
 
-  return <GuidanceClient blocks={blocks} tier={tier} />;
+  return (
+    <GuidanceClient 
+      blocks={blocks} 
+      tier={tier} 
+      candidateDesignation={candidate?.designation ?? undefined}
+      candidateDreamRoles={dreamRoles}
+    />
+  );
 }

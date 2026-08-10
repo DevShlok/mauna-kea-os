@@ -1,6 +1,10 @@
 "use client";
 
-import { Shield, CheckCircle2, Clock, CheckCheck, HelpCircle } from "lucide-react";
+import React, { useState } from "react";
+import { Shield, CheckCircle2, Clock, CheckCheck, HelpCircle, MessageSquare, Loader2, Sparkles } from "lucide-react";
+import toast from "react-hot-toast";
+import { CandidateAssessmentWidget } from "./CandidateAssessmentWidget";
+import { requestAssessmentClarificationAction } from "@/actions/candidate-portal";
 
 function NeoCard({
   children,
@@ -36,18 +40,56 @@ export function VerificationStatusClient({
   const isVerified = verificationStatus?.status === "Verified";
   const tier = assessmentBadge?.metadata?.tier as "A" | "B" | "C" | undefined;
   const assessTotal = assessmentBadge?.metadata?.total as number | undefined;
+  
+  const [isClarifyOpen, setIsClarifyOpen] = useState(false);
+  const [clarificationText, setClarificationText] = useState("");
+  const [isSubmittingClarification, setIsSubmittingClarification] = useState(false);
+
+  const handleClarificationSubmit = async () => {
+    setIsSubmittingClarification(true);
+    try {
+      const res = await requestAssessmentClarificationAction(candId, clarificationText);
+      if (res.success) {
+        toast.success("Feedback request sent to Mauna Kea consultant team!");
+        setIsClarifyOpen(false);
+        setClarificationText("");
+      } else {
+        toast.error(res.error || "Failed to send request");
+      }
+    } catch {
+      toast.error("Error sending clarification request");
+    } finally {
+      setIsSubmittingClarification(false);
+    }
+  };
 
   const TIER_CONFIG: Record<"A" | "B" | "C", { label: string; color: string; bg: string; desc: string }> = {
-    A: { label: "Tier A", color: "text-emerald-700", bg: "bg-emerald-100", desc: "Exceptional profile across all dimensions." },
-    B: { label: "Tier B", color: "text-amber-700",   bg: "bg-amber-100",   desc: "Solid profile with strong fundamentals." },
-    C: { label: "Tier C", color: "text-red-700",     bg: "bg-red-100",     desc: "Profile under active development." },
+    A: {
+      label: "Tier A — Top 5% Talent",
+      color: "text-emerald-700",
+      bg: "bg-emerald-50 border-emerald-300",
+      desc: "Exceptional mastery across leadership, financial strategy, crisis resolution, and team empowerment.",
+    },
+    B: {
+      label: "Tier B — High Potential Leader",
+      color: "text-blue-700",
+      bg: "bg-blue-50 border-blue-300",
+      desc: "Strong core competency in functional execution and strategic planning, recommended for growth mandates.",
+    },
+    C: {
+      label: "Tier C — Emerging Professional",
+      color: "text-amber-700",
+      bg: "bg-amber-50 border-amber-300",
+      desc: "Demonstrates core domain experience with clear development areas for executive progression.",
+    },
   };
+
   return (
-    <div className="max-w-3xl mx-auto flex flex-col gap-6 pb-12">
-      {/* Banner */}
-      <NeoCard className="p-8 text-center flex flex-col items-center gap-4">
+    <div className="max-w-4xl mx-auto flex flex-col gap-6 pb-16">
+      {/* Verification Banner */}
+      <NeoCard className="p-8 text-center space-y-4">
         <div
-          className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isVerified ? "text-emerald-600 bg-emerald-50" : "text-[#133255] bg-[#eef2f7]"}`}
+          className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto ${isVerified ? "text-emerald-600 bg-emerald-50" : "text-[#133255] bg-[#eef2f7]"}`}
           style={{
             boxShadow: isVerified ? "4px 4px 10px #a7f3d0, -4px -4px 10px #ffffff" : "4px 4px 10px #cbd5e1, -4px -4px 10px #ffffff",
           }}
@@ -66,27 +108,97 @@ export function VerificationStatusClient({
         </div>
       </NeoCard>
 
-      {/* Your Assessment Tier */}
-      {tier && (
+      {/* Your Assessment Tier or Assessment Widget Launcher */}
+      {tier ? (
         <>
-          <h2 className="text-lg font-bold text-slate-800 mt-4 mb-2 px-2">Your Assessment Tier</h2>
+          <div className="flex items-center justify-between mt-4 mb-2 px-2">
+            <h2 className="text-lg font-bold text-slate-800">Your Assessment Tier</h2>
+            <button
+              onClick={() => setIsClarifyOpen(true)}
+              className="text-xs font-bold text-[#133255] hover:underline flex items-center gap-1.5 cursor-pointer"
+            >
+              <MessageSquare className="w-4 h-4 text-[#D8B15B]" /> Request Outcome Clarification
+            </button>
+          </div>
           <NeoCard className="p-6">
-            <div className="flex items-center gap-4">
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black ${TIER_CONFIG[tier].bg} ${TIER_CONFIG[tier].color} border-2`}>
-                {tier}
-              </div>
-              <div>
-                <div className={`text-xl font-black ${TIER_CONFIG[tier].color}`}>
-                  {TIER_CONFIG[tier].label}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black ${TIER_CONFIG[tier].bg} ${TIER_CONFIG[tier].color} border-2 shrink-0`}>
+                  {tier}
                 </div>
-                <p className="text-sm text-slate-500 font-medium mt-0.5">{TIER_CONFIG[tier].desc}</p>
-                <p className="text-xs text-slate-400 mt-1 font-medium">
-                  Your profile has been reviewed by the Mauna Kea team across behavioral, psychometric, and cultural dimensions.
-                </p>
+                <div>
+                  <div className={`text-xl font-black ${TIER_CONFIG[tier].color}`}>
+                    {TIER_CONFIG[tier].label}
+                  </div>
+                  <p className="text-sm text-slate-500 font-medium mt-0.5">{TIER_CONFIG[tier].desc}</p>
+                  <p className="text-xs text-slate-400 mt-1 font-medium">
+                    Your profile has been evaluated by the Mauna Kea team across behavioral, psychometric, and leadership dimensions.
+                  </p>
+                </div>
               </div>
+              {assessTotal !== undefined && (
+                <div className="px-4 py-2 rounded-2xl bg-white border border-slate-200 text-center shrink-0 shadow-xs">
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Evaluation Score</div>
+                  <div className="text-xl font-black text-[#133255]">{assessTotal} / 100</div>
+                </div>
+              )}
             </div>
           </NeoCard>
+
+          {/* Clarification Modal (#24) */}
+          {isClarifyOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+              <div className="neo-card max-w-lg w-full p-6 bg-white rounded-3xl space-y-4 shadow-2xl border border-slate-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-base text-slate-800 flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-[#133255]" /> Assessment Feedback Query
+                  </h3>
+                  <button onClick={() => setIsClarifyOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Have questions about your constructive takeaways or tier placement? Submit your clarification request below. Our consultant team will review your query without altering your official score.
+                </p>
+                <textarea
+                  rows={4}
+                  value={clarificationText}
+                  onChange={(e) => setClarificationText(e.target.value)}
+                  placeholder="Detail your question, additional context, or specific areas you would like to discuss with a consultant..."
+                  className="w-full p-3.5 rounded-2xl border border-slate-200 text-xs font-medium outline-none neo-inset"
+                />
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => setIsClarifyOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    disabled={isSubmittingClarification || clarificationText.trim().length < 10}
+                    onClick={handleClarificationSubmit}
+                    className="px-5 py-2 rounded-xl bg-[#133255] text-white text-xs font-bold disabled:opacity-40 hover:bg-[#1d4d82] flex items-center gap-2"
+                  >
+                    {isSubmittingClarification ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Query to Consultants"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
+      ) : (
+        <NeoCard className="p-7 space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <span className="bg-sky-100 text-sky-800 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                Behavioral & Psychometric Assessment
+              </span>
+              <h3 className="text-lg font-bold text-slate-800">Complete Your AI Competency Evaluation</h3>
+              <p className="text-xs text-slate-500 font-medium max-w-lg">
+                Complete our 10-minute behavioral and psychometric questionnaire to earn your Mauna Kea Assessment Verification Badge and constructive growth takeaways.
+              </p>
+            </div>
+            <CandidateAssessmentWidget candId={candId} />
+          </div>
+        </NeoCard>
       )}
 
       {/* Reference Check Summaries */}
