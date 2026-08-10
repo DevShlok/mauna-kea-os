@@ -2,7 +2,7 @@ import { getCandidateById } from "@/db/queries";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/db";
 import { clients, mandateCandidates, candidateReports, mandates, candidates, clientRemarks } from "@/db/schema";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, ne } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import ClientCandidateProfile from "@/features/client/components/ClientCandidateProfile";
 
@@ -86,11 +86,12 @@ export default async function ClientCandidateDetailPage({
 
   const { mandateCandidate, mandate } = results[0];
 
-  // Fetch the candidate report if available
+  // Fetch the candidate report if available (excluding manual rubric assessments)
   const reports = await db
     .select()
     .from(candidateReports)
-    .where(eq(candidateReports.candidateId, candidateId))
+    .where(and(eq(candidateReports.candidateId, candidateId), ne(candidateReports.frameworkId, "rubric-assessment")))
+    .orderBy(asc(candidateReports.createdAt))
     .limit(1);
 
   // Only expose the AI report if it has been explicitly published to the client

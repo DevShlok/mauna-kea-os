@@ -564,7 +564,11 @@ export default function WorkbenchClient({ initialCandidate, frameworks, candidat
       setFrameworkId("");
     }
 
-    fetch(`/api/latest-report?candidateId=${candidateId}`)
+    const reportQueryUrl = candidateRef.frameworkId
+      ? `/api/latest-report?candidateId=${candidateId}&frameworkId=${candidateRef.frameworkId}`
+      : `/api/latest-report?candidateId=${candidateId}`;
+
+    fetch(reportQueryUrl)
       .then(res => res.json())
       .then(data => {
         if (data.exists && data.report?.reportData) {

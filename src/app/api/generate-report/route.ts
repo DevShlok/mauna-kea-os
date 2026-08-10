@@ -187,8 +187,11 @@ export async function POST(req: Request) {
     });
     enrichedContext += frameworkContext;
 
-    // 3. Overwrite existing report or create a new one to prevent DB bloat
-    const existingReports = await db.select().from(candidateReports).where(eq(candidateReports.candidateId, candidateId));
+    // 3. Overwrite existing report for THIS framework or create a new one to prevent DB bloat
+    const existingReports = await db
+      .select()
+      .from(candidateReports)
+      .where(and(eq(candidateReports.candidateId, candidateId), eq(candidateReports.frameworkId, frameworkId)));
     let reportId;
     
     if (existingReports.length > 0) {
@@ -197,10 +200,14 @@ export async function POST(req: Request) {
         .set({ status: "Generating", frameworkId, reportData: null })
         .where(eq(candidateReports.id, reportId));
         
-      // Clean up any stray duplicates
+      // Clean up any stray duplicates FOR THIS FRAMEWORK ONLY
       if (existingReports.length > 1) {
         await db.delete(candidateReports)
-          .where(and(eq(candidateReports.candidateId, candidateId), ne(candidateReports.id, reportId)));
+          .where(and(
+            eq(candidateReports.candidateId, candidateId),
+            eq(candidateReports.frameworkId, frameworkId),
+            ne(candidateReports.id, reportId)
+          ));
       }
     } else {
       reportId = "REP-" + Date.now();
