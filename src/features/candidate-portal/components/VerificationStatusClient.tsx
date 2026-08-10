@@ -66,61 +66,6 @@ export function VerificationStatusClient({
         </div>
       </NeoCard>
 
-      {/* Verification Steps */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Step 1: Reference Checks */}
-        <NeoCard className="p-5 flex flex-col justify-between gap-4">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[12px] font-bold text-[#133255] uppercase tracking-wider">
-                Step 1
-              </span>
-              {isVerified ? (
-                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <CheckCheck className="w-3.5 h-3.5" /> Completed
-                </span>
-              ) : checks.length > 0 ? (
-                <span className="text-[11px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" /> In Progress
-                </span>
-              ) : (
-                <span className="text-[11px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full" style={{ boxShadow: "inset 2px 2px 4px rgba(163,177,198,0.5), inset -2px -2px 4px rgba(255,255,255,0.7)" }}>
-                  Not Started
-                </span>
-              )}
-            </div>
-            <h3 className="text-slate-800 font-bold text-[15px]">Reference Check</h3>
-            <p className="text-slate-500 font-medium text-[12px] leading-relaxed">
-              360° qualitative feedback gathered from former peers and seniors.
-            </p>
-          </div>
-          <div className="text-[12px] text-slate-400 font-bold pt-3 border-t border-slate-300">
-            {checks.length > 0 ? `${checks.length} reference(s) logged` : "Arranged by consultant"}
-          </div>
-        </NeoCard>
-
-        {/* Step 2: Executive Assessment */}
-        <NeoCard className="p-5 flex flex-col justify-between gap-4 opacity-75">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">
-                Step 2
-              </span>
-              <span className="text-[11px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full" style={{ boxShadow: "inset 2px 2px 4px rgba(163,177,198,0.5), inset -2px -2px 4px rgba(255,255,255,0.7)" }}>
-                Phase 4
-              </span>
-            </div>
-            <h3 className="text-slate-800 font-bold text-[15px]">Assessment</h3>
-            <p className="text-slate-500 font-medium text-[12px] leading-relaxed">
-              Leadership competency evaluation and psychometric alignment.
-            </p>
-          </div>
-          <div className="text-[12px] text-slate-400 font-bold pt-3 border-t border-slate-300">
-            Coming soon
-          </div>
-        </NeoCard>
-      </div>
-
       {/* Your Assessment Tier */}
       {tier && (
         <>

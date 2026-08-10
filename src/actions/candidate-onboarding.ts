@@ -16,6 +16,13 @@ export async function saveConversationalAnswersAction(candId: string, answers: R
     if (answers.expected) mapped.expected = parseInt(answers.expected.replace(/\D/g, ""), 10) || null;
     if (answers.notice) mapped.notice = parseInt(answers.notice.replace(/\D/g, ""), 10) || null;
     if (answers.location) mapped.location = answers.location;
+
+    if (answers.experienceSummary || answers.achievements) {
+      mapped.notes = [answers.experienceSummary, answers.achievements].filter(Boolean).join("\n\nKey Achievements:\n");
+    }
+    if (answers.dreamRoles) {
+      mapped.dreamRoles = [answers.dreamRoles];
+    }
     
     // We only update what was provided via chat
     if (Object.keys(mapped).length > 0) {

@@ -24,25 +24,31 @@ import {
 import toast from "react-hot-toast";
 
 // ─── Stage Configuration ─────────────────────────────────────────────────────
-type StageKey = "Shared" | "Under Review" | "Shortlisted" | "Interviewing" | "Decision";
-
 const STAGES: { key: string; label: string }[] = [
-  { key: "Shared", label: "Profile Shared" },
-  { key: "Under Review", label: "Under Review" },
-  { key: "Shortlisted", label: "Shortlisted" },
-  { key: "Interviewing", label: "Interviewing" },
-  { key: "Decision", label: "Decision" },
+  { key: "Profile Submitted", label: "Submitted" },
+  { key: "Profile Shortlisted", label: "Shortlisted" },
+  { key: "Interview Scheduled", label: "Interview Scheduled" },
+  { key: "Interview Completed", label: "Interview Done" },
+  { key: "Offer Released / Rejected", label: "Offer Released" },
+  { key: "Offer Accepted", label: "Offer Accepted" },
+  { key: "Joined", label: "Joined" },
 ];
 
-const TERMINAL_POSITIVE = ["Hired"];
-const TERMINAL_NEGATIVE = ["Rejected"];
+const TERMINAL_POSITIVE = ["Joined", "Offer Accepted", "Hired"];
+const TERMINAL_NEGATIVE = ["Rejected", "Offer Rejected"];
 const TERMINAL = [...TERMINAL_POSITIVE, ...TERMINAL_NEGATIVE];
 
 function getStageIndex(status: string | null): number {
   if (!status) return 0;
-  if (status === "Hired") return 5;
-  if (status === "Rejected") return -1;
-  return Math.max(0, STAGES.findIndex((s) => s.key === status));
+  const s = status.toLowerCase();
+  if (s.includes("joined") || s.includes("placed") || s.includes("hired")) return 6;
+  if (s.includes("accepted")) return 5;
+  if (s.includes("offer") || s.includes("decision")) return 4;
+  if (s.includes("interview completed") || s.includes("interview done")) return 3;
+  if (s.includes("interview")) return 2;
+  if (s.includes("shortlist") || s.includes("under review")) return 1;
+  if (s.includes("rejected")) return -1;
+  return 0;
 }
 
 function canNudge(float: Float): boolean {
