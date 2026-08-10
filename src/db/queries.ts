@@ -5,7 +5,7 @@ import {
   mandates, mandateCandidates, candidates, floats, floatReferences,
   floatFollowUps, floatActivities, frameworks, frameworkCategories,
   frameworkCriteria, platformUsers, candidateReports, candidateFiles, clients,
-  userPreferences
+  userPreferences, candidateVerifications, candidateBadges, referenceChecks
 } from './schema';
 
 
@@ -679,7 +679,7 @@ export const getCandidateById = cache(async (id: string) => {
   if (!cand) return null;
   const actualId = cand.id;
 
-  const [activities, floatSubmissions, mCands, followUps, references, files] = await Promise.all([
+  const [activities, floatSubmissions, mCands, followUps, references, files, verifications, badges, refChecks] = await Promise.all([
     db.select().from(floatActivities).where(eq(floatActivities.candId, actualId)),
     db.select().from(floats).where(and(eq(floats.candId, actualId), eq(floats.isDeleted, false))),
     db.select({
@@ -695,7 +695,10 @@ export const getCandidateById = cache(async (id: string) => {
     .where(and(eq(mandateCandidates.candId, actualId), eq(mandates.isDeleted, false))),
     db.select().from(floatFollowUps).where(eq(floatFollowUps.candId, actualId)),
     db.select().from(floatReferences).where(eq(floatReferences.candId, actualId)),
-    db.select().from(candidateFiles).where(eq(candidateFiles.candId, actualId))
+    db.select().from(candidateFiles).where(eq(candidateFiles.candId, actualId)),
+    db.select().from(candidateVerifications).where(eq(candidateVerifications.candId, actualId)).limit(1),
+    db.select().from(candidateBadges).where(eq(candidateBadges.candId, actualId)),
+    db.select().from(referenceChecks).where(eq(referenceChecks.candId, actualId))
   ]);
 
   const submissionsMap = new Map();
@@ -736,6 +739,8 @@ export const getCandidateById = cache(async (id: string) => {
   }
 
   const submissions = Array.from(submissionsMap.values());
+  const verifRow = verifications[0] ?? null;
+  const isVerified = verifRow?.status === 'Verified';
   
   return {
     ...cand,
@@ -748,6 +753,11 @@ export const getCandidateById = cache(async (id: string) => {
     followUps,
     references,
     files,
+    isVerified,
+    verifications: verifications,
+    verification: verifRow,
+    badges: badges ?? [],
+    referenceCheckRecords: refChecks ?? []
   };
 });
 

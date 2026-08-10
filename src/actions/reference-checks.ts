@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { referenceChecks, candidateVerifications, candidateNotifications, candidates } from "@/db/schema";
+import { referenceChecks, candidateVerifications, candidateNotifications, candidates, candidateBadges } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -105,6 +105,20 @@ export async function markCandidateVerifiedAction(candId: string, verifiedBy: st
     });
   }
 
+  // Also write to candidateBadges for 'reference_check_complete'
+  await db.insert(candidateBadges).values({
+    candId,
+    badgeType: 'reference_check_complete',
+    earnedAt: now,
+    metadata: { verifiedBy },
+  }).onConflictDoUpdate({
+    target: [candidateBadges.candId, candidateBadges.badgeType],
+    set: {
+      earnedAt: now,
+      metadata: { verifiedBy },
+    },
+  });
+
   // Create Candidate Notification
   await db.insert(candidateNotifications).values({
     candId,
@@ -113,8 +127,19 @@ export async function markCandidateVerifiedAction(candId: string, verifiedBy: st
     link: '/candidate/verification'
   });
 
+  const candRow = (await db.select({ slug: candidates.slug }).from(candidates).where(eq(candidates.id, candId)).limit(1))[0];
+  const slug = candRow?.slug;
+
   revalidatePath(`/dashboard/candidates/${candId}`);
+  revalidatePath(`/dashboard/candidates`);
   revalidatePath(`/candidate/verification`);
   revalidatePath(`/candidate/profile`);
+  revalidatePath(`/candidate`);
+  if (slug) {
+    revalidatePath(`/${slug}`);
+    revalidatePath(`/${slug}/verification`);
+    revalidatePath(`/${slug}/profile`);
+  }
+  revalidatePath('/[clientSlug]', 'layout');
   return { success: true };
 }

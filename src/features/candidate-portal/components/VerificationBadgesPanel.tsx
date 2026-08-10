@@ -75,9 +75,16 @@ export function VerificationBadgesPanel({ badges }: { badges: any[] }) {
                     {config.title}
                   </h3>
                   {earned ? (
-                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded-full flex items-center gap-1 border border-green-200">
-                      <Shield className="w-3 h-3" /> Verified
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {config.id === "assessment_complete" && earned.metadata?.tier && (
+                        <span className="text-xs font-extrabold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full border border-amber-300">
+                          Tier {earned.metadata.tier} ({earned.metadata.total}/100)
+                        </span>
+                      )}
+                      <span className="text-xs font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded-full flex items-center gap-1 border border-green-200">
+                        <Shield className="w-3 h-3" /> Verified
+                      </span>
+                    </div>
                   ) : (
                     <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full flex items-center gap-1 border border-slate-200">
                       <Clock className="w-3 h-3" /> Pending

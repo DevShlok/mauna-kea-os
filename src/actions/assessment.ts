@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { candidateReports, candidateBadges, candidates } from "@/db/schema";
+import { candidateReports, candidateBadges, candidates, candidateNotifications } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { requireRole } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -70,10 +70,34 @@ export async function saveAssessmentAction(
       .update(candidates)
       .set({ score: total, assessDate: new Date().toISOString().split("T")[0] })
       .where(eq(candidates.id, candId));
+
+    // Send notification to candidate
+    await db.insert(candidateNotifications).values({
+      candId,
+      type: "assessment_ready",
+      message: `Your assessment has been completed with Tier ${tier}!`,
+      link: "/candidate/verification",
+    });
   }
 
+  // Fetch candidate slug for layout revalidation
+  const candRow = (await db.select({ slug: candidates.slug }).from(candidates).where(eq(candidates.id, candId)).limit(1))[0];
+  const slug = candRow?.slug;
+
+  revalidatePath(`/dashboard/candidates`);
   revalidatePath(`/dashboard/candidates/${candId}`);
   revalidatePath(`/dashboard/candidates/${candId}/assessment`);
+  revalidatePath(`/candidate/verification`);
+  revalidatePath(`/candidate/guidance`);
+  revalidatePath(`/candidate/dream-companies`);
+  revalidatePath(`/candidate`);
+  if (slug) {
+    revalidatePath(`/${slug}`);
+    revalidatePath(`/${slug}/verification`);
+    revalidatePath(`/${slug}/guidance`);
+    revalidatePath(`/${slug}/dream-companies`);
+  }
+  revalidatePath("/[clientSlug]", "layout");
   return { success: true, tier, total };
 }
 

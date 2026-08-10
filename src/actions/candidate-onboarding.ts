@@ -60,7 +60,10 @@ export async function completeOnboardingAction(candId: string, finalProfileData:
       candId,
       badgeType: "profile_complete",
       earnedAt: new Date(),
-    }).onConflictDoNothing();
+    }).onConflictDoUpdate({
+      target: [candidateBadges.candId, candidateBadges.badgeType],
+      set: { earnedAt: new Date() },
+    });
 
     // 4. Send Welcome Notification
     await db.insert(candidateNotifications).values({

@@ -148,17 +148,24 @@ export function CandidateHome({
               </p>
             )}
           </div>
-          <div className="hidden sm:flex flex-col items-end gap-1">
-            <div
-              className="px-3 py-1.5 rounded-full text-[12px] font-bold shadow-sm"
-              style={{
-                background: "#e0e5ec",
-                color: "#133255",
-                boxShadow: "inset 2px 2px 4px rgba(163,177,198,0.5), inset -2px -2px 4px rgba(255,255,255,0.8)",
-              }}
-            >
-              Active Profile
-            </div>
+          <div className="hidden sm:flex flex-col items-end gap-1.5">
+            {(() => {
+              const assessmentBadge = candidate?.badges?.find((b: any) => b.badgeType === "assessment_complete");
+              const tier = assessmentBadge?.metadata?.tier;
+              return tier ? (
+                <span className="px-3 py-1 rounded-full text-[12px] font-extrabold text-amber-800 bg-amber-100 border border-amber-300 shadow-sm flex items-center gap-1">
+                  ⭐ Tier {tier} Candidate
+                </span>
+              ) : candidate?.score ? (
+                <span className="px-3 py-1 rounded-full text-[12px] font-bold text-blue-800 bg-blue-100 border border-blue-300 shadow-sm">
+                  Score: {candidate.score}/100
+                </span>
+              ) : (
+                <span className="px-3 py-1 rounded-full text-[12px] font-medium text-slate-500 bg-slate-100 border border-slate-200">
+                  Assessment Pending
+                </span>
+              );
+            })()}
             <p className="text-slate-500 text-[11px] font-medium">Managed by Mauna Kea</p>
           </div>
         </div>

@@ -480,6 +480,8 @@ export async function updateSubmissionAction(
   revalidatePath("/dashboard/float-list/submissions");
   revalidatePath("/dashboard/float-list/database");
   revalidatePath("/candidate/applications");
+  revalidatePath("/candidate");
+  revalidatePath("/[clientSlug]", "layout");
 }
 
 export async function addFollowUpAction(data: unknown) {
@@ -654,6 +656,8 @@ export async function updateMandateCandidateStageAction(candId: number, stage: s
 
   revalidatePath("/dashboard/candidates");
   revalidatePath(`/dashboard/mandates/${mandateId}`);
+  revalidatePath("/candidate/applications");
+  revalidatePath("/[clientSlug]", "layout");
 }
 
 /**
@@ -667,6 +671,8 @@ export async function bulkMovePipelineCandidatesAction(candIds: number[], stage:
   if (!candIds.length) return;
   await db.update(mandateCandidates).set({ stage }).where(inArray(mandateCandidates.id, candIds));
   revalidatePath(`/dashboard/mandates/${mandateId}`);
+  revalidatePath("/candidate/applications");
+  revalidatePath("/[clientSlug]", "layout");
 }
 
 /**

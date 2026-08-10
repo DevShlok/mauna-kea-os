@@ -616,9 +616,27 @@ export default function FlCandidateClient({
                     <div className="text-[13px] text-[#6b7a99] flex items-center gap-1 mb-2">
                       <MapPin size={13} className="text-[#133255]" /> {candidate.location || "Location not provided"}
                     </div>
-                    <div className="flex gap-1.5 flex-wrap">
+                    <div className="flex gap-1.5 flex-wrap items-center">
                       <span className={`px-2 py-0.5 rounded-[4px] text-[11px] font-bold tracking-wide uppercase border ${candidate.status === 'Active' ? 'bg-[#e0f5e9] text-[#137a43] border-[#137a43]' : candidate.status === 'Passive' ? 'bg-[#fef4e6] text-[#b36b00] border-[#b36b00]' : 'bg-[#fae6e6] text-[#c92a2a] border-[#c92a2a]'}`}>{candidate.status}</span>
-                      {candidate.score && <span className="text-[11px] font-bold text-[#b7791f] border border-[#b7791f] px-2 py-0.5 rounded-[4px]">Score: {candidate.score}/10</span>}
+                      {(() => {
+                        const b = candidate.badges?.find((b: any) => b.badgeType === 'assessment_complete');
+                        const tier = b?.metadata?.tier;
+                        if (tier) {
+                          return (
+                            <span className="text-[11px] font-extrabold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-[4px] shadow-xs">
+                              Tier {tier} ({candidate.score ?? b?.metadata?.total ?? '-'})
+                            </span>
+                          );
+                        }
+                        if (candidate.score) {
+                          return (
+                            <span className="text-[11px] font-bold text-[#b7791f] border border-[#b7791f] px-2 py-0.5 rounded-[4px]">
+                              Score: {candidate.score}/100
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -1052,24 +1070,41 @@ export default function FlCandidateClient({
         );
 
       case "assessment":
-        return candidate.score ? (
+        const assessmentBadge = candidate.badges?.find((b: any) => b.badgeType === "assessment_complete");
+        const hasScore = candidate.score || assessmentBadge;
+        const tier = assessmentBadge?.metadata?.tier;
+        const total = candidate.score ?? assessmentBadge?.metadata?.total;
+
+        return hasScore ? (
           <div className="space-y-4">
             <div className="p-4 bg-[#f0f5ff] border border-[#d6e4ff] rounded-xl flex justify-between items-center">
-              <span className="text-[15px] font-bold text-[#133255]">Overall AI Score</span>
-              <span className="px-3 py-1 rounded-[6px] text-[18px] font-serif font-bold bg-white text-[#1d4ed8] shadow-sm">{candidate.score}/10</span>
+              <div>
+                <div className="text-[14px] font-bold text-[#133255]">MK Assessment Completed</div>
+                {tier && <div className="text-[12px] font-bold text-[#b7791f] mt-0.5">Tier {tier} Rating</div>}
+              </div>
+              <span className="px-3 py-1.5 rounded-[8px] text-[16px] font-bold bg-white text-[#1d4ed8] shadow-sm border border-[#d6e4ff]">
+                {total ? `${total}/100` : "Complete"}
+              </span>
             </div>
-            <button onClick={() => router.push(`/dashboard/workbench?flCandId=${candidate.id}`)} className="w-full px-4 py-2.5 rounded-xl text-[13px] font-bold bg-[#133255] text-white hover:bg-[#1e40af] transition-all shadow-sm">
-              Open Full Report in Workbench
-            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => router.push(`/dashboard/candidates/${candidate.id}/assessment`)} className="px-3 py-2 rounded-xl text-[12px] font-bold bg-[#133255] text-white hover:bg-[#1e40af] transition-all shadow-sm">
+                View Rubric
+              </button>
+              <button onClick={() => router.push(`/dashboard/workbench?flCandId=${candidate.id}`)} className="px-3 py-2 rounded-xl text-[12px] font-bold bg-[#f0f5fa] text-[#133255] border border-[#bacce6] hover:bg-[#e0edff] transition-all shadow-sm">
+                AI Workbench
+              </button>
+            </div>
           </div>
         ) : (
           <div className="text-center py-6">
-            <div className="text-[40px] mb-2 opacity-50">🤖</div>
-            <div className="text-[14px] text-[#6b7a99] mb-4">No AI assessment completed yet</div>
+            <div className="text-[36px] mb-2">📋</div>
+            <div className="text-[14px] font-medium text-[#6b7a99] mb-4">No assessment completed yet</div>
             {!readOnly && (
-              <button onClick={() => router.push(`/dashboard/workbench?flCandId=${candidate.id}`)} className="px-5 py-2.5 rounded-xl text-[13px] font-bold bg-[#133255] text-white hover:bg-[#1e40af] transition-all shadow-sm">
-                Start Assessment
-              </button>
+              <div className="flex justify-center gap-2">
+                <button onClick={() => router.push(`/dashboard/candidates/${candidate.id}/assessment`)} className="px-4 py-2 rounded-xl text-[12px] font-bold bg-[#133255] text-white hover:bg-[#1e40af] transition-all shadow-sm">
+                  Start MK Rubric
+                </button>
+              </div>
             )}
           </div>
         );
