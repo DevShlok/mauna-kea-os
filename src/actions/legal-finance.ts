@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { contracts, contractDocuments, invoices, invoicePayments, clients, consultantNotifications } from "@/db/schema";
+import { contracts, contractDocuments, invoices, invoicePayments, clients, consultantNotifications, mandates, candidates } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
 import { newContractId, newInvoiceId } from "@/lib/ids";
 import { generateContractNumber, generateInvoiceNumber } from "@/lib/lf-sequences";
@@ -653,3 +653,153 @@ export async function reversePaymentAction(paymentId: number, reason: string) {
   revalidatePath("/dashboard/legal-finance/payments");
   return { success: true };
 }
+
+/**
+ * Triggered automatically when a candidate pipeline stage moves to 'offer-accepted', 'closed', or 'Hired'
+ */
+export async function triggerAutoDraftInvoice({
+  mandateId,
+  candId,
+  actorName = "Placement Automation",
+}: {
+  mandateId: number;
+  candId: string;
+  actorName?: string;
+}) {
+  try {
+    // 1. Check if invoice already exists for this mandate & candidate
+    const existing = await db
+      .select()
+      .from(invoices)
+      .where(
+        and(
+          eq(invoices.mandateId, mandateId),
+          eq(invoices.candId, candId),
+          eq(invoices.isDeleted, false)
+        )
+      );
+
+    if (existing.length > 0 && existing.some((i) => i.status !== "Cancelled")) {
+      return { success: false, reason: "Invoice already exists for placement." };
+    }
+
+    // 2. Fetch Mandate
+    const [mandate] = await db.select().from(mandates).where(eq(mandates.id, mandateId));
+    if (!mandate) return { success: false, reason: "Mandate not found." };
+
+    // 3. Fetch Client (by clientId or matching company name)
+    let [clientObj] = mandate.clientId
+      ? await db.select().from(clients).where(eq(clients.id, mandate.clientId))
+      : await db.select().from(clients).where(eq(clients.name, mandate.company || ""));
+
+    if (!clientObj) {
+      // Fallback: create temporary client reference or pick first matching
+      const allClients = await db.select().from(clients).limit(1);
+      if (allClients.length === 0) return { success: false, reason: "No client record found." };
+      clientObj = allClients[0];
+    }
+
+    // 4. Fetch Active Signed Contract for Client
+    const [contractObj] = await db
+      .select()
+      .from(contracts)
+      .where(
+        and(
+          eq(contracts.clientId, clientObj.id),
+          eq(contracts.status, "Signed"),
+          eq(contracts.isDeleted, false)
+        )
+      )
+      .orderBy(sql`${contracts.createdAt} DESC`)
+      .limit(1);
+
+    // Fallback contract terms if no signed contract exists
+    const successFeePct = contractObj?.successFeePct || 20;
+    const contractId = contractObj?.id || null;
+
+    // 5. Fetch Candidate CTC (default to 30 Lakhs if not recorded)
+    const [candObj] = await db.select().from(candidates).where(eq(candidates.id, candId));
+    const annualCtc = 30; // 30 Lakhs base estimate
+
+    // Financial calculations
+    const ctcRupees = annualCtc * 100000;
+    const feeBeforeTax = Math.round((ctcRupees * successFeePct) / 100);
+    const gstRate = clientObj.gstRate || 18;
+    const gstAmount = clientObj.gstApplicable !== false ? Math.round((feeBeforeTax * gstRate) / 100) : 0;
+    const totalAmount = feeBeforeTax + gstAmount;
+
+    const isInterstate = clientObj.state?.toLowerCase() !== "maharashtra";
+    const cgstAmount = !isInterstate && gstAmount > 0 ? Math.round(gstAmount / 2) : 0;
+    const sgstAmount = !isInterstate && gstAmount > 0 ? Math.round(gstAmount / 2) : 0;
+    const igstAmount = isInterstate ? gstAmount : 0;
+
+    const invoiceDate = new Date().toISOString().split("T")[0];
+    const dueDateObj = new Date();
+    dueDateObj.setDate(dueDateObj.getDate() + 30);
+    const dueDate = dueDateObj.toISOString().split("T")[0];
+
+    const id = newInvoiceId();
+    const invoiceNumber = await generateInvoiceNumber();
+
+    await db.insert(invoices).values({
+      id,
+      invoiceNumber,
+      clientId: clientObj.id,
+      contractId,
+      mandateId,
+      candId,
+      clientSnapshot: {
+        id: clientObj.id,
+        name: clientObj.name,
+        legalEntityName: clientObj.legalEntityName || clientObj.name,
+        gstNumber: clientObj.gstNumber,
+        billingAddress: clientObj.billingAddress,
+        city: clientObj.city,
+        state: clientObj.state,
+      },
+      commercialSnapshot: {
+        contractNumber: contractObj?.contractNumber || "STANDARD-TERMS",
+        successFeePct,
+      },
+      invoiceDate,
+      dueDate,
+      annualCtc,
+      commercialPct: successFeePct,
+      feeBeforeTax,
+      gstRate,
+      gstAmount,
+      cgstAmount,
+      sgstAmount,
+      igstAmount,
+      totalAmount,
+      amountOutstanding: totalAmount,
+      currency: clientObj.currency || "INR",
+      notes: `Auto-drafted upon placement of candidate ${candObj?.name || candId} for mandate ${mandate.role} @ ${mandate.company}.`,
+      consultant: mandate.consultant || actorName,
+      createdBy: actorName,
+      status: "Draft",
+    });
+
+    // Notify Finance team
+    await db.insert(consultantNotifications).values({
+      targetRole: "finance",
+      message: `Placement Invoice Auto-Drafted: ${invoiceNumber} for candidate ${candObj?.name || "Placement"} (${mandate.company} - ${mandate.role}) of ₹${(totalAmount / 100000).toFixed(2)} L. Click to review.`,
+      link: `/dashboard/legal-finance/invoices/${id}`,
+    });
+
+    await writeLfAuditLog({
+      entityType: "invoice",
+      entityId: id,
+      action: "auto_drafted",
+      actorName,
+      newValue: { invoiceNumber, candidateName: candObj?.name, company: mandate.company, totalAmount },
+    });
+
+    revalidatePath("/dashboard/legal-finance/invoices");
+    return { success: true, id, invoiceNumber };
+  } catch (err: any) {
+    console.error("Auto-draft invoice trigger error:", err);
+    return { success: false, reason: err.message };
+  }
+}
+

@@ -640,7 +640,7 @@ export async function updateMandateCandidateStageAction(candId: number, stage: s
 
   await db.update(mandateCandidates).set({ stage }).where(eq(mandateCandidates.id, targetId));
 
-  // Trigger candidate notification if stage changed to a significant one
+  // Trigger candidate notification & Auto-Draft Invoice if stage changed to placement
   if (mcInfo && mcInfo.oldStage !== stage && mcInfo.candidateId) {
     const significantStages = ["Shared", "Shortlisted", "Interviewing", "Decision", "Hired", "Rejected"];
     if (significantStages.includes(stage)) {
@@ -651,6 +651,13 @@ export async function updateMandateCandidateStageAction(candId: number, stage: s
         link: "/candidate/applications",
         isRead: false,
       });
+    }
+
+    // Auto-draft tax invoice for placement
+    const placementStages = ["offer-accepted", "closed", "Hired", "offer-sent"];
+    if (placementStages.includes(stage)) {
+      const { triggerAutoDraftInvoice } = await import("./legal-finance");
+      await triggerAutoDraftInvoice({ mandateId, candId: mcInfo.candidateId });
     }
   }
 

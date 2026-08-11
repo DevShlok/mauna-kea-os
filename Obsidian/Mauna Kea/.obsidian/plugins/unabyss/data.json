@@ -8,8 +8,8 @@
     "outboundEnabled": true,
     "inboundEnabled": true,
     "auth": {
-      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg2NDExMTQ1LCJpYXQiOjE3ODY0MDc1NDUsImp0aSI6IjRmMGViN2YwN2I1ZDQyNzNiZDk0NzJhMjc0MDU5MDA4IiwidXNlcl9pZCI6IjE1OWE3OWJjLWFlMzYtNDc1Mi05MDg3LTU1Y2IyNTJiZDE1NiIsImNsaWVudF90eXBlIjoib2F1dGhfY2xpZW50Iiwib2F1dGhfY2xpZW50X2lkIjoib2JzaWRpYW4ifQ.i1frBa570Di4jHrPsWmLAjkFe47c-Y-D7p4lZKHozzY",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODk5OTU0NSwiaWF0IjoxNzg2NDA3NTQ1LCJqdGkiOiIwOWU5ZjFjOGZmMDA0MjZkYWE2MWNiYWM3OGI0ZDc1NyIsInVzZXJfaWQiOiIxNTlhNzliYy1hZTM2LTQ3NTItOTA4Ny01NWNiMjUyYmQxNTYiLCJjbGllbnRfdHlwZSI6Im9hdXRoX2NsaWVudCIsIm9hdXRoX2NsaWVudF9pZCI6Im9ic2lkaWFuIn0.EvSN9bUFckJndMH3KW5H2eoaw_vKRIY115HhY19Sa4w",
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg2NDQ4MjI4LCJpYXQiOjE3ODY0NDQ2MjgsImp0aSI6IjFiZWM0Yzc4YWE4YzQyMTQ5M2JkMzZkYTY0YjliNTRjIiwidXNlcl9pZCI6IjE1OWE3OWJjLWFlMzYtNDc1Mi05MDg3LTU1Y2IyNTJiZDE1NiIsImNsaWVudF90eXBlIjoib2F1dGhfY2xpZW50Iiwib2F1dGhfY2xpZW50X2lkIjoib2JzaWRpYW4ifQ.vYi1GqZeDo21vypk4fX1fz7IhWigoIGLlPheixA8qe8",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4OTAzNjYyOCwiaWF0IjoxNzg2NDQ0NjI4LCJqdGkiOiJkYjg0ZDcwMmZmNDg0ZTkxYjUzYWFkZjk0OTQ5MGNkOCIsInVzZXJfaWQiOiIxNTlhNzliYy1hZTM2LTQ3NTItOTA4Ny01NWNiMjUyYmQxNTYiLCJjbGllbnRfdHlwZSI6Im9hdXRoX2NsaWVudCIsIm9hdXRoX2NsaWVudF9pZCI6Im9ic2lkaWFuIn0.jlwX7XJY2twggsIXv4hoJZUjM3SgWCst8YsSxCfzxB0",
       "userEmail": "shlokshukla1469@gmail.com"
     },
     "bannerDismissed": true
@@ -89,8 +89,8 @@
         "mtime": 1786147720142
       },
       "Features/index.md": {
-        "contentHash": "eaeb0a3d9bb245dc8c90e8f0a384abed4d3992f60974c167ef595bb04e48691e",
-        "mtime": 1786147709479
+        "contentHash": "360e3e8f728e319ad0bf3035fdfaa7651e8e17190ebc7bacb0632fc2ef4cfa2e",
+        "mtime": 1786444627980
       },
       "Architecture/scripts.md": {
         "contentHash": "83c89ffeb3f216b0bc1c7467ea032f02f86cde4b7cf6e480b461b48c437212ba",
@@ -187,6 +187,14 @@
       "Features/executive-tagging-system.md": {
         "contentHash": "0914997e1ff257990cb7046c54ec3d4822a55c655d3eeb26599d10183ff33ec5",
         "mtime": 1786387134521
+      },
+      "Features/legal-and-finance.md": {
+        "contentHash": "60775fd128138e967de5ce2bc97bacfa3ed6d20e7ae320e5863903848aaa76b2",
+        "mtime": 1786444621347
+      },
+      "2026-08-11.md": {
+        "contentHash": "ed700c93bb02448320855f13823e5982ea81f0e248f0ec31eef7cdcf0a216324",
+        "mtime": 1786444631870
       }
     },
     "exportsUpdatedAfter": ""

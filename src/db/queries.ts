@@ -1467,62 +1467,67 @@ export const getLfAuditLogsPaginated = cache(async (params: {
  * Compliance Dashboard Metrics & Flags
  */
 export const getComplianceStats = cache(async () => {
-  // 1. Clients with mandates in last 12 months but no signed contract
-  const missingContracts = await db.execute(sql`
-    SELECT c.id, c.name
-    FROM clients c
-    JOIN mandates m ON m.client_id = c.id
-    LEFT JOIN contracts con ON con.client_id = c.id AND con.status = 'Signed' AND con.is_deleted = false
-    WHERE m.is_deleted = false AND m.created_at > NOW() - INTERVAL '12 months'
-    GROUP BY c.id, c.name
-    HAVING COUNT(con.id) = 0
-  `);
-
-  // 2. Expired signed contracts
   const todayStr = new Date().toISOString().split("T")[0];
-  const expiredContracts = await db
-    .select()
-    .from(contracts)
-    .where(
-      and(
-        eq(contracts.status, "Signed"),
-        lte(contracts.contractEndDate, todayStr),
-        eq(contracts.isDeleted, false)
-      )
-    );
 
-  // 3. Clients missing GST
-  const missingGstClients = await db
-    .select({ id: clients.id, name: clients.name })
-    .from(clients)
-    .where(
-      and(
-        or(isNull(clients.gstNumber), eq(clients.gstNumber, "")),
-        eq(clients.isDeleted, false)
-      )
-    );
-
-  // 4. Overdue invoices (>30 days)
-  const overdueInvoices = await db
-    .select()
-    .from(invoices)
-    .where(
-      and(
-        eq(invoices.status, "Overdue"),
-        eq(invoices.isDeleted, false)
-      )
-    );
-
-  // 5. Pending approvals
-  const pendingApprovals = await db
-    .select()
-    .from(contracts)
-    .where(
-      and(
-        eq(contracts.approvalStatus, "Pending"),
-        eq(contracts.isDeleted, false)
-      )
-    );
+  const [
+    missingContracts,
+    expiredContracts,
+    missingGstClients,
+    overdueInvoices,
+    pendingApprovals,
+  ] = await Promise.all([
+    // 1. Clients with mandates in last 12 months but no signed contract
+    db.execute(sql`
+      SELECT c.id, c.name
+      FROM clients c
+      JOIN mandates m ON m.client_id = c.id
+      LEFT JOIN contracts con ON con.client_id = c.id AND con.status = 'Signed' AND con.is_deleted = false
+      WHERE m.is_deleted = false AND m.created_at > NOW() - INTERVAL '12 months'
+      GROUP BY c.id, c.name
+      HAVING COUNT(con.id) = 0
+    `),
+    // 2. Expired signed contracts
+    db
+      .select()
+      .from(contracts)
+      .where(
+        and(
+          eq(contracts.status, "Signed"),
+          lte(contracts.contractEndDate, todayStr),
+          eq(contracts.isDeleted, false)
+        )
+      ),
+    // 3. Clients missing GST
+    db
+      .select({ id: clients.id, name: clients.name })
+      .from(clients)
+      .where(
+        and(
+          or(isNull(clients.gstNumber), eq(clients.gstNumber, "")),
+          eq(clients.isDeleted, false)
+        )
+      ),
+    // 4. Overdue invoices (>30 days)
+    db
+      .select()
+      .from(invoices)
+      .where(
+        and(
+          eq(invoices.status, "Overdue"),
+          eq(invoices.isDeleted, false)
+        )
+      ),
+    // 5. Pending contract approvals
+    db
+      .select()
+      .from(contracts)
+      .where(
+        and(
+          eq(contracts.approvalStatus, "Pending"),
+          eq(contracts.isDeleted, false)
+        )
+      ),
+  ]);
 
   return {
     missingContractsCount: missingContracts.length,

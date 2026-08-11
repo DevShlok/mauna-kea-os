@@ -2,6 +2,7 @@
 
 ## Internal Consultant OS (`/dashboard/*`)
 - [[Features/internal-os]] — overall dashboard structure
+- [[Features/legal-and-finance]] — commercial contracts, tax invoicing, payment ledgers, and compliance
 - [[Features/mandate-pipeline]] — mandate management and candidate pipeline
 - [[Features/float-list]] — submission CRM view (Floats)
 - [[Features/ai-workbench]] — AI report generation and candidate analysis

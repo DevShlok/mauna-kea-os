@@ -131,6 +131,30 @@ export default function InvoicesClient({
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              const exportData = initialData.rows.map(({ invoice, clientName }) => ({
+                "Invoice Number": invoice.invoiceNumber,
+                "Client Name": clientName || "N/A",
+                "Invoice Date": invoice.invoiceDate,
+                "Due Date": invoice.dueDate,
+                "Fee (Excl GST) ₹": invoice.feeBeforeTax || 0,
+                "GST Amount ₹": invoice.gstAmount || 0,
+                "Total Amount ₹": invoice.totalAmount || 0,
+                "Amount Paid ₹": invoice.amountPaid || 0,
+                "Outstanding ₹": invoice.amountOutstanding || 0,
+                "Status": invoice.status,
+                "PO Number": invoice.poNumber || "N/A",
+              }));
+              import("@/lib/export-excel").then((mod) =>
+                mod.exportToExcel(exportData, `Invoices_Export_${new Date().toISOString().split("T")[0]}`)
+              );
+            }}
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-xs"
+          >
+            <Download className="w-4 h-4 text-emerald-600" />
+            Export Excel
+          </button>
           <Link
             href="/dashboard/legal-finance/invoices/new"
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl shadow-md transition-all duration-200"

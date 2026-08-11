@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { DollarSign, RotateCcw, Search, CheckCircle2, AlertCircle } from "lucide-react";
+import { DollarSign, RotateCcw, Search, CheckCircle2, AlertCircle, Download } from "lucide-react";
 import toast from "react-hot-toast";
 import { reversePaymentAction } from "@/actions/legal-finance";
 
@@ -68,6 +68,29 @@ export default function PaymentsClient({
           <p className="text-sm text-slate-500 mt-0.5">
             Track all incoming payments, collections, UTR numbers, and reversals
           </p>
+        </div>
+        <div>
+          <button
+            onClick={() => {
+              const exportData = filteredRows.map(({ payment, invoiceNumber, clientName }) => ({
+                "Payment Date": payment.paymentDate,
+                "Invoice Number": invoiceNumber || payment.invoiceId,
+                "Client Name": clientName || "N/A",
+                "Mode": payment.mode || "NEFT",
+                "UTR / Ref": payment.utrNumber || payment.referenceNumber || "N/A",
+                "Amount Received ₹": payment.amount || 0,
+                "Status": payment.isReversed ? "Reversed" : "Active",
+                "Recorded By": payment.recordedBy || "System",
+              }));
+              import("@/lib/export-excel").then((mod) =>
+                mod.exportToExcel(exportData, `Payments_Ledger_${new Date().toISOString().split("T")[0]}`)
+              );
+            }}
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-xs"
+          >
+            <Download className="w-4 h-4 text-emerald-600" />
+            Export Excel
+          </button>
         </div>
       </div>
 

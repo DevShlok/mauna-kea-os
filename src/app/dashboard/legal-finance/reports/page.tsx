@@ -9,43 +9,44 @@ export const dynamic = "force-dynamic";
 export default async function ReportsPage() {
   await requireRole(["admin", "finance"]);
 
-  // Calculate high-level aggregates
-  const [totals] = await db
-    .select({
-      totalBilled: sql<number>`COALESCE(SUM(total_amount), 0)`,
-      totalCollected: sql<number>`COALESCE(SUM(amount_paid), 0)`,
-      totalOutstanding: sql<number>`COALESCE(SUM(amount_outstanding), 0)`,
-    })
-    .from(invoices)
-    .where(eq(invoices.isDeleted, false));
-
   const todayStr = new Date().toISOString().split("T")[0];
 
-  const [overdue] = await db
-    .select({
-      overdueAmount: sql<number>`COALESCE(SUM(amount_outstanding), 0)`,
-    })
-    .from(invoices)
-    .where(
-      and(
-        lte(invoices.dueDate, todayStr),
-        eq(invoices.isDeleted, false)
-      )
-    );
-
-  // Revenue by client
-  const byClient = await db
-    .select({
-      clientName: clients.name,
-      billed: sql<number>`COALESCE(SUM(${invoices.totalAmount}), 0)`,
-      paid: sql<number>`COALESCE(SUM(${invoices.amountPaid}), 0)`,
-      outstanding: sql<number>`COALESCE(SUM(${invoices.amountOutstanding}), 0)`,
-    })
-    .from(invoices)
-    .leftJoin(clients, eq(invoices.clientId, clients.id))
-    .where(eq(invoices.isDeleted, false))
-    .groupBy(clients.name)
-    .orderBy(sql`SUM(${invoices.totalAmount}) DESC`);
+  const [[totals], [overdue], byClient] = await Promise.all([
+    // Totals
+    db
+      .select({
+        totalBilled: sql<number>`COALESCE(SUM(total_amount), 0)`,
+        totalCollected: sql<number>`COALESCE(SUM(amount_paid), 0)`,
+        totalOutstanding: sql<number>`COALESCE(SUM(amount_outstanding), 0)`,
+      })
+      .from(invoices)
+      .where(eq(invoices.isDeleted, false)),
+    // Overdue
+    db
+      .select({
+        overdueAmount: sql<number>`COALESCE(SUM(amount_outstanding), 0)`,
+      })
+      .from(invoices)
+      .where(
+        and(
+          lte(invoices.dueDate, todayStr),
+          eq(invoices.isDeleted, false)
+        )
+      ),
+    // By client
+    db
+      .select({
+        clientName: clients.name,
+        billed: sql<number>`COALESCE(SUM(${invoices.totalAmount}), 0)`,
+        paid: sql<number>`COALESCE(SUM(${invoices.amountPaid}), 0)`,
+        outstanding: sql<number>`COALESCE(SUM(${invoices.amountOutstanding}), 0)`,
+      })
+      .from(invoices)
+      .leftJoin(clients, eq(invoices.clientId, clients.id))
+      .where(eq(invoices.isDeleted, false))
+      .groupBy(clients.name)
+      .orderBy(sql`SUM(${invoices.totalAmount}) DESC`),
+  ]);
 
   const summary = {
     totalBilled: Number(totals?.totalBilled || 0),
