@@ -17,8 +17,8 @@
   "manifestCache": {
     "paths": {
       "Changelog.md": {
-        "contentHash": "b19f3659353f08a2cb9621fd0af2c9dcfce17a73e9ac9dc7edc7b34832d516aa",
-        "mtime": 1786387137957
+        "contentHash": "09e1daff889209c0a2eadfff210a5633620a65a4ebfd7536271474aed2770df8",
+        "mtime": 1786447468548
       },
       "Decisions/no-raw-scores-to-candidates.md": {
         "contentHash": "596b889a55301ec6a7604faaf24e10b7b186b8c18d6459feb7115c13b0cdef6f",
@@ -189,12 +189,12 @@
         "mtime": 1786387134521
       },
       "Features/legal-and-finance.md": {
-        "contentHash": "0ac8291d413f37efe3e66da7d6a8571b418c321616a8a99eeeb16229f87f483e",
-        "mtime": 1786445758724
+        "contentHash": "eaa84f2375f6754f0a6202cc2cd3c26fcf12f5f8c0ab761217a1a9a1c024c254",
+        "mtime": 1786447418946
       },
       "2026-08-11.md": {
-        "contentHash": "0030437673a3a935e5a57cdd77e6243b3160c003a6e73be3d147da5ed942acd1",
-        "mtime": 1786445768035
+        "contentHash": "d195f515358785e73768686c6ff0592f91902c9b52cbd77793f015d76549b01a",
+        "mtime": 1786447447945
       }
     },
     "exportsUpdatedAfter": ""

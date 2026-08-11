@@ -4,6 +4,10 @@ Newest entry on top. Format: `YYYY-MM-DD — what changed — why`
 
 ---
 
+2026-08-11 — Invoice legal layout gap analysis + phase-wise implementation plan — Reviewed email feedback on Contracts & Invoice modules. Produced full gap audit: 14 legally mandatory fields missing from printed Tax Invoice (MK entity name, GSTIN, PAN, address, Place of Supply, bank details, signatory, T&C, reverse charge). Created `docs/contracts-invoice-implementation-plan.md` with 5 phases covering invoice legal compliance, .docx fix, navigation, email drafts, and GSTIN lookup. Updated Obsidian vault.
+
+2026-08-11 — Invoice module enhancements: candidate linkage, multi-line billing, UTGST — Added candidate-first selection flow with mandate/client/contract auto-resolve. Added multi-placement line items (`+Add`) with proposal deck CTC slab auto-matching (<50L=18%, 50L–1Cr=20%, >1Cr=25%). 100% editable particulars per line. Precise CGST/SGST/UTGST/IGST tax splits. DB migration `0034` for `line_items`, `utgst_amount`, `tax_type`. `tsc --noEmit` clean.
+
 2026-08-10 — Unified Executive Tagging System & Executive Search UX overhaul — Created reusable `TagInput.tsx` pill component with preset suggestions. Created `tag-matching.ts` (`computeTagOverlapScore`). Added `updateCandidateTagsAction` server action. Made table tags interactive in `CandidatesClient.tsx` and `MandatesClient.tsx`. Rendered and enabled inline editing for executive tags in `FlCandidateClient.tsx` and `CandidateProfileView.tsx`. Enhanced AI resume parser (`importCandidateDocumentAction`) to auto-extract 5-8 standardized `expTags`.
 
 2026-08-10 — Unified single-button Smart Candidate Import & auto-detection engine — Merged separate import buttons into a single "Import Candidate" button in `CandidatesClient.tsx` and `CandidatesImportModal.tsx`. Built format auto-detection branching: tabular files (`.xlsx`, `.csv`) update database table records only; document resume files (`.pdf`, `.doc`, `.docx`, `.txt`) invoke `importCandidateDocumentAction` to parse candidate profile details via AI, create/update database records, and attach CV files.
