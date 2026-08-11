@@ -1336,8 +1336,11 @@ export const getInvoiceById = cache(async (invoiceId: string) => {
     .select({
       invoice: invoices,
       clientName: clients.name,
+      clientLegalName: clients.legalEntityName,
       clientGst: clients.gstNumber,
       clientAddress: clients.billingAddress,
+      clientRegisteredAddress: clients.registeredAddress,
+      clientState: clients.state,
       contractNumber: contracts.contractNumber,
     })
     .from(invoices)
@@ -1357,8 +1360,11 @@ export const getInvoiceById = cache(async (invoiceId: string) => {
   return {
     ...row.invoice,
     clientName: row.clientName,
+    clientLegalName: row.clientLegalName,
     clientGst: row.clientGst,
     clientAddress: row.clientAddress,
+    clientRegisteredAddress: row.clientRegisteredAddress,
+    clientState: row.clientState,
     contractNumber: row.contractNumber,
     payments,
   };

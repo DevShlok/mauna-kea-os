@@ -5,6 +5,7 @@ import { ArrowLeft, Check, ChevronRight, FileText, Shield, DollarSign, Calendar,
 import toast from "react-hot-toast";
 import { createContractAction } from "@/actions/legal-finance";
 import { saveAs } from "file-saver";
+import { MK_COMPANY } from "@/lib/constants/mk-company";
 
 interface ClientOption {
   id: string;
@@ -163,6 +164,10 @@ export default function ContractWizard({
           body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 11pt; line-height: 1.5; color: #111827; }
           h1 { color: #133255; font-size: 18pt; text-align: center; border-bottom: 2pt solid #133255; padding-bottom: 6pt; }
           h2 { color: #133255; font-size: 13pt; margin-top: 16pt; border-bottom: 1pt solid #e5e7eb; }
+          .mk-header { text-align: center; margin-bottom: 12pt; }
+          .mk-brand { font-size: 22pt; font-weight: bold; letter-spacing: 4pt; color: #133255; }
+          .mk-tagline { font-size: 11pt; color: #374151; }
+          .mk-address { font-size: 9pt; color: #6b7280; }
           table { width: 100%; border-collapse: collapse; margin-top: 8pt; margin-bottom: 12pt; }
           th, td { border: 1pt solid #d1d5db; padding: 6pt 8pt; text-align: left; font-size: 10pt; }
           th { background-color: #f3f4f6; color: #133255; font-weight: bold; }
@@ -171,9 +176,15 @@ export default function ContractWizard({
         </style>
       </head>
       <body>
+        <div class='mk-header'>
+          <p class='mk-brand'>MAUNA KEA</p>
+          <p class='mk-tagline'>Executive Search &amp; Advisory</p>
+          <p class='mk-address'>${MK_COMPANY.address}</p>
+          <p class='mk-address'>GSTIN: ${MK_COMPANY.gstin} &nbsp;|&nbsp; PAN: ${MK_COMPANY.pan}</p>
+        </div>
         <h1>EXECUTIVE SEARCH COMMERCIAL AGREEMENT</h1>
         <p style="text-align:center; font-size: 10pt; color: #4b5563;">
-          Between <strong>Mauna Kea OS</strong> and <strong>${selectedClient.legalEntityName || selectedClient.name}</strong>
+          Between <strong>${MK_COMPANY.legalName}</strong> and <strong>${selectedClient.legalEntityName || selectedClient.name}</strong>
         </p>
 
         <h2>1. AGREEMENT DETAILS</h2>
@@ -231,19 +242,22 @@ export default function ContractWizard({
         <table style="border:none; margin-top:30pt;">
           <tr style="border:none;">
             <td style="border:none; width:50%;">
-              <p><strong>For Mauna Kea OS</strong></p>
+              <p><strong>For ${MK_COMPANY.legalName}</strong></p>
+              <p style="font-size:9pt; color:#6b7280;">Executive Search &amp; Advisory</p>
               <br><br><br>
               <p>___________________________</p>
-              <p><strong>${formData.signingAuthorityMK.name || "Authorized Signatory"}</strong></p>
+              <p><strong>${formData.signingAuthorityMK.name || "Authorised Signatory"}</strong></p>
               <p>${formData.signingAuthorityMK.designation}</p>
+              <p style="font-size:9pt;">Place: Gurugram &nbsp;|&nbsp; Date: ____________</p>
             </td>
             <td style="border:none; width:50%;">
-              <p><strong>For ${selectedClient.name}</strong></p>
+              <p><strong>For ${selectedClient.legalEntityName || selectedClient.name}</strong></p>
               <br><br><br>
               <p>___________________________</p>
               <p><strong>${formData.signingAuthorityClient.name || "Client Signatory"}</strong></p>
               <p>${formData.signingAuthorityClient.designation}</p>
               <p>${formData.signingAuthorityClient.email}</p>
+              <p style="font-size:9pt;">Place: ____________ &nbsp;|&nbsp; Date: ____________</p>
             </td>
           </tr>
         </table>
