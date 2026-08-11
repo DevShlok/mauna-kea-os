@@ -1,21 +1,35 @@
 # Legal & Finance Module Architecture & Documentation
 
 ## Overview
-The **Legal & Finance Module** provides enterprise-grade commercial contract lifecycle management, automated tax invoicing (GST/IGST/CGST split), payment collection ledgers, compliance risk monitoring, revenue reporting, and AI-assisted financial query handling.
+The **Legal & Finance Module** provides enterprise-grade commercial contract lifecycle management, candidate-linked multi-line tax invoicing (CGST/SGST/UTGST/IGST splits), payment collection ledgers, compliance risk monitoring, revenue reporting, and AI-assisted financial query handling.
 
 ---
 
 ## Key Features & Capabilities
 
-### 1. Contract Management
-- **Commercial Contract Registry**: Track commercial agreements, start/end dates, success fee %, retainer amounts, replacement guarantee periods, and non-poaching lock-in clauses.
-- **Contract Creation Wizard**: 4-step wizard for client selection, fee structuring, governance clauses, and approval submission.
-- **Version Control & Renewals**: Parent-child version history (`parent_contract_id`) allowing contract renewals without mutating historical records.
-- **Signed Copy History**: Append-only storage (`contract_documents`) for executed PDF contracts.
+### 1. Contract Management & Generation
+- **Auto-Population**: Auto-populates Lead Consultant (`client.owner`) and Practice/Sector (`client.vertical`) upon client selection, with manual override capability.
+- **Signing Authorities**: Captures Client Signatory (Name, Designation, Email) and Mauna Kea Signatory (Name, Designation).
+- **CTC-Wise Commission Slabs**: Choice between flat fee % or a multi-tier CTC Commission Slab Grid (e.g. 0–30L @ 18%, 30–60L @ 20%, >60L @ 25%).
+- **Generic & Custom Clauses**: Standard governance clauses (Exclusivity, Non-poaching lock-in, Late payment interest, Travel reimbursement) plus dynamic "Add Custom Clause" builder.
+- **Editable Word Document (.docx) Generator**: Step 4 review generates a formatted Microsoft Word document blob for instant editing in MS Word before uploading signed executed copies.
+- **SaaS-Style Force-Scroll Approval Inspection**: Approvers must scroll through all contract terms to the bottom before the "Approve & Execute" button becomes active.
+- **Bi-Directional Database Sync**: Saving or updating a contract automatically syncs Lead Consultant (`owner`), Practice (`vertical`), and Payment Terms back to the Client Master database (`clients` table).
+- **Role-Protected Exports**: Contracts Repository table Excel export is restricted to `admin` and `finance` roles only.
 
-### 2. Tax Invoicing & Fee Calculation
-- **Auto-Calculated Tax Invoices**: Automated base fee, GST (18%), CGST (9%), SGST (9%), and IGST (18%) calculations based on client place of supply.
-- **Auto-Draft Placement Invoicing**: Moving a candidate pipeline stage to `offer-accepted`, `closed`, or `Hired` automatically drafts a tax invoice in the background and alerts the Finance team.
+### 2. Tax Invoicing & Multi-Placement Billing
+- **Candidate-First Selection & Governance**: Step 1 starts by selecting placed candidate(s), auto-resolving linked Mandate, Client, and signed Contract. Prevents orphan invoices.
+- **Proposal Deck Fee Slab Auto-Matching**: Auto-calculates success fee % based on candidate CTC:
+  - `CTC < ₹50 Lakhs` $\rightarrow$ **18%**
+  - `CTC ₹50 Lakhs – ₹1 Crore` $\rightarrow$ **20%**
+  - `CTC > ₹1 Crore` $\rightarrow$ **25%**
+- **Multi-Placement Line Items (`+ Add Line Item`)**: Supports billing multiple candidate placements on a single Tax Invoice.
+- **100% Editable Particulars Description**: Line descriptions default to *"Executive Search Professional Fee — Success fee (20%) for Placement against Annual CTC of ₹50 Lakhs"* and are fully editable per line.
+- **Precise Tax Regime Splits**:
+  - **Intra-State**: CGST 9% + SGST 9%
+  - **Union Territory (DL, CH, PY, AN, LD, DN, JK, LA)**: CGST 9% + UTGST 9%
+  - **Inter-State**: IGST 18%
+- **Auto-Draft Placement Invoicing**: Moving a candidate pipeline stage to `offer-accepted`, `closed`, `Hired`, or `offer-sent` automatically drafts a tax invoice in the background and alerts the Finance team.
 - **INR Number to Words**: Converts rupee invoice totals into official Indian currency words (e.g. *"Rupees Forty Five Lakh Sixty Thousand Only"*).
 - **Credit Notes & Cancellations**: Full audit-logged invoice cancellation and Credit Note issuing (`CN-MK-IN-YYYY-NNNNN`).
 
@@ -46,9 +60,19 @@ clients (id) ◄─── (clientId) ─── contracts (id) ◄─── (cont
     ▲                               ▲
     │                               │
     └─────────────── (clientId) ────┼─── invoices (id) ◄─── (invoiceId) ─── invoice_payments (id)
-                                    │
-                                mandates (id)
+                                    │        │
+                                mandates (id)│ (lineItems JSON array)
+                                    ▲        │
+                                    └──── candidates (id)
 ```
+
+---
+
+## Migrations Applied
+
+- `0032_legal_finance_foundation.sql`: Core tables (`contracts`, `invoices`, `invoice_payments`, `lf_audit_logs`, `lf_sequences`).
+- `0033_contract_enhanced_fields.sql`: Added `signing_authority_client`, `signing_authority_mk`, `ctc_slabs`, `custom_clauses`.
+- `0034_invoice_line_items_and_tax.sql`: Added `line_items`, `utgst_amount`, `tax_type`.
 
 ---
 
