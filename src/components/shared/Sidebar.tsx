@@ -14,7 +14,8 @@ import {
   Shield,
   Trash2,
   PhoneCall,
-  Briefcase
+  Briefcase,
+  Scale
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useState, useEffect } from "react";
@@ -81,6 +82,19 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
       children: [
         { label: "My Engagement Lists", href: "/dashboard/calls", visibleTo: ["admin", "consultant"] },
         { label: "Weekly Planning", href: "/dashboard/calls/planning", visibleTo: ["admin", "consultant"] },
+      ]
+    },
+    {
+      title: "Legal & Finance",
+      icon: Scale,
+      visibleTo: ["admin", "consultant", "finance"],
+      children: [
+        { label: "Contracts", href: "/dashboard/legal-finance/contracts", visibleTo: ["admin", "consultant", "finance"] },
+        { label: "Invoices",  href: "/dashboard/legal-finance/invoices",  visibleTo: ["admin", "finance"] },
+        { label: "Payments",  href: "/dashboard/legal-finance/payments",  visibleTo: ["admin", "finance"] },
+        { label: "Reports",   href: "/dashboard/legal-finance/reports",   visibleTo: ["admin", "finance"] },
+        { label: "Compliance", href: "/dashboard/legal-finance/compliance", visibleTo: ["admin", "finance"] },
+        { label: "Audit Log", href: "/dashboard/legal-finance/audit-log",  visibleTo: ["admin", "finance"] },
       ]
     },
     {

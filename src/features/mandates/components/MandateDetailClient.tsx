@@ -285,6 +285,9 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
         <div className="flex gap-2">
           <button onClick={handleDeleteMandate} disabled={isDeleting} className="px-4 py-2 border border-red-200 text-red-600 bg-red-50 rounded text-xs font-bold hover:bg-red-100">{isDeleting ? "Deleting..." : "Delete"}</button>
           <button onClick={() => { setEditForm(mandate); setIsEditingMandate(true); }} className="px-4 py-2 neo-btn text-gray-600 text-xs font-bold">Edit</button>
+          <Link href={`/dashboard/legal-finance/invoices/new?mandateId=${mandate.id}`} className="px-4 py-2 bg-emerald-700 text-white rounded text-xs font-bold hover:bg-emerald-800 flex items-center gap-1">
+            Raise Invoice
+          </Link>
           <button onClick={() => setIsReportModalOpen(true)} className="px-4 py-2 bg-[#133255] text-white rounded text-xs font-bold hover:bg-[#133255]">Generate Report</button>
         </div>
       </div>

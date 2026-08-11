@@ -13,3 +13,5 @@ export const newCandId     = () => `CAND-${crypto.randomUUID()}`;
 export const newFloatId    = () => `SUB-${crypto.randomUUID()}`;
 export const newFollowUpId = () => `FU-${crypto.randomUUID()}`;
 export const newClientId   = () => `CLI-${crypto.randomUUID()}`;
+export const newContractId = () => `CON-${crypto.randomUUID()}`;
+export const newInvoiceId  = () => `INV-${crypto.randomUUID()}`;

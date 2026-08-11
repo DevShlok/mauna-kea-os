@@ -22,7 +22,6 @@ import {
   Mail,
   Calendar,
   Home as HomeIcon,
-  Compass,
   Star,
   FileText,
   Clock,
@@ -30,7 +29,11 @@ import {
   Camera,
   Loader2,
   ArrowLeft,
+  Briefcase as BriefcaseIcon,
+  CheckCircle,
+  Compass,
 } from "lucide-react";
+import { TagInput } from "@/components/ui/TagInput";
 import { updateCandidateSelfProfileAction, updateProfilePhotoAction } from "@/actions/candidate-portal";
 import toast from "react-hot-toast";
 import { VerifiedBadge } from "@/components/ui/StatusBadge";
@@ -1014,85 +1017,32 @@ export function CandidateProfileView({
               <h2 className="text-[17px] font-bold text-slate-800 flex items-center gap-2">
                 <Star className="w-5 h-5 text-[#D8B15B]" /> Career Aspirations
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">Dream roles and target companies.</p>
             </div>
 
-            <div>
-              <label className="block text-[12px] font-bold text-slate-600 uppercase tracking-wider mb-2">
-                Dream Roles
-              </label>
-              <div className="flex gap-2 mb-3">
-                <input
-                  type="text"
-                  placeholder="e.g. CFO, VP Finance..."
-                  value={dreamRoleInput}
-                  onChange={(e) => setDreamRoleInput(e.target.value)}
-                  className="flex-1 px-4 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none neo-inset"
-                />
-                <button
-                  type="button"
-                  onClick={addDreamRole}
-                  className="px-4 py-2.5 text-white font-bold rounded-xl text-xs bg-[#133255] hover:bg-[#1a4270] transition-all"
-                >
-                  Add Role
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {form.dreamRoles.map((r: string) => (
-                  <span
-                    key={r}
-                    className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-100 text-amber-900 shadow-sm"
-                  >
-                    {r}
-                    <button
-                      type="button"
-                      onClick={() => removeDreamRole(r)}
-                      className="hover:text-rose-600"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
+            <div className="space-y-4">
+              <TagInput
+                label="Dream / Target Roles"
+                tags={form.dreamRoles}
+                onChange={(newRoles) => setForm({ ...form, dreamRoles: newRoles })}
+                colorScheme="gold"
+                placeholder="Type target role (e.g. Group CFO, Finance Director)..."
+              />
 
-            <div className="pt-2">
-              <label className="block text-[12px] font-bold text-slate-600 uppercase tracking-wider mb-2">
-                Target / Dream Companies
-              </label>
-              <div className="flex gap-2 mb-3">
-                <input
-                  type="text"
-                  placeholder="e.g. Kotak, Axis Bank..."
-                  value={dreamCoInput}
-                  onChange={(e) => setDreamCoInput(e.target.value)}
-                  className="flex-1 px-4 py-2.5 rounded-xl text-slate-800 text-xs font-medium outline-none neo-inset"
-                />
-                <button
-                  type="button"
-                  onClick={addDreamCo}
-                  className="px-4 py-2.5 text-white font-bold rounded-xl text-xs bg-[#133255] hover:bg-[#1a4270] transition-all"
-                >
-                  Add Company
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {form.dreamCos.map((c: string) => (
-                  <span
-                    key={c}
-                    className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#133255] text-white shadow-sm"
-                  >
-                    {c}
-                    <button
-                      type="button"
-                      onClick={() => removeDreamCo(c)}
-                      className="hover:text-rose-300"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </span>
-                ))}
-              </div>
+              <TagInput
+                label="Target / Dream Companies"
+                tags={form.dreamCos}
+                onChange={(newCos) => setForm({ ...form, dreamCos: newCos })}
+                colorScheme="blue"
+                placeholder="Type company name (e.g. Tata, Reliance, Axis Bank)..."
+              />
+
+              <TagInput
+                label="Executive Expertise & Skills"
+                tags={form.expTags}
+                onChange={(newExp) => setForm({ ...form, expTags: newExp })}
+                colorScheme="emerald"
+                placeholder="Type key skill tag (e.g. M&A, FP&A, IFRS)..."
+              />
             </div>
           </NeoCard>
         )}

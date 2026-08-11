@@ -202,7 +202,18 @@ export default function MandatesClient({
         return (
           <div className="flex flex-wrap gap-1">
             {Array.from(new Set(m.sectors)).map((s: any, i: number) => (
-              <span key={`${s}-${i}`} className="px-2 py-0.5 bg-[#f0f3f8] text-[#475569] rounded-[4px] text-[11px] font-medium">{s}</span>
+              <button
+                key={`${s}-${i}`}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSectorFilter(s);
+                }}
+                className="px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 rounded-full text-[11px] font-bold cursor-pointer transition-colors"
+                title={`Filter mandates by sector "${s}"`}
+              >
+                {s}
+              </button>
             ))}
           </div>
         );

@@ -415,6 +415,7 @@ export async function importCandidateDocumentAction(formData: FormData) {
     ctc: z.string().nullable().describe("Current annual CTC/salary"),
     totalExperience: z.number().nullable().describe("Total work experience in years"),
     qualification: z.string().nullable().describe("Highest degree/qualification"),
+    expTags: z.array(z.string()).optional().describe("5-8 key executive skills or functional expertise tags extracted from resume (e.g. M&A, FP&A, Big4 Alum, IFRS)"),
   });
 
   let extractedData: any = {};
@@ -436,6 +437,7 @@ ${extractedText.substring(0, 4000)}`
   const mobile = extractedData.mobile || "";
   const designation = extractedData.designation || "";
   const company = extractedData.company || "";
+  const expTags = Array.isArray(extractedData.expTags) ? extractedData.expTags : [];
 
   // 3. Upload Document to Supabase Storage
   let cvUrl = "";
@@ -477,6 +479,9 @@ ${extractedText.substring(0, 4000)}`
 
   if (existingCandidate) {
     candidateId = existingCandidate.id;
+    const currentExpTags = (existingCandidate.expTags as string[]) || [];
+    const mergedTags = Array.from(new Set([...currentExpTags, ...expTags]));
+
     await db.update(candidates).set({
       name: name || existingCandidate.name,
       email: email || existingCandidate.email,
@@ -487,6 +492,7 @@ ${extractedText.substring(0, 4000)}`
       linkedin: extractedData.linkedin || existingCandidate.linkedin,
       exp: extractedData.totalExperience || existingCandidate.exp,
       ctc: extractedData.ctc || existingCandidate.ctc,
+      expTags: mergedTags,
       hasCv: true,
       cvFileName: cvUrl || existingCandidate.cvFileName,
       cvText: extractedText || existingCandidate.cvText,
@@ -508,6 +514,7 @@ ${extractedText.substring(0, 4000)}`
       qual: extractedData.qualification ? [extractedData.qualification] : [],
       exp: extractedData.totalExperience || 0,
       ctc: extractedData.ctc || "",
+      expTags,
       hasCv: true,
       cvFileName: cvUrl,
       cvText: extractedText,
@@ -535,4 +542,32 @@ ${extractedText.substring(0, 4000)}`
     isUpdate: !!existingCandidate,
     hasCv: true,
   };
+}
+
+/**
+ * Update candidate executive tags (expTags, dreamRoles, dreamCos, pastCompanies).
+ */
+export async function updateCandidateTagsAction(
+  candId: string,
+  tagData: {
+    expTags?: string[];
+    dreamRoles?: string[];
+    dreamCos?: string[];
+    pastCompanies?: string[];
+  }
+) {
+  const currentUser = await getCurrentUserName();
+  const { eq } = await import("drizzle-orm");
+
+  const toSet: any = { updatedBy: currentUser };
+  if (tagData.expTags !== undefined) toSet.expTags = tagData.expTags;
+  if (tagData.dreamRoles !== undefined) toSet.dreamRoles = tagData.dreamRoles;
+  if (tagData.dreamCos !== undefined) toSet.dreamCos = tagData.dreamCos;
+  if (tagData.pastCompanies !== undefined) toSet.pastCompanies = tagData.pastCompanies;
+
+  await db.update(candidates).set(toSet).where(eq(candidates.id, candId));
+
+  revalidatePath(`/dashboard/candidates/${candId}`);
+  revalidatePath("/dashboard/candidates");
+  return { success: true };
 }

@@ -11,9 +11,25 @@ import { updateClientAction, deleteClientAction } from "@/actions";
 import dynamic from "next/dynamic";
 const MandateImportModal = dynamic(() => import("@/features/mandates/components/MandateImportModal"), { ssr: false });
 
-export default function ClientDetailClient({ client, mandates, industries = [], associatedCandidates = [], currentUser }: { client: any, mandates: any[], industries?: any[], associatedCandidates?: any[], currentUser: { name: string } }) {
+export default function ClientDetailClient({
+  client,
+  mandates,
+  industries = [],
+  associatedCandidates = [],
+  contractsList = [],
+  invoicesList = [],
+  currentUser,
+}: {
+  client: any;
+  mandates: any[];
+  industries?: any[];
+  associatedCandidates?: any[];
+  contractsList?: any[];
+  invoicesList?: any[];
+  currentUser: { name: string };
+}) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
+  const [activeTab, setActiveTab] = useState<"active" | "completed" | "contracts" | "invoices">("active");
   const [isEditing, setIsEditing] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,8 +45,13 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
 
   const activeMandates = mandates.filter(m => m.status !== 'Closed' && m.status !== 'Lost');
   const completedMandates = mandates.filter(m => m.status === 'Closed' || m.status === 'Lost');
-
   const displayedMandates = activeTab === "active" ? activeMandates : completedMandates;
+
+  // Compute financial totals
+  const totalBilled = invoicesList.reduce((acc, i) => acc + (i.totalAmount || 0), 0);
+  const totalPaid = invoicesList.reduce((acc, i) => acc + (i.amountPaid || 0), 0);
+  const totalOutstanding = invoicesList.reduce((acc, i) => acc + (i.amountOutstanding || 0), 0);
+  const signedContracts = contractsList.filter(c => c.status === 'Signed');
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +93,7 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
         </div>
 
         {/* Client Header */}
-        <div className="neo-card p-8 mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+        <div className="neo-card p-8 mb-6 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
           <div className="flex gap-6 items-center">
             <div className="w-20 h-20 neo-card-sm text-[#133255] flex items-center justify-center shrink-0">
               <Building2 className="w-10 h-10" />
@@ -109,6 +130,34 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
           </div>
         </div>
 
+        {/* Financial Summary Strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-4 rounded-xl shadow-xs border border-slate-200">
+            <span className="text-xs text-slate-400 font-semibold block">Active Contract</span>
+            <span className="text-sm font-bold text-slate-900 mt-1 block">
+              {signedContracts.length > 0 ? signedContracts[0].contractNumber : "No signed contract"}
+            </span>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-xs border border-slate-200">
+            <span className="text-xs text-slate-400 font-semibold block">Total Invoiced</span>
+            <span className="text-sm font-bold text-[#133255] mt-1 block">
+              ₹{(totalBilled / 100000).toFixed(2)} L
+            </span>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-xs border border-slate-200">
+            <span className="text-xs text-slate-400 font-semibold block">Total Collected</span>
+            <span className="text-sm font-bold text-emerald-600 mt-1 block">
+              ₹{(totalPaid / 100000).toFixed(2)} L
+            </span>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-xs border border-slate-200">
+            <span className="text-xs text-slate-400 font-semibold block">Outstanding</span>
+            <span className="text-sm font-bold text-amber-600 mt-1 block">
+              ₹{(totalOutstanding / 100000).toFixed(2)} L
+            </span>
+          </div>
+        </div>
+
         <MandateImportModal 
           isOpen={isImportModalOpen} 
           onClose={() => setIsImportModalOpen(false)} 
@@ -117,7 +166,7 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
           currentUser={currentUser}
         />
 
-        {/* Mandates Tabs */}
+        {/* Main Content Tabs */}
         <div className="neo-table">
           <div className="flex border-b border-gray-100 px-6">
             <button 
@@ -132,43 +181,126 @@ export default function ClientDetailClient({ client, mandates, industries = [], 
             >
               Completed / Lost ({completedMandates.length})
             </button>
+            <button 
+              onClick={() => setActiveTab("contracts")}
+              className={`py-4 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'contracts' ? 'border-[#133255] text-[#133255]' : 'border-transparent text-gray-400 hover:text-gray-700'}`}
+            >
+              Contracts ({contractsList.length})
+            </button>
+            <button 
+              onClick={() => setActiveTab("invoices")}
+              className={`py-4 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'invoices' ? 'border-[#133255] text-[#133255]' : 'border-transparent text-gray-400 hover:text-gray-700'}`}
+            >
+              Invoices ({invoicesList.length})
+            </button>
           </div>
 
-          {/* Mandates List */}
+
+          {/* Tab Panels */}
           <div className="p-0">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Location</th>
-                  <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Consultant</th>
-                  <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Opened</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayedMandates.map(m => (
-                  <tr key={m.id} className="border-b border-gray-50 neo-row-hover transition-colors">
-                    <td className="px-6 py-4 font-bold text-[15px] text-gray-900">
-                      <Link href={`/dashboard/mandates/${m.id}`} className="text-[#133255] hover:underline">
-                        {m.role}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 text-[15px] text-gray-600 capitalize">{m.status}</td>
-                    <td className="px-6 py-4 text-[15px] text-gray-600">{m.geography || "-"}</td>
-                    <td className="px-6 py-4 text-[15px] text-gray-600">{m.consultant || "-"}</td>
-                    <td className="px-6 py-4 text-[15px] text-gray-600">{m.opened || "-"}</td>
+            {activeTab === "contracts" ? (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/50">
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Contract No.</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Duration</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Terms</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Approval</th>
                   </tr>
-                ))}
-                {displayedMandates.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-sm text-gray-500">
-                      No {activeTab} mandates found for {client.name}.
-                    </td>
+                </thead>
+                <tbody>
+                  {contractsList.map((c: any) => (
+                    <tr key={c.id} className="border-b border-gray-50 neo-row-hover transition-colors">
+                      <td className="px-6 py-4 font-bold text-[15px]">
+                        <Link href={`/dashboard/legal-finance/contracts/${c.id}`} className="text-[#133255] hover:underline">
+                          {c.contractNumber}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 text-[14px] text-gray-600">{c.contractStartDate} → {c.contractEndDate}</td>
+                      <td className="px-6 py-4 text-[14px] text-gray-600">{c.successFeePct ? `${c.successFeePct}% Success Fee` : "Retainer"}</td>
+                      <td className="px-6 py-4 text-[14px] font-semibold text-gray-800">{c.status}</td>
+                      <td className="px-6 py-4 text-[14px] text-gray-600">{c.approvalStatus}</td>
+                    </tr>
+                  ))}
+                  {contractsList.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-sm text-gray-500">
+                        No contracts created for {client.name} yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            ) : activeTab === "invoices" ? (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/50">
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Invoice No.</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Invoice Date</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Amount</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Paid</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {invoicesList.map((inv: any) => (
+                    <tr key={inv.id} className="border-b border-gray-50 neo-row-hover transition-colors">
+                      <td className="px-6 py-4 font-bold text-[15px]">
+                        <Link href={`/dashboard/legal-finance/invoices/${inv.id}`} className="text-[#133255] hover:underline">
+                          {inv.invoiceNumber}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 text-[14px] text-gray-600">{inv.invoiceDate}</td>
+                      <td className="px-6 py-4 text-[14px] font-bold text-[#133255]">₹{((inv.totalAmount || 0) / 100000).toFixed(2)} L</td>
+                      <td className="px-6 py-4 text-[14px] font-bold text-emerald-600">₹{((inv.amountPaid || 0) / 100000).toFixed(2)} L</td>
+                      <td className="px-6 py-4 text-[14px] font-semibold text-gray-800">{inv.status}</td>
+                    </tr>
+                  ))}
+                  {invoicesList.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-sm text-gray-500">
+                        No invoices generated for {client.name} yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            ) : (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/50">
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Role</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Location</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Consultant</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">Opened</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayedMandates.map(m => (
+                    <tr key={m.id} className="border-b border-gray-50 neo-row-hover transition-colors">
+                      <td className="px-6 py-4 font-bold text-[15px] text-gray-900">
+                        <Link href={`/dashboard/mandates/${m.id}`} className="text-[#133255] hover:underline">
+                          {m.role}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 text-[15px] text-gray-600 capitalize">{m.status}</td>
+                      <td className="px-6 py-4 text-[15px] text-gray-600">{m.geography || "-"}</td>
+                      <td className="px-6 py-4 text-[15px] text-gray-600">{m.consultant || "-"}</td>
+                      <td className="px-6 py-4 text-[15px] text-gray-600">{m.opened || "-"}</td>
+                    </tr>
+                  ))}
+                  {displayedMandates.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-sm text-gray-500">
+                        No {activeTab} mandates found for {client.name}.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 

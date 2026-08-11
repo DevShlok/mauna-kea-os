@@ -320,6 +320,30 @@ export const clients = pgTable('clients', {
   status: varchar('status', { length: 50 }).default('Active'),
   legalEntityName: varchar('legal_entity_name', { length: 255 }),
   contacts: json('contacts').$type<{name: string; designation: string; number: string; email: string; linkedCandidateId?: string}[]>().default([]),
+  // ── Legal & billing fields (Phase 1 — Legal & Finance) ──
+  gstNumber: varchar('gst_number', { length: 25 }),
+  panNumber: varchar('pan_number', { length: 15 }),
+  cinNumber: varchar('cin_number', { length: 25 }),
+  registeredAddress: text('registered_address'),
+  billingAddress: text('billing_address'),
+  city: varchar('city', { length: 100 }),
+  state: varchar('state', { length: 100 }),
+  country: varchar('country', { length: 100 }).default('India'),
+  pinCode: varchar('pin_code', { length: 10 }),
+  financeContactName: varchar('finance_contact_name', { length: 255 }),
+  financeEmail: varchar('finance_email', { length: 255 }),
+  billingEmail: varchar('billing_email', { length: 255 }),
+  billingPhone: varchar('billing_phone', { length: 20 }),
+  placeOfSupply: varchar('place_of_supply', { length: 100 }),
+  currency: varchar('currency', { length: 10 }).default('INR'),
+  defaultPaymentTerms: varchar('default_payment_terms', { length: 100 }),
+  requiresPo: boolean('requires_po').default(false),
+  vendorCode: varchar('vendor_code', { length: 100 }),
+  clientCode: varchar('client_code', { length: 100 }),
+  tdsApplicable: boolean('tds_applicable').default(true),
+  gstApplicable: boolean('gst_applicable').default(true),
+  gstRate: float('gst_rate').default(18),
+  // ──────────────────────────────────────────────────────────
   isDeleted: boolean('is_deleted').default(false),
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),
@@ -809,3 +833,200 @@ export const candidateProfileChangeRequests = pgTable('candidate_profile_change_
 
 export type CandidateProfileChangeRequest = typeof candidateProfileChangeRequests.$inferSelect;
 
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ─── LEGAL & FINANCE MODULE (Phase 1 Foundation) ─────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── LF SEQUENCES (auto-numbering) ───────────────────────────────────────────
+export const lfSequences = pgTable('lf_sequences', {
+  key: varchar('key', { length: 50 }).primaryKey(),
+  lastVal: int('last_val').notNull().default(0),
+});
+
+// ─── CONTRACTS ────────────────────────────────────────────────────────────────
+export const contracts = pgTable('contracts', {
+  id: varchar('id', { length: 50 }).primaryKey(),
+  contractNumber: varchar('contract_number', { length: 60 }).notNull().unique(),
+  clientId: varchar('client_id', { length: 50 }).references(() => clients.id, { onDelete: 'restrict' }),
+  clientSnapshot: json('client_snapshot').$type<Record<string, any>>().default({}),
+  consultant: varchar('consultant', { length: 255 }),
+  businessHead: varchar('business_head', { length: 255 }),
+  practice: varchar('practice', { length: 100 }),
+  contractStartDate: date('contract_start_date').notNull(),
+  contractEndDate: date('contract_end_date').notNull(),
+  renewalType: varchar('renewal_type', { length: 20 }).default('Manual'),
+  status: varchar('status', { length: 30 }).default('Draft'),
+  commercialStructure: varchar('commercial_structure', { length: 50 }),
+  successFeePct: float('success_fee_pct'),
+  minFee: float('min_fee'),
+  maxFee: float('max_fee'),
+  retainerAmount: float('retainer_amount'),
+  replacementPeriod: int('replacement_period'),
+  guaranteePeriod: int('guarantee_period'),
+  paymentTerms: varchar('payment_terms', { length: 100 }),
+  currency: varchar('currency', { length: 10 }).default('INR'),
+  billingMilestones: json('billing_milestones').$type<any[]>().default([]),
+  latePaymentClause: text('late_payment_clause'),
+  travelExpenses: text('travel_expenses'),
+  oppExpenses: text('opp_expenses'),
+  exclusivity: boolean('exclusivity').default(false),
+  nonPoachingMonths: int('non_poaching_months').default(0),
+  confidentiality: boolean('confidentiality').default(true),
+  draftDocUrl: varchar('draft_doc_url', { length: 1000 }),
+  signedDocUrl: varchar('signed_doc_url', { length: 1000 }),
+  approvalStatus: varchar('approval_status', { length: 30 }).default('Pending'),
+  approvedBy: varchar('approved_by', { length: 255 }),
+  approvedAt: datetime('approved_at'),
+  version: int('version').default(1).notNull(),
+  parentContractId: varchar('parent_contract_id', { length: 50 }),
+  isDeleted: boolean('is_deleted').default(false),
+  deletedAt: datetime('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 255 }),
+  notes: text('notes'),
+  createdBy: varchar('created_by', { length: 255 }),
+  createdAt: datetime('created_at').default(sql`now()`),
+  updatedAt: datetime('updated_at').default(sql`now()`),
+}, (table) => ({
+  clientIdIdx: index('con_client_id_idx').on(table.clientId),
+  statusIdx: index('con_status_idx').on(table.status),
+  endDateIdx: index('con_end_date_idx').on(table.contractEndDate),
+  isDeletedIdx: index('con_is_deleted_idx').on(table.isDeleted),
+}));
+
+// ─── CONTRACT DOCUMENTS (append-only) ────────────────────────────────────────
+export const contractDocuments = pgTable('contract_documents', {
+  id: serial('id').primaryKey(),
+  contractId: varchar('contract_id', { length: 50 }).notNull().references(() => contracts.id, { onDelete: 'cascade' }),
+  label: varchar('label', { length: 255 }).notNull(),
+  fileUrl: varchar('file_url', { length: 1000 }).notNull(),
+  fileName: varchar('file_name', { length: 255 }).notNull(),
+  fileSizeBytes: int('file_size_bytes'),
+  uploadedBy: varchar('uploaded_by', { length: 255 }),
+  uploadedAt: datetime('uploaded_at').default(sql`now()`),
+}, (table) => ({
+  contractIdIdx: index('cd_contract_id_idx').on(table.contractId),
+}));
+
+// ─── INVOICES ─────────────────────────────────────────────────────────────────
+export const invoices = pgTable('invoices', {
+  id: varchar('id', { length: 50 }).primaryKey(),
+  invoiceNumber: varchar('invoice_number', { length: 60 }).notNull().unique(),
+  clientId: varchar('client_id', { length: 50 }).references(() => clients.id, { onDelete: 'restrict' }),
+  contractId: varchar('contract_id', { length: 50 }).references(() => contracts.id, { onDelete: 'restrict' }),
+  mandateId: int('mandate_id').references(() => mandates.id, { onDelete: 'restrict' }),
+  candId: varchar('cand_id', { length: 50 }).references(() => candidates.id, { onDelete: 'restrict' }),
+  clientSnapshot: json('client_snapshot').$type<Record<string, any>>().default({}),
+  commercialSnapshot: json('commercial_snapshot').$type<Record<string, any>>().default({}),
+  invoiceDate: date('invoice_date').notNull(),
+  dueDate: date('due_date').notNull(),
+  joiningDate: date('joining_date'),
+  annualCtc: float('annual_ctc'),
+  commercialPct: float('commercial_pct'),
+  feeBeforeTax: float('fee_before_tax'),
+  gstRate: float('gst_rate').default(18),
+  gstAmount: float('gst_amount'),
+  cgstAmount: float('cgst_amount'),
+  sgstAmount: float('sgst_amount'),
+  igstAmount: float('igst_amount'),
+  tdsRate: float('tds_rate').default(0),
+  tdsAmount: float('tds_amount'),
+  totalAmount: float('total_amount'),
+  currency: varchar('currency', { length: 10 }).default('INR'),
+  placeOfSupply: varchar('place_of_supply', { length: 100 }),
+  hsnSacCode: varchar('hsn_sac_code', { length: 20 }).default('998313'),
+  poNumber: varchar('po_number', { length: 100 }),
+  status: varchar('status', { length: 30 }).default('Draft'),
+  amountPaid: float('amount_paid').default(0),
+  amountOutstanding: float('amount_outstanding'),
+  version: int('version').default(1).notNull(),
+  parentInvoiceId: varchar('parent_invoice_id', { length: 50 }),
+  cancelReason: text('cancel_reason'),
+  cancelBy: varchar('cancel_by', { length: 255 }),
+  cancelledAt: datetime('cancelled_at'),
+  consultant: varchar('consultant', { length: 255 }),
+  createdBy: varchar('created_by', { length: 255 }),
+  isDeleted: boolean('is_deleted').default(false),
+  deletedAt: datetime('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 255 }),
+  notes: text('notes'),
+  createdAt: datetime('created_at').default(sql`now()`),
+  updatedAt: datetime('updated_at').default(sql`now()`),
+}, (table) => ({
+  clientIdIdx: index('inv_client_id_idx').on(table.clientId),
+  contractIdIdx: index('inv_contract_id_idx').on(table.contractId),
+  mandateIdIdx: index('inv_mandate_id_idx').on(table.mandateId),
+  statusIdx: index('inv_status_idx').on(table.status),
+  dueDateIdx: index('inv_due_date_idx').on(table.dueDate),
+  isDeletedIdx: index('inv_is_deleted_idx').on(table.isDeleted),
+}));
+
+// ─── INVOICE PAYMENTS (ledger) ────────────────────────────────────────────────
+export const invoicePayments = pgTable('invoice_payments', {
+  id: serial('id').primaryKey(),
+  invoiceId: varchar('invoice_id', { length: 50 }).notNull().references(() => invoices.id, { onDelete: 'cascade' }),
+  paymentDate: date('payment_date').notNull(),
+  amount: float('amount').notNull(),
+  referenceNumber: varchar('reference_number', { length: 100 }),
+  utrNumber: varchar('utr_number', { length: 100 }),
+  mode: varchar('mode', { length: 50 }),
+  notes: text('notes'),
+  isReversed: boolean('is_reversed').default(false),
+  reversedAt: datetime('reversed_at'),
+  reversedBy: varchar('reversed_by', { length: 255 }),
+  reversalReason: text('reversal_reason'),
+  recordedBy: varchar('recorded_by', { length: 255 }),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  invoiceIdIdx: index('ip_invoice_id_idx').on(table.invoiceId),
+}));
+
+// ─── LF AUDIT LOGS (immutable — INSERT only) ──────────────────────────────────
+export const lfAuditLogs = pgTable('lf_audit_logs', {
+  id: serial('id').primaryKey(),
+  entityType: varchar('entity_type', { length: 30 }).notNull(),
+  entityId: varchar('entity_id', { length: 100 }).notNull(),
+  action: varchar('action', { length: 50 }).notNull(),
+  actorName: varchar('actor_name', { length: 255 }).notNull(),
+  actorRole: varchar('actor_role', { length: 50 }),
+  timestamp: datetime('timestamp').default(sql`now()`).notNull(),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  previousValue: json('previous_value').$type<Record<string, any>>(),
+  newValue: json('new_value').$type<Record<string, any>>(),
+  changeReason: text('change_reason'),
+  metadata: json('metadata').$type<Record<string, any>>().default({}),
+}, (table) => ({
+  entityIdx: index('lfa_entity_idx').on(table.entityType, table.entityId),
+  actionIdx: index('lfa_action_idx').on(table.action),
+  tsIdx: index('lfa_ts_idx').on(table.timestamp),
+}));
+
+// ─── RELATIONS ────────────────────────────────────────────────────────────────
+export const contractsRelations = relations(contracts, ({ one, many }) => ({
+  client: one(clients, { fields: [contracts.clientId], references: [clients.id] }),
+  documents: many(contractDocuments),
+  invoices: many(invoices),
+}));
+
+export const contractDocumentsRelations = relations(contractDocuments, ({ one }) => ({
+  contract: one(contracts, { fields: [contractDocuments.contractId], references: [contracts.id] }),
+}));
+
+export const invoicesRelations = relations(invoices, ({ one, many }) => ({
+  client: one(clients, { fields: [invoices.clientId], references: [clients.id] }),
+  contract: one(contracts, { fields: [invoices.contractId], references: [contracts.id] }),
+  payments: many(invoicePayments),
+}));
+
+export const invoicePaymentsRelations = relations(invoicePayments, ({ one }) => ({
+  invoice: one(invoices, { fields: [invoicePayments.invoiceId], references: [invoices.id] }),
+}));
+
+// ─── INFERRED TYPES ───────────────────────────────────────────────────────────
+export type Contract = typeof contracts.$inferSelect;
+export type ContractInsert = typeof contracts.$inferInsert;
+export type ContractDocument = typeof contractDocuments.$inferSelect;
+export type Invoice = typeof invoices.$inferSelect;
+export type InvoiceInsert = typeof invoices.$inferInsert;
+export type InvoicePayment = typeof invoicePayments.$inferSelect;
+export type LfAuditLog = typeof lfAuditLogs.$inferSelect;

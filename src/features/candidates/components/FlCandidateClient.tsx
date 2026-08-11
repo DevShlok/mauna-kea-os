@@ -15,13 +15,14 @@ import {
   bulkAssignToMandateAction, 
   bulkAddToEngagementListAction 
 } from "@/actions";
-import { convertToClientContactAction, updatePastCompaniesAction, updateCandidateTargetCompaniesAction } from "@/actions/candidates";
+import { convertToClientContactAction, updatePastCompaniesAction, updateCandidateTargetCompaniesAction, updateCandidateTagsAction } from "@/actions/candidates";
 import { updateDreamCompanyStatusAction, approveProfileChangeRequestAction, rejectProfileChangeRequestAction } from "@/actions/candidate-portal";
 import { removeFromEngagementListAction } from "@/actions/calls";
 import { formatCtcValue, getCleanLinkedInUrl } from "@/lib/helpers";
 import { createClient } from "@/utils/supabase/client";
-import { Pin, Download, User, FileText, CheckSquare, Target, Briefcase, IndianRupee, MapPin, Building2, Brain, Link as LinkIcon, Edit, Trash2, ArrowLeft, Plus, Check, Send, Rocket, PhoneCall, X, ShieldCheck } from "lucide-react";
+import { Pin, Download, User, FileText, CheckSquare, Target, Briefcase, IndianRupee, MapPin, Building2, Brain, Link as LinkIcon, Edit, Trash2, ArrowLeft, Plus, Check, Send, Rocket, PhoneCall, X, ShieldCheck, Tag as TagIcon, Sparkles } from "lucide-react";
 import { VerifiedBadge } from "@/components/ui/StatusBadge";
+import { TagInput } from "@/components/ui/TagInput";
 
 import { useWidgetLayout } from "@/hooks/useWidgetLayout";
 import { WidgetCard } from "@/components/ui/WidgetCard";
@@ -75,6 +76,33 @@ export default function FlCandidateClient({
   const [localDreamStatuses, setLocalDreamStatuses] = useState<any[]>(dreamStatuses);
   const [user, setUser] = useState<any>(null);
   const [isProcessingApproval, setIsProcessingApproval] = useState(false);
+
+  // Executive Tags State
+  const [expTags, setExpTags] = useState<string[]>((candidate?.expTags as string[]) || []);
+  const [dreamRoles, setDreamRoles] = useState<string[]>((candidate?.dreamRoles as string[]) || []);
+  const [isEditingTags, setIsEditingTags] = useState(false);
+  const [isSavingTags, setIsSavingTags] = useState(false);
+
+  const handleSaveTags = async () => {
+    setIsSavingTags(true);
+    try {
+      const res = await updateCandidateTagsAction(candidate.id, {
+        expTags,
+        dreamRoles,
+      });
+      if (res.success) {
+        toast.success("Executive tags updated!");
+        setIsEditingTags(false);
+        router.refresh();
+      } else {
+        toast.error("Failed to update tags");
+      }
+    } catch {
+      toast.error("Error updating tags");
+    } finally {
+      setIsSavingTags(false);
+    }
+  };
 
   const handleApprovePendingRequest = async () => {
     if (!pendingChangeRequest) return;
@@ -813,6 +841,89 @@ export default function FlCandidateClient({
                     <Plus size={14} />
                   </button>
                 </form>
+              )}
+            </div>
+
+            {/* Executive Expertise Tags Widget */}
+            <div className="pt-3 border-t border-slate-200/80 mt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                  <TagIcon className="w-3.5 h-3.5 text-[#D8B15B]" />
+                  Executive Expertise & Skill Tags
+                </div>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isEditingTags) {
+                        handleSaveTags();
+                      } else {
+                        setIsEditingTags(true);
+                      }
+                    }}
+                    disabled={isSavingTags}
+                    className="text-xs font-bold text-[#133255] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    {isEditingTags ? (
+                      isSavingTags ? "Saving..." : "Save Tags"
+                    ) : (
+                      <>
+                        <Edit className="w-3 h-3" /> Edit Tags
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+
+              {isEditingTags ? (
+                <div className="space-y-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                  <TagInput
+                    label="Expertise Tags (expTags)"
+                    tags={expTags}
+                    onChange={setExpTags}
+                    colorScheme="blue"
+                    placeholder="Type skill tag (e.g. M&A, IFRS, FP&A)..."
+                  />
+                  <TagInput
+                    label="Target / Aspirant Roles (dreamRoles)"
+                    tags={dreamRoles}
+                    onChange={setDreamRoles}
+                    colorScheme="gold"
+                    placeholder="Type target role tag (e.g. Group CFO, Global Controller)..."
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    {expTags.map((t, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => router.push(`/dashboard/candidates?search=${encodeURIComponent(t)}`)}
+                        className="px-2.5 py-1 bg-blue-50 text-blue-900 border border-blue-200 rounded-xl text-xs font-bold hover:bg-blue-100 transition-colors cursor-pointer"
+                        title={`Search all candidates with tag "${t}"`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                    {expTags.length === 0 && (
+                      <span className="text-xs text-slate-400 italic">No expertise tags assigned</span>
+                    )}
+                  </div>
+
+                  {dreamRoles.length > 0 && (
+                    <div className="pt-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Target Roles</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {dreamRoles.map((dr, idx) => (
+                          <span key={idx} className="px-2 py-0.5 bg-amber-50 text-amber-900 border border-amber-200 rounded-lg text-xs font-bold">
+                            {dr}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 

@@ -6,7 +6,8 @@ import {
   mandates, mandateCandidates, candidates, floats, floatReferences,
   floatFollowUps, floatActivities, frameworks, frameworkCategories,
   frameworkCriteria, platformUsers, candidateReports, candidateFiles, clients,
-  userPreferences, candidateVerifications, candidateBadges, referenceChecks
+  userPreferences, candidateVerifications, candidateBadges, referenceChecks,
+  contracts, contractDocuments, invoices, invoicePayments, lfAuditLogs, lfSequences
 } from './schema';
 
 
@@ -1115,3 +1116,425 @@ export const getRecycleBinPaginated = cache(async ({
     }
   };
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ─── LEGAL & FINANCE QUERIES ──────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Paginated contracts query with status/search filtering
+ */
+export const getContractsPaginated = cache(async (params: {
+  page?: number;
+  pageSize?: number;
+  status?: string;
+  clientId?: string;
+  search?: string;
+  consultant?: string;
+}) => {
+  const page = Math.max(1, params.page || 1);
+  const pageSize = Math.max(1, Math.min(100, params.pageSize || 25));
+  const offset = (page - 1) * pageSize;
+
+  const conditions = [eq(contracts.isDeleted, false)];
+
+  if (params.status && params.status !== "All") {
+    if (params.status === "Expiring") {
+      const todayStr = new Date().toISOString().split("T")[0];
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 30);
+      const futureStr = futureDate.toISOString().split("T")[0];
+      conditions.push(
+        eq(contracts.status, "Signed"),
+        gte(contracts.contractEndDate, todayStr),
+        lte(contracts.contractEndDate, futureStr)
+      );
+    } else {
+      conditions.push(eq(contracts.status, params.status));
+    }
+  }
+
+  if (params.clientId) {
+    conditions.push(eq(contracts.clientId, params.clientId));
+  }
+
+  if (params.consultant) {
+    conditions.push(eq(contracts.consultant, params.consultant));
+  }
+
+  if (params.search) {
+    const term = `%${params.search}%`;
+    conditions.push(
+      or(
+        ilike(contracts.contractNumber, term),
+        ilike(contracts.consultant, term),
+        ilike(contracts.practice, term)
+      )!
+    );
+  }
+
+  const whereClause = and(...conditions);
+
+  const [countRes] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(contracts)
+    .where(whereClause);
+
+  const rows = await db
+    .select({
+      contract: contracts,
+      clientName: clients.name,
+    })
+    .from(contracts)
+    .leftJoin(clients, eq(contracts.clientId, clients.id))
+    .where(whereClause)
+    .orderBy(desc(contracts.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  const totalCount = Number(countRes?.count || 0);
+
+  return {
+    rows,
+    totalCount,
+    totalPages: Math.ceil(totalCount / pageSize),
+    currentPage: page,
+  };
+});
+
+/**
+ * Fetch contract details by ID including documents and client info
+ */
+export const getContractById = cache(async (contractId: string) => {
+  const [contract] = await db
+    .select({
+      contract: contracts,
+      clientName: clients.name,
+    })
+    .from(contracts)
+    .leftJoin(clients, eq(contracts.clientId, clients.id))
+    .where(and(eq(contracts.id, contractId), eq(contracts.isDeleted, false)))
+    .limit(1);
+
+  if (!contract) return null;
+
+  const documents = await db
+    .select()
+    .from(contractDocuments)
+    .where(eq(contractDocuments.contractId, contractId))
+    .orderBy(desc(contractDocuments.uploadedAt));
+
+  return {
+    ...contract.contract,
+    clientName: contract.clientName,
+    documents,
+  };
+});
+
+/**
+ * Gets active/signed contract for a client
+ */
+export const getActiveContractForClient = cache(async (clientId: string) => {
+  const [contract] = await db
+    .select()
+    .from(contracts)
+    .where(
+      and(
+        eq(contracts.clientId, clientId),
+        eq(contracts.status, "Signed"),
+        eq(contracts.isDeleted, false)
+      )
+    )
+    .orderBy(desc(contracts.createdAt))
+    .limit(1);
+
+  return contract || null;
+});
+
+/**
+ * Get all contracts for a client (for Client detail page Contracts tab)
+ */
+export const getContractsByClientId = cache(async (clientId: string) => {
+  return await db
+    .select()
+    .from(contracts)
+    .where(and(eq(contracts.clientId, clientId), eq(contracts.isDeleted, false)))
+    .orderBy(desc(contracts.createdAt));
+});
+
+/**
+ * Paginated invoices query
+ */
+export const getInvoicesPaginated = cache(async (params: {
+  page?: number;
+  pageSize?: number;
+  status?: string;
+  clientId?: string;
+  search?: string;
+}) => {
+  const page = Math.max(1, params.page || 1);
+  const pageSize = Math.max(1, Math.min(100, params.pageSize || 25));
+  const offset = (page - 1) * pageSize;
+
+  const conditions = [eq(invoices.isDeleted, false)];
+
+  if (params.status && params.status !== "All") {
+    conditions.push(eq(invoices.status, params.status));
+  }
+
+  if (params.clientId) {
+    conditions.push(eq(invoices.clientId, params.clientId));
+  }
+
+  if (params.search) {
+    const term = `%${params.search}%`;
+    conditions.push(
+      or(
+        ilike(invoices.invoiceNumber, term),
+        ilike(invoices.poNumber, term),
+        ilike(invoices.consultant, term)
+      )!
+    );
+  }
+
+  const whereClause = and(...conditions);
+
+  const [countRes] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(invoices)
+    .where(whereClause);
+
+  const rows = await db
+    .select({
+      invoice: invoices,
+      clientName: clients.name,
+      contractNumber: contracts.contractNumber,
+    })
+    .from(invoices)
+    .leftJoin(clients, eq(invoices.clientId, clients.id))
+    .leftJoin(contracts, eq(invoices.contractId, contracts.id))
+    .where(whereClause)
+    .orderBy(desc(invoices.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  const totalCount = Number(countRes?.count || 0);
+
+  return {
+    rows,
+    totalCount,
+    totalPages: Math.ceil(totalCount / pageSize),
+    currentPage: page,
+  };
+});
+
+/**
+ * Single invoice details with payment ledger
+ */
+export const getInvoiceById = cache(async (invoiceId: string) => {
+  const [row] = await db
+    .select({
+      invoice: invoices,
+      clientName: clients.name,
+      clientGst: clients.gstNumber,
+      clientAddress: clients.billingAddress,
+      contractNumber: contracts.contractNumber,
+    })
+    .from(invoices)
+    .leftJoin(clients, eq(invoices.clientId, clients.id))
+    .leftJoin(contracts, eq(invoices.contractId, contracts.id))
+    .where(and(eq(invoices.id, invoiceId), eq(invoices.isDeleted, false)))
+    .limit(1);
+
+  if (!row) return null;
+
+  const payments = await db
+    .select()
+    .from(invoicePayments)
+    .where(eq(invoicePayments.invoiceId, invoiceId))
+    .orderBy(desc(invoicePayments.paymentDate));
+
+  return {
+    ...row.invoice,
+    clientName: row.clientName,
+    clientGst: row.clientGst,
+    clientAddress: row.clientAddress,
+    contractNumber: row.contractNumber,
+    payments,
+  };
+});
+
+/**
+ * Invoices for client page Financial tab
+ */
+export const getInvoicesByClientId = cache(async (clientId: string) => {
+  return await db
+    .select()
+    .from(invoices)
+    .where(and(eq(invoices.clientId, clientId), eq(invoices.isDeleted, false)))
+    .orderBy(desc(invoices.createdAt));
+});
+
+/**
+ * Paginated payment events table
+ */
+export const getPaymentsPaginated = cache(async (params: {
+  page?: number;
+  pageSize?: number;
+}) => {
+  const page = Math.max(1, params.page || 1);
+  const pageSize = Math.max(1, Math.min(100, params.pageSize || 25));
+  const offset = (page - 1) * pageSize;
+
+  const [countRes] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(invoicePayments);
+
+  const rows = await db
+    .select({
+      payment: invoicePayments,
+      invoiceNumber: invoices.invoiceNumber,
+      clientName: clients.name,
+    })
+    .from(invoicePayments)
+    .leftJoin(invoices, eq(invoicePayments.invoiceId, invoices.id))
+    .leftJoin(clients, eq(invoices.clientId, clients.id))
+    .orderBy(desc(invoicePayments.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  const totalCount = Number(countRes?.count || 0);
+
+  return {
+    rows,
+    totalCount,
+    totalPages: Math.ceil(totalCount / pageSize),
+    currentPage: page,
+  };
+});
+
+/**
+ * Filterable paginated Audit Log
+ */
+export const getLfAuditLogsPaginated = cache(async (params: {
+  page?: number;
+  pageSize?: number;
+  entityType?: string;
+  actorName?: string;
+  action?: string;
+}) => {
+  const page = Math.max(1, params.page || 1);
+  const pageSize = Math.max(1, Math.min(100, params.pageSize || 25));
+  const offset = (page - 1) * pageSize;
+
+  const conditions = [];
+  if (params.entityType && params.entityType !== "All") {
+    conditions.push(eq(lfAuditLogs.entityType, params.entityType));
+  }
+  if (params.actorName) {
+    conditions.push(ilike(lfAuditLogs.actorName, `%${params.actorName}%`));
+  }
+  if (params.action) {
+    conditions.push(ilike(lfAuditLogs.action, `%${params.action}%`));
+  }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [countRes] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(lfAuditLogs)
+    .where(whereClause);
+
+  const rows = await db
+    .select()
+    .from(lfAuditLogs)
+    .where(whereClause)
+    .orderBy(desc(lfAuditLogs.timestamp))
+    .limit(pageSize)
+    .offset(offset);
+
+  const totalCount = Number(countRes?.count || 0);
+
+  return {
+    rows,
+    totalCount,
+    totalPages: Math.ceil(totalCount / pageSize),
+    currentPage: page,
+  };
+});
+
+/**
+ * Compliance Dashboard Metrics & Flags
+ */
+export const getComplianceStats = cache(async () => {
+  // 1. Clients with mandates in last 12 months but no signed contract
+  const missingContracts = await db.execute(sql`
+    SELECT c.id, c.name
+    FROM clients c
+    JOIN mandates m ON m.client_id = c.id
+    LEFT JOIN contracts con ON con.client_id = c.id AND con.status = 'Signed' AND con.is_deleted = false
+    WHERE m.is_deleted = false AND m.created_at > NOW() - INTERVAL '12 months'
+    GROUP BY c.id, c.name
+    HAVING COUNT(con.id) = 0
+  `);
+
+  // 2. Expired signed contracts
+  const todayStr = new Date().toISOString().split("T")[0];
+  const expiredContracts = await db
+    .select()
+    .from(contracts)
+    .where(
+      and(
+        eq(contracts.status, "Signed"),
+        lte(contracts.contractEndDate, todayStr),
+        eq(contracts.isDeleted, false)
+      )
+    );
+
+  // 3. Clients missing GST
+  const missingGstClients = await db
+    .select({ id: clients.id, name: clients.name })
+    .from(clients)
+    .where(
+      and(
+        or(isNull(clients.gstNumber), eq(clients.gstNumber, "")),
+        eq(clients.isDeleted, false)
+      )
+    );
+
+  // 4. Overdue invoices (>30 days)
+  const overdueInvoices = await db
+    .select()
+    .from(invoices)
+    .where(
+      and(
+        eq(invoices.status, "Overdue"),
+        eq(invoices.isDeleted, false)
+      )
+    );
+
+  // 5. Pending approvals
+  const pendingApprovals = await db
+    .select()
+    .from(contracts)
+    .where(
+      and(
+        eq(contracts.approvalStatus, "Pending"),
+        eq(contracts.isDeleted, false)
+      )
+    );
+
+  return {
+    missingContractsCount: missingContracts.length,
+    missingContractsList: missingContracts,
+    expiredContractsCount: expiredContracts.length,
+    expiredContractsList: expiredContracts,
+    missingGstCount: missingGstClients.length,
+    missingGstList: missingGstClients,
+    overdueInvoicesCount: overdueInvoices.length,
+    overdueInvoicesList: overdueInvoices,
+    pendingApprovalsCount: pendingApprovals.length,
+    pendingApprovalsList: pendingApprovals,
+  };
+});
+

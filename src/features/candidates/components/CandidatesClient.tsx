@@ -495,12 +495,21 @@ export default function CandidatesClient({
         if (!tags.length) return <span className="text-[#a0aabf]">–</span>;
         return (
           <div className="flex flex-wrap justify-center gap-1">
-            {tags.slice(0, 2).map((t: string, i: number) => (
-              <span key={i} className="text-[11px] bg-[#f0f3f8] text-[#475569] rounded-[4px] px-1.5 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-[100px]" title={t}>
+            {tags.slice(0, 3).map((t: string, i: number) => (
+              <button
+                key={i}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSearch(t);
+                }}
+                className="text-[11px] font-bold bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-200 rounded-full px-2 py-0.5 whitespace-nowrap transition-colors cursor-pointer"
+                title={`Filter candidates by "${t}"`}
+              >
                 {t}
-              </span>
+              </button>
             ))}
-            {tags.length > 2 && <span className="text-[11px] text-[#94a3b8]">+{tags.length - 2}</span>}
+            {tags.length > 3 && <span className="text-[11px] font-bold text-slate-500 self-center">+{tags.length - 3}</span>}
           </div>
         );
 

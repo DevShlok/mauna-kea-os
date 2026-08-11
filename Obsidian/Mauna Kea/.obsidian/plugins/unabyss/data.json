@@ -8,8 +8,8 @@
     "outboundEnabled": true,
     "inboundEnabled": true,
     "auth": {
-      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg2Mzg5NzQyLCJpYXQiOjE3ODYzODYxNDIsImp0aSI6IjE5N2Q0NzA0MDIwNjQ0OTJhNmJlYjY0N2ZjY2U2ZGI0IiwidXNlcl9pZCI6IjE1OWE3OWJjLWFlMzYtNDc1Mi05MDg3LTU1Y2IyNTJiZDE1NiIsImNsaWVudF90eXBlIjoib2F1dGhfY2xpZW50Iiwib2F1dGhfY2xpZW50X2lkIjoib2JzaWRpYW4ifQ._YNpY9PCeEtEr5GHbQhI225q1STeMRV4dSlDgZqbWx8",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODk3ODE0MiwiaWF0IjoxNzg2Mzg2MTQyLCJqdGkiOiI4YTA3OTY5NmUzODk0YzJhYWVkZDY2OTZlNDdlMDRkNCIsInVzZXJfaWQiOiIxNTlhNzliYy1hZTM2LTQ3NTItOTA4Ny01NWNiMjUyYmQxNTYiLCJjbGllbnRfdHlwZSI6Im9hdXRoX2NsaWVudCIsIm9hdXRoX2NsaWVudF9pZCI6Im9ic2lkaWFuIn0.kcHNinUF6ZFqt8FzYxHVgAP6eRaUEVl-diCiZe91Pt8",
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg2NDExMTQ1LCJpYXQiOjE3ODY0MDc1NDUsImp0aSI6IjRmMGViN2YwN2I1ZDQyNzNiZDk0NzJhMjc0MDU5MDA4IiwidXNlcl9pZCI6IjE1OWE3OWJjLWFlMzYtNDc1Mi05MDg3LTU1Y2IyNTJiZDE1NiIsImNsaWVudF90eXBlIjoib2F1dGhfY2xpZW50Iiwib2F1dGhfY2xpZW50X2lkIjoib2JzaWRpYW4ifQ.i1frBa570Di4jHrPsWmLAjkFe47c-Y-D7p4lZKHozzY",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODk5OTU0NSwiaWF0IjoxNzg2NDA3NTQ1LCJqdGkiOiIwOWU5ZjFjOGZmMDA0MjZkYWE2MWNiYWM3OGI0ZDc1NyIsInVzZXJfaWQiOiIxNTlhNzliYy1hZTM2LTQ3NTItOTA4Ny01NWNiMjUyYmQxNTYiLCJjbGllbnRfdHlwZSI6Im9hdXRoX2NsaWVudCIsIm9hdXRoX2NsaWVudF9pZCI6Im9ic2lkaWFuIn0.EvSN9bUFckJndMH3KW5H2eoaw_vKRIY115HhY19Sa4w",
       "userEmail": "shlokshukla1469@gmail.com"
     },
     "bannerDismissed": true
@@ -17,8 +17,8 @@
   "manifestCache": {
     "paths": {
       "Changelog.md": {
-        "contentHash": "54106646a38041b77c2736fa866049d2a63e4b0c9631dcc07bfc61ee7317fc67",
-        "mtime": 1786386285424
+        "contentHash": "b19f3659353f08a2cb9621fd0af2c9dcfce17a73e9ac9dc7edc7b34832d516aa",
+        "mtime": 1786387137957
       },
       "Decisions/no-raw-scores-to-candidates.md": {
         "contentHash": "596b889a55301ec6a7604faaf24e10b7b186b8c18d6459feb7115c13b0cdef6f",
@@ -183,6 +183,10 @@
       "Features/candidate-imports.md": {
         "contentHash": "703a43ce8d0a14237e7d67572e5ec502eb04e005e36ab96732e60c2c8b97a942",
         "mtime": 1786386378530
+      },
+      "Features/executive-tagging-system.md": {
+        "contentHash": "0914997e1ff257990cb7046c54ec3d4822a55c655d3eeb26599d10183ff33ec5",
+        "mtime": 1786387134521
       }
     },
     "exportsUpdatedAfter": ""
