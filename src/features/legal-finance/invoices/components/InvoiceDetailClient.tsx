@@ -10,12 +10,14 @@ import {
   Ban,
   RotateCcw,
   FileX,
+  Mail,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import RecordPaymentModal from "@/features/legal-finance/payments/components/RecordPaymentModal";
 import { cancelInvoiceAction, issueCreditNoteAction, reversePaymentAction } from "@/actions/legal-finance";
 import { numberToWordsINR } from "@/lib/number-to-words";
 import { MK_COMPANY, getStateCode } from "@/lib/constants/mk-company";
+import EmailDraftModal from "@/features/legal-finance/components/EmailDraftModal";
 
 interface InvoiceDetailProps {
   invoice: {
@@ -69,6 +71,7 @@ const STATUS_STYLES: Record<string, string> = {
 export default function InvoiceDetailClient({ invoice }: InvoiceDetailProps) {
   const router = useRouter();
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isEmailDraftOpen, setIsEmailDraftOpen] = useState(false);
 
   const handleCancel = async () => {
     const reason = prompt(`Reason for cancelling invoice ${invoice.invoiceNumber}?`);
@@ -166,6 +169,9 @@ export default function InvoiceDetailClient({ invoice }: InvoiceDetailProps) {
         <div className="flex items-center gap-2">
           <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
             <Printer className="w-3.5 h-3.5" /> Print / PDF
+          </button>
+          <button onClick={() => setIsEmailDraftOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-violet-700 bg-violet-50 border border-violet-200 rounded-xl hover:bg-violet-100 transition-colors">
+            <Mail className="w-3.5 h-3.5" /> Draft Email
           </button>
 
           {invoice.status !== "Cancelled" && invoice.status !== "Credit Note" && (
@@ -509,6 +515,23 @@ export default function InvoiceDetailClient({ invoice }: InvoiceDetailProps) {
         invoiceId={invoice.id}
         invoiceNumber={invoice.invoiceNumber}
         outstandingAmount={invoice.amountOutstanding || 0}
+      />
+
+      <EmailDraftModal
+        isOpen={isEmailDraftOpen}
+        onClose={() => setIsEmailDraftOpen(false)}
+        context={{
+          type: "invoice",
+          invoiceNumber: invoice.invoiceNumber,
+          clientName: invoice.clientLegalName || invoice.clientName || "",
+          invoiceDate: invoice.invoiceDate,
+          dueDate: invoice.dueDate,
+          totalAmount: invoice.totalAmount || 0,
+          feeBeforeTax: invoice.feeBeforeTax || 0,
+          lineItems: invoice.lineItems as { particulars: string; feeAmount: number }[] | undefined,
+          contractNumber: invoice.contractNumber,
+          consultant: invoice.consultant,
+        }}
       />
     </div>
   );

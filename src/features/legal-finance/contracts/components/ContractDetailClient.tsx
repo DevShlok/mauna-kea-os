@@ -17,6 +17,7 @@ import {
   DollarSign,
   UserCheck,
   Trash2,
+  Mail,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -25,6 +26,7 @@ import {
   renewContractAction,
   deleteContractAction,
 } from "@/actions/legal-finance";
+import EmailDraftModal from "@/features/legal-finance/components/EmailDraftModal";
 
 interface ContractDetailProps {
   contract: {
@@ -67,6 +69,7 @@ export default function ContractDetailClient({ contract }: ContractDetailProps) 
   const router = useRouter();
   const [isUploading, setIsUploading] = useState(false);
   const [signedUrlInput, setSignedUrlInput] = useState("");
+  const [isEmailDraftOpen, setIsEmailDraftOpen] = useState(false);
 
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
@@ -182,6 +185,12 @@ export default function ContractDetailClient({ contract }: ContractDetailProps) 
               <Download className="w-3.5 h-3.5" /> Download Signed PDF
             </a>
           )}
+          <button
+            onClick={() => setIsEmailDraftOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-violet-700 bg-violet-50 border border-violet-200 rounded-xl hover:bg-violet-100 transition-colors"
+          >
+            <Mail className="w-3.5 h-3.5" /> Draft Email
+          </button>
           {contract.status === "Signed" && (
             <button
               onClick={handleRenew}
@@ -511,6 +520,22 @@ export default function ContractDetailClient({ contract }: ContractDetailProps) 
           </div>
         </div>
       )}
+
+      <EmailDraftModal
+        isOpen={isEmailDraftOpen}
+        onClose={() => setIsEmailDraftOpen(false)}
+        context={{
+          type: "contract",
+          contractNumber: contract.contractNumber,
+          clientName: contract.clientName || "",
+          contractStartDate: contract.contractStartDate,
+          contractEndDate: contract.contractEndDate,
+          consultant: contract.consultant,
+          practice: contract.practice,
+          commercialStructure: contract.commercialStructure,
+          successFeePct: contract.successFeePct,
+        }}
+      />
     </div>
   );
 }
