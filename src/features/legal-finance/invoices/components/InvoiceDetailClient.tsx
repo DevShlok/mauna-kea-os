@@ -41,6 +41,9 @@ interface InvoiceDetailProps {
     cgstAmount: number | null;
     sgstAmount: number | null;
     igstAmount: number | null;
+    utgstAmount?: number | null;
+    taxType?: string | null;
+    lineItems?: any[];
     totalAmount: number | null;
     amountPaid: number | null;
     amountOutstanding: number | null;
@@ -204,55 +207,90 @@ export default function InvoiceDetailClient({ invoice }: InvoiceDetailProps) {
         <table className="w-full text-left border-collapse text-xs">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600">
-              <th className="p-3">Description</th>
+              <th className="p-3">#</th>
+              <th className="p-3">Particulars & Description</th>
               <th className="p-3 text-right">SAC Code</th>
               <th className="p-3 text-right">Amount (₹)</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            <tr>
-              <td className="p-3">
-                <p className="font-semibold text-slate-900">Executive Search Professional Fee</p>
-                <p className="text-slate-500 text-[11px]">
-                  Success fee ({invoice.commercialPct}%) for Placement against Annual CTC of ₹{invoice.annualCtc} Lakhs
-                </p>
-              </td>
-              <td className="p-3 text-right text-slate-600">{invoice.hsnSacCode || "998313"}</td>
-              <td className="p-3 text-right font-semibold text-slate-900">
-                ₹{(invoice.feeBeforeTax || 0).toLocaleString("en-IN")}
-              </td>
-            </tr>
+            {invoice.lineItems && invoice.lineItems.length > 0 ? (
+              invoice.lineItems.map((item: any, idx: number) => (
+                <tr key={idx}>
+                  <td className="p-3 font-bold text-slate-500 text-center">{idx + 1}</td>
+                  <td className="p-3">
+                    <p className="font-semibold text-slate-900 whitespace-pre-line">
+                      {item.particulars || `Executive Search Fee for Placement against CTC ₹${item.annualCtc} Lakhs`}
+                    </p>
+                  </td>
+                  <td className="p-3 text-right text-slate-600 font-mono">{invoice.hsnSacCode || "998313"}</td>
+                  <td className="p-3 text-right font-bold text-slate-900 font-mono">
+                    ₹{(item.feeAmount || 0).toLocaleString("en-IN")}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td className="p-3 font-bold text-slate-500 text-center">1</td>
+                <td className="p-3">
+                  <p className="font-semibold text-slate-900">Executive Search Professional Fee</p>
+                  <p className="text-slate-500 text-[11px]">
+                    Success fee ({invoice.commercialPct}%) for Placement against Annual CTC of ₹{invoice.annualCtc} Lakhs
+                  </p>
+                </td>
+                <td className="p-3 text-right text-slate-600 font-mono">{invoice.hsnSacCode || "998313"}</td>
+                <td className="p-3 text-right font-bold text-slate-900 font-mono">
+                  ₹{(invoice.feeBeforeTax || 0).toLocaleString("en-IN")}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
 
         {/* Breakdown & Totals */}
         <div className="flex justify-end pt-2 border-t border-slate-200">
-          <div className="w-72 space-y-2 text-xs">
+          <div className="w-80 space-y-2 text-xs">
             <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-600">Subtotal (Excl GST):</span>
-              <span className="font-semibold text-slate-900">
+              <span className="text-slate-600">Total Fee (Excl GST):</span>
+              <span className="font-semibold text-slate-900 font-mono">
                 ₹{(invoice.feeBeforeTax || 0).toLocaleString("en-IN")}
               </span>
             </div>
-            {invoice.cgstAmount ? (
+
+            {invoice.taxType === "UNION_TERRITORY" || invoice.utgstAmount ? (
               <>
                 <div className="flex justify-between py-1 border-b border-slate-100">
                   <span className="text-slate-600">CGST (9%):</span>
-                  <span className="font-semibold text-slate-900">
+                  <span className="font-semibold text-slate-900 font-mono">
+                    ₹{(invoice.cgstAmount || Math.round((invoice.gstAmount || 0) / 2)).toLocaleString("en-IN")}
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-100">
+                  <span className="text-slate-600">UTGST (9%):</span>
+                  <span className="font-semibold text-slate-900 font-mono">
+                    ₹{(invoice.utgstAmount || Math.round((invoice.gstAmount || 0) / 2)).toLocaleString("en-IN")}
+                  </span>
+                </div>
+              </>
+            ) : invoice.cgstAmount ? (
+              <>
+                <div className="flex justify-between py-1 border-b border-slate-100">
+                  <span className="text-slate-600">CGST (9%):</span>
+                  <span className="font-semibold text-slate-900 font-mono">
                     ₹{invoice.cgstAmount.toLocaleString("en-IN")}
                   </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-100">
                   <span className="text-slate-600">SGST (9%):</span>
-                  <span className="font-semibold text-slate-900">
-                    ₹{invoice.sgstAmount?.toLocaleString("en-IN")}
+                  <span className="font-semibold text-slate-900 font-mono">
+                    ₹{(invoice.sgstAmount || 0).toLocaleString("en-IN")}
                   </span>
                 </div>
               </>
             ) : (
               <div className="flex justify-between py-1 border-b border-slate-100">
                 <span className="text-slate-600">IGST ({invoice.gstRate || 18}%):</span>
-                <span className="font-semibold text-slate-900">
+                <span className="font-semibold text-slate-900 font-mono">
                   ₹{(invoice.igstAmount || invoice.gstAmount || 0).toLocaleString("en-IN")}
                 </span>
               </div>

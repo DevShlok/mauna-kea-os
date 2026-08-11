@@ -1,6 +1,6 @@
 import { requireRole } from "@/lib/auth";
 import { db } from "@/db";
-import { clients, contracts } from "@/db/schema";
+import { clients, contracts, candidates, mandateCandidates, mandates } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import RaiseInvoiceClient from "@/features/legal-finance/invoices/components/RaiseInvoiceClient";
 
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function RaiseInvoicePage() {
   await requireRole(["admin", "finance"]);
 
-  const [clientsList, contractsList] = await Promise.all([
+  const [clientsList, contractsList, candidatesList] = await Promise.all([
     db
       .select({
         id: clients.id,
@@ -18,6 +18,7 @@ export default async function RaiseInvoicePage() {
         gstNumber: clients.gstNumber,
         gstRate: clients.gstRate,
         requiresPo: clients.requiresPo,
+        state: clients.state,
       })
       .from(clients)
       .where(eq(clients.isDeleted, false))
@@ -33,12 +34,29 @@ export default async function RaiseInvoicePage() {
       .from(contracts)
       .where(eq(contracts.isDeleted, false))
       .orderBy(contracts.contractNumber),
+    db
+      .select({
+        candId: candidates.id,
+        candName: candidates.name,
+        currentCtc: candidates.fixedCtc,
+        mandateId: mandates.id,
+        roleTitle: mandates.role,
+        company: mandates.company,
+        clientId: mandates.clientId,
+        clientName: clients.name,
+      })
+      .from(mandateCandidates)
+      .leftJoin(candidates, eq(mandateCandidates.candId, candidates.id))
+      .leftJoin(mandates, eq(mandateCandidates.mandateId, mandates.id))
+      .leftJoin(clients, eq(mandates.clientId, clients.id))
+      .limit(100),
   ]);
 
   return (
     <RaiseInvoiceClient
       clientsList={JSON.parse(JSON.stringify(clientsList))}
       contractsList={JSON.parse(JSON.stringify(contractsList))}
+      candidatesList={JSON.parse(JSON.stringify(candidatesList))}
     />
   );
 }

@@ -242,3 +242,30 @@ export const createContractSchema = z.object({
 });
 
 export const updateContractSchema = createContractSchema.partial();
+
+// ─── INVOICES ─────────────────────────────────────────────
+export const createInvoiceSchema = z.object({
+  clientId: z.string().min(1, "Client is required"),
+  contractId: z.string().optional().nullable(),
+  mandateId: z.union([z.number(), z.string()]).optional().nullable(),
+  candId: z.string().optional().nullable(),
+  invoiceDate: z.string().min(1, "Invoice date is required"),
+  dueDate: z.string().min(1, "Due date is required"),
+  annualCtc: z.number().optional().default(0),
+  commercialPct: z.number().optional().default(0),
+  poNumber: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  taxType: z.enum(["INTRA_STATE", "UNION_TERRITORY", "INTER_STATE"]).optional().default("INTRA_STATE"),
+  lineItems: z.array(
+    z.object({
+      candId: z.string().optional(),
+      candidateName: z.string().optional(),
+      roleTitle: z.string().optional(),
+      joiningDate: z.string().optional(),
+      annualCtc: z.number(),
+      feePct: z.number(),
+      feeAmount: z.number(),
+      particulars: z.string(),
+    })
+  ).optional().default([]),
+});

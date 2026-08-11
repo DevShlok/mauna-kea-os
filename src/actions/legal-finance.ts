@@ -331,16 +331,18 @@ export async function deleteContractAction(id: string, reason: string) {
 
 export async function createInvoiceAction(data: {
   clientId: string;
-  contractId: string;
-  mandateId?: number;
-  candId?: string;
+  contractId?: string | null;
+  mandateId?: number | null;
+  candId?: string | null;
   invoiceDate: string;
   dueDate: string;
-  joiningDate?: string;
-  annualCtc: number;
-  commercialPct: number;
-  poNumber?: string;
-  notes?: string;
+  joiningDate?: string | null;
+  annualCtc?: number;
+  commercialPct?: number;
+  poNumber?: string | null;
+  notes?: string | null;
+  taxType?: "INTRA_STATE" | "UNION_TERRITORY" | "INTER_STATE";
+  lineItems?: any[];
 }) {
   const { name: actorName, role: actorRole } = await getCurrentUserName();
 
@@ -348,8 +350,9 @@ export async function createInvoiceAction(data: {
   const [clientObj] = await db.select().from(clients).where(eq(clients.id, data.clientId));
   if (!clientObj) throw new Error("Client not found.");
 
-  const [contractObj] = await db.select().from(contracts).where(eq(contracts.id, data.contractId));
-  if (!contractObj) throw new Error("Contract not found.");
+  const [contractObj] = data.contractId
+    ? await db.select().from(contracts).where(eq(contracts.id, data.contractId))
+    : [null];
 
   // Validation: Check duplicate invoice for candidate + mandate
   if (data.candId && data.mandateId) {
@@ -369,19 +372,43 @@ export async function createInvoiceAction(data: {
     }
   }
 
-  // Financial calculations
-  // annualCtc is in Lakhs (e.g. 120 = 1.2 Cr). Convert to Rupees for fee
-  const ctcRupees = data.annualCtc * 100000;
-  const feeBeforeTax = Math.round((ctcRupees * data.commercialPct) / 100);
+  // Financial calculations from line items or single placement
+  const lineItemsList = data.lineItems && data.lineItems.length > 0
+    ? data.lineItems
+    : [
+        {
+          candId: data.candId,
+          annualCtc: data.annualCtc || 0,
+          feePct: data.commercialPct || 0,
+          feeAmount: Math.round(((data.annualCtc || 0) * 100000 * (data.commercialPct || 0)) / 100),
+          particulars: `Executive Search Professional Fee — Success fee (${data.commercialPct || 0}%) for Placement against Annual CTC of ₹${data.annualCtc || 0} Lakhs`,
+        },
+      ];
+
+  const feeBeforeTax = lineItemsList.reduce((sum: number, item: any) => sum + (item.feeAmount || 0), 0);
   const gstRate = clientObj.gstRate || 18;
   const gstAmount = clientObj.gstApplicable !== false ? Math.round((feeBeforeTax * gstRate) / 100) : 0;
   const totalAmount = feeBeforeTax + gstAmount;
 
-  // Split CGST/SGST/IGST based on place of supply vs company location
-  const isInterstate = clientObj.state?.toLowerCase() !== "maharashtra"; // Default MH home state
-  const cgstAmount = !isInterstate && gstAmount > 0 ? Math.round(gstAmount / 2) : 0;
-  const sgstAmount = !isInterstate && gstAmount > 0 ? Math.round(gstAmount / 2) : 0;
-  const igstAmount = isInterstate ? gstAmount : 0;
+  // Split CGST/SGST/UTGST/IGST based on taxType & place of supply
+  const taxType = data.taxType || (clientObj.state?.toLowerCase() !== "maharashtra" ? "INTER_STATE" : "INTRA_STATE");
+
+  let cgstAmount = 0;
+  let sgstAmount = 0;
+  let utgstAmount = 0;
+  let igstAmount = 0;
+
+  if (gstAmount > 0) {
+    if (taxType === "INTRA_STATE") {
+      cgstAmount = Math.round(gstAmount / 2);
+      sgstAmount = Math.round(gstAmount / 2);
+    } else if (taxType === "UNION_TERRITORY") {
+      cgstAmount = Math.round(gstAmount / 2);
+      utgstAmount = Math.round(gstAmount / 2);
+    } else {
+      igstAmount = gstAmount;
+    }
+  }
 
   const id = newInvoiceId();
   const invoiceNumber = await generateInvoiceNumber();
@@ -390,9 +417,10 @@ export async function createInvoiceAction(data: {
     id,
     invoiceNumber,
     clientId: data.clientId,
-    contractId: data.contractId,
+    contractId: data.contractId || null,
     mandateId: data.mandateId || null,
     candId: data.candId || null,
+    lineItems: lineItemsList,
     clientSnapshot: {
       id: clientObj.id,
       name: clientObj.name,
@@ -404,21 +432,23 @@ export async function createInvoiceAction(data: {
       pinCode: clientObj.pinCode,
     },
     commercialSnapshot: {
-      contractNumber: contractObj.contractNumber,
-      successFeePct: contractObj.successFeePct,
-      paymentTerms: contractObj.paymentTerms,
+      contractNumber: contractObj?.contractNumber || "STANDARD-TERMS",
+      successFeePct: contractObj?.successFeePct || data.commercialPct,
+      paymentTerms: contractObj?.paymentTerms || clientObj.defaultPaymentTerms || "30 days",
     },
     invoiceDate: data.invoiceDate,
     dueDate: data.dueDate,
     joiningDate: data.joiningDate || null,
-    annualCtc: data.annualCtc,
-    commercialPct: data.commercialPct,
+    annualCtc: data.annualCtc || 0,
+    commercialPct: data.commercialPct || 0,
     feeBeforeTax,
     gstRate,
     gstAmount,
     cgstAmount,
     sgstAmount,
+    utgstAmount,
     igstAmount,
+    taxType,
     totalAmount,
     amountOutstanding: totalAmount,
     currency: clientObj.currency || "INR",
