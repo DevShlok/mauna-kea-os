@@ -88,8 +88,11 @@ export default function AuditLogClient({
               ) : (
                 filteredRows.map((log) => (
                   <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4 whitespace-nowrap text-slate-500">
-                      {new Date(log.timestamp).toLocaleString()}
+                    <td suppressHydrationWarning className="py-3.5 px-4 whitespace-nowrap text-slate-500">
+                      {new Date(log.timestamp).toLocaleString("en-IN", {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
                     </td>
                     <td className="py-3.5 px-4">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-700 border border-slate-200">

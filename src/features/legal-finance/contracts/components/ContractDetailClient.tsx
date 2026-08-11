@@ -320,9 +320,9 @@ export default function ContractDetailClient({ contract }: ContractDetailProps) 
               )}
 
               {contract.approvedBy && (
-                <p className="text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+                <p suppressHydrationWarning className="text-[11px] text-slate-500 pt-2 border-t border-slate-100">
                   Approved by <strong>{contract.approvedBy}</strong> on{" "}
-                  {new Date(contract.approvedAt!).toLocaleDateString()}
+                  {new Date(contract.approvedAt!).toLocaleDateString("en-IN")}
                 </p>
               )}
             </div>
