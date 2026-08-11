@@ -81,9 +81,12 @@ export async function createContractAction(data: any) {
     paymentTerms: validated.paymentTerms,
     currency: validated.currency || "INR",
     billingMilestones: validated.billingMilestones || [],
+    signingAuthorityClient: validated.signingAuthorityClient || {},
+    signingAuthorityMK: validated.signingAuthorityMK || {},
+    ctcSlabs: validated.ctcSlabs || [],
+    customClauses: validated.customClauses || [],
     latePaymentClause: validated.latePaymentClause,
     travelExpenses: validated.travelExpenses,
-    oppExpenses: validated.oppExpenses,
     exclusivity: validated.exclusivity ?? false,
     nonPoachingMonths: validated.nonPoachingMonths ?? 0,
     confidentiality: validated.confidentiality ?? true,
@@ -91,6 +94,16 @@ export async function createContractAction(data: any) {
     createdBy: actorName,
     approvalStatus: "Pending",
   });
+
+  // Bi-directional replication back to Client Database
+  await db
+    .update(clients)
+    .set({
+      owner: validated.consultant || clientObj.owner,
+      vertical: validated.practice || clientObj.vertical,
+      defaultPaymentTerms: validated.paymentTerms || clientObj.defaultPaymentTerms,
+    })
+    .where(eq(clients.id, validated.clientId));
 
   await writeLfAuditLog({
     entityType: "contract",

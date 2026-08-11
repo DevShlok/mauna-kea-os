@@ -217,7 +217,24 @@ export const createContractSchema = z.object({
   billingMilestones:    z.array(z.any()).optional().default([]),
   latePaymentClause:    z.string().optional().nullable(),
   travelExpenses:       z.string().optional().nullable(),
-  oppExpenses:          z.string().optional().nullable(),
+  signingAuthorityClient: z.object({
+    name: z.string().optional(),
+    designation: z.string().optional(),
+    email: z.string().optional(),
+  }).optional().default({}),
+  signingAuthorityMK: z.object({
+    name: z.string().optional(),
+    designation: z.string().optional(),
+  }).optional().default({}),
+  ctcSlabs: z.array(z.object({
+    minCtc: z.number(),
+    maxCtc: z.number(),
+    feePct: z.number(),
+  })).optional().default([]),
+  customClauses: z.array(z.object({
+    title: z.string(),
+    text: z.string(),
+  })).optional().default([]),
   exclusivity:          z.boolean().optional().default(false),
   nonPoachingMonths:    z.number().optional().default(0),
   confidentiality:      z.boolean().optional().default(true),

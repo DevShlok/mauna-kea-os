@@ -15,6 +15,8 @@ export default async function NewContractPage() {
       name: clients.name,
       legalEntityName: clients.legalEntityName,
       gstNumber: clients.gstNumber,
+      owner: clients.owner,
+      vertical: clients.vertical,
     })
     .from(clients)
     .where(eq(clients.isDeleted, false))

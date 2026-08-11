@@ -24,5 +24,8 @@ export default async function ContractsPage({
     search,
   });
 
-  return <ContractsClient initialData={JSON.parse(JSON.stringify(data))} />;
+  const sessionUser = await requireRole(["admin", "consultant", "finance"]);
+  const userRole = sessionUser?.userRole || "consultant";
+
+  return <ContractsClient initialData={JSON.parse(JSON.stringify(data))} userRole={userRole} />;
 }

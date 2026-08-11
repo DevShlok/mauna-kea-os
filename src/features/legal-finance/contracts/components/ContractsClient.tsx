@@ -28,6 +28,7 @@ interface ContractRow {
 
 export default function ContractsClient({
   initialData,
+  userRole = "consultant",
 }: {
   initialData: {
     rows: ContractRow[];
@@ -35,6 +36,7 @@ export default function ContractsClient({
     totalPages: number;
     currentPage: number;
   };
+  userRole?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -42,6 +44,8 @@ export default function ContractsClient({
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get("search") || "");
   const [activeTab, setActiveTab] = useState(searchParams.get("status") || "All");
+
+  const isExportAllowed = userRole === "admin" || userRole === "finance";
 
   // Debounce search input
   useEffect(() => {
@@ -151,29 +155,31 @@ export default function ContractsClient({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              const exportData = initialData.rows.map(({ contract, clientName }) => ({
-                "Contract Number": contract.contractNumber,
-                "Client Name": clientName || "N/A",
-                "Start Date": contract.contractStartDate,
-                "End Date": contract.contractEndDate,
-                "Success Fee %": contract.successFeePct || "N/A",
-                "Structure": contract.commercialStructure || "SuccessFee",
-                "Renewal Type": contract.renewalType,
-                "Status": contract.status,
-                "Approval Status": contract.approvalStatus,
-                "Consultant": contract.consultant || "N/A",
-              }));
-              import("@/lib/export-excel").then((mod) =>
-                mod.exportToExcel(exportData, `Contracts_Export_${new Date().toISOString().split("T")[0]}`)
-              );
-            }}
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-xs"
-          >
-            <Download className="w-4 h-4 text-emerald-600" />
-            Export Excel
-          </button>
+          {isExportAllowed && (
+            <button
+              onClick={() => {
+                const exportData = initialData.rows.map(({ contract, clientName }) => ({
+                  "Contract Number": contract.contractNumber,
+                  "Client Name": clientName || "N/A",
+                  "Start Date": contract.contractStartDate,
+                  "End Date": contract.contractEndDate,
+                  "Success Fee %": contract.successFeePct || "N/A",
+                  "Structure": contract.commercialStructure || "SuccessFee",
+                  "Renewal Type": contract.renewalType,
+                  "Status": contract.status,
+                  "Approval Status": contract.approvalStatus,
+                  "Consultant": contract.consultant || "N/A",
+                }));
+                import("@/lib/export-excel").then((mod) =>
+                  mod.exportToExcel(exportData, `Contracts_Export_${new Date().toISOString().split("T")[0]}`)
+                );
+              }}
+              className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-xs"
+            >
+              <Download className="w-4 h-4 text-emerald-600" />
+              Export Excel
+            </button>
+          )}
           <Link
             href="/dashboard/legal-finance/contracts/new"
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl shadow-md transition-all duration-200"

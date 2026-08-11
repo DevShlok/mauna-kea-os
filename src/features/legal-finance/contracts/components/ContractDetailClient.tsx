@@ -49,6 +49,8 @@ interface ContractDetailProps {
     exclusivity: boolean | null;
     nonPoachingMonths: number | null;
     confidentiality: boolean | null;
+    latePaymentClause?: string | null;
+    travelExpenses?: string | null;
     signedDocUrl: string | null;
     approvalStatus: string;
     approvedBy: string | null;
@@ -66,11 +68,20 @@ export default function ContractDetailClient({ contract }: ContractDetailProps) 
   const [isUploading, setIsUploading] = useState(false);
   const [signedUrlInput, setSignedUrlInput] = useState("");
 
-  const handleApprove = async (approved: boolean) => {
-    const notes = prompt(`Notes for ${approved ? "approval" : "rejection"} (optional):`);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const [approvalNotes, setApprovalNotes] = useState("");
+
+  const handleOpenApprovalModal = () => {
+    setHasScrolledToBottom(false);
+    setShowApprovalModal(true);
+  };
+
+  const handleConfirmApprove = async (approved: boolean) => {
     try {
-      await approveContractAction(contract.id, approved, notes || undefined);
+      await approveContractAction(contract.id, approved, approvalNotes || undefined);
       toast.success(`Contract ${approved ? "approved" : "rejected"}.`);
+      setShowApprovalModal(false);
       router.refresh();
     } catch (err: any) {
       toast.error(err.message || "Action failed");
@@ -305,13 +316,13 @@ export default function ContractDetailClient({ contract }: ContractDetailProps) 
               {contract.approvalStatus === "Pending" && (
                 <div className="flex gap-2 pt-2">
                   <button
-                    onClick={() => handleApprove(true)}
+                    onClick={handleOpenApprovalModal}
                     className="flex-1 py-2 text-xs font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-xs"
                   >
                     Approve
                   </button>
                   <button
-                    onClick={() => handleApprove(false)}
+                    onClick={() => handleConfirmApprove(false)}
                     className="flex-1 py-2 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl hover:bg-rose-100 transition-colors"
                   >
                     Reject
@@ -387,6 +398,119 @@ export default function ContractDetailClient({ contract }: ContractDetailProps) 
           </div>
         </div>
       </div>
+
+      {/* FORCE-SCROLL APPROVAL INSPECTION MODAL (SaaS-Style) */}
+      {showApprovalModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="p-4 bg-[#133255] text-white flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold font-serif">Contract Approval & Terms Inspection</h3>
+                <p className="text-[11px] text-slate-300">
+                  {contract.contractNumber} — {contract.clientName}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowApprovalModal(false)}
+                className="text-slate-300 hover:text-white text-xs font-bold px-2 py-1 rounded"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Inspection Status Banner */}
+            <div
+              className={`p-3 text-xs font-semibold flex items-center gap-2 ${
+                hasScrolledToBottom
+                  ? "bg-emerald-50 text-emerald-800 border-b border-emerald-200"
+                  : "bg-amber-50 text-amber-800 border-b border-amber-200"
+              }`}
+            >
+              {hasScrolledToBottom ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>All contract terms inspected! You may now approve and execute this contract.</span>
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Please scroll through all terms to the bottom to enable approval.</span>
+                </>
+              )}
+            </div>
+
+            {/* Scrollable Terms Inspection Body */}
+            <div
+              onScroll={(e) => {
+                const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+                if (scrollTop + clientHeight >= scrollHeight - 30) {
+                  setHasScrolledToBottom(true);
+                }
+              }}
+              className="p-5 overflow-y-auto space-y-4 text-xs text-slate-700 leading-relaxed font-sans max-h-96"
+            >
+              <div className="border-b border-slate-100 pb-3">
+                <h4 className="font-bold text-slate-900 text-sm mb-1">1. Commercial Structure & Fees</h4>
+                <p>
+                  Success Fee Rate: <strong>{contract.successFeePct ? `${contract.successFeePct}%` : "As per CTC Slabs"}</strong> of candidate annual CTC. Payment terms: <strong>{contract.paymentTerms}</strong>. Replacement guarantee period: <strong>{contract.replacementPeriod} days</strong>.
+                </p>
+              </div>
+
+              <div className="border-b border-slate-100 pb-3">
+                <h4 className="font-bold text-slate-900 text-sm mb-1">2. Non-Poaching & Exclusivity</h4>
+                <p>
+                  Exclusivity Status: <strong>{contract.exclusivity ? "Exclusive Partner" : "Non-Exclusive"}</strong>. Non-poaching restriction period: <strong>{contract.nonPoachingMonths} months</strong> post contract end date.
+                </p>
+              </div>
+
+              <div className="border-b border-slate-100 pb-3">
+                <h4 className="font-bold text-slate-900 text-sm mb-1">3. Late Payment & Expenses</h4>
+                <p>
+                  {contract.latePaymentClause || "Interest of 1.5% per month applicable on delayed invoices."}
+                </p>
+                <p className="mt-1">
+                  {contract.travelExpenses || "Outstation travel expenses to be reimbursed at actuals."}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm mb-1">4. Approval Confirmation</h4>
+                <p className="text-slate-500">
+                  By clicking Approve below, you confirm that you have thoroughly reviewed all commercial terms, guarantees, and legal governance clauses for {contract.clientName}.
+                </p>
+              </div>
+            </div>
+
+            {/* Approval Action Footer */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <input
+                type="text"
+                placeholder="Approval notes / sign-off reference (optional)..."
+                value={approvalNotes}
+                onChange={(e) => setApprovalNotes(e.target.value)}
+                className="w-full sm:w-2/3 px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none"
+              />
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowApprovalModal(false)}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={!hasScrolledToBottom}
+                  onClick={() => handleConfirmApprove(true)}
+                  className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs"
+                >
+                  Approve & Execute
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
