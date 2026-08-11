@@ -4,11 +4,25 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClientAction } from "@/actions";
 import { Trash2, Plus } from "lucide-react";
+import GstinLookupField from "@/components/GstinLookupField";
 
 export default function NewClientClient({ industries = [] }: { industries?: any[] }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: "", legalEntityName: "", accountId: "", vertical: "", owner: "", status: "Active" });
+  const [form, setForm] = useState({
+    name: "",
+    legalEntityName: "",
+    accountId: "",
+    vertical: "",
+    owner: "",
+    status: "Active",
+    gstNumber: "",
+    panNumber: "",
+    registeredAddress: "",
+    city: "",
+    state: "",
+    pinCode: "",
+  });
   const [contacts, setContacts] = useState<{name: string, designation: string, number: string, email: string}[]>([{name: "", designation: "", number: "", email: ""}]);
 
   const handleAddSubmit = async (e: React.FormEvent) => {
@@ -41,6 +55,7 @@ export default function NewClientClient({ industries = [] }: { industries?: any[
       <div className="neo-table">
         <form onSubmit={handleAddSubmit} className="p-8">
           <div className="space-y-6">
+            {/* Row 1: Client name + Legal Entity */}
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Client *</label>
@@ -52,6 +67,7 @@ export default function NewClientClient({ industries = [] }: { industries?: any[
               </div>
             </div>
 
+            {/* Row 2: Account ID + Industry */}
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Account ID</label>
@@ -68,6 +84,7 @@ export default function NewClientClient({ industries = [] }: { industries?: any[
               </div>
             </div>
 
+            {/* Row 3: Account Owner + Status */}
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Account owner</label>
@@ -82,9 +99,74 @@ export default function NewClientClient({ industries = [] }: { industries?: any[
                 </select>
               </div>
             </div>
-            
+
+            {/* Billing / Legal Section */}
+            <div className="pt-6 border-t border-gray-100">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[#9ca8be] mb-4">Billing & Legal Details</h3>
+              <div className="space-y-4">
+                {/* GSTIN Lookup */}
+                <GstinLookupField
+                  value={form.gstNumber}
+                  onChange={(val) => setForm(prev => ({ ...prev, gstNumber: val }))}
+                  onLookupSuccess={(result) => {
+                    setForm(prev => ({
+                      ...prev,
+                      // Only auto-fill if field is currently empty
+                      legalEntityName: prev.legalEntityName || result.legalName || prev.legalEntityName,
+                      panNumber: prev.panNumber || result.pan,
+                      registeredAddress: prev.registeredAddress || result.registeredAddress || prev.registeredAddress,
+                      city: prev.city || result.city || prev.city,
+                      state: prev.state || result.state || prev.state,
+                      pinCode: prev.pinCode || result.pinCode || prev.pinCode,
+                    }));
+                  }}
+                  inputClassName="neo-inset"
+                />
+
+                {/* PAN */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">PAN Number</label>
+                    <input
+                      value={form.panNumber}
+                      onChange={e => setForm({...form, panNumber: e.target.value.toUpperCase()})}
+                      maxLength={10}
+                      className="w-full px-4 py-3 neo-inset text-[15px] font-mono outline-none"
+                      placeholder="e.g. ABCDE1234F"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">City</label>
+                    <input value={form.city} onChange={e => setForm({...form, city: e.target.value})} className="w-full px-4 py-3 neo-inset text-[15px] outline-none" placeholder="e.g. Mumbai"/>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">State</label>
+                    <input value={form.state} onChange={e => setForm({...form, state: e.target.value})} className="w-full px-4 py-3 neo-inset text-[15px] outline-none" placeholder="e.g. Maharashtra"/>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">PIN Code</label>
+                    <input value={form.pinCode} onChange={e => setForm({...form, pinCode: e.target.value})} maxLength={6} className="w-full px-4 py-3 neo-inset text-[15px] outline-none" placeholder="e.g. 400001"/>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Registered Address</label>
+                  <textarea
+                    value={form.registeredAddress}
+                    onChange={e => setForm({...form, registeredAddress: e.target.value})}
+                    rows={2}
+                    className="w-full px-4 py-3 neo-inset text-[15px] outline-none resize-none"
+                    placeholder="Full registered address (auto-filled from GSTIN lookup)"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Contacts Section */}
-            <div className="mt-10 pt-8 border-t border-gray-100">
+            <div className="mt-6 pt-6 border-t border-gray-100">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-[#9ca8be]">Client Contacts</h3>
                 <button type="button" onClick={addContact} className="text-sm font-bold text-[#133255] flex items-center gap-1 hover:text-[#D8B15B] transition-colors">
@@ -122,7 +204,6 @@ export default function NewClientClient({ industries = [] }: { industries?: any[
                 ))}
               </div>
             </div>
-
           </div>
 
           <div className="mt-10 flex justify-end gap-4 border-t border-gray-100 pt-6">
