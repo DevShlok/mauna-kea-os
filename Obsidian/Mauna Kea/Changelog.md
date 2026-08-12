@@ -4,7 +4,8 @@ Newest entry on top. Format: `YYYY-MM-DD — what changed — why`
 
 ---
 
-2026-08-13 — Consolidated Implementation Plan v2.0 Execution & Client Portal UI/UX Polish — Executed plan and polished Client Portal UI/UX across `/[clientSlug]` routes (including `nykaa-fsn-e-commerce`):
+2026-08-13 — Consolidated Implementation Plan v2.0 Execution & Client Portal UI/UX Polish — Executed plan and polished Client Portal UI/UX across `/[clientSlug]` routes (including `nykaa-fsn-e-commerce` and `nykaa-fsn-e-commerce/mandates/19`):
+- **Command Centre Header & Navigation**: Added "Back to Dashboard" navigation link in `ClientCommandCentreShell` header, enhanced mandate status badge, and added smooth screen transition controls.
 - **Executive Hero Banner & Dashboard UI**: Added high-impact dark navy welcome hero strip (`Client Command Centre`), responsive 4-stat metric grid, active account status badge, and always-visible "View Candidates" CTA buttons on mandate cards.
 - **Client Command Centre Access**: Extended `requireRole` in `ClientMandateDetailPage` to allow admin and consultant preview alongside client users with fallback resolving client name by slug.
 - **Dynamic Funnel Metrics**: Updated `MarketMappingScreen` to calculate search depth funnel metrics dynamically from candidate array counts. Verified `npx tsc --noEmit` clean (0 errors).

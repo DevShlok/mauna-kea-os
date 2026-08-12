@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Compass,
   Users,
@@ -15,6 +16,7 @@ import {
   Layers,
   Search,
   Filter,
+  ArrowLeft,
 } from "lucide-react";
 import MarketMappingScreen from "./MarketMappingScreen";
 import EngagementTrackerScreen from "./EngagementTrackerScreen";
@@ -62,6 +64,15 @@ export default function ClientCommandCentreShell({
       <header className="bg-[#133255] text-white border-b border-[#1e4a7a] sticky top-0 z-30 shadow-md">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
+            <Link
+              href={`/${clientSlug}`}
+              className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-white/10 shrink-0"
+              title="Back to Dashboard"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Link>
+
             <div
               className="w-11 h-11 rounded-2xl flex items-center justify-center font-serif text-xl font-bold text-[#133255] shrink-0"
               style={{ background: "linear-gradient(135deg, #D8B15B, #f0c96a)", boxShadow: "0 4px 14px rgba(216,177,91,0.35)" }}
