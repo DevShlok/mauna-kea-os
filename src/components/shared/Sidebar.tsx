@@ -18,7 +18,8 @@ import {
   Scale,
   Receipt,
   BarChart3,
-  ShieldCheck
+  ShieldCheck,
+  FileText
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useState, useEffect } from "react";
@@ -30,6 +31,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
   const initials = fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "MK";
 
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [hoveredSubGroup, setHoveredSubGroup] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
@@ -51,7 +53,10 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
   };
 
   const handleMouseEnter = (title: string) => setHoveredCategory(title);
-  const handleMouseLeave = () => setHoveredCategory(null);
+  const handleMouseLeave = () => {
+    setHoveredCategory(null);
+    setHoveredSubGroup(null);
+  };
 
   interface NavChild {
     label: string;
@@ -60,11 +65,18 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
     visibleTo: string[];
   }
 
+  interface NavGroup {
+    header: string;
+    icon: any;
+    items: NavChild[];
+  }
+
   interface NavCategory {
     title: string;
     icon: any;
     visibleTo: string[];
-    children: NavChild[];
+    children?: NavChild[];
+    groups?: NavGroup[];
   }
 
   const categories: NavCategory[] = [
@@ -102,45 +114,48 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
       ]
     },
     {
-      title: "Contracts",
+      title: "Legal & Finance",
       icon: Scale,
       visibleTo: ["admin", "consultant", "finance"],
-      children: [
-        { label: "Contract Repository", href: "/dashboard/legal-finance/contracts", visibleTo: ["admin", "consultant", "finance"] },
-        { label: "Create New Contract", href: "/dashboard/legal-finance/contracts/new", icon: Plus, visibleTo: ["admin", "consultant", "finance"] },
-        { label: "Contract Templates", href: "/dashboard/legal-finance/contracts/templates", visibleTo: ["admin", "finance"] },
-        { label: "Renewals", href: "/dashboard/legal-finance/contracts?tab=Expiring", visibleTo: ["admin", "consultant", "finance"] },
-      ]
-    },
-    {
-      title: "Invoices",
-      icon: Receipt,
-      visibleTo: ["admin", "finance"],
-      children: [
-        { label: "Raise Invoice", href: "/dashboard/legal-finance/invoices/new", icon: Plus, visibleTo: ["admin", "finance"] },
-        { label: "Invoice Repository", href: "/dashboard/legal-finance/invoices", visibleTo: ["admin", "finance"] },
-        { label: "Payment Tracking", href: "/dashboard/legal-finance/payments", visibleTo: ["admin", "finance"] },
-        { label: "Credit Notes", href: "/dashboard/legal-finance/invoices?type=CREDIT_NOTE", visibleTo: ["admin", "finance"] },
-      ]
-    },
-    {
-      title: "Reports",
-      icon: BarChart3,
-      visibleTo: ["admin", "finance"],
-      children: [
-        { label: "Revenue", href: "/dashboard/legal-finance/reports?tab=revenue", visibleTo: ["admin", "finance"] },
-        { label: "Outstanding", href: "/dashboard/legal-finance/reports?tab=outstanding", visibleTo: ["admin", "finance"] },
-        { label: "Upcoming Renewals", href: "/dashboard/legal-finance/reports?tab=renewals", visibleTo: ["admin", "finance"] },
-        { label: "Collection Dashboard", href: "/dashboard/legal-finance/reports?tab=collection", visibleTo: ["admin", "finance"] },
-      ]
-    },
-    {
-      title: "Governance",
-      icon: ShieldCheck,
-      visibleTo: ["admin", "finance"],
-      children: [
-        { label: "Compliance", href: "/dashboard/legal-finance/compliance", visibleTo: ["admin", "finance"] },
-        { label: "Audit Log", href: "/dashboard/legal-finance/audit-log", visibleTo: ["admin", "finance"] },
+      groups: [
+        {
+          header: "Contracts",
+          icon: FileText,
+          items: [
+            { label: "Contract Repository", href: "/dashboard/legal-finance/contracts", visibleTo: ["admin", "consultant", "finance"] },
+            { label: "Create New Contract", href: "/dashboard/legal-finance/contracts/new", icon: Plus, visibleTo: ["admin", "consultant", "finance"] },
+            { label: "Contract Templates", href: "/dashboard/legal-finance/contracts/templates", visibleTo: ["admin", "finance"] },
+            { label: "Renewals", href: "/dashboard/legal-finance/contracts?tab=Expiring", visibleTo: ["admin", "consultant", "finance"] },
+          ]
+        },
+        {
+          header: "Invoices",
+          icon: Receipt,
+          items: [
+            { label: "Raise Invoice", href: "/dashboard/legal-finance/invoices/new", icon: Plus, visibleTo: ["admin", "finance"] },
+            { label: "Invoice Repository", href: "/dashboard/legal-finance/invoices", visibleTo: ["admin", "finance"] },
+            { label: "Payment Tracking", href: "/dashboard/legal-finance/payments", visibleTo: ["admin", "finance"] },
+            { label: "Credit Notes", href: "/dashboard/legal-finance/invoices?type=CREDIT_NOTE", visibleTo: ["admin", "finance"] },
+          ]
+        },
+        {
+          header: "Reports",
+          icon: BarChart3,
+          items: [
+            { label: "Revenue", href: "/dashboard/legal-finance/reports?tab=revenue", visibleTo: ["admin", "finance"] },
+            { label: "Outstanding", href: "/dashboard/legal-finance/reports?tab=outstanding", visibleTo: ["admin", "finance"] },
+            { label: "Upcoming Renewals", href: "/dashboard/legal-finance/reports?tab=renewals", visibleTo: ["admin", "finance"] },
+            { label: "Collection Dashboard", href: "/dashboard/legal-finance/reports?tab=collection", visibleTo: ["admin", "finance"] },
+          ]
+        },
+        {
+          header: "Governance",
+          icon: ShieldCheck,
+          items: [
+            { label: "Compliance", href: "/dashboard/legal-finance/compliance", visibleTo: ["admin", "finance"] },
+            { label: "Audit Log", href: "/dashboard/legal-finance/audit-log", visibleTo: ["admin", "finance"] },
+          ]
+        }
       ]
     },
     {
@@ -206,11 +221,17 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
         <div className="flex-1 py-4 flex flex-col gap-0.5 px-3">
           {categories.filter(cat => cat.visibleTo.includes(userRole)).map((category, idx) => {
             const isHovered = hoveredCategory === category.title;
-            const visibleChildren = category.children.filter(child => child.visibleTo.includes(userRole));
 
-            if (visibleChildren.length === 0) return null;
+            let allChildren: NavChild[] = [];
+            if (category.children) {
+              allChildren = category.children.filter(c => c.visibleTo.includes(userRole));
+            } else if (category.groups) {
+              allChildren = category.groups.flatMap(g => g.items.filter(i => i.visibleTo.includes(userRole)));
+            }
 
-            const isActive = visibleChildren.some(child => pathname?.startsWith(child.href) && child.href !== "/dashboard");
+            if (allChildren.length === 0) return null;
+
+            const isActive = allChildren.some(child => pathname?.startsWith(child.href) && child.href !== "/dashboard");
             const isExpanded = isHovered || isActive;
             const isHighlighted = isHovered || isActive;
 
@@ -221,6 +242,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                 onMouseEnter={() => handleMouseEnter(category.title)}
                 onMouseLeave={handleMouseLeave}
               >
+                {/* Parent Category Header */}
                 <div
                   className={`flex items-center gap-3 py-3 cursor-pointer rounded-xl mx-0 ${
                     isHighlighted
@@ -251,70 +273,173 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                   )}
                 </div>
 
+                {/* Sub-menu rendering */}
                 {!isCollapsed && (
                   <div
                     style={{
                       overflow: 'hidden',
-                      maxHeight: isExpanded ? `${visibleChildren.length * 44}px` : '0px',
+                      maxHeight: isExpanded ? '600px' : '0px',
                       opacity: isExpanded ? 1 : 0,
-                      transition: 'max-height 280ms cubic-bezier(0.4, 0, 0.2, 1), opacity 220ms cubic-bezier(0.4, 0, 0.2, 1)',
+                      transition: 'max-height 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 250ms cubic-bezier(0.4, 0, 0.2, 1)',
                       willChange: 'max-height, opacity',
                     }}
                   >
-                    <div className="flex flex-col py-1 pl-3">
-                      {visibleChildren.map((child, childIdx) => {
-                        const isChildActive = pathname === child.href;
-                        return (
-                          <Link
-                            key={childIdx}
-                            href={child.href}
-                            className={`flex items-center gap-2.5 pl-8 pr-4 py-2.5 text-[13px] rounded-lg ${
-                              isChildActive
-                                ? "text-[#D8B15B] font-bold bg-[#D8B15B]/10 border border-[#D8B15B]/20"
-                                : "text-white/55 hover:text-white hover:bg-white/5 border border-transparent"
-                            }`}
-                            style={{
-                              transform: isExpanded ? 'translateX(0)' : 'translateX(-8px)',
-                              opacity: isExpanded ? 1 : 0,
-                              transition: `transform 220ms cubic-bezier(0.4, 0, 0.2, 1) ${isExpanded ? childIdx * 25 : 0}ms, opacity 200ms ease ${isExpanded ? childIdx * 25 : 0}ms`,
-                              willChange: 'transform, opacity',
-                            }}
-                          >
-                            {child.icon && <child.icon className="w-3.5 h-3.5 shrink-0 opacity-70" />}
-                            <span>{child.label}</span>
-                            {isChildActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#D8B15B] shrink-0" />}
-                          </Link>
-                        );
-                      })}
-                    </div>
+                    {/* STANDARD FLAT CHILDREN */}
+                    {category.children && (
+                      <div className="flex flex-col py-1 pl-3">
+                        {allChildren.map((child, childIdx) => {
+                          const isChildActive = pathname === child.href;
+                          return (
+                            <Link
+                              key={childIdx}
+                              href={child.href}
+                              className={`flex items-center gap-2.5 pl-8 pr-4 py-2.5 text-[13px] rounded-lg ${
+                                isChildActive
+                                  ? "text-[#D8B15B] font-bold bg-[#D8B15B]/10 border border-[#D8B15B]/20"
+                                  : "text-white/55 hover:text-white hover:bg-white/5 border border-transparent"
+                              }`}
+                              style={{
+                                transform: isExpanded ? 'translateX(0)' : 'translateX(-8px)',
+                                opacity: isExpanded ? 1 : 0,
+                                transition: `transform 220ms cubic-bezier(0.4, 0, 0.2, 1) ${isExpanded ? childIdx * 20 : 0}ms, opacity 200ms ease ${isExpanded ? childIdx * 20 : 0}ms`,
+                                willChange: 'transform, opacity',
+                              }}
+                            >
+                              {child.icon && <child.icon className="w-3.5 h-3.5 shrink-0 opacity-70" />}
+                              <span>{child.label}</span>
+                              {isChildActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#D8B15B] shrink-0" />}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* DYNAMIC CASCADING GROUPS UNDER LEGAL & FINANCE */}
+                    {category.groups && (
+                      <div className="flex flex-col py-1 pl-3 space-y-1">
+                        {category.groups.map((group, groupIdx) => {
+                          const visibleGroupItems = group.items.filter(i => i.visibleTo.includes(userRole));
+                          if (visibleGroupItems.length === 0) return null;
+
+                          const isGroupActive = visibleGroupItems.some(i => pathname === i.href || (pathname.startsWith(i.href) && i.href.length > 25));
+                          const isGroupHovered = hoveredSubGroup === group.header;
+                          const isSubGroupExpanded = isGroupHovered || isGroupActive;
+
+                          return (
+                            <div
+                              key={groupIdx}
+                              className="flex flex-col rounded-xl overflow-hidden"
+                              onMouseEnter={() => setHoveredSubGroup(group.header)}
+                            >
+                              {/* Dynamic 4 Sub-Headings: Contracts, Invoices, Reports, Governance */}
+                              <div
+                                className={`flex items-center gap-2.5 pl-6 pr-3 py-2 text-[13px] font-semibold cursor-pointer rounded-lg transition-all ${
+                                  isSubGroupExpanded
+                                    ? "text-[#D8B15B] bg-white/5"
+                                    : "text-white/70 hover:text-white hover:bg-white/5"
+                                }`}
+                              >
+                                <group.icon className={`w-3.5 h-3.5 shrink-0 ${isSubGroupExpanded ? "text-[#D8B15B]" : "text-white/40"}`} />
+                                <span className="flex-1 tracking-wide">{group.header}</span>
+                                <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-200 ${isSubGroupExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/30"}`} />
+                              </div>
+
+                              {/* Dynamic Second-Layer Dropdown Items */}
+                              <div
+                                style={{
+                                  overflow: 'hidden',
+                                  maxHeight: isSubGroupExpanded ? `${visibleGroupItems.length * 40}px` : '0px',
+                                  opacity: isSubGroupExpanded ? 1 : 0,
+                                  transition: 'max-height 250ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease',
+                                  willChange: 'max-height, opacity',
+                                }}
+                              >
+                                <div className="flex flex-col py-1 pl-4">
+                                  {visibleGroupItems.map((item, itemIdx) => {
+                                    const isItemActive = pathname === item.href;
+                                    return (
+                                      <Link
+                                        key={itemIdx}
+                                        href={item.href}
+                                        className={`flex items-center gap-2 pl-6 pr-3 py-1.5 text-[12px] rounded-lg transition-all ${
+                                          isItemActive
+                                            ? "text-[#D8B15B] font-bold bg-[#D8B15B]/15 border border-[#D8B15B]/25"
+                                            : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"
+                                        }`}
+                                      >
+                                        <span className={`text-[10px] ${isItemActive ? "text-[#D8B15B]" : "text-white/30"}`}>•</span>
+                                        <span className="truncate">{item.label}</span>
+                                        {isItemActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#D8B15B] shrink-0" />}
+                                      </Link>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Flyout for collapsed state */}
+                {/* Collapsed Flyout Overlay */}
                 {isCollapsed && isHovered && (
                   <div
-                    className="absolute left-[76px] ml-2 top-0 mt-2 w-56 py-2 z-50 rounded-2xl overflow-hidden"
+                    className="absolute left-[76px] ml-2 top-0 mt-2 w-64 py-3 z-50 rounded-2xl overflow-hidden shadow-2xl"
                     style={{
                       background: "linear-gradient(180deg, #1a3d6b 0%, #0f2744 100%)",
                       border: "1px solid rgba(216,177,91,0.3)",
-                      boxShadow: "0 16px 48px rgba(0,0,0,0.4)",
+                      boxShadow: "0 16px 48px rgba(0,0,0,0.45)",
                     }}
                   >
-                    <div className="px-4 py-2 font-bold text-[#D8B15B] border-b border-white/10 mb-1 text-[11px] uppercase tracking-widest">{category.title}</div>
-                    <div className="flex flex-col px-2">
-                      {visibleChildren.map((child, childIdx) => {
+                    <div className="px-4 py-2 font-bold text-[#D8B15B] border-b border-white/10 mb-2 text-[11px] uppercase tracking-widest flex items-center justify-between">
+                      <span>{category.title}</span>
+                    </div>
+
+                    <div className="flex flex-col px-2 max-h-[400px] overflow-y-auto space-y-2">
+                      {category.children && allChildren.map((child, childIdx) => {
                         const isChildActive = pathname === child.href;
                         return (
                           <Link
                             key={childIdx}
                             href={child.href}
-                            className={`flex items-center gap-2.5 px-3 py-2.5 text-[13px] transition-colors rounded-xl ${
-                              isChildActive ? "bg-white/10 text-white font-medium" : "text-white/60 hover:bg-white/8 hover:text-white"
+                            className={`flex items-center gap-2.5 px-3 py-2 text-[12.5px] transition-colors rounded-xl ${
+                              isChildActive ? "bg-white/10 text-[#D8B15B] font-bold" : "text-white/70 hover:bg-white/8 hover:text-white"
                             }`}
                           >
                             {child.icon && <child.icon className="w-3.5 h-3.5 shrink-0" />}
                             {child.label}
                           </Link>
+                        );
+                      })}
+
+                      {category.groups && category.groups.map((group, groupIdx) => {
+                        const visibleGroupItems = group.items.filter(i => i.visibleTo.includes(userRole));
+                        if (visibleGroupItems.length === 0) return null;
+
+                        return (
+                          <div key={groupIdx} className="space-y-1">
+                            <div className="px-3 pt-1 text-[11px] font-bold text-[#D8B15B] uppercase tracking-wider flex items-center gap-1.5">
+                              <group.icon className="w-3 h-3 text-[#D8B15B]" />
+                              <span>{group.header}</span>
+                            </div>
+                            {visibleGroupItems.map((item, itemIdx) => {
+                              const isItemActive = pathname === item.href;
+                              return (
+                                <Link
+                                  key={itemIdx}
+                                  href={item.href}
+                                  className={`flex items-center gap-2 px-4 py-1.5 text-[12px] transition-colors rounded-lg ${
+                                    isItemActive ? "bg-[#D8B15B]/15 text-[#D8B15B] font-bold" : "text-white/60 hover:text-white hover:bg-white/5"
+                                  }`}
+                                >
+                                  <span className="text-[9px] text-[#D8B15B]">•</span>
+                                  <span>{item.label}</span>
+                                </Link>
+                              );
+                            })}
+                          </div>
                         );
                       })}
                     </div>
