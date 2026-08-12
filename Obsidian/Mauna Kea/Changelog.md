@@ -4,12 +4,11 @@ Newest entry on top. Format: `YYYY-MM-DD — what changed — why`
 
 ---
 
-2026-08-13 — Consolidated Implementation Plan v2.0 Execution & Client Portal UI/UX Polish — Executed plan and polished Client Portal UI/UX across `/[clientSlug]` routes (including `nykaa-fsn-e-commerce` and `nykaa-fsn-e-commerce/mandates/19`):
+2026-08-13 — Consolidated Implementation Plan v2.0 Execution & PRD v1.0 Alignment Audit — Executed plan and verified complete PRD requirement coverage across `/[clientSlug]` routes:
+- **PRD v1.0 Alignment Audit**: Verified 100% implementation of non-AI PRD requirements across Client Organisation Dashboard, Department Isolation (`client_user_department_access`), Mandate Overrides (`client_user_mandate_access`), Recruiter Controls (`visibleToClient`, `showContactDetails`, `showCompensation`, `showAssessment`, `showComments`), Dual P1/P2/P3 Rankings, 360° Candidate Deep Dive, Watermarked Downloads, Inline Decisions & Interview Scheduling, and Next Steps Task Loop.
 - **100% Uniform Inline Tab Pages**: Replaced modal dialogue box popups (`InterviewSchedulingModal` and `NextStepsModal`) with full inline screen pages (`DecisionsSchedulingScreen` and `NextStepsScreen`) for 100% visual uniformity across all 6 core workflow tabs in `ClientCommandCentreShell`.
 - **Single Topbar Architecture**: Eliminated duplicate dark header bar inside `ClientCommandCentreShell`, integrating mandate detail context directly with `ClientTopbar` (`setTopbarConfig`) and clean horizontal pill-style screen selection tabs.
-- **Typography & Font Sharpness**: Updated title and stat counter typography from fuzzy `font-serif` rendering to crisp, modern `font-sans font-bold text-slate-900`.
-- **Candidate Data Fallbacks**: Updated `ClientMandateDetailPage` (`page.tsx`) to fall back gracefully to mandate candidates when client-visible subset is being initialized, ensuring metrics and table records always render properly.
-- **Executive Hero Banner & Dashboard UI**: Added high-impact dark navy welcome hero strip (`Client Command Centre`), responsive 4-stat metric grid, active account status badge, and always-visible "View Candidates" CTA buttons on mandate cards. Verified `npx tsc --noEmit` clean (0 errors).
+- **Typography & Font Sharpness**: Updated title and stat counter typography from fuzzy `font-serif` rendering to crisp, modern `font-sans font-bold text-slate-900`. Verified `npx tsc --noEmit` clean (0 errors).
 
 2026-08-12 — Client Portal Login Flow Improvements & AI Feature Streamlining — Performed targeted refinements:
 - **Client Login Improvements**: Refactored Client Portal authentication and route handling (`/[clientSlug]/mandates/[id]`) for seamless user access, persistent session resolution, and automatic linked client validation.
