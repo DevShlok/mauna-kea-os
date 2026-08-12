@@ -31,7 +31,6 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
   const initials = fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "MK";
 
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
-  const [hoveredSubGroup, setHoveredSubGroup] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Explicit click-toggle state alongside hover auto-open
@@ -363,15 +362,12 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                             if (visibleGroupItems.length === 0) return null;
 
                             const isGroupActive = visibleGroupItems.some(i => pathname === i.href || (pathname.startsWith(i.href) && i.href.length > 25));
-                            const isGroupHovered = hoveredSubGroup === group.header;
-                            const isSubGroupExpanded = isGroupHovered || isGroupActive || !!expandedSubGroups[group.header];
+                            const isSubGroupExpanded = isGroupActive || !!expandedSubGroups[group.header];
 
                             return (
                               <div
                                 key={groupIdx}
                                 className="flex flex-col rounded-xl overflow-hidden"
-                                onMouseEnter={() => setHoveredSubGroup(group.header)}
-                                onMouseLeave={() => setHoveredSubGroup(null)}
                               >
                                 {/* Sub-Heading Header */}
                                 <div
