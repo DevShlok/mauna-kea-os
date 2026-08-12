@@ -16,8 +16,8 @@ import MarketMappingScreen from "./MarketMappingScreen";
 import EngagementTrackerScreen from "./EngagementTrackerScreen";
 import ShortlistCompareScreen from "./ShortlistCompareScreen";
 import CandidateDeepDiveScreen from "./CandidateDeepDiveScreen";
-import InterviewSchedulingModal from "./InterviewSchedulingModal";
-import NextStepsModal from "./NextStepsModal";
+import DecisionsSchedulingScreen from "./DecisionsSchedulingScreen";
+import NextStepsScreen from "./NextStepsScreen";
 
 type ScreenType = "market_mapping" | "engagement_tracker" | "shortlist_compare" | "deep_dive" | "scheduling" | "next_steps";
 
@@ -41,7 +41,6 @@ export default function ClientCommandCentreShell({
   const [activeScreen, setActiveScreen] = useState<ScreenType>("market_mapping");
   const [selectedCandidateForDeepDive, setSelectedCandidateForDeepDive] = useState<any | null>(null);
   const [selectedCandidateForScheduling, setSelectedCandidateForScheduling] = useState<any | null>(null);
-  const [isNextStepsOpen, setIsNextStepsOpen] = useState(false);
 
   const { setTopbarConfig } = useClientPortal();
 
@@ -100,7 +99,7 @@ export default function ClientCommandCentreShell({
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsNextStepsOpen(true)}
+              onClick={() => setActiveScreen("next_steps")}
               className="px-4 py-2.5 bg-[#D8B15B] hover:bg-[#c4a150] text-[#133255] rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
             >
               <Send className="w-3.5 h-3.5" />
@@ -118,12 +117,8 @@ export default function ClientCommandCentreShell({
               <button
                 key={tab.id}
                 onClick={() => {
-                  if (tab.id === "scheduling") {
+                  if (tab.id === "scheduling" && !selectedCandidateForScheduling) {
                     setSelectedCandidateForScheduling(mandate?.candidates?.[0] || null);
-                  }
-                  if (tab.id === "next_steps") {
-                    setIsNextStepsOpen(true);
-                    return;
                   }
                   setActiveScreen(tab.id);
                 }}
@@ -196,23 +191,23 @@ export default function ClientCommandCentreShell({
           )}
 
           {activeScreen === "scheduling" && (
-            <InterviewSchedulingModal
+            <DecisionsSchedulingScreen
               candidate={selectedCandidateForScheduling || mandate?.candidates?.[0]}
               mandate={mandate}
-              onClose={() => setActiveScreen("shortlist_compare")}
+              onSuccess={() => setActiveScreen("shortlist_compare")}
+            />
+          )}
+
+          {activeScreen === "next_steps" && (
+            <NextStepsScreen
+              mandate={mandate}
+              clientName={clientName}
+              userName={userName}
+              onSuccess={() => setActiveScreen("market_mapping")}
             />
           )}
         </div>
       </div>
-
-      {/* ─── Next Steps Closed-Loop Feedback Modal ──────────── */}
-      <NextStepsModal
-        isOpen={isNextStepsOpen}
-        onClose={() => setIsNextStepsOpen(false)}
-        mandate={mandate}
-        clientName={clientName}
-        userName={userName}
-      />
     </div>
   );
 }

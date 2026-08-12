@@ -5,6 +5,7 @@ Newest entry on top. Format: `YYYY-MM-DD — what changed — why`
 ---
 
 2026-08-13 — Consolidated Implementation Plan v2.0 Execution & Client Portal UI/UX Polish — Executed plan and polished Client Portal UI/UX across `/[clientSlug]` routes (including `nykaa-fsn-e-commerce` and `nykaa-fsn-e-commerce/mandates/19`):
+- **100% Uniform Inline Tab Pages**: Replaced modal dialogue box popups (`InterviewSchedulingModal` and `NextStepsModal`) with full inline screen pages (`DecisionsSchedulingScreen` and `NextStepsScreen`) for 100% visual uniformity across all 6 core workflow tabs in `ClientCommandCentreShell`.
 - **Single Topbar Architecture**: Eliminated duplicate dark header bar inside `ClientCommandCentreShell`, integrating mandate detail context directly with `ClientTopbar` (`setTopbarConfig`) and clean horizontal pill-style screen selection tabs.
 - **Typography & Font Sharpness**: Updated title and stat counter typography from fuzzy `font-serif` rendering to crisp, modern `font-sans font-bold text-slate-900`.
 - **Candidate Data Fallbacks**: Updated `ClientMandateDetailPage` (`page.tsx`) to fall back gracefully to mandate candidates when client-visible subset is being initialized, ensuring metrics and table records always render properly.
