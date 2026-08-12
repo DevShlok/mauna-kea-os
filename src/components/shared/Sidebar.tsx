@@ -31,8 +31,11 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
   const initials = fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "MK";
 
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
-  const [hoveredSubGroup, setHoveredSubGroup] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Track expanded accordion sections explicitly to prevent layout wobbling on hover
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [expandedSubGroups, setExpandedSubGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebarCollapsed");
@@ -50,12 +53,6 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
     const supabase = createClient();
     await supabase.auth.signOut();
     window.location.href = '/sign-in';
-  };
-
-  const handleMouseEnter = (title: string) => setHoveredCategory(title);
-  const handleMouseLeave = () => {
-    setHoveredCategory(null);
-    setHoveredSubGroup(null);
   };
 
   interface NavChild {
@@ -191,13 +188,51 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
     }
   ];
 
+  // Auto-expand current active category and sub-group on load or navigation
+  useEffect(() => {
+    categories.forEach(category => {
+      let allChildren: NavChild[] = [];
+      if (category.children) {
+        allChildren = category.children.filter(c => c.visibleTo.includes(userRole));
+      } else if (category.groups) {
+        allChildren = category.groups.flatMap(g => g.items.filter(i => i.visibleTo.includes(userRole)));
+      }
+
+      const isActive = allChildren.some(child => pathname?.startsWith(child.href) && child.href !== "/dashboard");
+      if (isActive) {
+        setExpandedSections(prev => ({ ...prev, [category.title]: true }));
+
+        if (category.groups) {
+          category.groups.forEach(g => {
+            const isGroupActive = g.items.some(i => pathname?.startsWith(i.href) && i.href !== "/dashboard");
+            if (isGroupActive) {
+              setExpandedSubGroups(prev => ({ ...prev, [g.header]: true }));
+            }
+          });
+        }
+      }
+    });
+  }, [pathname, userRole]);
+
+  const toggleCategory = (title: string) => {
+    if (isCollapsed) {
+      setIsCollapsed(false);
+    }
+    setExpandedSections(prev => ({ ...prev, [title]: !prev[title] }));
+  };
+
+  const toggleSubGroup = (header: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedSubGroups(prev => ({ ...prev, [header]: !prev[header] }));
+  };
+
   return (
     <div className={`group relative h-screen shrink-0 z-40 ${isCollapsed ? "w-[76px]" : "w-[285px]"}`} style={{ transition: 'width 280ms cubic-bezier(0.4, 0, 0.2, 1)', willChange: 'width' }}>
       <div
         className={`absolute inset-0 flex flex-col overflow-y-auto text-white border-r border-white/10 ${isCollapsed ? 'overflow-x-visible' : 'overflow-x-hidden'}`}
         style={{ background: "linear-gradient(180deg, #133255 0%, #0b1f36 100%)", boxShadow: "4px 0 20px rgba(0,0,0,0.18)" }}
       >
-        {/* Logo */}
+        {/* Logo Header */}
         <div className={`h-[76px] flex items-center px-5 border-b border-white/10 hover:bg-white/5 transition-colors ${isCollapsed ? "justify-center" : ""}`}>
           <Link href="/dashboard" className={`flex items-center gap-3 overflow-hidden ${isCollapsed ? "justify-center" : ""}`}>
             <div
@@ -218,10 +253,9 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
           </Link>
         </div>
 
+        {/* Sidebar Menu Items */}
         <div className="flex-1 py-4 flex flex-col gap-1 px-3">
           {categories.filter(cat => cat.visibleTo.includes(userRole)).map((category, idx) => {
-            const isHovered = hoveredCategory === category.title;
-
             let allChildren: NavChild[] = [];
             if (category.children) {
               allChildren = category.children.filter(c => c.visibleTo.includes(userRole));
@@ -232,19 +266,20 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
             if (allChildren.length === 0) return null;
 
             const isActive = allChildren.some(child => pathname?.startsWith(child.href) && child.href !== "/dashboard");
-            const isExpanded = isHovered || isActive;
-            const isHighlighted = isHovered || isActive;
+            const isHovered = hoveredCategory === category.title;
+            const isExpanded = !!expandedSections[category.title];
+            const isHighlighted = isHovered || isActive || isExpanded;
 
             return (
               <div
                 key={idx}
                 className="flex flex-col"
-                onMouseEnter={() => handleMouseEnter(category.title)}
-                onMouseLeave={handleMouseLeave}
+                onMouseEnter={() => setHoveredCategory(category.title)}
+                onMouseLeave={() => setHoveredCategory(null)}
               >
-                {/* Parent Category Header (Layer 1 - Increased to 15.5px) */}
+                {/* Parent Category Header (Wobble-Free Click Accordion + Gold Highlight) */}
                 <div
-                  className={`flex items-center gap-3 py-3 cursor-pointer rounded-xl mx-0 ${
+                  className={`flex items-center gap-3 py-3 cursor-pointer rounded-xl mx-0 select-none transition-all ${
                     isHighlighted
                       ? "text-white font-bold"
                       : "text-white/75 hover:text-white"
@@ -255,135 +290,110 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                           background: "rgba(216,177,91,0.14)",
                           border: "1px solid rgba(216,177,91,0.3)",
                           boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
-                          transition: 'color 150ms ease, background 150ms ease, border-color 150ms ease, box-shadow 150ms ease',
                         }
-                      : { border: "1px solid transparent", transition: 'color 150ms ease, background 150ms ease, border-color 150ms ease, box-shadow 150ms ease' }
+                      : { border: "1px solid transparent" }
                   }
-                  onClick={() => {
-                    if (isCollapsed) setIsCollapsed(false);
-                  }}
+                  onClick={() => toggleCategory(category.title)}
                   title={isCollapsed ? category.title : undefined}
                 >
                   <category.icon className={`w-[20px] h-[20px] shrink-0 transition-colors ${isHighlighted ? "text-[#D8B15B]" : ""}`} />
                   {!isCollapsed && (
                     <>
                       <span className="text-[15.5px] flex-1 tracking-wide font-semibold">{category.title}</span>
-                      <ChevronRight className={`w-4 h-4 transition-transform duration-500 ${isExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/35"}`} />
+                      <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/35"}`} />
                     </>
                   )}
                 </div>
 
-                {/* Sub-menu rendering */}
+                {/* Wobble-Free CSS Grid Accordion Expansion */}
                 {!isCollapsed && (
-                  <div
-                    style={{
-                      overflow: 'hidden',
-                      maxHeight: isExpanded ? '650px' : '0px',
-                      opacity: isExpanded ? 1 : 0,
-                      transition: 'max-height 480ms cubic-bezier(0.16, 1, 0.3, 1), opacity 380ms cubic-bezier(0.16, 1, 0.3, 1)',
-                      willChange: 'max-height, opacity',
-                    }}
-                  >
-                    {/* STANDARD FLAT CHILDREN (Layer 2 - Increased to 14.5px) */}
-                    {category.children && (
-                      <div className="flex flex-col py-1.5 pl-3 space-y-0.5">
-                        {allChildren.map((child, childIdx) => {
-                          const isChildActive = pathname === child.href;
-                          return (
-                            <Link
-                              key={childIdx}
-                              href={child.href}
-                              className={`flex items-center gap-2.5 pl-8 pr-4 py-2.5 text-[14.5px] font-medium rounded-lg transition-all ${
-                                isChildActive
-                                  ? "text-[#D8B15B] font-bold bg-[#D8B15B]/12 border border-[#D8B15B]/25"
-                                  : "text-white/65 hover:text-white hover:bg-white/5 border border-transparent"
-                              }`}
-                              style={{
-                                transform: isExpanded ? 'translateX(0)' : 'translateX(-8px)',
-                                opacity: isExpanded ? 1 : 0,
-                                transition: `transform 360ms cubic-bezier(0.16, 1, 0.3, 1) ${isExpanded ? childIdx * 30 : 0}ms, opacity 320ms ease ${isExpanded ? childIdx * 30 : 0}ms`,
-                                willChange: 'transform, opacity',
-                              }}
-                            >
-                              {child.icon && <child.icon className="w-4 h-4 shrink-0 opacity-80" />}
-                              <span>{child.label}</span>
-                              {isChildActive && <div className="ml-auto w-2 h-2 rounded-full bg-[#D8B15B] shrink-0" />}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* CASCADING GROUPS UNDER LEGAL & FINANCE */}
-                    {category.groups && (
-                      <div className="flex flex-col py-1.5 pl-3 space-y-1">
-                        {category.groups.map((group, groupIdx) => {
-                          const visibleGroupItems = group.items.filter(i => i.visibleTo.includes(userRole));
-                          if (visibleGroupItems.length === 0) return null;
-
-                          const isGroupActive = visibleGroupItems.some(i => pathname === i.href || (pathname.startsWith(i.href) && i.href.length > 25));
-                          const isGroupHovered = hoveredSubGroup === group.header;
-                          const isSubGroupExpanded = isGroupHovered || isGroupActive;
-
-                          return (
-                            <div
-                              key={groupIdx}
-                              className="flex flex-col rounded-xl overflow-hidden"
-                              onMouseEnter={() => setHoveredSubGroup(group.header)}
-                            >
-                              {/* Sub-Headings (Layer 2 under Legal & Finance - Increased to 14.5px) */}
-                              <div
-                                className={`flex items-center gap-2.5 pl-6 pr-3 py-2 text-[14.5px] font-bold cursor-pointer rounded-lg transition-all ${
-                                  isSubGroupExpanded
-                                    ? "text-[#D8B15B] bg-white/5"
-                                    : "text-white/80 hover:text-white hover:bg-white/5"
+                  <div className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                    <div className="overflow-hidden">
+                      {/* STANDARD FLAT CHILDREN */}
+                      {category.children && (
+                        <div className="flex flex-col py-1.5 pl-3 space-y-0.5">
+                          {allChildren.map((child, childIdx) => {
+                            const isChildActive = pathname === child.href;
+                            return (
+                              <Link
+                                key={childIdx}
+                                href={child.href}
+                                className={`flex items-center gap-2.5 pl-8 pr-4 py-2 text-[14.5px] font-medium rounded-lg transition-all ${
+                                  isChildActive
+                                    ? "text-[#D8B15B] font-bold bg-[#D8B15B]/14 border border-[#D8B15B]/25"
+                                    : "text-white/65 hover:text-white hover:bg-white/5 border border-transparent"
                                 }`}
                               >
-                                <group.icon className={`w-4 h-4 shrink-0 ${isSubGroupExpanded ? "text-[#D8B15B]" : "text-white/45"}`} />
-                                <span className="flex-1 tracking-wide">{group.header}</span>
-                                <ChevronRight className={`w-4 h-4 transition-transform duration-400 ${isSubGroupExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/35"}`} />
-                              </div>
+                                {child.icon && <child.icon className="w-4 h-4 shrink-0 opacity-80" />}
+                                <span>{child.label}</span>
+                                {isChildActive && <div className="ml-auto w-2 h-2 rounded-full bg-[#D8B15B] shrink-0" />}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
 
-                              {/* Dynamic Second-Layer Dropdown Items (Layer 3 - Increased to 13.5px) */}
-                              <div
-                                style={{
-                                  overflow: 'hidden',
-                                  maxHeight: isSubGroupExpanded ? `${visibleGroupItems.length * 44}px` : '0px',
-                                  opacity: isSubGroupExpanded ? 1 : 0,
-                                  transition: 'max-height 420ms cubic-bezier(0.16, 1, 0.3, 1), opacity 350ms ease',
-                                  willChange: 'max-height, opacity',
-                                }}
-                              >
-                                <div className="flex flex-col py-1 pl-4 space-y-0.5">
-                                  {visibleGroupItems.map((item, itemIdx) => {
-                                    const isItemActive = pathname === item.href;
-                                    return (
-                                      <Link
-                                        key={itemIdx}
-                                        href={item.href}
-                                        className={`flex items-center gap-2 pl-6 pr-3 py-2 text-[13.5px] font-medium rounded-lg transition-all ${
-                                          isItemActive
-                                            ? "text-[#D8B15B] font-bold bg-[#D8B15B]/15 border border-[#D8B15B]/25"
-                                            : "text-white/65 hover:text-white hover:bg-white/5 border border-transparent"
-                                        }`}
-                                      >
-                                        <span className={`text-[11px] ${isItemActive ? "text-[#D8B15B]" : "text-white/35"}`}>•</span>
-                                        <span className="truncate">{item.label}</span>
-                                        {isItemActive && <div className="ml-auto w-2 h-2 rounded-full bg-[#D8B15B] shrink-0" />}
-                                      </Link>
-                                    );
-                                  })}
+                      {/* CASCADING NESTED GROUPS (Legal & Finance) */}
+                      {category.groups && (
+                        <div className="flex flex-col py-1.5 pl-3 space-y-1">
+                          {category.groups.map((group, groupIdx) => {
+                            const visibleGroupItems = group.items.filter(i => i.visibleTo.includes(userRole));
+                            if (visibleGroupItems.length === 0) return null;
+
+                            const isGroupActive = visibleGroupItems.some(i => pathname === i.href || (pathname.startsWith(i.href) && i.href.length > 25));
+                            const isSubGroupExpanded = !!expandedSubGroups[group.header] || isGroupActive;
+
+                            return (
+                              <div key={groupIdx} className="flex flex-col rounded-xl overflow-hidden">
+                                {/* Sub-Heading Header */}
+                                <div
+                                  onClick={(e) => toggleSubGroup(group.header, e)}
+                                  className={`flex items-center gap-2.5 pl-6 pr-3 py-2 text-[14.5px] font-bold cursor-pointer rounded-lg select-none transition-all ${
+                                    isSubGroupExpanded
+                                      ? "text-[#D8B15B] bg-white/5"
+                                      : "text-white/80 hover:text-white hover:bg-white/5"
+                                  }`}
+                                >
+                                  <group.icon className={`w-4 h-4 shrink-0 ${isSubGroupExpanded ? "text-[#D8B15B]" : "text-white/45"}`} />
+                                  <span className="flex-1 tracking-wide">{group.header}</span>
+                                  <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isSubGroupExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/35"}`} />
+                                </div>
+
+                                {/* Dynamic Sub-Group Items (CSS Grid expansion - zero wobble) */}
+                                <div className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${isSubGroupExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                                  <div className="overflow-hidden">
+                                    <div className="flex flex-col py-1 pl-4 space-y-0.5">
+                                      {visibleGroupItems.map((item, itemIdx) => {
+                                        const isItemActive = pathname === item.href;
+                                        return (
+                                          <Link
+                                            key={itemIdx}
+                                            href={item.href}
+                                            className={`flex items-center gap-2 pl-6 pr-3 py-1.5 text-[13.5px] font-medium rounded-lg transition-all ${
+                                              isItemActive
+                                                ? "text-[#D8B15B] font-bold bg-[#D8B15B]/15 border border-[#D8B15B]/25"
+                                                : "text-white/65 hover:text-white hover:bg-white/5 border border-transparent"
+                                            }`}
+                                          >
+                                            <span className={`text-[11px] ${isItemActive ? "text-[#D8B15B]" : "text-white/35"}`}>•</span>
+                                            <span className="truncate">{item.label}</span>
+                                            {isItemActive && <div className="ml-auto w-2 h-2 rounded-full bg-[#D8B15B] shrink-0" />}
+                                          </Link>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
-                {/* Collapsed Flyout Overlay (Increased font sizes) */}
+                {/* Collapsed Flyout Overlay (when sidebar is in collapsed icon mode) */}
                 {isCollapsed && isHovered && (
                   <div
                     className="absolute left-[76px] ml-2 top-0 mt-2 w-64 py-3 z-50 rounded-2xl overflow-hidden shadow-2xl"
@@ -450,7 +460,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
           })}
         </div>
 
-        {/* User Footer (Increased to 15px & 12.5px) */}
+        {/* User Footer */}
         <div className={`mt-auto p-4 border-t border-white/10 flex items-center overflow-hidden ${isCollapsed ? "flex-col gap-4 justify-center" : "gap-3"}`}>
           <div
             className="w-[40px] h-[40px] rounded-full flex items-center justify-center font-serif text-[16px] font-bold shrink-0 text-[#133255]"
