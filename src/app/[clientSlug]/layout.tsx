@@ -43,13 +43,14 @@ export default async function DynamicSlugLayout({
       }
     }
 
-    const clientName = (platformUser?.role === "client" ? platformUser?.name : client.name) || client.name;
+    const clientName = client.name || platformUser?.name || "Client Portal";
+    const userName = platformUser?.name || "Client User";
     return (
       <ClientPortalProvider>
         <div className="h-screen overflow-hidden bg-[#f4f6fb] flex print:h-auto print:overflow-visible">
           <div className="shrink-0 h-full z-50 print:hidden">
             <Suspense fallback={<div className="w-64 h-full bg-[#0b1f3a]"></div>}>
-              <ClientSidebar clientName={clientName} clientSlug={client.slug || "client"} />
+              <ClientSidebar clientName={clientName} userName={userName} clientSlug={client.slug || "client"} />
             </Suspense>
           </div>
           <div className="flex-1 flex flex-col h-full overflow-hidden relative print:h-auto print:overflow-visible">

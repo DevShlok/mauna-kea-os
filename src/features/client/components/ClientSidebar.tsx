@@ -15,9 +15,10 @@ import { usePathname, useSearchParams } from "next/navigation";
 type Props = {
   clientSlug?: string;
   clientName: string;
+  userName?: string;
 };
 
-export function ClientSidebar({ clientName, clientSlug }: Props) {
+export function ClientSidebar({ clientName, userName, clientSlug }: Props) {
   const prefix = clientSlug ? `/${clientSlug}` : '/client';
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -37,7 +38,8 @@ export function ClientSidebar({ clientName, clientSlug }: Props) {
     activeTab = "dashboard";
   }
 
-  const initials = clientName
+  const displayName = userName || clientName;
+  const initials = displayName
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -105,10 +107,10 @@ export function ClientSidebar({ clientName, clientSlug }: Props) {
           {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <span className="text-white text-[14px] font-semibold block truncate">
-            {clientName}
+          <span className="text-white text-[13px] font-semibold block truncate">
+            {displayName}
           </span>
-          <span className="text-white/50 text-[11px] block">Client</span>
+          <span className="text-white/50 text-[11px] block truncate">{clientName}</span>
         </div>
         <button
           onClick={handleSignOut}

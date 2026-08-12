@@ -4,6 +4,8 @@ Newest entry on top. Format: `YYYY-MM-DD — what changed — why`
 
 ---
 
+2026-08-13 — Consolidated Implementation Plan v2.0 Execution — Applied database schema migrations 0038, 0040, 0041, 0042 to primary database. Built Sprint 1 Payroll foundation and execution engine (`processPayrollRunAction`, `finalizeAndSendPayslipsAction`, `computeNetPay` with Basic 40%, HRA 20%, Spec 40%, PF 12%, PT ₹200, Net Pay formula, HTML payslips via Resend). Wired Client Controls & Tasks tab (`CandidateVisibilityPanel`, `ClientNextStepsTasksPanel`) into `MandateDetailClient.tsx`. Built automated client user invitation flow (`inviteClientUserAction`) and department/mandate access isolation actions (`grantDepartmentAccessAction`, `grantMandateAccessAction`). Deployed contract renewal alerts and payment reminders cron API routes in `/api/cron/` with `vercel.json` schedules. Verified `npx tsc --noEmit` clean (0 errors).
+
 2026-08-12 — Client Portal Login Flow Improvements & AI Feature Streamlining — Performed targeted refinements:
 - **Client Login Improvements**: Refactored Client Portal authentication and route handling (`/[clientSlug]/mandates/[id]`) for seamless user access, persistent session resolution, and automatic linked client validation.
 - **AI Feature Streamlining**: Streamlined Client Hiring Command Centre by removing AI narrative synthesis text boxes and the AI Assistant drawer per user feedback, focusing 100% of the client UI on direct visual benchmarking, 6-screen executive workflows, multi-slot scheduling, and closed-loop task feedback.

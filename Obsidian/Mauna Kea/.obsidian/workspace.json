@@ -198,6 +198,7 @@
   },
   "active": "ef4a57a16ec56532",
   "lastOpenFiles": [
+    "Features/payroll.md",
     "Database/other-tables.md",
     "2026-08-08.md",
     "2026-08-11.md",
@@ -225,7 +226,6 @@
     "Decisions/advanced-table-abstraction.md",
     "Decisions/floats-vs-candidates.md",
     "Decisions/field-level-audit-log.md",
-    "API/index.md",
     "Untitled 2.canvas",
     "Untitled 1.canvas",
     "Untitled.canvas",

@@ -147,6 +147,13 @@ export default function ContractDetailClient({ contract }: ContractDetailProps) 
     }
   };
 
+  // ─── Expiry alert computation ────────────────────────────────────────────────
+  const today = new Date();
+  const endDate = new Date(contract.contractEndDate);
+  const daysToExpiry = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const isExpired = daysToExpiry < 0;
+  const isExpiringSoon = !isExpired && daysToExpiry <= 60;
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header Bar */}
@@ -208,6 +215,33 @@ export default function ContractDetailClient({ contract }: ContractDetailProps) 
           </button>
         </div>
       </div>
+
+      {/* ─── Expiry Warning Banner ─────────────────────────────────────── */}
+      {(isExpired || isExpiringSoon) && (
+        <div className={`flex items-start gap-3 p-4 rounded-2xl border text-sm ${
+          isExpired
+            ? "bg-rose-50 border-rose-200 text-rose-800"
+            : daysToExpiry <= 30
+            ? "bg-amber-50 border-amber-300 text-amber-900"
+            : "bg-yellow-50 border-yellow-200 text-yellow-800"
+        }`}>
+          <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" />
+          <div>
+            <p className="font-bold">
+              {isExpired
+                ? `Contract expired ${Math.abs(daysToExpiry)} days ago`
+                : `Contract expires in ${daysToExpiry} day${daysToExpiry === 1 ? "" : "s"}`}
+            </p>
+            <p className="text-xs mt-0.5 opacity-80">
+              {isExpired
+                ? "This contract is no longer active. Please renew or archive it."
+                : daysToExpiry <= 30
+                ? "Urgent: initiate renewal or extension process immediately."
+                : "Renewal planning should begin. Use the Renew button above."}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main 2 Cols */}
@@ -275,6 +309,18 @@ export default function ContractDetailClient({ contract }: ContractDetailProps) 
                   {contract.nonPoachingMonths ? `${contract.nonPoachingMonths} Months` : "None"}
                 </span>
               </div>
+              {contract.latePaymentClause && (
+                <div className="col-span-2">
+                  <span className="text-slate-400 block font-semibold">Late Payment Clause</span>
+                  <span className="font-semibold text-slate-800">{contract.latePaymentClause}</span>
+                </div>
+              )}
+              {contract.travelExpenses && (
+                <div className="col-span-2">
+                  <span className="text-slate-400 block font-semibold">Travel Expenses</span>
+                  <span className="font-semibold text-slate-800">{contract.travelExpenses}</span>
+                </div>
+              )}
             </div>
           </div>
 

@@ -25,11 +25,11 @@ export default async function ClientMandateDetailPage({ params }: { params: Prom
   if (platformUser?.linkedClientId) {
     const [client] = await db.select().from(clients).where(eq(clients.id, platformUser.linkedClientId));
     if (!client || mandate.company !== client.name) {
-      redirect(`/${resolvedParams.clientSlug}/mandates`);
+      redirect(`/${resolvedParams.clientSlug}`);
     }
     clientName = client.name;
   } else {
-    redirect(`/${resolvedParams.clientSlug}/mandates`);
+    redirect(`/${resolvedParams.clientSlug}`);
   }
 
   // Enrich candidates with profile pics from the master candidates table

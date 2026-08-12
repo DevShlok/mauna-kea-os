@@ -17,8 +17,10 @@ import {
   Brain,
   FileText,
   UserCheck,
+  History,
 } from "lucide-react";
 import { logDocumentDownloadAction } from "@/actions/client-command-centre";
+import CandidateActivityTimeline from "./CandidateActivityTimeline";
 import toast from "react-hot-toast";
 
 interface CandidateDeepDiveScreenProps {
@@ -36,7 +38,7 @@ export default function CandidateDeepDiveScreen({
   userName,
   onBack,
 }: CandidateDeepDiveScreenProps) {
-  const [activeTab, setActiveTab] = useState<"summary" | "behavioral" | "psychometric" | "references" | "competency">("summary");
+  const [activeTab, setActiveTab] = useState<"summary" | "behavioral" | "psychometric" | "references" | "competency" | "activity">("summary");
 
   const cand = candidate || {
     name: "Candidate",
@@ -131,6 +133,7 @@ export default function CandidateDeepDiveScreen({
           { id: "psychometric", label: "2. Psychometric Assessment", icon: ShieldCheck },
           { id: "references", label: "3. Reference Checks", icon: UserCheck },
           { id: "competency", label: "4. Competency Breakdown", icon: Award },
+          { id: "activity", label: "Activity History", icon: History },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -249,6 +252,20 @@ export default function CandidateDeepDiveScreen({
                 <span className="text-[#133255]">8.7 / 10</span>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === "activity" && (
+          <div className="space-y-3">
+            <div className="border-b border-slate-100 pb-3">
+              <h3 className="text-base font-serif font-bold text-slate-900">Activity History</h3>
+              <p className="text-xs text-slate-500">All decisions, interview scheduling, and status changes for this candidate on this mandate.</p>
+            </div>
+            {candidate?.mandateCandidateId ? (
+              <CandidateActivityTimeline mandateCandidateId={candidate.mandateCandidateId} />
+            ) : (
+              <p className="text-xs text-slate-400 py-6 text-center">Activity history is not available for this view.</p>
+            )}
           </div>
         )}
       </div>

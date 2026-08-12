@@ -10,6 +10,8 @@ import { StatusBadge, VerifiedBadge } from "@/components/ui/StatusBadge";
 import { STAGE_OPTIONS, stageLabel, formatMandateCtc } from "@/lib/helpers";
 import { editMandateAction, updateMandateSearchNotesAction, updateMandateCandidateStageAction, deleteMandateAction, sendCandidatesToClientAction, saveCandidateAssessmentAction, bulkMovePipelineCandidatesAction, bulkDeletePipelineCandidatesAction } from "@/actions";
 import MandateKanbanBoard from "./MandateKanbanBoard";
+import ClientNextStepsTasksPanel from "./ClientNextStepsTasksPanel";
+import CandidateVisibilityPanel from "./CandidateVisibilityPanel";
 import { Search, ArrowUpDown, Upload, Eye, EyeOff, ShieldCheck, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { updateCandidateVisibilityAction, updateConsultantRankingAction } from "@/actions/client-command-centre";
@@ -173,7 +175,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<number>>(new Set());
   const [isSendingToClient, setIsSendingToClient] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
-  const [workflowTab, setWorkflowTab] = useState<"universe" | "mapping" | "longlist" | "calllist" | "shortlist" | "client-shortlisted" | "interview" | "offer-sent" | "offer-accepted" | "closed">("universe");
+  const [workflowTab, setWorkflowTab] = useState<"universe" | "mapping" | "longlist" | "calllist" | "shortlist" | "client-shortlisted" | "interview" | "offer-sent" | "offer-accepted" | "closed" | "client-controls">("universe");
   const [isBulkMoving, setIsBulkMoving] = useState(false);
   const [bulkTargetStage, setBulkTargetStage] = useState("");
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -583,6 +585,10 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
           </div>
         </div>
       </div>
+
+      {/* Client Next Steps Tasks Panel */}
+      <ClientNextStepsTasksPanel mandateId={mandate.id} />
+
       <div className="neo-table">
         <div className="p-5 border-b border-gray-100 flex justify-between items-center">
           <h3 className="font-bold text-gray-900 text-base">Candidate Pipeline</h3>
@@ -663,6 +669,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
               { value: "offer-sent", label: "Offer Sent" },
               { value: "offer-accepted", label: "Offer Accepted" },
               { value: "closed", label: "Closed" },
+              { value: "client-controls", label: "Client Controls & Tasks" },
             ].map(({ value, label }) => {
               const count = mandate.candidates.filter((c: any) => c.stage === value || (!c.stage && value === "universe")).length;
               return (
@@ -735,7 +742,18 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
             </div>
           )}
 
-        {viewMode === "board" ? (
+        {workflowTab === "client-controls" ? (
+          <div className="p-6 space-y-8 bg-slate-50/50">
+            <CandidateVisibilityPanel
+              mandateId={mandate.id}
+              candidates={mandate.candidates}
+              onUpdateCandidates={(updatedList) => {
+                setMandate((prev: any) => ({ ...prev, candidates: updatedList }));
+              }}
+            />
+            <ClientNextStepsTasksPanel mandateId={mandate.id} />
+          </div>
+        ) : viewMode === "board" ? (
           <div className="p-4 bg-gray-50/50">
             <MandateKanbanBoard 
               candidates={mandate.candidates} 

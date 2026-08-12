@@ -39,6 +39,7 @@ type Mandate = {
 
 type Props = {
   clientName: string;
+  userName?: string;
   clientSlug?: string;
   mandates: Mandate[];
   initialTab?: "dashboard" | "shortlist" | "insights" | "profile";
@@ -158,7 +159,7 @@ function getRoleIcon(role: string) {
 }
 
 // ─── Main Component ──────────────────────────────────────
-export default function ClientDashboard({ clientName, clientSlug, mandates, initialTab = "dashboard" }: Props) {
+export default function ClientDashboard({ clientName, userName, clientSlug, mandates, initialTab = "dashboard" }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab") as any;
@@ -183,7 +184,7 @@ export default function ClientDashboard({ clientName, clientSlug, mandates, init
       case "dashboard":
         setTopbarConfig({
           title: clientName,
-          subtitle: "Welcome back",
+          subtitle: userName ? `Welcome back, ${userName}` : "Welcome back",
           showSearch: true,
           searchQuery,
           onSearchChange: setSearchQuery,

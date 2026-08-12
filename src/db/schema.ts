@@ -39,6 +39,8 @@ export const mandates = pgTable('mandates', {
   createdAt: datetime('created_at').default(sql`now()`),
   auditLog: json('audit_log').$type<Record<string, { updatedBy: string, updatedAt: string }>>().default({}),
   metadata: json('metadata').$type<Record<string, any>>().default({}),
+  // ─── Phase CP-1: Interview rounds config ───
+  interviewRounds: json('interview_rounds').$type<{ round: number; label: string }[]>().default([{round:1,label:'Interview 1'},{round:2,label:'Interview 2'},{round:3,label:'Final Interview'}]),
 }, (table) => ({
   companyIdx: index('mandates_company_idx').on(table.company),
   clientIdIdx: index('mandates_client_id_idx').on(table.clientId),
@@ -97,10 +99,17 @@ export const mandateCandidates = pgTable('mandate_candidates', {
   competencies: json('competencies').$type<{skill: string; rating: number}[]>().default([]),
   movementProb: varchar('movement_prob', { length: 50 }),
   movementReason: varchar('movement_reason', { length: 255 }),
+  // ─── Phase CP-1: Client decision + interview tracking ───
+  clientDecision: varchar('client_decision', { length: 20 }),
+  clientDecisionAt: datetime('client_decision_at'),
+  clientRejectionReasons: json('client_rejection_reasons').$type<string[]>().default([]),
+  clientRejectionOther: text('client_rejection_other'),
+  interviewRoundCurrent: int('interview_round_current').default(0),
 }, (table) => ({
   mandateIdIdx: index('mc_mandate_id_idx').on(table.mandateId),
   candIdIdx: index('mc_cand_id_idx').on(table.candId),
   stageIdx: index('mc_stage_idx').on(table.stage),
+  clientDecisionIdx: index('mc_client_decision_idx').on(table.clientDecision),
 }));
 
 // ─── DOWNLOAD LOGS ───────────────────────────────────────
@@ -338,6 +347,15 @@ export const platformUsers = pgTable('platform_users', {
   lastActive: datetime('last_active'),
   maxLeaves: int('max_leaves').default(20), // default to 20 days
   reportingManagerId: varchar('reporting_manager_id', { length: 50 }), // references another user's id
+  // ─── Payroll / HR profile fields (Phase PAY) ───
+  employeeCode: varchar('employee_code', { length: 50 }),
+  designation: varchar('designation', { length: 255 }),
+  department: varchar('department', { length: 255 }),
+  dateOfJoining: date('date_of_joining'),
+  pan: varchar('pan', { length: 20 }),
+  bankAccount: varchar('bank_account', { length: 50 }),
+  bankName: varchar('bank_name', { length: 100 }),
+  ifsc: varchar('ifsc', { length: 20 }),
   isDeleted: boolean('is_deleted').default(false),
   deletedAt: datetime('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 255 }),
@@ -418,9 +436,15 @@ export const clientNotifications = pgTable('client_notifications', {
   link: varchar('link', { length: 255 }),
   isRead: boolean('is_read').default(false),
   createdAt: datetime('created_at').default(sql`now()`),
+  // ─── Phase CP-1 extensions ───
+  type: varchar('type', { length: 80 }),
+  userId: varchar('user_id', { length: 255 }),
+  title: varchar('title', { length: 255 }),
 }, (table) => ({
   clientIdIdx: index('cn_client_id_idx').on(table.clientId),
   mandateIdIdx: index('cn_mandate_id_idx').on(table.mandateId),
+  typeIdx: index('cn_type_idx').on(table.type),
+  isReadIdx: index('cn_is_read_idx').on(table.isRead),
 }));
 
 // ─── CLIENT REMARKS ──────────────────────────────────────
@@ -437,6 +461,33 @@ export const clientRemarks = pgTable('client_remarks', {
   mandateIdIdx: index('crem_mandate_id_idx').on(table.mandateId),
   candIdIdx: index('crem_cand_id_idx').on(table.candId),
 }));
+
+// ─── CLIENT USER DEPARTMENT ACCESS (CP-6) ──────────────────────────────────
+export const clientUserDepartmentAccess = pgTable('client_user_department_access', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id', { length: 50 }).notNull().references(() => platformUsers.id, { onDelete: 'cascade' }),
+  departmentId: int('department_id').notNull().references(() => departments.id, { onDelete: 'cascade' }),
+  grantedBy: varchar('granted_by', { length: 255 }),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  userDeptUniq: unique('cuda_user_dept_uniq').on(table.userId, table.departmentId),
+  userIdIdx: index('cuda_user_id_idx').on(table.userId),
+}));
+
+// ─── CLIENT USER MANDATE ACCESS OVERRIDE (CP-7) ───────────────────────────
+export const clientUserMandateAccess = pgTable('client_user_mandate_access', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id', { length: 50 }).notNull().references(() => platformUsers.id, { onDelete: 'cascade' }),
+  mandateId: int('mandate_id').notNull().references(() => mandates.id, { onDelete: 'cascade' }),
+  grantedBy: varchar('granted_by', { length: 255 }),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  userMandateUniq: unique('cuma_user_mandate_uniq').on(table.userId, table.mandateId),
+  userIdIdx: index('cuma_user_id_idx').on(table.userId),
+}));
+
+export type ClientUserDepartmentAccess = typeof clientUserDepartmentAccess.$inferSelect;
+export type ClientUserMandateAccess = typeof clientUserMandateAccess.$inferSelect;
 
 // ─── CANDIDATE NOTIFICATIONS (Phase 1) ─────────────────
 export const candidateNotifications = pgTable('candidate_notifications', {
@@ -503,6 +554,68 @@ export const candidateVerifications = pgTable('candidate_verifications', {
   candIdIdx: index('cv_cand_id_idx').on(table.candId),
 }));
 
+// ─── INTERVIEWS (Phase CP-1) ──────────────────────────────
+export const interviews = pgTable('interviews', {
+  id: serial('id').primaryKey(),
+  mandateId: int('mandate_id').notNull().references(() => mandates.id, { onDelete: 'cascade' }),
+  mandateCandidateId: int('mandate_candidate_id').references(() => mandateCandidates.id, { onDelete: 'set null' }),
+  positionId: int('position_id').references(() => mandatePositions.id, { onDelete: 'set null' }),
+  round: int('round').notNull().default(1),
+  roundLabel: varchar('round_label', { length: 100 }),
+  interviewerName: varchar('interviewer_name', { length: 255 }),
+  interviewerRole: varchar('interviewer_role', { length: 100 }),
+  scheduledDate: date('scheduled_date'),
+  scheduledTime: varchar('scheduled_time', { length: 20 }),
+  status: varchar('status', { length: 30 }).default('Scheduled'),
+  recommendation: varchar('recommendation', { length: 50 }),
+  feedbackText: text('feedback_text'),
+  createdBy: varchar('created_by', { length: 255 }),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  mandateIdIdx: index('int_mandate_id_idx').on(table.mandateId),
+  mcIdIdx: index('int_mc_id_idx').on(table.mandateCandidateId),
+  statusIdx: index('int_status_idx').on(table.status),
+}));
+
+// ─── CLIENT ACTION TASKS (Phase CP-1) ────────────────────
+export const clientActionTasks = pgTable('client_action_tasks', {
+  id: serial('id').primaryKey(),
+  mandateId: int('mandate_id').notNull().references(() => mandates.id, { onDelete: 'cascade' }),
+  clientId: varchar('client_id', { length: 50 }).references(() => clients.id, { onDelete: 'set null' }),
+  selectedSteps: json('selected_steps').$type<string[]>().default([]),
+  freeTextComment: text('free_text_comment'),
+  submittedBy: varchar('submitted_by', { length: 255 }),
+  submittedByName: varchar('submitted_by_name', { length: 255 }),
+  submittedAt: datetime('submitted_at').default(sql`now()`),
+  status: varchar('status', { length: 30 }).default('Open'),
+  acknowledgedBy: varchar('acknowledged_by', { length: 255 }),
+  acknowledgedAt: datetime('acknowledged_at'),
+  completedBy: varchar('completed_by', { length: 255 }),
+  completedAt: datetime('completed_at'),
+}, (table) => ({
+  mandateIdIdx: index('cat_mandate_id_idx').on(table.mandateId),
+  clientIdIdx: index('cat_client_id_idx').on(table.clientId),
+  statusIdx: index('cat_status_idx').on(table.status),
+}));
+
+// ─── CANDIDATE ACTIVITY LOG (Phase CP-1) ─────────────────
+export const candidateActivityLog = pgTable('candidate_activity_log', {
+  id: serial('id').primaryKey(),
+  mandateId: int('mandate_id').references(() => mandates.id, { onDelete: 'set null' }),
+  mandateCandidateId: int('mandate_candidate_id').references(() => mandateCandidates.id, { onDelete: 'set null' }),
+  actionType: varchar('action_type', { length: 80 }).notNull(),
+  description: text('description').notNull(),
+  previousState: varchar('previous_state', { length: 100 }),
+  newState: varchar('new_state', { length: 100 }),
+  performedBy: varchar('performed_by', { length: 255 }),
+  performedByRole: varchar('performed_by_role', { length: 50 }),
+  performedAt: datetime('performed_at').default(sql`now()`),
+}, (table) => ({
+  mcIdIdx: index('cal_mc_id_idx').on(table.mandateCandidateId),
+  mandateIdIdx: index('cal_mandate_id_idx').on(table.mandateId),
+  performedAtIdx: index('cal_performed_at_idx').on(table.performedAt),
+}));
+
 // ─── TYPES ───────────────────────────────────────────────
 export type Mandate = typeof mandates.$inferSelect;
 export type MandateCandidate = typeof mandateCandidates.$inferSelect;
@@ -523,6 +636,9 @@ export type ConsultantNotification = typeof consultantNotifications.$inferSelect
 export type CandidateNotification = typeof candidateNotifications.$inferSelect;
 export type ReferenceCheck = typeof referenceChecks.$inferSelect;
 export type CandidateVerification = typeof candidateVerifications.$inferSelect;
+export type Interview = typeof interviews.$inferSelect;
+export type ClientActionTask = typeof clientActionTasks.$inferSelect;
+export type CandidateActivityLog = typeof candidateActivityLog.$inferSelect;
 
 // ─── TIME & LEAVE MANAGEMENT ─────────────────────────────
 export const timeLogs = pgTable('time_logs', {
@@ -1060,6 +1176,9 @@ export const invoicePayments = pgTable('invoice_payments', {
   utrNumber: varchar('utr_number', { length: 100 }),
   mode: varchar('mode', { length: 50 }),
   notes: text('notes'),
+  tdsRate: float('tds_rate').default(0),
+  tdsAmount: float('tds_amount').default(0),
+  tdsEvidenceUrl: text('tds_evidence_url'),
   isReversed: boolean('is_reversed').default(false),
   reversedAt: datetime('reversed_at'),
   reversedBy: varchar('reversed_by', { length: 255 }),
@@ -1111,6 +1230,126 @@ export const invoicePaymentsRelations = relations(invoicePayments, ({ one }) => 
   invoice: one(invoices, { fields: [invoicePayments.invoiceId], references: [invoices.id] }),
 }));
 
+// ─── PAYROLL ──────────────────────────────────────────────────────────────────
+
+// Employee CTC Master — each salary revision is a new row (never overwrites)
+export const employeeCtcMaster = pgTable('employee_ctc_master', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id', { length: 50 }).notNull().references(() => platformUsers.id, { onDelete: 'cascade' }),
+  effectiveDate: date('effective_date').notNull(),
+  annualCtc: float('annual_ctc').notNull(),
+  basicPct: float('basic_pct').notNull().default(40),
+  hraPct: float('hra_pct').notNull().default(20),
+  specialAllowancePct: float('special_allowance_pct').notNull().default(40),
+  pfApplicable: boolean('pf_applicable').notNull().default(true),
+  pfEmployeePct: float('pf_employee_pct').notNull().default(12),
+  pfEmployerPct: float('pf_employer_pct').notNull().default(12),
+  professionalTaxMonthly: float('professional_tax_monthly').notNull().default(200),
+  tdsMonthly: float('tds_monthly').notNull().default(0),
+  otherAllowances: json('other_allowances').$type<{ label: string; amount: number }[]>().default([]),
+  otherDeductions: json('other_deductions').$type<{ label: string; amount: number }[]>().default([]),
+  createdBy: varchar('created_by', { length: 255 }),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  userIdIdx: index('ectc_user_id_idx').on(table.userId),
+  effDateIdx: index('ectc_eff_date_idx').on(table.userId, table.effectiveDate),
+}));
+
+// Payroll Runs — one row per calendar month
+export const payrollRuns = pgTable('payroll_runs', {
+  id: serial('id').primaryKey(),
+  month: varchar('month', { length: 7 }).notNull().unique(), // 'YYYY-MM'
+  status: varchar('status', { length: 20 }).notNull().default('Draft'), // Draft | Processed | Approved | Finalized
+  totalGrossEarnings: float('total_gross_earnings').notNull().default(0),
+  totalNetPay: float('total_net_pay').notNull().default(0),
+  totalEmployees: int('total_employees').notNull().default(0),
+  processedBy: varchar('processed_by', { length: 255 }),
+  processedAt: datetime('processed_at'),
+  approvedBy: varchar('approved_by', { length: 255 }),
+  approvedAt: datetime('approved_at'),
+  finalizedBy: varchar('finalized_by', { length: 255 }),
+  finalizedAt: datetime('finalized_at'),
+  notes: text('notes'),
+  createdAt: datetime('created_at').default(sql`now()`),
+});
+
+// Payroll Line Items — one per employee per run with full earnings/deductions snapshot
+export const payrollLineItems = pgTable('payroll_line_items', {
+  id: serial('id').primaryKey(),
+  runId: int('run_id').notNull().references(() => payrollRuns.id, { onDelete: 'cascade' }),
+  userId: varchar('user_id', { length: 50 }).notNull().references(() => platformUsers.id, { onDelete: 'cascade' }),
+  // Snapshot fields
+  employeeName: varchar('employee_name', { length: 255 }),
+  employeeCode: varchar('employee_code', { length: 50 }),
+  designation: varchar('designation', { length: 255 }),
+  department: varchar('department', { length: 255 }),
+  dateOfJoining: date('date_of_joining'),
+  pan: varchar('pan', { length: 20 }),
+  bankAccount: varchar('bank_account', { length: 50 }),
+  bankName: varchar('bank_name', { length: 100 }),
+  ifsc: varchar('ifsc', { length: 20 }),
+  // Attendance
+  workingDaysInMonth: int('working_days_in_month').notNull().default(26),
+  paidDays: float('paid_days'),
+  lopDays: float('lop_days').notNull().default(0),
+  lopOverride: float('lop_override'),
+  adjustmentNote: text('adjustment_note'),
+  // Earnings
+  basic: float('basic'),
+  hra: float('hra'),
+  specialAllowance: float('special_allowance'),
+  otherAllowances: json('other_allowances').$type<{ label: string; amount: number }[]>().default([]),
+  grossEarnings: float('gross_earnings'),
+  // Deductions
+  pfEmployee: float('pf_employee'),
+  pfEmployer: float('pf_employer'),
+  professionalTax: float('professional_tax'),
+  tds: float('tds'),
+  otherDeductions: json('other_deductions').$type<{ label: string; amount: number }[]>().default([]),
+  grossDeductions: float('gross_deductions'),
+  // Net
+  netPay: float('net_pay'),
+  // Payslip
+  payslipSent: boolean('payslip_sent').notNull().default(false),
+  payslipSentAt: datetime('payslip_sent_at'),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  runIdIdx: index('pli_run_id_idx').on(table.runId),
+  userIdIdx: index('pli_user_id_idx').on(table.userId),
+  runUserUniq: unique('pli_run_user_uniq').on(table.runId, table.userId),
+}));
+
+// Payroll Leave Summary — pre-computed leave + LOP per employee per run
+export const payrollLeaveSummary = pgTable('payroll_leave_summary', {
+  id: serial('id').primaryKey(),
+  runId: int('run_id').notNull().references(() => payrollRuns.id, { onDelete: 'cascade' }),
+  userId: varchar('user_id', { length: 50 }).notNull().references(() => platformUsers.id, { onDelete: 'cascade' }),
+  annualQuota: float('annual_quota').notNull().default(24),
+  leavesTakenYtd: float('leaves_taken_ytd').notNull().default(0),
+  leavesTakenThisMonth: float('leaves_taken_this_month').notNull().default(0),
+  balanceRemaining: float('balance_remaining').notNull().default(0),
+  lopDays: float('lop_days').notNull().default(0),
+  flagged: boolean('flagged').notNull().default(false),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  runIdIdx: index('pls_run_id_idx').on(table.runId),
+  runUserUniq: unique('pls_run_user_uniq').on(table.runId, table.userId),
+}));
+
+// Payroll Audit Log — immutable INSERT-only record of all payroll actions
+export const payrollAuditLog = pgTable('payroll_audit_log', {
+  id: serial('id').primaryKey(),
+  runId: int('run_id').references(() => payrollRuns.id, { onDelete: 'set null' }),
+  action: varchar('action', { length: 80 }).notNull(),
+  actorName: varchar('actor_name', { length: 255 }),
+  actorId: varchar('actor_id', { length: 50 }),
+  performedAt: datetime('performed_at').default(sql`now()`),
+  notes: text('notes'),
+}, (table) => ({
+  runIdIdx: index('pal_run_id_idx').on(table.runId),
+  performedAtIdx: index('pal_performed_at_idx').on(table.performedAt),
+}));
+
 // ─── INFERRED TYPES ───────────────────────────────────────────────────────────
 export type Contract = typeof contracts.$inferSelect;
 export type ContractInsert = typeof contracts.$inferInsert;
@@ -1119,3 +1358,12 @@ export type Invoice = typeof invoices.$inferSelect;
 export type InvoiceInsert = typeof invoices.$inferInsert;
 export type InvoicePayment = typeof invoicePayments.$inferSelect;
 export type LfAuditLog = typeof lfAuditLogs.$inferSelect;
+// Payroll types
+export type EmployeeCtcMaster = typeof employeeCtcMaster.$inferSelect;
+export type EmployeeCtcMasterInsert = typeof employeeCtcMaster.$inferInsert;
+export type PayrollRun = typeof payrollRuns.$inferSelect;
+export type PayrollRunInsert = typeof payrollRuns.$inferInsert;
+export type PayrollLineItem = typeof payrollLineItems.$inferSelect;
+export type PayrollLineItemInsert = typeof payrollLineItems.$inferInsert;
+export type PayrollLeaveSummary = typeof payrollLeaveSummary.$inferSelect;
+export type PayrollAuditLog = typeof payrollAuditLog.$inferSelect;

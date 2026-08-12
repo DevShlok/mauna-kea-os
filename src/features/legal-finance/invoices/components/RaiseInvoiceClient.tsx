@@ -79,6 +79,7 @@ export default function RaiseInvoiceClient({
     poNumber: "",
     notes: "",
     taxType: "INTRA_STATE" as "INTRA_STATE" | "UNION_TERRITORY" | "INTER_STATE",
+    financeOverride: false,
   });
 
   // Line items state
@@ -250,6 +251,7 @@ export default function RaiseInvoiceClient({
         notes: formData.notes || undefined,
         taxType: formData.taxType,
         lineItems,
+        financeOverride: formData.financeOverride,
       });
 
       toast.success(`Tax Invoice ${res.invoiceNumber} raised successfully!`);
@@ -520,6 +522,25 @@ export default function RaiseInvoiceClient({
             <span className="text-[11px] text-slate-400 block uppercase tracking-wider font-semibold">Total Payable</span>
             <span className="text-2xl font-bold font-serif text-emerald-400">₹{totalAmount.toLocaleString("en-IN")}</span>
           </div>
+        </div>
+
+        {/* Finance Override Toggle */}
+        <div className={`p-4 rounded-2xl border text-xs transition-all ${formData.financeOverride ? "bg-amber-50 border-amber-300" : "bg-slate-50 border-slate-200"}`}>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.financeOverride}
+              onChange={(e) => setFormData({ ...formData, financeOverride: e.target.checked })}
+              className="w-4 h-4 mt-0.5 rounded text-amber-600 focus:ring-amber-500"
+            />
+            <div>
+              <p className="font-bold text-slate-900">Finance Override — Bypass Duplicate Invoice Guard</p>
+              <p className="text-slate-500 mt-0.5 leading-relaxed">
+                Enable only when intentionally re-raising an invoice for a candidate who already has an active invoice
+                (e.g. after a credit note, billing correction, or retainer split). All overrides are logged in the audit trail.
+              </p>
+            </div>
+          </label>
         </div>
 
         {/* Form Actions */}

@@ -39,11 +39,12 @@ export default async function DynamicSlugPage(props: PageProps) {
       ...m,
       candidates: m.candidates.filter(c => c.isSentToClient)
     }));
-    const clientName = (platformUser?.role === "client" ? platformUser?.name : client.name) || client.name;
+    const clientName = client.name || platformUser?.name || "Client Portal";
+    const userName = platformUser?.name || "Client User";
     const clientSlug = client.slug || slug;
     return (
       <Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-[#f4f6fb]">Loading...</div>}>
-        <ClientDashboard clientSlug={clientSlug} clientName={clientName} mandates={filteredMandates} initialTab={tab as any} />
+        <ClientDashboard clientSlug={clientSlug} clientName={clientName} userName={userName} mandates={filteredMandates} initialTab={tab as any} />
       </Suspense>
     );
   }

@@ -343,6 +343,7 @@ export async function createInvoiceAction(data: {
   notes?: string | null;
   taxType?: "INTRA_STATE" | "UNION_TERRITORY" | "INTER_STATE";
   lineItems?: any[];
+  financeOverride?: boolean;
 }) {
   const { name: actorName, role: actorRole } = await getCurrentUserName();
 
@@ -355,7 +356,8 @@ export async function createInvoiceAction(data: {
     : [null];
 
   // Validation: Check duplicate invoice for candidate + mandate
-  if (data.candId && data.mandateId) {
+  // Finance override skips this guard (e.g. re-raise after credit note)
+  if (data.candId && data.mandateId && !data.financeOverride) {
     const existing = await db
       .select()
       .from(invoices)
@@ -368,7 +370,7 @@ export async function createInvoiceAction(data: {
       );
 
     if (existing.length > 0 && existing.some((i) => i.status !== "Cancelled")) {
-      throw new Error("An active invoice already exists for this candidate and mandate.");
+      throw new Error("An active invoice already exists for this candidate and mandate. Enable Finance Override to proceed.");
     }
   }
 
@@ -538,6 +540,9 @@ export async function recordPaymentAction(data: {
   utrNumber?: string;
   mode?: string;
   notes?: string;
+  tdsRate?: number;
+  tdsAmount?: number;
+  tdsEvidenceUrl?: string;
 }) {
   const { platformUser, userRole } = await requireRole(["admin", "finance"]);
   const actorName = platformUser?.name || "Finance";
@@ -554,6 +559,9 @@ export async function recordPaymentAction(data: {
     utrNumber: data.utrNumber || null,
     mode: data.mode || null,
     notes: data.notes || null,
+    tdsRate: data.tdsRate ?? 0,
+    tdsAmount: data.tdsAmount ?? 0,
+    tdsEvidenceUrl: data.tdsEvidenceUrl || null,
     recordedBy: actorName,
   });
 

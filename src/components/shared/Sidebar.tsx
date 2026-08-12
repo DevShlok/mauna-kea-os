@@ -19,7 +19,8 @@ import {
   Receipt,
   BarChart3,
   ShieldCheck,
-  FileText
+  FileText,
+  Banknote
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useState, useEffect } from "react";
@@ -131,7 +132,8 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
           items: [
             { label: "Raise Invoice", href: "/dashboard/legal-finance/invoices/new", icon: Plus, visibleTo: ["admin", "finance"] },
             { label: "Invoice Repository", href: "/dashboard/legal-finance/invoices", visibleTo: ["admin", "finance"] },
-            { label: "Payment Tracking", href: "/dashboard/legal-finance/payments", visibleTo: ["admin", "finance"] },
+            { label: "Payment Dashboard", href: "/dashboard/legal-finance/payments/dashboard", visibleTo: ["admin", "finance"] },
+            { label: "Payment Ledger", href: "/dashboard/legal-finance/payments", visibleTo: ["admin", "finance"] },
             { label: "Credit Notes", href: "/dashboard/legal-finance/invoices?type=CREDIT_NOTE", visibleTo: ["admin", "finance"] },
           ]
         },
@@ -151,6 +153,29 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
           items: [
             { label: "Compliance", href: "/dashboard/legal-finance/compliance", visibleTo: ["admin", "finance"] },
             { label: "Audit Log", href: "/dashboard/legal-finance/audit-log", visibleTo: ["admin", "finance"] },
+          ]
+        }
+      ]
+    },
+    {
+      title: "Payroll",
+      icon: Banknote,
+      visibleTo: ["admin", "finance"],
+      groups: [
+        {
+          header: "Runs",
+          icon: Receipt,
+          items: [
+            { label: "Payroll Dashboard", href: "/dashboard/payroll", visibleTo: ["admin", "finance"] },
+            { label: "New Payroll Run", href: "/dashboard/payroll/new", icon: Plus, visibleTo: ["admin", "finance"] },
+          ]
+        },
+        {
+          header: "Configuration",
+          icon: FileText,
+          items: [
+            { label: "CTC Master", href: "/dashboard/payroll/ctc-master", visibleTo: ["admin", "finance"] },
+            { label: "Employee Profiles", href: "/dashboard/payroll/employees", visibleTo: ["admin", "finance"] },
           ]
         }
       ]
