@@ -10,11 +10,138 @@ import { StatusBadge, VerifiedBadge } from "@/components/ui/StatusBadge";
 import { STAGE_OPTIONS, stageLabel, formatMandateCtc } from "@/lib/helpers";
 import { editMandateAction, updateMandateSearchNotesAction, updateMandateCandidateStageAction, deleteMandateAction, sendCandidatesToClientAction, saveCandidateAssessmentAction, bulkMovePipelineCandidatesAction, bulkDeletePipelineCandidatesAction } from "@/actions";
 import MandateKanbanBoard from "./MandateKanbanBoard";
-import { Search, ArrowUpDown, Upload } from "lucide-react";
+import { Search, ArrowUpDown, Upload, Eye, EyeOff, ShieldCheck, X } from "lucide-react";
 import dynamic from "next/dynamic";
+import { updateCandidateVisibilityAction, updateConsultantRankingAction } from "@/actions/client-command-centre";
 
 const PipelineImportModal = dynamic(() => import("./PipelineImportModal"), { ssr: false });
 const CopyCandidatesModal = dynamic(() => import("./CopyCandidatesModal"), { ssr: false });
+
+function RecruiterVisibilityModal({ candidate, onClose, onSave }: { candidate: any; onClose: () => void; onSave: (updated: any) => void }) {
+  const [visibleToClient, setVisibleToClient] = useState(candidate.visibleToClient ?? false);
+  const [showContactDetails, setShowContactDetails] = useState(candidate.showContactDetails ?? false);
+  const [showCompensation, setShowCompensation] = useState(candidate.showCompensation ?? true);
+  const [showAssessment, setShowAssessment] = useState(candidate.showAssessment ?? true);
+  const [showComments, setShowComments] = useState(candidate.showComments ?? true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateCandidateVisibilityAction({
+        mandateCandidateId: candidate.id,
+        visibleToClient,
+        showContactDetails,
+        showCompensation,
+        showAssessment,
+        showComments,
+      });
+      toast.success("Recruiter visibility settings saved!");
+      onSave({ visibleToClient, showContactDetails, showCompensation, showAssessment, showComments });
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to save settings");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-5">
+        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-[#133255]" />
+            <h3 className="font-bold text-gray-900 text-base">Client Visibility Settings</h3>
+          </div>
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"><X className="w-4 h-4" /></button>
+        </div>
+
+        <div className="text-xs text-gray-500">
+          Control what details for <span className="font-bold text-gray-800">{candidate.name}</span> are exposed to the client in their Hiring Command Centre.
+        </div>
+
+        <div className="space-y-4">
+          <label className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100/80 transition-colors">
+            <div>
+              <span className="text-xs font-bold text-gray-800 block">Visible to Client</span>
+              <span className="text-[11px] text-gray-500 block">Candidate will appear in Client Portal Mandate screens</span>
+            </div>
+            <input
+              type="checkbox"
+              checked={visibleToClient}
+              onChange={e => setVisibleToClient(e.target.checked)}
+              className="w-4 h-4 rounded text-[#133255] focus:ring-[#133255]"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100/80 transition-colors">
+            <div>
+              <span className="text-xs font-bold text-gray-800 block">Show Contact Details</span>
+              <span className="text-[11px] text-gray-500 block">Expose direct mobile number & email address to client</span>
+            </div>
+            <input
+              type="checkbox"
+              checked={showContactDetails}
+              onChange={e => setShowContactDetails(e.target.checked)}
+              className="w-4 h-4 rounded text-[#133255] focus:ring-[#133255]"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100/80 transition-colors">
+            <div>
+              <span className="text-xs font-bold text-gray-800 block">Show Compensation Details</span>
+              <span className="text-[11px] text-gray-500 block">Expose Fixed, Variable & Expected CTC figures</span>
+            </div>
+            <input
+              type="checkbox"
+              checked={showCompensation}
+              onChange={e => setShowCompensation(e.target.checked)}
+              className="w-4 h-4 rounded text-[#133255] focus:ring-[#133255]"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100/80 transition-colors">
+            <div>
+              <span className="text-xs font-bold text-gray-800 block">Show 360° Assessment</span>
+              <span className="text-[11px] text-gray-500 block">Expose approved competency framework & scores</span>
+            </div>
+            <input
+              type="checkbox"
+              checked={showAssessment}
+              onChange={e => setShowAssessment(e.target.checked)}
+              className="w-4 h-4 rounded text-[#133255] focus:ring-[#133255]"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100/80 transition-colors">
+            <div>
+              <span className="text-xs font-bold text-gray-800 block">Show Consultant Comments</span>
+              <span className="text-[11px] text-gray-500 block">Expose Monaki consultant evaluation notes</span>
+            </div>
+            <input
+              type="checkbox"
+              checked={showComments}
+              onChange={e => setShowComments(e.target.checked)}
+              className="w-4 h-4 rounded text-[#133255] focus:ring-[#133255]"
+            />
+          </label>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-2">
+          <button onClick={onClose} className="px-4 py-2 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50">Cancel</button>
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="px-5 py-2 bg-[#133255] text-white rounded-xl text-xs font-bold hover:bg-[#1a4473] disabled:opacity-50"
+          >
+            {isSaving ? "Saving..." : "Save Visibility Settings"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const PIPELINE_STAGES = [
   "universe","mapping","longlist","calllist","shortlist","client-shortlisted","interview","offer-sent","offer-accepted","closed",
@@ -51,6 +178,7 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
   const [bulkTargetStage, setBulkTargetStage] = useState("");
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState<number | null>(null);
+  const [visibilityCandidate, setVisibilityCandidate] = useState<any | null>(null);
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -692,6 +820,39 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                 </td>
                 <td className="px-4 py-3">
                   <select
+                    value={c.consultantRanking || ""}
+                    onChange={async (e) => {
+                      const val = e.target.value as "P1" | "P2" | "P3" | "";
+                      await updateConsultantRankingAction(c.id, val ? val : null);
+                      setMandate((prev: any) => ({
+                        ...prev,
+                        candidates: prev.candidates.map((item: any) => item.id === c.id ? { ...item, consultantRanking: val } : item)
+                      }));
+                    }}
+                    className="neo-inset px-2 py-1 text-xs font-bold bg-white outline-none cursor-pointer text-[#133255] border border-gray-200 rounded"
+                  >
+                    <option value="">No Rank</option>
+                    <option value="P1">P1 — Top Priority</option>
+                    <option value="P2">P2 — Strong Fit</option>
+                    <option value="P3">P3 — Backup</option>
+                  </select>
+                </td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => setVisibilityCandidate(c)}
+                    className={`px-2.5 py-1 text-[11px] font-bold rounded-full flex items-center gap-1.5 transition-all ${
+                      c.visibleToClient
+                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200"
+                        : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
+                    }`}
+                    title="Configure Recruiter Visibility Settings"
+                  >
+                    {c.visibleToClient ? <Eye className="w-3 h-3 text-emerald-600" /> : <EyeOff className="w-3 h-3 text-gray-400" />}
+                    <span>{c.visibleToClient ? "Visible" : "Hidden"}</span>
+                  </button>
+                </td>
+                <td className="px-4 py-3">
+                  <select
                     value={c.stage || ""}
                     onChange={(e) => updateCandidateStage(mandate.id, c.id, e.target.value)}
                     className="neo-inset px-2 py-1 text-xs bg-white outline-none cursor-pointer"
@@ -748,6 +909,8 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
                       Candidate <ArrowUpDown className="w-3 h-3 inline-block ml-1" />
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Sourced By</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Recruiter Rank</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Client Access</th>
                     <th onClick={() => handleSort('stage')} className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
                       Stage <ArrowUpDown className="w-3 h-3 inline-block ml-1" />
                     </th>
@@ -1038,6 +1201,21 @@ export default function MandateDetailClient({ initialMandate, consultants = [], 
           </div>
         );
       })()}
+
+      {visibilityCandidate && (
+        <RecruiterVisibilityModal
+          candidate={visibilityCandidate}
+          onClose={() => setVisibilityCandidate(null)}
+          onSave={(updatedSettings) => {
+            setMandate((prev: any) => ({
+              ...prev,
+              candidates: prev.candidates.map((item: any) =>
+                item.id === visibilityCandidate.id ? { ...item, ...updatedSettings } : item
+              )
+            }));
+          }}
+        />
+      )}
 
     </div>
   );

@@ -31,6 +31,7 @@ export const mandates = pgTable('mandates', {
   additionalDocsText: text('additional_docs_text'),
   openQuestions: text('open_questions'),
   clientId: varchar('client_id', { length: 50 }).references(() => clients.id, { onDelete: 'set null' }),
+  departmentId: int('department_id'),
   frameworkId: varchar('framework_id', { length: 20 }).references(() => frameworks.id, { onDelete: 'set null' }),
   isDeleted: boolean('is_deleted').default(false),
   deletedAt: datetime('deleted_at'),
@@ -46,6 +47,32 @@ export const mandates = pgTable('mandates', {
   isDeletedIdx: index('mandates_is_deleted_idx').on(table.isDeleted),
 }));
 
+// ─── DEPARTMENTS ─────────────────────────────────────────
+export const departments = pgTable('departments', {
+  id: serial('id').primaryKey(),
+  tenantId: varchar('tenant_id', { length: 255 }),
+  clientId: varchar('client_id', { length: 50 }).notNull().references(() => clients.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  clientIdIdx: index('dept_client_id_idx').on(table.clientId),
+}));
+
+// ─── MANDATE POSITIONS ───────────────────────────────────
+export const mandatePositions = pgTable('mandate_positions', {
+  id: serial('id').primaryKey(),
+  mandateId: int('mandate_id').notNull().references(() => mandates.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).notNull(),
+  jobDescription: text('job_description'),
+  location: varchar('location', { length: 255 }),
+  minCompensation: float('min_compensation'),
+  maxCompensation: float('max_compensation'),
+  status: varchar('status', { length: 50 }).default('Open'),
+  createdAt: datetime('created_at').default(sql`now()`),
+}, (table) => ({
+  mandateIdIdx: index('mp_mandate_id_idx').on(table.mandateId),
+}));
+
 // ─── MANDATE CANDIDATES ──────────────────────────────────
 export const mandateCandidates = pgTable('mandate_candidates', {
   id: serial('id').primaryKey(),
@@ -55,6 +82,15 @@ export const mandateCandidates = pgTable('mandate_candidates', {
   score: float('score'),
   hasReport: boolean('has_report').default(false),
   isSentToClient: boolean('is_sent_to_client').default(false),
+  visibleToClient: boolean('visible_to_client').default(false),
+  showContactDetails: boolean('show_contact_details').default(false),
+  showCompensation: boolean('show_compensation').default(true),
+  showAssessment: boolean('show_assessment').default(true),
+  showComments: boolean('show_comments').default(true),
+  consultantRanking: varchar('consultant_ranking', { length: 10 }), // P1, P2, P3
+  clientRanking: varchar('client_ranking', { length: 10 }), // P1, P2, P3
+  rejectionReason: text('rejection_reason'),
+  rejectionCategory: varchar('rejection_category', { length: 100 }),
   createdAt: datetime('created_at').default(sql`now()`),
   addedBy: varchar('added_by', { length: 255 }),
   ranking: int('ranking'),
@@ -65,6 +101,23 @@ export const mandateCandidates = pgTable('mandate_candidates', {
   mandateIdIdx: index('mc_mandate_id_idx').on(table.mandateId),
   candIdIdx: index('mc_cand_id_idx').on(table.candId),
   stageIdx: index('mc_stage_idx').on(table.stage),
+}));
+
+// ─── DOWNLOAD LOGS ───────────────────────────────────────
+export const downloadLogs = pgTable('download_logs', {
+  id: serial('id').primaryKey(),
+  tenantId: varchar('tenant_id', { length: 255 }),
+  userId: varchar('user_id', { length: 255 }).notNull(),
+  userName: varchar('user_name', { length: 255 }).notNull(),
+  userRole: varchar('user_role', { length: 50 }).notNull(),
+  mandateId: int('mandate_id').references(() => mandates.id, { onDelete: 'set null' }),
+  candidateId: varchar('candidate_id', { length: 50 }).references(() => candidates.id, { onDelete: 'set null' }),
+  documentType: varchar('document_type', { length: 100 }).notNull(),
+  ipAddress: varchar('ip_address', { length: 100 }),
+  downloadedAt: datetime('downloaded_at').default(sql`now()`),
+}, (table) => ({
+  mandateIdIdx: index('dl_mandate_id_idx').on(table.mandateId),
+  candIdIdx: index('dl_cand_id_idx').on(table.candidateId),
 }));
 
 // ─── CANDIDATES (MASTER) ─────────────────────────────────
