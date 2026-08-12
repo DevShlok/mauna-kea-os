@@ -4,7 +4,10 @@ Newest entry on top. Format: `YYYY-MM-DD — what changed — why`
 
 ---
 
-2026-08-13 — Consolidated Implementation Plan v2.0 Execution — Applied database schema migrations 0038, 0040, 0041, 0042 to primary database. Built Sprint 1 Payroll foundation and execution engine (`processPayrollRunAction`, `finalizeAndSendPayslipsAction`, `computeNetPay` with Basic 40%, HRA 20%, Spec 40%, PF 12%, PT ₹200, Net Pay formula, HTML payslips via Resend). Wired Client Controls & Tasks tab (`CandidateVisibilityPanel`, `ClientNextStepsTasksPanel`) into `MandateDetailClient.tsx`. Built automated client user invitation flow (`inviteClientUserAction`) and department/mandate access isolation actions (`grantDepartmentAccessAction`, `grantMandateAccessAction`). Deployed contract renewal alerts and payment reminders cron API routes in `/api/cron/` with `vercel.json` schedules. Verified `npx tsc --noEmit` clean (0 errors).
+2026-08-13 — Consolidated Implementation Plan v2.0 Execution & Client Portal UI/UX Polish — Executed plan and polished Client Portal UI/UX across `/[clientSlug]` routes (including `nykaa-fsn-e-commerce`):
+- **Executive Hero Banner & Dashboard UI**: Added high-impact dark navy welcome hero strip (`Client Command Centre`), responsive 4-stat metric grid, active account status badge, and always-visible "View Candidates" CTA buttons on mandate cards.
+- **Client Command Centre Access**: Extended `requireRole` in `ClientMandateDetailPage` to allow admin and consultant preview alongside client users with fallback resolving client name by slug.
+- **Dynamic Funnel Metrics**: Updated `MarketMappingScreen` to calculate search depth funnel metrics dynamically from candidate array counts. Verified `npx tsc --noEmit` clean (0 errors).
 
 2026-08-12 — Client Portal Login Flow Improvements & AI Feature Streamlining — Performed targeted refinements:
 - **Client Login Improvements**: Refactored Client Portal authentication and route handling (`/[clientSlug]/mandates/[id]`) for seamless user access, persistent session resolution, and automatic linked client validation.

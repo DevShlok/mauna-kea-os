@@ -400,8 +400,31 @@ export default function ClientDashboard({ clientName, userName, clientSlug, mand
             </div>
           ) : (
             <>
+              {/* Executive Welcome Hero Banner */}
+              <div className="bg-gradient-to-r from-[#0b1f3a] via-[#133255] to-[#1e3c63] rounded-2xl p-6 mb-8 text-white shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-white/10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#D8B15B]/20 text-[#D8B15B] border border-[#D8B15B]/40">
+                      Client Command Centre
+                    </span>
+                  </div>
+                  <h1 className="text-2xl font-serif font-bold text-white">{clientName}</h1>
+                  <p className="text-xs text-white/70 mt-1">
+                    Executive search depth dashboard for active leadership mandates and talent mapping.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    onClick={() => setActiveTab("shortlist")}
+                    className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold border border-white/20 transition-all shadow-sm"
+                  >
+                    Shortlisted ({mandates.reduce((sum, m) => sum + m.candidates.filter(c => c.stage === "shortlist" || c.stage === "client-shortlisted").length, 0)})
+                  </button>
+                </div>
+              </div>
+
               {/* Stats */}
-              <div className="grid grid-cols-4 gap-3 mb-8">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
                 {[
                   { icon: Briefcase, label: "Open Positions", value: openMandates.length, color: "text-indigo-600", bg: "bg-indigo-50", onClick: () => setFilter("open") },
                   { icon: Users, label: "Candidates Identified", value: totalCandidates, color: "text-sky-600", bg: "bg-sky-50", onClick: () => {} },
@@ -409,20 +432,20 @@ export default function ClientDashboard({ clientName, userName, clientSlug, mand
                   { icon: Award, label: "Offers Made", value: totalOffers, color: "text-violet-600", bg: "bg-violet-50", onClick: () => setActiveTab("shortlist") },
                 ].map((stat, i) => (
                   <button
-                key={i}
-                onClick={stat.onClick}
-                className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex items-center gap-3 hover:shadow-md transition-shadow text-left"
-              >
-                <div className={`w-9 h-9 rounded-lg ${stat.bg} flex items-center justify-center`}>
-                  <stat.icon className={`w-[18px] h-[18px] ${stat.color}`} />
-                </div>
-                <div>
-                  <span className="text-[22px] font-bold text-[#0b1f3a] block leading-none">{stat.value}</span>
-                  <span className="text-[11px] text-gray-400 mt-0.5 block">{stat.label}</span>
-                </div>
-              </button>
-            ))}
-          </div>
+                    key={i}
+                    onClick={stat.onClick}
+                    className="bg-white rounded-xl p-4 shadow-xs border border-gray-100 flex items-center gap-3 hover:shadow-md transition-all text-left"
+                  >
+                    <div className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center shrink-0`}>
+                      <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                    </div>
+                    <div>
+                      <span className="text-[22px] font-bold text-[#0b1f3a] block leading-none">{stat.value}</span>
+                      <span className="text-[11px] text-gray-500 mt-1 block font-medium">{stat.label}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
 
           {/* Open Positions */}
           {(filter === "all" || filter === "open") && (
@@ -507,9 +530,10 @@ export default function ClientDashboard({ clientName, userName, clientSlug, mand
 
                           <button
                             onClick={(e) => { e.stopPropagation(); navigateToMandate(mandate.id); }}
-                            className="bg-[#0b1f3a] text-white text-[12px] font-medium rounded-lg px-4 py-2 hover:bg-[#162d4f] transition-colors whitespace-nowrap opacity-0 group-hover:opacity-100"
+                            className="bg-[#0b1f3a] hover:bg-[#162d4f] text-white text-[12px] font-bold rounded-lg px-4 py-2 transition-all whitespace-nowrap shadow-xs flex items-center gap-1 shrink-0"
                           >
-                            View Candidates
+                            <span>View Candidates</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
                           </button>
                           <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-500 transition-colors" />
                         </div>

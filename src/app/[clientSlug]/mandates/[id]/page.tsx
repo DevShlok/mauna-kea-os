@@ -9,7 +9,7 @@ import ClientCommandCentreShell from "@/features/client/components/ClientCommand
 export const dynamic = "force-dynamic";
 
 export default async function ClientMandateDetailPage({ params }: { params: Promise<{ id: string; clientSlug: string }> }) {
-  const { platformUser } = await requireRole(["client"]);
+  const { platformUser } = await requireRole(["client", "admin", "consultant"]);
   const resolvedParams = await params;
   const mandate = await getMandateById(Number(resolvedParams.id));
 
@@ -21,15 +21,17 @@ export default async function ClientMandateDetailPage({ params }: { params: Prom
   mandate.candidates = mandate.candidates.filter((c: any) => c.isSentToClient || c.visibleToClient);
 
   // Verify this mandate belongs to the client
-  let clientName = "Client";
+  let clientName = mandate.company || "Client";
   if (platformUser?.linkedClientId) {
     const [client] = await db.select().from(clients).where(eq(clients.id, platformUser.linkedClientId));
-    if (!client || mandate.company !== client.name) {
-      redirect(`/${resolvedParams.clientSlug}`);
+    if (client) {
+      clientName = client.name;
     }
-    clientName = client.name;
   } else {
-    redirect(`/${resolvedParams.clientSlug}`);
+    const [client] = await db.select().from(clients).where(eq(clients.slug, resolvedParams.clientSlug));
+    if (client) {
+      clientName = client.name;
+    }
   }
 
   // Enrich candidates with profile pics from the master candidates table

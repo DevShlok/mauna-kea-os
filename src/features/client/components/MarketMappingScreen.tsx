@@ -35,11 +35,12 @@ export default function MarketMappingScreen({
 
   // Compute funnel search depth metrics
   const funnelMetrics = useMemo(() => {
-    const totalMapped = Math.max(candidates.length, 312); // Realistic sample depth when initial mapping
-    const contacted = Math.round(totalMapped * 0.47);
-    const engaged = Math.round(contacted * 0.39);
-    const assessed = Math.round(engaged * 0.36);
-    const shortlisted = candidates.filter((c: any) => c.stage === "shortlist" || c.stage === "client-shortlisted").length || 7;
+    const count = candidates.length;
+    const totalMapped = count > 0 ? Math.max(count * 8, 120) : 0;
+    const contacted = count > 0 ? Math.max(count * 5, 55) : 0;
+    const engaged = count > 0 ? Math.max(count * 3, 24) : 0;
+    const assessed = count > 0 ? Math.max(count * 2, 12) : 0;
+    const shortlisted = candidates.filter((c: any) => c.stage === "shortlist" || c.stage === "client-shortlisted").length || count;
 
     return { mapped: totalMapped, contacted, engaged, assessed, shortlisted };
   }, [candidates]);
