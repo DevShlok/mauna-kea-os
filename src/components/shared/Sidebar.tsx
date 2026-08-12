@@ -300,7 +300,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
               >
                 {/* Parent Category Header */}
                 <div
-                  className={`flex items-center gap-3 py-3 cursor-pointer rounded-xl mx-0 select-none transition-all ${
+                  className={`flex items-center gap-3 py-3 cursor-pointer rounded-xl mx-0 select-none transition-colors duration-200 ease-out ${
                     isHighlighted
                       ? "text-white font-bold"
                       : "text-white/75 hover:text-white"
@@ -317,11 +317,11 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                   onClick={() => toggleCategory(category.title)}
                   title={isCollapsed ? category.title : undefined}
                 >
-                  <category.icon className={`w-[20px] h-[20px] shrink-0 transition-colors ${isHighlighted ? "text-[#D8B15B]" : ""}`} />
+                  <category.icon className={`w-[20px] h-[20px] shrink-0 transition-colors duration-200 ease-out ${isHighlighted ? "text-[#D8B15B]" : ""}`} />
                   {!isCollapsed && (
                     <>
                       <span className="text-[15.5px] flex-1 tracking-wide font-semibold">{category.title}</span>
-                      <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/35"}`} />
+                      <ChevronRight className={`w-4 h-4 transition-transform duration-280 ease-out ${isExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/35"}`} />
                     </>
                   )}
                 </div>
@@ -339,7 +339,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                               <Link
                                 key={childIdx}
                                 href={child.href}
-                                className={`flex items-center gap-2.5 pl-8 pr-4 py-2 text-[14.5px] font-medium rounded-lg transition-all ${
+                                className={`flex items-center gap-2.5 pl-8 pr-4 py-2 text-[14.5px] font-medium rounded-lg transition-colors duration-200 ease-out ${
                                   isChildActive
                                     ? "text-[#D8B15B] font-bold bg-[#D8B15B]/14 border border-[#D8B15B]/25"
                                     : "text-white/65 hover:text-white hover:bg-white/5 border border-transparent"
@@ -372,19 +372,19 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                                 {/* Sub-Heading Header */}
                                 <div
                                   onClick={(e) => toggleSubGroup(group.header, e)}
-                                  className={`flex items-center gap-2.5 pl-6 pr-3 py-2 text-[14.5px] font-bold cursor-pointer rounded-lg select-none transition-all ${
+                                  className={`flex items-center gap-2.5 pl-6 pr-3 py-2 text-[14.5px] font-bold cursor-pointer rounded-lg select-none transition-colors duration-200 ease-out ${
                                     isSubGroupExpanded
                                       ? "text-[#D8B15B] bg-white/5"
                                       : "text-white/80 hover:text-white hover:bg-white/5"
                                   }`}
                                 >
-                                  <group.icon className={`w-4 h-4 shrink-0 ${isSubGroupExpanded ? "text-[#D8B15B]" : "text-white/45"}`} />
+                                  <group.icon className={`w-4 h-4 shrink-0 transition-colors duration-200 ease-out ${isSubGroupExpanded ? "text-[#D8B15B]" : "text-white/45"}`} />
                                   <span className="flex-1 tracking-wide">{group.header}</span>
-                                  <ChevronRight className={`w-4 h-4 transition-transform duration-250 ${isSubGroupExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/35"}`} />
+                                  <ChevronRight className={`w-4 h-4 transition-transform duration-280 ease-out ${isSubGroupExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/35"}`} />
                                 </div>
 
                                 {/* Dynamic Sub-Group Items (CSS Grid expansion) */}
-                                <div className={`grid transition-[grid-template-rows,opacity] duration-250 ease-out ${isSubGroupExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                                <div className={`grid transition-[grid-template-rows,opacity] duration-280 ease-out ${isSubGroupExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
                                   <div className="overflow-hidden">
                                     <div className="flex flex-col py-1 pl-4 space-y-0.5">
                                       {visibleGroupItems.map((item, itemIdx) => {
@@ -393,7 +393,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                                           <Link
                                             key={itemIdx}
                                             href={item.href}
-                                            className={`flex items-center gap-2 pl-6 pr-3 py-1.5 text-[13.5px] font-medium rounded-lg transition-all ${
+                                            className={`flex items-center gap-2 pl-6 pr-3 py-1.5 text-[13.5px] font-medium rounded-lg transition-colors duration-200 ease-out ${
                                               isItemActive
                                                 ? "text-[#D8B15B] font-bold bg-[#D8B15B]/15 border border-[#D8B15B]/25"
                                                 : "text-white/65 hover:text-white hover:bg-white/5 border border-transparent"
@@ -420,7 +420,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                 {/* Collapsed Flyout Overlay (when sidebar is in collapsed icon mode) */}
                 {isCollapsed && isHovered && (
                   <div
-                    className="absolute left-[76px] ml-2 top-0 mt-2 w-64 py-3 z-50 rounded-2xl overflow-hidden shadow-2xl"
+                    className="absolute left-[76px] ml-2 top-0 mt-2 w-64 py-3 z-50 rounded-2xl overflow-hidden shadow-2xl animate-in fade-in-0 slide-in-from-left-2 duration-200 ease-out"
                     style={{
                       background: "linear-gradient(180deg, #1a3d6b 0%, #0f2744 100%)",
                       border: "1px solid rgba(216,177,91,0.3)",
@@ -438,7 +438,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                           <Link
                             key={childIdx}
                             href={child.href}
-                            className={`flex items-center gap-2.5 px-3 py-2 text-[14px] font-medium transition-colors rounded-xl ${
+                            className={`flex items-center gap-2.5 px-3 py-2 text-[14px] font-medium transition-colors duration-200 ease-out rounded-xl ${
                               isChildActive ? "bg-white/10 text-[#D8B15B] font-bold" : "text-white/75 hover:bg-white/8 hover:text-white"
                             }`}
                           >
@@ -464,7 +464,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                                 <Link
                                   key={itemIdx}
                                   href={item.href}
-                                  className={`flex items-center gap-2 px-4 py-2 text-[13.5px] font-medium transition-colors rounded-lg ${
+                                  className={`flex items-center gap-2 px-4 py-2 text-[13.5px] font-medium transition-colors duration-200 ease-out rounded-lg ${
                                     isItemActive ? "bg-[#D8B15B]/15 text-[#D8B15B] font-bold" : "text-white/65 hover:text-white hover:bg-white/5"
                                   }`}
                                 >
@@ -502,7 +502,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
               <span className="text-[#D8B15B]/90 text-[12.5px] block capitalize font-medium">{userRole}</span>
             </div>
           )}
-          <button onClick={handleSignOut} className="text-white/40 hover:text-rose-400 transition-colors p-1 shrink-0" title="Sign Out">
+          <button onClick={handleSignOut} className="text-white/40 hover:text-rose-400 transition-colors duration-200 ease-out p-1 shrink-0" title="Sign Out">
             <LogOut className="w-4 h-4" />
           </button>
         </div>
@@ -511,7 +511,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
       {/* Floating Toggle Button */}
       <button
         onClick={toggleSidebar}
-        className="absolute top-1/2 -right-3.5 -translate-y-1/2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-50 flex items-center justify-center cursor-pointer text-[#133255]"
+        className="absolute top-1/2 -right-3.5 -translate-y-1/2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-280 ease-out z-50 flex items-center justify-center cursor-pointer text-[#133255]"
         style={{
           background: "linear-gradient(135deg, #D8B15B, #f0c96a)",
           boxShadow: "0 4px 10px rgba(0,0,0,0.3), 0 0 0 2px #133255",
