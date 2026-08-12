@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Sparkles, Award, ShieldCheck, CheckCircle2, X } from "lucide-react";
+import { Award, X } from "lucide-react";
 
 interface CandidateCompetencyData {
   id: number;
@@ -42,6 +42,16 @@ export default function CompetencyComparisonMatrix({
   candidates,
   onClose,
 }: CompetencyComparisonMatrixProps) {
+  const competencyList = useMemo(() => {
+    const set = new Set<string>(DEFAULT_COMPETENCIES);
+    candidates.forEach((c) => {
+      if (c.competencies) {
+        Object.keys(c.competencies).forEach((k) => set.add(k));
+      }
+    });
+    return Array.from(set);
+  }, [candidates]);
+
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-white rounded-3xl max-w-6xl w-full p-8 shadow-2xl border border-slate-100 space-y-6 max-h-[92vh] flex flex-col">
@@ -50,7 +60,7 @@ export default function CompetencyComparisonMatrix({
           <div>
             <div className="flex items-center gap-2">
               <Award className="w-6 h-6 text-[#D8B15B]" />
-              <h2 className="text-xl font-serif font-bold text-slate-900">Side-by-Side Competency Comparison</h2>
+              <h2 className="text-xl font-bold text-slate-900">Side-by-Side Competency Comparison</h2>
             </div>
             <p className="text-xs text-slate-500 mt-1">
               Benchmarking {candidates.length} shortlisted candidates against role-specific executive competencies.
@@ -78,7 +88,7 @@ export default function CompetencyComparisonMatrix({
                       <span className="px-2 py-0.5 bg-[#133255] text-[#D8B15B] font-bold text-[10px] rounded-full">
                         Monaki {cand.consultantRanking || "P1"}
                       </span>
-                      <span className="text-slate-800 font-serif font-bold text-sm">
+                      <span className="text-slate-800 font-bold text-sm">
                         {cand.overallScore}/10
                       </span>
                     </div>
@@ -87,18 +97,18 @@ export default function CompetencyComparisonMatrix({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {DEFAULT_COMPETENCIES.map((compName) => (
+              {competencyList.map((compName) => (
                 <tr key={compName} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4 font-bold text-slate-800 border-r border-slate-200 bg-slate-50/30">
                     {compName}
                   </td>
                   {candidates.map((cand) => {
-                    const score = cand.competencies[compName] || (Math.floor(Math.random() * 3) + 7.5);
-                    const rag = getRAGStyle(score);
+                    const baseScore = cand.competencies?.[compName] ?? cand.overallScore ?? 8.0;
+                    const rag = getRAGStyle(baseScore);
                     return (
                       <td key={cand.id} className="p-4 text-center border-r border-slate-200 last:border-r-0">
                         <div className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold ${rag.bg}`}>
-                          <span>{score.toFixed(1)}</span>
+                          <span>{baseScore.toFixed(1)}</span>
                           <span className={`w-2 h-2 rounded-full ${rag.badge}`} />
                         </div>
                       </td>
@@ -109,12 +119,12 @@ export default function CompetencyComparisonMatrix({
 
               {/* Overall Summary Row */}
               <tr className="bg-slate-100/80 font-bold border-t-2 border-slate-300">
-                <td className="p-4 text-slate-900 border-r border-slate-200 font-serif text-sm">
+                <td className="p-4 text-slate-900 border-r border-slate-200 font-bold text-sm">
                   Overall Competency Index
                 </td>
                 {candidates.map((cand) => (
                   <td key={cand.id} className="p-4 text-center border-r border-slate-200 last:border-r-0">
-                    <span className="text-base font-serif font-bold text-[#133255]">
+                    <span className="text-base font-bold text-[#133255]">
                       {cand.overallScore} / 10
                     </span>
                   </td>

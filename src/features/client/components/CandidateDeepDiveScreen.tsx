@@ -24,7 +24,7 @@ import CandidateActivityTimeline from "./CandidateActivityTimeline";
 import toast from "react-hot-toast";
 
 interface CandidateDeepDiveScreenProps {
-  candidate: any;
+  candidate?: any;
   mandate: any;
   clientName: string;
   userName: string;
@@ -40,16 +40,24 @@ export default function CandidateDeepDiveScreen({
 }: CandidateDeepDiveScreenProps) {
   const [activeTab, setActiveTab] = useState<"summary" | "behavioral" | "psychometric" | "references" | "competency" | "activity">("summary");
 
-  const cand = candidate || {
-    name: "Candidate",
-    role: "Executive Leader",
-    company: "Enterprise Corp",
-    location: "Gurugram / Mumbai",
-    exp: 14,
-    ctc: "85 LPA",
-    expected: "1.1 Cr",
-    notice: "60 Days",
-  };
+  if (!candidate) {
+    return (
+      <div className="space-y-6">
+        <button
+          onClick={onBack}
+          className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Shortlist</span>
+        </button>
+        <div className="bg-white rounded-3xl p-12 border border-slate-200/80 shadow-sm text-center text-slate-400 text-xs">
+          No candidate selected for deep dive. Select a candidate from the Market Mapping or Shortlist view.
+        </div>
+      </div>
+    );
+  }
+
+  const cand = candidate;
 
   const handleDownloadPDF = async () => {
     try {
@@ -60,13 +68,12 @@ export default function CandidateDeepDiveScreen({
       });
       toast.success("Downloading watermarked PDF report...");
 
-      // Generate text window or trigger download
-      const content = `CONFIDENTIAL EXECUTIVE REPORT\nPrepared for: ${clientName}\nDownloaded by: ${userName} on ${new Date().toLocaleString()}\n\nCandidate: ${cand.name}\nRole: ${cand.role} - ${cand.company}\nMonaki Score: 8.7/10`;
+      const content = `CONFIDENTIAL EXECUTIVE ASSESSMENT REPORT\nClient: ${clientName}\nDownloaded by: ${userName} on ${new Date().toLocaleString()}\n\nCandidate Name: ${cand.name}\nCurrent Designation: ${cand.role || "Executive Leader"}\nCurrent Company: ${cand.company || mandate.company}\nLocation: ${cand.location || "India"}\nMonaki Overall Assessment Score: ${cand.overallScore || cand.score || 8.5}/10\n\nNotice Period: ${cand.notice || "60 Days"}\nStatus: ${cand.stage || "Shortlisted"}`;
       const blob = new Blob([content], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${cand.name}_Monaki_360_Report.txt`;
+      a.download = `${cand.name.replace(/\s+/g, "_")}_Executive_Report.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -92,48 +99,57 @@ export default function CandidateDeepDiveScreen({
           className="px-5 py-2.5 bg-[#133255] text-white hover:bg-[#1a4473] rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
         >
           <Download className="w-4 h-4 text-[#D8B15B]" />
-          <span>Download Watermarked PDF</span>
+          <span>Download Watermarked Report</span>
         </button>
       </div>
 
       {/* ─── Candidate Executive Card ──────────────────────── */}
       <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#133255] to-[#0b1f36] text-white flex items-center justify-center font-bold text-xl shrink-0 shadow-lg">
+          <div className="w-16 h-16 rounded-2xl bg-[#133255] text-white flex items-center justify-center font-bold text-xl shrink-0 shadow-lg">
             {cand.initials || "MK"}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-serif font-bold text-slate-900">{cand.name}</h2>
+              <h2 className="text-2xl font-bold text-slate-900">{cand.name}</h2>
               <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs rounded-full">
                 Verified Candidate
               </span>
             </div>
-            <p className="text-sm font-semibold text-slate-700 mt-0.5">{cand.role} — {cand.company}</p>
-            <div className="flex items-center gap-4 text-xs text-slate-500 mt-2">
-              <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {cand.location || "India"}</span>
-              <span className="flex items-center gap-1"><Briefcase className="w-3.5 h-3.5" /> {cand.exp || 14} Yrs Exp</span>
-              <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> Notice: {cand.notice || "60 Days"}</span>
+            <div className="text-xs text-slate-500 font-semibold mt-1 flex items-center gap-3 flex-wrap">
+              <span>{cand.role || "Executive Leader"}</span>
+              <span>•</span>
+              <span>{cand.company || mandate.company}</span>
+              <span>•</span>
+              <span>{cand.location || "India"}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center min-w-[160px] self-stretch md:self-auto flex flex-col justify-center">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Overall Competency</span>
-          <span className="text-3xl font-serif font-bold text-[#133255] block mt-1">8.7 <span className="text-xs text-slate-400 font-sans font-normal">/ 10</span></span>
-          <span className="text-[11px] text-emerald-600 font-bold block mt-0.5">Top P1 Choice</span>
+        <div className="flex items-center gap-6 border-t md:border-t-0 border-slate-100 pt-4 md:pt-0 w-full md:w-auto justify-between md:justify-end">
+          <div className="text-center">
+            <div className="text-[10px] font-bold uppercase text-slate-400">Total Exp</div>
+            <div className="text-sm font-bold text-slate-900">{cand.exp ? `${cand.exp} Yrs` : "12+ Yrs"}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-[10px] font-bold uppercase text-slate-400">Notice Period</div>
+            <div className="text-sm font-bold text-slate-900">{cand.notice || "60 Days"}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-[10px] font-bold uppercase text-slate-400">Monaki Index</div>
+            <div className="text-base font-bold text-[#133255]">{cand.overallScore || cand.score || 8.5}/10</div>
+          </div>
         </div>
       </div>
 
-      {/* ─── 360° Assessment Tabs ───────────────────────────── */}
-      <div className="flex border-b border-slate-200 bg-white rounded-2xl px-4 shadow-sm overflow-x-auto">
+      {/* ─── Navigation Tabs ──────────────────────────────── */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
         {[
           { id: "summary", label: "Executive Summary", icon: FileText },
-          { id: "behavioral", label: "1. Behavioral Interview", icon: Brain },
-          { id: "psychometric", label: "2. Psychometric Assessment", icon: ShieldCheck },
-          { id: "references", label: "3. Reference Checks", icon: UserCheck },
-          { id: "competency", label: "4. Competency Breakdown", icon: Award },
-          { id: "activity", label: "Activity History", icon: History },
+          { id: "competency", label: "Competency Framework", icon: Award },
+          { id: "behavioral", label: "Behavioral Assessment", icon: Brain },
+          { id: "references", label: "Reference Checks", icon: ShieldCheck },
+          { id: "activity", label: "Activity Timeline", icon: History },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -141,91 +157,53 @@ export default function CandidateDeepDiveScreen({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-5 py-3.5 text-xs font-bold flex items-center gap-2 border-b-2 whitespace-nowrap transition-colors ${
+              className={`px-4 py-2.5 text-xs font-bold rounded-xl flex items-center gap-2 transition-all ${
                 isActive
-                  ? "border-[#133255] text-[#133255] bg-slate-50/80"
-                  : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  ? "bg-[#133255] text-white shadow-xs"
+                  : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? "text-[#133255]" : "opacity-75"}`} />
+              <Icon className={`w-3.5 h-3.5 ${isActive ? "text-[#D8B15B]" : "text-slate-400"}`} />
               <span>{tab.label}</span>
             </button>
           );
         })}
       </div>
 
-      {/* ─── Tab Content Panels ─────────────────────────────── */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-6">
+      {/* ─── Tab Content ──────────────────────────────────── */}
+      <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-6">
         {activeTab === "summary" && (
           <div className="space-y-6">
-            <div className="border-b border-slate-100 pb-3">
-              <h3 className="text-base font-serif font-bold text-slate-900">One-Page Executive Summary</h3>
-              <p className="text-xs text-slate-500">Validated synthesis approved by Mauna Kea lead consultants.</p>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 mb-2">Executive Overview</h3>
+              <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                {cand.summary || `${cand.name} is a seasoned executive with extensive experience driving business growth, operational strategy, and organizational transformation.`}
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-emerald-50/70 p-5 rounded-2xl border border-emerald-200/60 space-y-2">
-                <div className="font-bold text-emerald-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200 space-y-2">
+                <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Key Strengths</span>
-                </div>
-                <ul className="text-xs text-emerald-900/90 space-y-1.5 list-disc pl-4">
-                  <li>Proven track record scaling P&L operations from \$20M to \$100M+.</li>
-                  <li>Exceptional strategic vision paired with strong digital execution pedigree.</li>
-                  <li>High cultural adaptability and team retention rate (&gt;92%).</li>
+                  Key Strengths
+                </h4>
+                <ul className="text-xs text-emerald-900 space-y-1 list-disc pl-4">
+                  {(cand.strengths || ["Proven leadership track record", "Strong stakeholder management", "Cross-functional execution"]).map((s: string, i: number) => (
+                    <li key={i}>{s}</li>
+                  ))}
                 </ul>
               </div>
 
-              <div className="bg-amber-50/70 p-5 rounded-2xl border border-amber-200/60 space-y-2">
-                <div className="font-bold text-amber-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+              <div className="bg-amber-50/60 p-4 rounded-2xl border border-amber-200 space-y-2">
+                <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
                   <AlertCircle className="w-4 h-4 text-amber-600" />
-                  <span>Key Considerations & Concerns</span>
-                </div>
-                <ul className="text-xs text-amber-900/90 space-y-1.5 list-disc pl-4">
-                  <li>Requires 60-day notice period buyout negotiation.</li>
-                  <li>Expecting performance-linked ESOP component in final offer structure.</li>
+                  Considerations / Probe Areas
+                </h4>
+                <ul className="text-xs text-amber-900 space-y-1 list-disc pl-4">
+                  {(cand.concerns || ["Relocation timeline alignment", "Compensation expectation vs budget"]).map((c: string, i: number) => (
+                    <li key={i}>{c}</li>
+                  ))}
                 </ul>
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-2">
-              <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Mauna Kea Recommendation</h4>
-              <p className="text-xs text-slate-700 leading-relaxed font-medium">
-                Strongly recommended for immediate Panel Interview. Candidate displays rare combination of commercial acumen, operational discipline, and transformation pedigree required for the target growth mandate.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "behavioral" && (
-          <div className="space-y-4">
-            <h3 className="text-base font-serif font-bold text-slate-900">Behavioral Interview Assessment</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Demonstrates high emotional intelligence, structured problem solving under crisis, and transparent communication across executive boards.
-            </p>
-          </div>
-        )}
-
-        {activeTab === "psychometric" && (
-          <div className="space-y-4">
-            <h3 className="text-base font-serif font-bold text-slate-900">Psychometric Assessment Output</h3>
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 text-center space-y-2">
-              <ShieldCheck className="w-8 h-8 text-[#133255] mx-auto" />
-              <div className="font-bold text-slate-800 text-sm">Psychometric Assessment Verified</div>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
-                High resilience score, strong analytical reasoning, and high strategic orientation.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "references" && (
-          <div className="space-y-4">
-            <h3 className="text-base font-serif font-bold text-slate-900">Reference Check Highlights</h3>
-            <div className="space-y-3">
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
-                <div className="font-bold text-slate-800">Former Board Director / Supervisor</div>
-                <p className="text-slate-600 italic">"One of the sharpest commercial leaders I have worked with. Delivers results consistently."</p>
               </div>
             </div>
           </div>
@@ -233,40 +211,40 @@ export default function CandidateDeepDiveScreen({
 
         {activeTab === "competency" && (
           <div className="space-y-4">
-            <h3 className="text-base font-serif font-bold text-slate-900">Competency Framework Breakdown</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between font-bold">
-                <span>Strategic Leadership</span>
-                <span className="text-[#133255]">8.8 / 10</span>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between font-bold">
-                <span>Commercial Acumen</span>
-                <span className="text-[#133255]">8.2 / 10</span>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between font-bold">
-                <span>Transformation</span>
-                <span className="text-[#133255]">9.1 / 10</span>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between font-bold">
-                <span>Team Leadership</span>
-                <span className="text-[#133255]">8.7 / 10</span>
-              </div>
+            <h3 className="text-sm font-bold text-slate-900">Validated Competency Scores</h3>
+            <div className="space-y-3">
+              {[
+                { name: "Strategic Leadership", score: cand.score || 8.8 },
+                { name: "Commercial Acumen", score: cand.score || 8.2 },
+                { name: "Transformation", score: cand.score || 9.1 },
+                { name: "Stakeholder Management", score: cand.score || 8.5 },
+                { name: "Team Leadership", score: cand.score || 8.7 },
+              ].map((c) => (
+                <div key={c.name} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-xs">
+                  <span className="font-bold text-slate-800">{c.name}</span>
+                  <span className="font-bold text-[#133255] text-sm">{c.score}/10</span>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        {activeTab === "activity" && (
-          <div className="space-y-3">
-            <div className="border-b border-slate-100 pb-3">
-              <h3 className="text-base font-serif font-bold text-slate-900">Activity History</h3>
-              <p className="text-xs text-slate-500">All decisions, interview scheduling, and status changes for this candidate on this mandate.</p>
-            </div>
-            {candidate?.mandateCandidateId ? (
-              <CandidateActivityTimeline mandateCandidateId={candidate.mandateCandidateId} />
-            ) : (
-              <p className="text-xs text-slate-400 py-6 text-center">Activity history is not available for this view.</p>
-            )}
+        {activeTab === "behavioral" && (
+          <div className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-6 rounded-2xl border border-slate-200/80 space-y-3">
+            <h3 className="font-bold text-slate-900 text-sm">Behavioral Interview Analysis</h3>
+            <p>Demonstrates high emotional intelligence, structured decision making under uncertainty, and strong team alignment during growth transitions.</p>
           </div>
+        )}
+
+        {activeTab === "references" && (
+          <div className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-6 rounded-2xl border border-slate-200/80 space-y-3">
+            <h3 className="font-bold text-slate-900 text-sm">Reference Check Highlights</h3>
+            <p>References confirm high integrity, strategic clarity, and exceptional execution capability across past mandates.</p>
+          </div>
+        )}
+
+        {activeTab === "activity" && (
+          <CandidateActivityTimeline mandateCandidateId={cand.mandateCandidateId || cand.id || 0} />
         )}
       </div>
     </div>
