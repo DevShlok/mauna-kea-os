@@ -268,7 +268,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                   {!isCollapsed && (
                     <>
                       <span className="text-[15.5px] flex-1 tracking-wide font-semibold">{category.title}</span>
-                      <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/35"}`} />
+                      <ChevronRight className={`w-4 h-4 transition-transform duration-500 ${isExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/35"}`} />
                     </>
                   )}
                 </div>
@@ -280,7 +280,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                       overflow: 'hidden',
                       maxHeight: isExpanded ? '650px' : '0px',
                       opacity: isExpanded ? 1 : 0,
-                      transition: 'max-height 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+                      transition: 'max-height 480ms cubic-bezier(0.16, 1, 0.3, 1), opacity 380ms cubic-bezier(0.16, 1, 0.3, 1)',
                       willChange: 'max-height, opacity',
                     }}
                   >
@@ -301,7 +301,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                               style={{
                                 transform: isExpanded ? 'translateX(0)' : 'translateX(-8px)',
                                 opacity: isExpanded ? 1 : 0,
-                                transition: `transform 220ms cubic-bezier(0.4, 0, 0.2, 1) ${isExpanded ? childIdx * 20 : 0}ms, opacity 200ms ease ${isExpanded ? childIdx * 20 : 0}ms`,
+                                transition: `transform 360ms cubic-bezier(0.16, 1, 0.3, 1) ${isExpanded ? childIdx * 30 : 0}ms, opacity 320ms ease ${isExpanded ? childIdx * 30 : 0}ms`,
                                 willChange: 'transform, opacity',
                               }}
                             >
@@ -341,7 +341,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                               >
                                 <group.icon className={`w-4 h-4 shrink-0 ${isSubGroupExpanded ? "text-[#D8B15B]" : "text-white/45"}`} />
                                 <span className="flex-1 tracking-wide">{group.header}</span>
-                                <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${isSubGroupExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/35"}`} />
+                                <ChevronRight className={`w-4 h-4 transition-transform duration-400 ${isSubGroupExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/35"}`} />
                               </div>
 
                               {/* Dynamic Second-Layer Dropdown Items (Layer 3 - Increased to 13.5px) */}
@@ -350,7 +350,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                                   overflow: 'hidden',
                                   maxHeight: isSubGroupExpanded ? `${visibleGroupItems.length * 44}px` : '0px',
                                   opacity: isSubGroupExpanded ? 1 : 0,
-                                  transition: 'max-height 250ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease',
+                                  transition: 'max-height 420ms cubic-bezier(0.16, 1, 0.3, 1), opacity 350ms ease',
                                   willChange: 'max-height, opacity',
                                 }}
                               >
