@@ -189,8 +189,11 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
     }
   ];
 
-  // Auto-expand active category section on navigation
+  // Auto-expand active category section on navigation & close non-active sections
   useEffect(() => {
+    let activeCatTitle: string | null = null;
+    let activeGroupHeader: string | null = null;
+
     categories.forEach(category => {
       let allChildren: NavChild[] = [];
       if (category.children) {
@@ -201,28 +204,46 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
 
       const isActive = allChildren.some(child => pathname?.startsWith(child.href) && child.href !== "/dashboard");
       if (isActive) {
-        setExpandedSections(prev => ({ ...prev, [category.title]: true }));
+        activeCatTitle = category.title;
 
         if (category.groups) {
           category.groups.forEach(g => {
             const isGroupActive = g.items.some(i => pathname?.startsWith(i.href) && i.href !== "/dashboard");
             if (isGroupActive) {
-              setExpandedSubGroups(prev => ({ ...prev, [g.header]: true }));
+              activeGroupHeader = g.header;
             }
           });
         }
       }
     });
+
+    if (activeCatTitle) {
+      setExpandedSections({ [activeCatTitle]: true });
+    } else {
+      setExpandedSections({});
+    }
+
+    if (activeGroupHeader) {
+      setExpandedSubGroups({ [activeGroupHeader]: true });
+    } else {
+      setExpandedSubGroups({});
+    }
   }, [pathname, userRole]);
 
   const toggleCategory = (title: string) => {
     if (isCollapsed) setIsCollapsed(false);
-    setExpandedSections(prev => ({ ...prev, [title]: !prev[title] }));
+    setExpandedSections(prev => {
+      const isCurrentlyOpen = !!prev[title];
+      return isCurrentlyOpen ? {} : { [title]: true };
+    });
   };
 
   const toggleSubGroup = (header: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setExpandedSubGroups(prev => ({ ...prev, [header]: !prev[header] }));
+    setExpandedSubGroups(prev => {
+      const isCurrentlyOpen = !!prev[header];
+      return isCurrentlyOpen ? {} : { [header]: true };
+    });
   };
 
   return (
