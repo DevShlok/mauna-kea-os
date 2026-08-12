@@ -76,7 +76,7 @@ export default function ShortlistCompareScreen({
         <div>
           <div className="flex items-center gap-2">
             <GitCompare className="w-5 h-5 text-[#D8B15B]" />
-            <h2 className="text-lg font-serif font-bold text-slate-900">3. Shortlist & Candidate Comparison</h2>
+            <h2 className="text-lg font-bold text-slate-900">3. Shortlist & Candidate Comparison</h2>
           </div>
           <p className="text-xs text-slate-500 mt-1">
             Compare shortlisted executive candidates against role-specific competency frameworks and dual P1/P2/P3 rankings.

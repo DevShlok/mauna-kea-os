@@ -96,7 +96,7 @@ export default function MarketMappingScreen({
           <div>
             <div className="flex items-center gap-2">
               <Compass className="w-5 h-5 text-[#D8B15B]" />
-              <h2 className="text-lg font-serif font-bold text-slate-900">1. Market Mapping / Talent Universe</h2>
+              <h2 className="text-lg font-bold text-slate-900">1. Market Mapping / Talent Universe</h2>
             </div>
             <p className="text-xs text-slate-500 mt-1">
               Complete visibility into the market universe mapped and engaged by Mauna Kea for this executive mandate.
@@ -118,31 +118,31 @@ export default function MarketMappingScreen({
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 text-center">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">1. Mapped</span>
-            <span className="text-2xl font-serif font-bold text-slate-900 block mt-1">{funnelMetrics.mapped}</span>
+            <span className="text-2xl font-bold text-slate-900 block mt-1">{funnelMetrics.mapped}</span>
             <span className="text-[11px] text-slate-400 block mt-0.5">Total Universe</span>
           </div>
 
           <div className="bg-blue-50/60 p-4 rounded-xl border border-blue-100 text-center">
             <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block">2. Contacted</span>
-            <span className="text-2xl font-serif font-bold text-blue-900 block mt-1">{funnelMetrics.contacted}</span>
+            <span className="text-2xl font-bold text-blue-900 block mt-1">{funnelMetrics.contacted}</span>
             <span className="text-[11px] text-blue-500 block mt-0.5">Outreached</span>
           </div>
 
           <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-100 text-center">
             <span className="text-xs font-bold text-amber-600 uppercase tracking-wider block">3. Engaged</span>
-            <span className="text-2xl font-serif font-bold text-amber-900 block mt-1">{funnelMetrics.engaged}</span>
+            <span className="text-2xl font-bold text-amber-900 block mt-1">{funnelMetrics.engaged}</span>
             <span className="text-[11px] text-amber-600 block mt-0.5">In Dialogue</span>
           </div>
 
           <div className="bg-purple-50/60 p-4 rounded-xl border border-purple-100 text-center">
             <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block">4. Assessed</span>
-            <span className="text-2xl font-serif font-bold text-purple-900 block mt-1">{funnelMetrics.assessed}</span>
+            <span className="text-2xl font-bold text-purple-900 block mt-1">{funnelMetrics.assessed}</span>
             <span className="text-[11px] text-purple-500 block mt-0.5">360° Evaluated</span>
           </div>
 
           <div className="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200 text-center col-span-2 md:col-span-1">
             <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider block">5. Shortlisted</span>
-            <span className="text-2xl font-serif font-bold text-emerald-900 block mt-1">{funnelMetrics.shortlisted}</span>
+            <span className="text-2xl font-bold text-emerald-900 block mt-1">{funnelMetrics.shortlisted}</span>
             <span className="text-[11px] text-emerald-600 block mt-0.5">Client Presented</span>
           </div>
         </div>

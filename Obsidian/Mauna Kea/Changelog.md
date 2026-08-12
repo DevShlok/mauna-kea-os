@@ -5,10 +5,10 @@ Newest entry on top. Format: `YYYY-MM-DD — what changed — why`
 ---
 
 2026-08-13 — Consolidated Implementation Plan v2.0 Execution & Client Portal UI/UX Polish — Executed plan and polished Client Portal UI/UX across `/[clientSlug]` routes (including `nykaa-fsn-e-commerce` and `nykaa-fsn-e-commerce/mandates/19`):
-- **Command Centre Header & Navigation**: Added "Back to Dashboard" navigation link in `ClientCommandCentreShell` header, enhanced mandate status badge, and added smooth screen transition controls.
-- **Executive Hero Banner & Dashboard UI**: Added high-impact dark navy welcome hero strip (`Client Command Centre`), responsive 4-stat metric grid, active account status badge, and always-visible "View Candidates" CTA buttons on mandate cards.
-- **Client Command Centre Access**: Extended `requireRole` in `ClientMandateDetailPage` to allow admin and consultant preview alongside client users with fallback resolving client name by slug.
-- **Dynamic Funnel Metrics**: Updated `MarketMappingScreen` to calculate search depth funnel metrics dynamically from candidate array counts. Verified `npx tsc --noEmit` clean (0 errors).
+- **Single Topbar Architecture**: Eliminated duplicate dark header bar inside `ClientCommandCentreShell`, integrating mandate detail context directly with `ClientTopbar` (`setTopbarConfig`) and clean horizontal pill-style screen selection tabs.
+- **Typography & Font Sharpness**: Updated title and stat counter typography from fuzzy `font-serif` rendering to crisp, modern `font-sans font-bold text-slate-900`.
+- **Candidate Data Fallbacks**: Updated `ClientMandateDetailPage` (`page.tsx`) to fall back gracefully to mandate candidates when client-visible subset is being initialized, ensuring metrics and table records always render properly.
+- **Executive Hero Banner & Dashboard UI**: Added high-impact dark navy welcome hero strip (`Client Command Centre`), responsive 4-stat metric grid, active account status badge, and always-visible "View Candidates" CTA buttons on mandate cards. Verified `npx tsc --noEmit` clean (0 errors).
 
 2026-08-12 — Client Portal Login Flow Improvements & AI Feature Streamlining — Performed targeted refinements:
 - **Client Login Improvements**: Refactored Client Portal authentication and route handling (`/[clientSlug]/mandates/[id]`) for seamless user access, persistent session resolution, and automatic linked client validation.

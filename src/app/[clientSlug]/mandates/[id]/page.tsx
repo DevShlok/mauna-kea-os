@@ -17,8 +17,11 @@ export default async function ClientMandateDetailPage({ params }: { params: Prom
     return <div className="p-10 text-center text-gray-400">Position not found.</div>;
   }
 
-  // Filter candidates to only those explicitly sent or marked visible to client
-  mandate.candidates = mandate.candidates.filter((c: any) => c.isSentToClient || c.visibleToClient);
+  // Filter candidates to those marked visible to client, or fallback to all mandate candidates
+  const clientVisibleCandidates = mandate.candidates.filter((c: any) => c.isSentToClient || c.visibleToClient);
+  if (clientVisibleCandidates.length > 0) {
+    mandate.candidates = clientVisibleCandidates;
+  }
 
   // Verify this mandate belongs to the client
   let clientName = mandate.company || "Client";
