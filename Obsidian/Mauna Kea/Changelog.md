@@ -4,6 +4,8 @@ Newest entry on top. Format: `YYYY-MM-DD — what changed — why`
 
 ---
 
+2026-08-12 — Major Project Cleanup & Dead Code Removal — Removed 18 obsolete scratch files, standalone one-off migration scripts, temporary text logs, and superseded server action functions (`issueCreditNoteAction` replaced by `createCreditNoteAction`). Deleted 645 redundant lines of code. `npx tsc --noEmit` and `npx next build` verified clean (0 errors across 59 routes).
+
 2026-08-12 — BRD Phase 5 Benchmarking, Legal Finance Credit Notes, Invoice Versioning, Mandate Pre-filling & Verification Fixes — Executed approved scope from Master Feature Audit:
 - **Phase 5 Benchmarking**: Created `src/actions/benchmarking.ts` (`getBenchmarkAction`), candidate portal benchmarking route `/[clientSlug]/benchmarking/page.tsx` with redirect at `/candidate/benchmarking`, `BenchmarkingClient.tsx` featuring neo-card design, percentile score badge, P25/P50/P75 salary distribution bars, candidate CTC indicator, and filter form. Added Benchmarking link to `CandidateSidebar.tsx`.
 - **Legal & Finance Credit Notes & Versioning**: Added DB migration `0035_invoice_extensions.sql` adding `invoice_type`, `parent_invoice_id`, and `version` columns. Implemented `createCreditNoteAction` (issuing `MK-CN-YYYY-NNNNN`) and `amendInvoiceAction` (`MK-IN-YYYY-NNNNN-vX` amendment versioning) in `legal-finance.ts`. Updated `InvoiceDetailClient.tsx` with Credit Note & Amend toolbar buttons and dynamic header badge.
