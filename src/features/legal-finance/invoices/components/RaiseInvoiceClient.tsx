@@ -372,8 +372,8 @@ export default function RaiseInvoiceClient({
                       className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
                     >
                       <option value="">-- Pick Candidate --</option>
-                      {candidatesList.map((cand) => (
-                        <option key={cand.candId || Math.random()} value={cand.candId || ""}>
+                      {candidatesList.map((cand, candIdx) => (
+                        <option key={`${cand.candId || "cand"}-${cand.mandateId || "mand"}-${candIdx}`} value={cand.candId || ""}>
                           {cand.candName} ({cand.roleTitle} @ {cand.clientName || cand.company})
                         </option>
                       ))}
