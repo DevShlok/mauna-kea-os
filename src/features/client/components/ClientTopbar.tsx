@@ -77,30 +77,36 @@ export function ClientTopbar() {
   };
 
   return (
-    <header className="shrink-0 h-[77px] bg-[#0b1f3a] border-b border-[#133255] text-white flex items-center">
-      <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-8">
+    <header 
+      className="shrink-0 h-[76px] flex items-center text-white relative z-30"
+      style={{
+        background: "linear-gradient(90deg, #133255 0%, #1a4270 100%)",
+        boxShadow: "0 4px 15px rgba(0,0,0,0.15)",
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
+      }}
+    >
+      <div className="max-w-7xl mx-auto w-full flex items-center justify-between px-6">
         
         {/* Left Section */}
         <div className="flex items-center gap-3">
           {showBack && (
             <button
               onClick={handleBack}
-              className="bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center hover:bg-white/20 transition-colors shrink-0"
+              className="bg-white/10 rounded-xl w-9 h-9 flex items-center justify-center hover:bg-white/20 transition-colors shrink-0 border border-white/10"
+              title="Back"
             >
-              <ArrowLeft className="w-5 h-5 text-white/70" />
+              <ArrowLeft className="w-4 h-4 text-white/80" />
             </button>
           )}
 
           <div>
+            <h1 className="font-serif text-[17px] font-bold text-white leading-tight">
+              {title || "Client Portal"}
+            </h1>
             {subtitle && (
-              <span className="text-[11px] font-semibold text-white/50 tracking-wider uppercase block">
+              <p className="text-[12px] text-[#D8B15B]/80 font-medium mt-0.5">
                 {subtitle}
-              </span>
-            )}
-            {title && (
-              <h1 className={`font-bold text-white leading-tight ${subtitle ? 'text-[18px]' : 'text-[20px] font-serif'}`}>
-                {title}
-              </h1>
+              </p>
             )}
           </div>
         </div>
@@ -226,6 +232,16 @@ export function ClientTopbar() {
               )}
             </div>
           )}
+
+          <span
+            className="px-3.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider text-[#133255] hidden sm:inline-block"
+            style={{
+              background: "linear-gradient(135deg, #D8B15B, #f0c96a)",
+              boxShadow: "0 2px 8px rgba(216,177,91,0.3)",
+            }}
+          >
+            Client
+          </span>
 
           {rightContent}
         </div>
