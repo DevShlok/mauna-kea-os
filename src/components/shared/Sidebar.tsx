@@ -31,9 +31,10 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
   const initials = fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "MK";
 
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [hoveredSubGroup, setHoveredSubGroup] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Track expanded accordion sections explicitly to prevent layout wobbling on hover
+  // Explicit click-toggle state alongside hover auto-open
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [expandedSubGroups, setExpandedSubGroups] = useState<Record<string, boolean>>({});
 
@@ -188,7 +189,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
     }
   ];
 
-  // Auto-expand current active category and sub-group on load or navigation
+  // Auto-expand active category section on navigation
   useEffect(() => {
     categories.forEach(category => {
       let allChildren: NavChild[] = [];
@@ -215,9 +216,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
   }, [pathname, userRole]);
 
   const toggleCategory = (title: string) => {
-    if (isCollapsed) {
-      setIsCollapsed(false);
-    }
+    if (isCollapsed) setIsCollapsed(false);
     setExpandedSections(prev => ({ ...prev, [title]: !prev[title] }));
   };
 
@@ -228,12 +227,13 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
 
   return (
     <div className={`group relative h-screen shrink-0 z-40 ${isCollapsed ? "w-[76px]" : "w-[285px]"}`} style={{ transition: 'width 280ms cubic-bezier(0.4, 0, 0.2, 1)', willChange: 'width' }}>
+      {/* Structural Outer Sidebar Container — Fixed Height, No Global Scroll */}
       <div
-        className={`absolute inset-0 flex flex-col overflow-y-auto text-white border-r border-white/10 ${isCollapsed ? 'overflow-x-visible' : 'overflow-x-hidden'}`}
+        className="absolute inset-0 flex flex-col h-full overflow-hidden text-white border-r border-white/10"
         style={{ background: "linear-gradient(180deg, #133255 0%, #0b1f36 100%)", boxShadow: "4px 0 20px rgba(0,0,0,0.18)" }}
       >
-        {/* Logo Header */}
-        <div className={`h-[76px] flex items-center px-5 border-b border-white/10 hover:bg-white/5 transition-colors ${isCollapsed ? "justify-center" : ""}`}>
+        {/* 1. FIXED LOGO HEADER — Never scrolls or moves upward */}
+        <div className={`h-[76px] shrink-0 flex items-center px-5 border-b border-white/10 bg-[#133255] select-none ${isCollapsed ? "justify-center" : ""}`}>
           <Link href="/dashboard" className={`flex items-center gap-3 overflow-hidden ${isCollapsed ? "justify-center" : ""}`}>
             <div
               className="text-[#133255] font-serif text-xl font-bold w-10 h-10 flex items-center justify-center rounded-xl shrink-0"
@@ -253,8 +253,8 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
           </Link>
         </div>
 
-        {/* Sidebar Menu Items */}
-        <div className="flex-1 py-4 flex flex-col gap-1 px-3">
+        {/* 2. MIDDLE SCROLLABLE NAVIGATION LIST — Only this section scrolls when items expand */}
+        <div className={`flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1 space-y-0.5 scrollbar-thin ${isCollapsed ? 'overflow-x-visible' : 'overflow-x-hidden'}`} style={{ scrollbarGutter: 'stable' }}>
           {categories.filter(cat => cat.visibleTo.includes(userRole)).map((category, idx) => {
             let allChildren: NavChild[] = [];
             if (category.children) {
@@ -267,17 +267,18 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
 
             const isActive = allChildren.some(child => pathname?.startsWith(child.href) && child.href !== "/dashboard");
             const isHovered = hoveredCategory === category.title;
-            const isExpanded = !!expandedSections[category.title];
+            // Auto open on hover OR active route OR explicit click
+            const isExpanded = isHovered || isActive || !!expandedSections[category.title];
             const isHighlighted = isHovered || isActive || isExpanded;
 
             return (
               <div
                 key={idx}
-                className="flex flex-col"
+                className="flex flex-col shrink-0"
                 onMouseEnter={() => setHoveredCategory(category.title)}
                 onMouseLeave={() => setHoveredCategory(null)}
               >
-                {/* Parent Category Header (Wobble-Free Click Accordion + Gold Highlight) */}
+                {/* Parent Category Header */}
                 <div
                   className={`flex items-center gap-3 py-3 cursor-pointer rounded-xl mx-0 select-none transition-all ${
                     isHighlighted
@@ -305,9 +306,9 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                   )}
                 </div>
 
-                {/* Wobble-Free CSS Grid Accordion Expansion */}
+                {/* Wobble-Free CSS Grid Accordion Expansion (Hover + Click Auto Open) */}
                 {!isCollapsed && (
-                  <div className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                  <div className={`grid transition-[grid-template-rows,opacity] duration-280 ease-out ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
                     <div className="overflow-hidden">
                       {/* STANDARD FLAT CHILDREN */}
                       {category.children && (
@@ -341,10 +342,16 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                             if (visibleGroupItems.length === 0) return null;
 
                             const isGroupActive = visibleGroupItems.some(i => pathname === i.href || (pathname.startsWith(i.href) && i.href.length > 25));
-                            const isSubGroupExpanded = !!expandedSubGroups[group.header] || isGroupActive;
+                            const isGroupHovered = hoveredSubGroup === group.header;
+                            const isSubGroupExpanded = isGroupHovered || isGroupActive || !!expandedSubGroups[group.header];
 
                             return (
-                              <div key={groupIdx} className="flex flex-col rounded-xl overflow-hidden">
+                              <div
+                                key={groupIdx}
+                                className="flex flex-col rounded-xl overflow-hidden"
+                                onMouseEnter={() => setHoveredSubGroup(group.header)}
+                                onMouseLeave={() => setHoveredSubGroup(null)}
+                              >
                                 {/* Sub-Heading Header */}
                                 <div
                                   onClick={(e) => toggleSubGroup(group.header, e)}
@@ -356,11 +363,11 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                                 >
                                   <group.icon className={`w-4 h-4 shrink-0 ${isSubGroupExpanded ? "text-[#D8B15B]" : "text-white/45"}`} />
                                   <span className="flex-1 tracking-wide">{group.header}</span>
-                                  <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isSubGroupExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/35"}`} />
+                                  <ChevronRight className={`w-4 h-4 transition-transform duration-250 ${isSubGroupExpanded ? "rotate-90 text-[#D8B15B]" : "text-white/35"}`} />
                                 </div>
 
-                                {/* Dynamic Sub-Group Items (CSS Grid expansion - zero wobble) */}
-                                <div className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${isSubGroupExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                                {/* Dynamic Sub-Group Items (CSS Grid expansion) */}
+                                <div className={`grid transition-[grid-template-rows,opacity] duration-250 ease-out ${isSubGroupExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
                                   <div className="overflow-hidden">
                                     <div className="flex flex-col py-1 pl-4 space-y-0.5">
                                       {visibleGroupItems.map((item, itemIdx) => {
@@ -460,8 +467,8 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
           })}
         </div>
 
-        {/* User Footer */}
-        <div className={`mt-auto p-4 border-t border-white/10 flex items-center overflow-hidden ${isCollapsed ? "flex-col gap-4 justify-center" : "gap-3"}`}>
+        {/* 3. FIXED USER FOOTER — Never moves or gets pushed down */}
+        <div className={`shrink-0 p-4 border-t border-white/10 bg-[#0b1f36] flex items-center overflow-hidden ${isCollapsed ? "flex-col gap-4 justify-center" : "gap-3"}`}>
           <div
             className="w-[40px] h-[40px] rounded-full flex items-center justify-center font-serif text-[16px] font-bold shrink-0 text-[#133255]"
             style={{
