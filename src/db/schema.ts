@@ -944,6 +944,7 @@ export const invoices = pgTable('invoices', {
   hsnSacCode: varchar('hsn_sac_code', { length: 20 }).default('998313'),
   poNumber: varchar('po_number', { length: 100 }),
   status: varchar('status', { length: 30 }).default('Draft'),
+  invoiceType: varchar('invoice_type', { length: 30 }).default('TAX_INVOICE'), // 'TAX_INVOICE' | 'CREDIT_NOTE' | 'AMENDMENT'
   amountPaid: float('amount_paid').default(0),
   amountOutstanding: float('amount_outstanding'),
   version: int('version').default(1).notNull(),

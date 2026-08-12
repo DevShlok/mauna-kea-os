@@ -4,6 +4,12 @@ Newest entry on top. Format: `YYYY-MM-DD — what changed — why`
 
 ---
 
+2026-08-12 — BRD Phase 5 Benchmarking, Legal Finance Credit Notes, Invoice Versioning, Mandate Pre-filling & Verification Fixes — Executed approved scope from Master Feature Audit:
+- **Phase 5 Benchmarking**: Created `src/actions/benchmarking.ts` (`getBenchmarkAction`), candidate portal benchmarking route `/[clientSlug]/benchmarking/page.tsx` with redirect at `/candidate/benchmarking`, `BenchmarkingClient.tsx` featuring neo-card design, percentile score badge, P25/P50/P75 salary distribution bars, candidate CTC indicator, and filter form. Added Benchmarking link to `CandidateSidebar.tsx`.
+- **Legal & Finance Credit Notes & Versioning**: Added DB migration `0035_invoice_extensions.sql` adding `invoice_type`, `parent_invoice_id`, and `version` columns. Implemented `createCreditNoteAction` (issuing `MK-CN-YYYY-NNNNN`) and `amendInvoiceAction` (`MK-IN-YYYY-NNNNN-vX` amendment versioning) in `legal-finance.ts`. Updated `InvoiceDetailClient.tsx` with Credit Note & Amend toolbar buttons and dynamic header badge.
+- **Mandate → Raise Invoice Pre-fill**: Enhanced `RaiseInvoicePage` and `RaiseInvoiceClient` to accept `mandateId` query parameter from `MandateDetailClient`, auto-selecting client and mandate candidates.
+- **Quick Wins Verified**: Confirmed `profile_complete` badge creation on onboarding finish, Applications Inbox status updates, contract/invoice reminder cron schedules in `vercel.json`, and client financial strip on client detail page.
+
 2026-08-11 — Invoice legal layout gap analysis + phase-wise implementation plan — Reviewed email feedback on Contracts & Invoice modules. Produced full gap audit: 14 legally mandatory fields missing from printed Tax Invoice (MK entity name, GSTIN, PAN, address, Place of Supply, bank details, signatory, T&C, reverse charge). Created `docs/contracts-invoice-implementation-plan.md` with 5 phases covering invoice legal compliance, .docx fix, navigation, email drafts, and GSTIN lookup. Updated Obsidian vault.
 
 2026-08-11 — Invoice module enhancements: candidate linkage, multi-line billing, UTGST — Added candidate-first selection flow with mandate/client/contract auto-resolve. Added multi-placement line items (`+Add`) with proposal deck CTC slab auto-matching (<50L=18%, 50L–1Cr=20%, >1Cr=25%). 100% editable particulars per line. Precise CGST/SGST/UTGST/IGST tax splits. DB migration `0034` for `line_items`, `utgst_amount`, `tax_type`. `tsc --noEmit` clean.

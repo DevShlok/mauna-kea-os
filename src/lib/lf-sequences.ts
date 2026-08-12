@@ -65,3 +65,13 @@ export async function generateInvoiceNumber(): Promise<string> {
   const seq = await nextLfSequence("invoice");
   return `MK-IN-${year}-${seq}`;
 }
+
+/**
+ * Generates a credit note number: MK-CN-2026-00001
+ */
+export async function generateCreditNoteNumber(): Promise<string> {
+  const year = new Date().getFullYear();
+  const seq = await nextLfSequence("invoice");
+  return `MK-CN-${year}-${seq}`;
+}
+

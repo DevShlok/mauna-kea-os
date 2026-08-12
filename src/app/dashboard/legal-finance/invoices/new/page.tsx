@@ -6,8 +6,14 @@ import RaiseInvoiceClient from "@/features/legal-finance/invoices/components/Rai
 
 export const dynamic = "force-dynamic";
 
-export default async function RaiseInvoicePage() {
+export default async function RaiseInvoicePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mandateId?: string }>;
+}) {
   await requireRole(["admin", "finance"]);
+  const resolvedParams = await searchParams;
+  const initialMandateId = resolvedParams?.mandateId ? parseInt(resolvedParams.mandateId, 10) : undefined;
 
   const [clientsList, contractsList, candidatesList] = await Promise.all([
     db
@@ -54,9 +60,11 @@ export default async function RaiseInvoicePage() {
 
   return (
     <RaiseInvoiceClient
+      initialMandateId={initialMandateId}
       clientsList={JSON.parse(JSON.stringify(clientsList))}
       contractsList={JSON.parse(JSON.stringify(contractsList))}
       candidatesList={JSON.parse(JSON.stringify(candidatesList))}
     />
   );
 }
+

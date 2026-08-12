@@ -60,6 +60,7 @@ export function CandidateSidebar({
     { label: "Jobs", href: `${prefix}/jobs`, icon: Briefcase },
     { label: "Dream Companies", href: `${prefix}/dream-companies`, icon: Star },
     { label: "Guidance", href: `${prefix}/guidance`, icon: BookOpen },
+    { label: "Benchmarking", href: `${prefix}/benchmarking`, icon: TrendingUp },
   ];
 
   const initials = userName

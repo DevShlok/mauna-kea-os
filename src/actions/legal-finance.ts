@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { contracts, contractDocuments, invoices, invoicePayments, clients, consultantNotifications, mandates, candidates } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
 import { newContractId, newInvoiceId } from "@/lib/ids";
-import { generateContractNumber, generateInvoiceNumber } from "@/lib/lf-sequences";
+import { generateContractNumber, generateInvoiceNumber, generateCreditNoteNumber } from "@/lib/lf-sequences";
 import { writeLfAuditLog } from "@/lib/lf-audit";
 import { createContractSchema, updateContractSchema } from "@/lib/validations";
 import { eq, and, sql } from "drizzle-orm";
@@ -845,4 +845,138 @@ export async function triggerAutoDraftInvoice({
     return { success: false, reason: err.message };
   }
 }
+
+export async function createCreditNoteAction(
+  originalInvoiceId: string,
+  creditAmount: number,
+  reason: string
+) {
+  const { name: actorName, role: actorRole } = await getCurrentUserName();
+  await requireRole(["admin", "finance"]);
+
+  if (!creditAmount || creditAmount <= 0) {
+    throw new Error("Credit amount must be greater than zero.");
+  }
+  if (!reason?.trim()) {
+    throw new Error("Reason for credit note is required.");
+  }
+
+  const [orig] = await db.select().from(invoices).where(eq(invoices.id, originalInvoiceId));
+  if (!orig) throw new Error("Original invoice not found.");
+
+  const newId = newInvoiceId();
+  const cnNumber = await generateCreditNoteNumber();
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  await db.insert(invoices).values({
+    id: newId,
+    invoiceNumber: cnNumber,
+    clientId: orig.clientId,
+    contractId: orig.contractId,
+    mandateId: orig.mandateId,
+    candId: orig.candId,
+    clientSnapshot: orig.clientSnapshot,
+    commercialSnapshot: orig.commercialSnapshot,
+    invoiceDate: todayStr,
+    dueDate: todayStr,
+    invoiceType: "CREDIT_NOTE",
+    parentInvoiceId: orig.id,
+    feeBeforeTax: -Math.abs(creditAmount),
+    totalAmount: -Math.abs(creditAmount),
+    amountPaid: -Math.abs(creditAmount),
+    amountOutstanding: 0,
+    currency: orig.currency || "INR",
+    notes: `Credit Note issued against ${orig.invoiceNumber}. Reason: ${reason.trim()}`,
+    status: "Issued",
+    createdBy: actorName,
+  });
+
+  await writeLfAuditLog({
+    entityType: "invoice",
+    entityId: newId,
+    action: "credit_note_issued",
+    actorName,
+    actorRole,
+    newValue: { creditNoteNumber: cnNumber, originalInvoiceId: orig.id, creditAmount, reason },
+  });
+
+  revalidatePath(`/dashboard/legal-finance/invoices/${originalInvoiceId}`);
+  revalidatePath("/dashboard/legal-finance/invoices");
+  return { success: true, id: newId, creditNoteNumber: cnNumber };
+}
+
+export async function amendInvoiceAction(
+  originalInvoiceId: string,
+  updatedFields: {
+    poNumber?: string;
+    notes?: string;
+    dueDate?: string;
+    lineItems?: any[];
+    feeBeforeTax?: number;
+    totalAmount?: number;
+  },
+  reason: string
+) {
+  const { name: actorName, role: actorRole } = await getCurrentUserName();
+  await requireRole(["admin", "finance"]);
+
+  if (!reason?.trim()) {
+    throw new Error("Reason for amendment is required.");
+  }
+
+  const [orig] = await db.select().from(invoices).where(eq(invoices.id, originalInvoiceId));
+  if (!orig) throw new Error("Original invoice not found.");
+
+  await db
+    .update(invoices)
+    .set({
+      status: "Superseded",
+      updatedAt: new Date(),
+    })
+    .where(eq(invoices.id, originalInvoiceId));
+
+  const newVersion = (orig.version || 1) + 1;
+  const newId = newInvoiceId();
+  const newNumber = `${orig.invoiceNumber}-v${newVersion}`;
+
+  const newFee = updatedFields.feeBeforeTax ?? orig.feeBeforeTax ?? 0;
+  const newTotal = updatedFields.totalAmount ?? orig.totalAmount ?? 0;
+
+  await db.insert(invoices).values({
+    ...orig,
+    id: newId,
+    invoiceNumber: newNumber,
+    version: newVersion,
+    parentInvoiceId: orig.id,
+    invoiceType: "AMENDMENT",
+    status: "Shared",
+    poNumber: updatedFields.poNumber !== undefined ? updatedFields.poNumber : orig.poNumber,
+    notes: updatedFields.notes !== undefined ? updatedFields.notes : orig.notes,
+    dueDate: updatedFields.dueDate || orig.dueDate,
+    lineItems: updatedFields.lineItems || orig.lineItems,
+    feeBeforeTax: newFee,
+    totalAmount: newTotal,
+    amountOutstanding: newTotal,
+    amountPaid: 0,
+    createdBy: actorName,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  await writeLfAuditLog({
+    entityType: "invoice",
+    entityId: newId,
+    action: "invoice_amended",
+    actorName,
+    actorRole,
+    previousValue: { originalInvoiceId, oldVersion: orig.version },
+    newValue: { newInvoiceNumber: newNumber, newVersion, reason },
+  });
+
+  revalidatePath(`/dashboard/legal-finance/invoices/${originalInvoiceId}`);
+  revalidatePath(`/dashboard/legal-finance/invoices/${newId}`);
+  revalidatePath("/dashboard/legal-finance/invoices");
+  return { success: true, id: newId, invoiceNumber: newNumber };
+}
+
 

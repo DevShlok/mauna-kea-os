@@ -46,10 +46,12 @@ interface LineItem {
 }
 
 export default function RaiseInvoiceClient({
+  initialMandateId,
   clientsList,
   contractsList,
   candidatesList,
 }: {
+  initialMandateId?: number;
   clientsList: OptionClient[];
   contractsList: OptionContract[];
   candidatesList: OptionCandidate[];
@@ -94,6 +96,22 @@ export default function RaiseInvoiceClient({
 
   const selectedClient = clientsList.find((c) => c.id === formData.clientId);
   const availableContracts = contractsList.filter((c) => c.clientId === formData.clientId);
+
+  // Auto-fill client & mandate when initialMandateId is provided in URL
+  useEffect(() => {
+    if (initialMandateId) {
+      const match = candidatesList.find((c) => c.mandateId === initialMandateId);
+      if (match && match.clientId) {
+        setFormData((prev) => ({
+          ...prev,
+          clientId: match.clientId!,
+          mandateId: initialMandateId,
+        }));
+      } else {
+        setFormData((prev) => ({ ...prev, mandateId: initialMandateId }));
+      }
+    }
+  }, [initialMandateId, candidatesList]);
 
   // Auto-detect tax regime when client changes
   useEffect(() => {

@@ -8,8 +8,8 @@
     "outboundEnabled": true,
     "inboundEnabled": true,
     "auth": {
-      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg2NDUxODUxLCJpYXQiOjE3ODY0NDgyNTEsImp0aSI6IjkzY2Q0ODE5ZTBlZjQ0MGJiOTljNzY1YTg3MmU2NDk0IiwidXNlcl9pZCI6IjE1OWE3OWJjLWFlMzYtNDc1Mi05MDg3LTU1Y2IyNTJiZDE1NiIsImNsaWVudF90eXBlIjoib2F1dGhfY2xpZW50Iiwib2F1dGhfY2xpZW50X2lkIjoib2JzaWRpYW4ifQ.ePLgteg6OYwLvG9gw0_eeuzgnwyDXqvzMJwega_UOPY",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4OTA0MDI1MSwiaWF0IjoxNzg2NDQ4MjUxLCJqdGkiOiI5NzQ4YjJjZjE2YTY0MmE2OGZiOGRiMzAwYmZmYmZlZiIsInVzZXJfaWQiOiIxNTlhNzliYy1hZTM2LTQ3NTItOTA4Ny01NWNiMjUyYmQxNTYiLCJjbGllbnRfdHlwZSI6Im9hdXRoX2NsaWVudCIsIm9hdXRoX2NsaWVudF9pZCI6Im9ic2lkaWFuIn0.Ug1Vh5AWUpB3S4GdafHdro6uYgP8BShrqwQvBFTg2qI",
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg2NTUwNDY3LCJpYXQiOjE3ODY1NDY4NjcsImp0aSI6IjM4ZWUwMjI3ZDgzNDQzODI4ZmVlOGI5OTIxOWYwMzU2IiwidXNlcl9pZCI6IjE1OWE3OWJjLWFlMzYtNDc1Mi05MDg3LTU1Y2IyNTJiZDE1NiIsImNsaWVudF90eXBlIjoib2F1dGhfY2xpZW50Iiwib2F1dGhfY2xpZW50X2lkIjoib2JzaWRpYW4ifQ.reOkvRgNLDiun8eAaxqCLJRh1Htskize7zeZBNmqTQs",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4OTEzODg2NywiaWF0IjoxNzg2NTQ2ODY3LCJqdGkiOiIxM2ZhODk3NzdkNDA0MWUyYWM3ZTMxYjMxODRjMmEyYiIsInVzZXJfaWQiOiIxNTlhNzliYy1hZTM2LTQ3NTItOTA4Ny01NWNiMjUyYmQxNTYiLCJjbGllbnRfdHlwZSI6Im9hdXRoX2NsaWVudCIsIm9hdXRoX2NsaWVudF9pZCI6Im9ic2lkaWFuIn0.PrHjohyBHk2E9GFIqm-xYB5IujUvZA7NqKqn2QW_Fz0",
       "userEmail": "shlokshukla1469@gmail.com"
     },
     "bannerDismissed": true
@@ -17,8 +17,8 @@
   "manifestCache": {
     "paths": {
       "Changelog.md": {
-        "contentHash": "09e1daff889209c0a2eadfff210a5633620a65a4ebfd7536271474aed2770df8",
-        "mtime": 1786447468548
+        "contentHash": "87869bd13330eba3450d56fa3e03de023010d9961c2d5ef0f0f8d7cee259fd51",
+        "mtime": 1786546858799
       },
       "Decisions/no-raw-scores-to-candidates.md": {
         "contentHash": "596b889a55301ec6a7604faaf24e10b7b186b8c18d6459feb7115c13b0cdef6f",

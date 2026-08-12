@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import RecordPaymentModal from "@/features/legal-finance/payments/components/RecordPaymentModal";
-import { cancelInvoiceAction, issueCreditNoteAction, reversePaymentAction } from "@/actions/legal-finance";
+import { cancelInvoiceAction, createCreditNoteAction, amendInvoiceAction, reversePaymentAction } from "@/actions/legal-finance";
 import { numberToWordsINR } from "@/lib/number-to-words";
 import { MK_COMPANY, getStateCode } from "@/lib/constants/mk-company";
 import EmailDraftModal from "@/features/legal-finance/components/EmailDraftModal";
@@ -86,14 +86,49 @@ export default function InvoiceDetailClient({ invoice }: InvoiceDetailProps) {
   };
 
   const handleIssueCreditNote = async () => {
+    const amountStr = prompt(
+      `Enter credit amount in ₹ (Full invoice amount: ₹${invoice.totalAmount || 0}):`,
+      String(invoice.totalAmount || 0)
+    );
+    if (!amountStr) return;
+    const amount = parseFloat(amountStr);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Invalid credit amount.");
+      return;
+    }
+
     const reason = prompt(`Reason for Credit Note against ${invoice.invoiceNumber}?`);
     if (!reason) return;
+
     try {
-      const res = await issueCreditNoteAction(invoice.id, reason);
-      toast.success(`Credit Note ${res.cnNumber} issued!`);
+      const res = await createCreditNoteAction(invoice.id, amount, reason);
+      toast.success(`Credit Note ${res.creditNoteNumber} issued!`);
       router.push(`/dashboard/legal-finance/invoices/${res.id}`);
     } catch (err: any) {
       toast.error(err.message || "Failed to issue Credit Note.");
+    }
+  };
+
+  const handleAmendInvoice = async () => {
+    const reason = prompt(`Reason for creating a new amendment version of ${invoice.invoiceNumber}?`);
+    if (!reason) return;
+
+    const newPo = prompt("Enter updated PO Number (leave as is if unchanged):", invoice.poNumber || "");
+    const newNotes = prompt("Enter updated Invoice Notes (leave as is if unchanged):", invoice.notes || "");
+
+    try {
+      const res = await amendInvoiceAction(
+        invoice.id,
+        {
+          poNumber: newPo || undefined,
+          notes: newNotes || undefined,
+        },
+        reason
+      );
+      toast.success(`Invoice amendment ${res.invoiceNumber} created!`);
+      router.push(`/dashboard/legal-finance/invoices/${res.id}`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to amend invoice.");
     }
   };
 
@@ -182,6 +217,9 @@ export default function InvoiceDetailClient({ invoice }: InvoiceDetailProps) {
               <button onClick={handleIssueCreditNote} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-violet-700 bg-violet-50 border border-violet-200 rounded-xl hover:bg-violet-100 transition-colors">
                 <FileX className="w-3.5 h-3.5" /> Credit Note
               </button>
+              <button onClick={handleAmendInvoice} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl hover:bg-amber-100 transition-colors">
+                <RotateCcw className="w-3.5 h-3.5" /> Amend
+              </button>
               <button onClick={handleCancel} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl hover:bg-rose-100 transition-colors">
                 <Ban className="w-3.5 h-3.5" /> Cancel
               </button>
@@ -201,7 +239,13 @@ export default function InvoiceDetailClient({ invoice }: InvoiceDetailProps) {
           <p className="text-sm font-semibold text-slate-700 mt-0.5 tracking-wide">{MK_COMPANY.tagline}</p>
           <p className="text-[11px] text-slate-600 mt-1">{MK_COMPANY.address}</p>
           <p className="text-[11px] font-bold text-slate-800 mt-1">GSTIN:- {MK_COMPANY.gstin}</p>
-          <p className="text-sm font-bold text-slate-900 mt-1 uppercase tracking-widest border-t border-slate-200 pt-2">TAX INVOICE</p>
+          <p className="text-sm font-bold text-slate-900 mt-1 uppercase tracking-widest border-t border-slate-200 pt-2">
+            {(invoice as any).invoiceType === "CREDIT_NOTE"
+              ? "CREDIT NOTE"
+              : (invoice as any).invoiceType === "AMENDMENT"
+              ? "AMENDED TAX INVOICE"
+              : "TAX INVOICE"}
+          </p>
         </div>
 
         {/* ── INVOICE METADATA ── */}
