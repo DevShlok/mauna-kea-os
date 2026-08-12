@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   BookOpen,
+  TrendingUp,
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useState, useEffect } from "react";
