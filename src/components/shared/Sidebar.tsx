@@ -89,12 +89,15 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
       icon: Scale,
       visibleTo: ["admin", "consultant", "finance"],
       children: [
-        { label: "Contracts", href: "/dashboard/legal-finance/contracts", visibleTo: ["admin", "consultant", "finance"] },
-        { label: "Invoices",  href: "/dashboard/legal-finance/invoices",  visibleTo: ["admin", "finance"] },
-        { label: "Payments",  href: "/dashboard/legal-finance/payments",  visibleTo: ["admin", "finance"] },
-        { label: "Reports",   href: "/dashboard/legal-finance/reports",   visibleTo: ["admin", "finance"] },
+        { label: "Contract Repository", href: "/dashboard/legal-finance/contracts", visibleTo: ["admin", "consultant", "finance"] },
+        { label: "Create Contract", href: "/dashboard/legal-finance/contracts/new", visibleTo: ["admin", "consultant", "finance"] },
+        { label: "Contract Templates", href: "/dashboard/legal-finance/contracts/templates", visibleTo: ["admin", "finance"] },
+        { label: "Invoice Repository", href: "/dashboard/legal-finance/invoices", visibleTo: ["admin", "finance"] },
+        { label: "Raise Invoice", href: "/dashboard/legal-finance/invoices/new", visibleTo: ["admin", "finance"] },
+        { label: "Payment Tracking", href: "/dashboard/legal-finance/payments", visibleTo: ["admin", "finance"] },
+        { label: "Financial Reports", href: "/dashboard/legal-finance/reports", visibleTo: ["admin", "finance"] },
         { label: "Compliance", href: "/dashboard/legal-finance/compliance", visibleTo: ["admin", "finance"] },
-        { label: "Audit Log", href: "/dashboard/legal-finance/audit-log",  visibleTo: ["admin", "finance"] },
+        { label: "Audit Log", href: "/dashboard/legal-finance/audit-log", visibleTo: ["admin", "finance"] },
       ]
     },
     {

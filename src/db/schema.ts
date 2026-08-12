@@ -844,6 +844,34 @@ export const lfSequences = pgTable('lf_sequences', {
   lastVal: int('last_val').notNull().default(0),
 });
 
+// ─── CONTRACT TEMPLATES (Admin Configurable) ─────────────────────────────────
+export const contractTemplates = pgTable('contract_templates', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  code: varchar('code', { length: 50 }).notNull().unique(),
+  description: text('description'),
+  structureType: varchar('structure_type', { length: 50 }).default('SuccessFee'),
+  defaultSuccessFeePct: float('default_success_fee_pct'),
+  defaultMinFee: float('default_min_fee'),
+  defaultMaxFee: float('default_max_fee'),
+  defaultRetainerAmount: float('default_retainer_amount'),
+  defaultReplacementPeriodDays: int('default_replacement_period_days').default(90),
+  defaultGuaranteePeriodDays: int('default_guarantee_period_days').default(90),
+  defaultPaymentTerms: varchar('default_payment_terms', { length: 100 }).default('30 Days'),
+  defaultCurrency: varchar('default_currency', { length: 10 }).default('INR'),
+  defaultLatePaymentClause: text('default_late_payment_clause'),
+  defaultTravelExpensesClause: text('default_travel_expenses_clause'),
+  defaultExclusivity: boolean('default_exclusivity').default(true),
+  defaultNonPoachingMonths: int('default_non_poaching_months').default(12),
+  defaultConfidentiality: boolean('default_confidentiality').default(true),
+  isActive: boolean('is_active').default(true),
+  createdBy: varchar('created_by', { length: 255 }),
+  createdAt: datetime('created_at').default(sql`now()`),
+  updatedAt: datetime('updated_at').default(sql`now()`),
+});
+
+export type ContractTemplate = typeof contractTemplates.$inferSelect;
+
 // ─── CONTRACTS ────────────────────────────────────────────────────────────────
 export const contracts = pgTable('contracts', {
   id: varchar('id', { length: 50 }).primaryKey(),

@@ -18,8 +18,10 @@ interface ClientOption {
 
 export default function ContractWizard({
   clientsList,
+  customTemplates = [],
 }: {
   clientsList: ClientOption[];
+  customTemplates?: any[];
 }) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -505,6 +507,47 @@ export default function ContractWizard({
             <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-2">
               Step 2: Commercials & Fee Structure
             </h2>
+
+            {customTemplates.length > 0 && (
+              <div className="p-3.5 bg-blue-50/60 rounded-xl border border-blue-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-800">
+                    Apply Commercial Template
+                  </label>
+                  <span className="text-[11px] text-slate-500">
+                    Auto-fills fee %, replacement period, payment terms, and legal clauses
+                  </span>
+                </div>
+                <select
+                  onChange={(e) => {
+                    const selected = customTemplates.find((t) => String(t.id) === e.target.value);
+                    if (selected) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        commercialStructure: selected.structureType || prev.commercialStructure,
+                        successFeePct: selected.defaultSuccessFeePct ?? prev.successFeePct,
+                        replacementPeriod: selected.defaultReplacementPeriodDays ?? prev.replacementPeriod,
+                        paymentTerms: selected.defaultPaymentTerms || prev.paymentTerms,
+                        latePaymentClause: selected.defaultLatePaymentClause || prev.latePaymentClause,
+                        travelExpenses: selected.defaultTravelExpensesClause || prev.travelExpenses,
+                        exclusivity: selected.defaultExclusivity ?? prev.exclusivity,
+                        confidentiality: selected.defaultConfidentiality ?? prev.confidentiality,
+                        nonPoachingMonths: selected.defaultNonPoachingMonths ?? prev.nonPoachingMonths,
+                      }));
+                      toast.success(`Applied template: ${selected.name}`);
+                    }
+                  }}
+                  className="px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none shadow-xs"
+                >
+                  <option value="">-- Choose Commercial Template --</option>
+                  {customTemplates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
               <div>
