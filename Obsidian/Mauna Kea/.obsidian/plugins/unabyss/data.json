@@ -17,8 +17,8 @@
   "manifestCache": {
     "paths": {
       "Changelog.md": {
-        "contentHash": "dc026b6b91b26b349afbbbed672a1d081c2dcbae66128e61b259bf94bf7db7be",
-        "mtime": 1786547469202
+        "contentHash": "0e3c2f54926436182396af21a1da808a0dec7727a47177a968e75c1b8efba062",
+        "mtime": 1786548295583
       },
       "Decisions/no-raw-scores-to-candidates.md": {
         "contentHash": "596b889a55301ec6a7604faaf24e10b7b186b8c18d6459feb7115c13b0cdef6f",
