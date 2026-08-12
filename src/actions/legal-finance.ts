@@ -526,46 +526,6 @@ export async function cancelInvoiceAction(id: string, reason: string) {
   return { success: true };
 }
 
-export async function issueCreditNoteAction(originalInvoiceId: string, reason: string) {
-  const { platformUser, userRole } = await requireRole(["admin", "finance"]);
-  const actorName = platformUser?.name || "Finance";
-
-  const [original] = await db.select().from(invoices).where(eq(invoices.id, originalInvoiceId));
-  if (!original) throw new Error("Original invoice not found.");
-
-  const cnId = newInvoiceId();
-  const cnNumber = `CN-${original.invoiceNumber}`;
-
-  await db.insert(invoices).values({
-    ...original,
-    id: cnId,
-    invoiceNumber: cnNumber,
-    status: "Credit Note",
-    feeBeforeTax: -Math.abs(original.feeBeforeTax || 0),
-    gstAmount: -Math.abs(original.gstAmount || 0),
-    totalAmount: -Math.abs(original.totalAmount || 0),
-    amountOutstanding: 0,
-    parentInvoiceId: originalInvoiceId,
-    notes: `Credit Note against ${original.invoiceNumber}. Reason: ${reason}`,
-    createdBy: actorName,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
-
-  await writeLfAuditLog({
-    entityType: "invoice",
-    entityId: cnId,
-    action: "cn_issued",
-    actorName,
-    actorRole: userRole,
-    changeReason: reason,
-    previousValue: { originalInvoiceId, originalNumber: original.invoiceNumber },
-  });
-
-  revalidatePath("/dashboard/legal-finance/invoices");
-  return { id: cnId, cnNumber };
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
 // ─── PAYMENT ACTIONS ──────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════
