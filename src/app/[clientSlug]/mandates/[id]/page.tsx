@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { clients, candidates } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import ClientMandateDetail from "@/features/client/components/ClientMandateDetail";
+import ClientCommandCentreShell from "@/features/client/components/ClientCommandCentreShell";
 
 export const dynamic = "force-dynamic";
 
@@ -17,19 +17,19 @@ export default async function ClientMandateDetailPage({ params }: { params: Prom
     return <div className="p-10 text-center text-gray-400">Position not found.</div>;
   }
 
-  // Filter candidates to only those explicitly sent to the client
-  mandate.candidates = mandate.candidates.filter((c: any) => c.isSentToClient);
+  // Filter candidates to only those explicitly sent or marked visible to client
+  mandate.candidates = mandate.candidates.filter((c: any) => c.isSentToClient || c.visibleToClient);
 
   // Verify this mandate belongs to the client
   let clientName = "Client";
   if (platformUser?.linkedClientId) {
     const [client] = await db.select().from(clients).where(eq(clients.id, platformUser.linkedClientId));
     if (!client || mandate.company !== client.name) {
-      redirect(`/${(await params).clientSlug}/mandates`);
+      redirect(`/${resolvedParams.clientSlug}/mandates`);
     }
     clientName = client.name;
   } else {
-    redirect(`/${(await params).clientSlug}/mandates`);
+    redirect(`/${resolvedParams.clientSlug}/mandates`);
   }
 
   // Enrich candidates with profile pics from the master candidates table
@@ -81,5 +81,12 @@ export default async function ClientMandateDetailPage({ params }: { params: Prom
 
   const enrichedMandate = { ...mandate, candidates: enrichedCandidates };
 
-  return <ClientMandateDetail clientSlug={(await params).clientSlug} mandate={enrichedMandate} />;
+  return (
+    <ClientCommandCentreShell
+      clientName={clientName}
+      clientSlug={resolvedParams.clientSlug}
+      mandate={enrichedMandate}
+      userName={platformUser?.name || "Client User"}
+    />
+  );
 }
