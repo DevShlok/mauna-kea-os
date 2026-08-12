@@ -22,7 +22,6 @@ import ShortlistCompareScreen from "./ShortlistCompareScreen";
 import CandidateDeepDiveScreen from "./CandidateDeepDiveScreen";
 import InterviewSchedulingModal from "./InterviewSchedulingModal";
 import NextStepsModal from "./NextStepsModal";
-import ClientAIAssistant from "./ClientAIAssistant";
 
 type ScreenType = "market_mapping" | "engagement_tracker" | "shortlist_compare" | "deep_dive" | "scheduling" | "next_steps";
 
@@ -47,7 +46,6 @@ export default function ClientCommandCentreShell({
   const [selectedCandidateForDeepDive, setSelectedCandidateForDeepDive] = useState<any | null>(null);
   const [selectedCandidateForScheduling, setSelectedCandidateForScheduling] = useState<any | null>(null);
   const [isNextStepsOpen, setIsNextStepsOpen] = useState(false);
-  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
 
   const screens = [
     { id: "market_mapping" as ScreenType, label: "1. Market Mapping / Universe", icon: Compass, count: mandate?.candidates?.length || 0 },
@@ -86,20 +84,6 @@ export default function ClientCommandCentreShell({
           </div>
 
           <div className="flex items-center gap-3 self-end md:self-auto">
-            {/* AI Assistant Toggle Button */}
-            <button
-              onClick={() => setIsAIAssistantOpen(!isAIAssistantOpen)}
-              className="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all"
-              style={{
-                background: isAIAssistantOpen ? "linear-gradient(135deg, #D8B15B, #f0c96a)" : "rgba(216,177,91,0.15)",
-                color: isAIAssistantOpen ? "#133255" : "#D8B15B",
-                border: "1px solid rgba(216,177,91,0.4)",
-              }}
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Candidate Intelligence AI</span>
-            </button>
-
             {/* Next Steps Quick Action */}
             <button
               onClick={() => setIsNextStepsOpen(true)}
@@ -214,14 +198,6 @@ export default function ClientCommandCentreShell({
         mandate={mandate}
         clientName={clientName}
         userName={userName}
-      />
-
-      {/* ─── Client AI Intelligence Drawer ─────────────────── */}
-      <ClientAIAssistant
-        isOpen={isAIAssistantOpen}
-        onClose={() => setIsAIAssistantOpen(false)}
-        mandate={mandate}
-        clientName={clientName}
       />
     </div>
   );

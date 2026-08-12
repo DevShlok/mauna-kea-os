@@ -42,19 +42,6 @@ export default function CompetencyComparisonMatrix({
   candidates,
   onClose,
 }: CompetencyComparisonMatrixProps) {
-  // Generate AI comparative narrative synthesis based on selected candidates
-  const aiNarrative = useMemo(() => {
-    if (candidates.length === 0) return "";
-    if (candidates.length === 1) {
-      return `${candidates[0].name} demonstrates exceptional leadership depth across ${DEFAULT_COMPETENCIES[0]} and ${DEFAULT_COMPETENCIES[1]}.`;
-    }
-
-    const candA = candidates[0];
-    const candB = candidates[1];
-
-    return `AI Executive Synthesis: ${candA.name} presents the strongest ${DEFAULT_COMPETENCIES[2]} profile with proven P&L leadership, while ${candB.name} delivers higher ${DEFAULT_COMPETENCIES[1]} and deep sector-specific execution exposure. ${candidates.length > 2 ? `Additional candidates provide balanced ${DEFAULT_COMPETENCIES[4]} capabilities across complex stakeholder environments.` : ""}`;
-  }, [candidates]);
-
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-white rounded-3xl max-w-6xl w-full p-8 shadow-2xl border border-slate-100 space-y-6 max-h-[92vh] flex flex-col">
@@ -72,17 +59,6 @@ export default function CompetencyComparisonMatrix({
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors">
             <X className="w-5 h-5" />
           </button>
-        </div>
-
-        {/* AI Comparative Narrative Box */}
-        <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent p-5 rounded-2xl border border-amber-500/30 shrink-0">
-          <div className="flex items-center gap-2 font-bold text-[#133255] text-xs uppercase tracking-wider mb-1.5">
-            <Sparkles className="w-4 h-4 text-[#D8B15B]" />
-            <span>AI Decision Support Synthesis</span>
-          </div>
-          <p className="text-xs text-slate-700 leading-relaxed font-medium">
-            {aiNarrative}
-          </p>
         </div>
 
         {/* Matrix Grid */}
