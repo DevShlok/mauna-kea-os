@@ -66,11 +66,11 @@ export default function ClientCommandCentreShell({
     <div className="flex-1 overflow-y-auto w-full bg-[#f4f6fb]">
       <div className="max-w-7xl mx-auto w-full px-6 py-6 pb-12">
         {/* ─── Executive Mandate Context Bar ───────────────────── */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="neo-card-sm p-5 border border-slate-200/60 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <Link
               href={`/${clientSlug}`}
-              className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all border border-slate-200 shrink-0"
+              className="p-2.5 neo-inset text-[#133255] hover:text-[#D8B15B] transition-all shrink-0 flex items-center justify-center"
               title="Back to Dashboard"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -100,7 +100,7 @@ export default function ClientCommandCentreShell({
           <div className="flex items-center gap-3">
             <button
               onClick={() => setActiveScreen("next_steps")}
-              className="px-4 py-2.5 bg-[#D8B15B] hover:bg-[#c4a150] text-[#133255] rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
+              className="px-5 py-2.5 neo-btn-gold text-[#133255] font-bold text-xs flex items-center gap-2"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Submit Next Steps</span>
@@ -109,7 +109,7 @@ export default function ClientCommandCentreShell({
         </div>
 
         {/* ─── 6 Core Screen Navigation Tabs ─────────────────── */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-2 mb-6">
+        <div className="flex items-center gap-2.5 overflow-x-auto scrollbar-none pb-2 mb-6">
           {screens.map(tab => {
             const Icon = tab.icon;
             const isActive = activeScreen === tab.id;
@@ -122,16 +122,16 @@ export default function ClientCommandCentreShell({
                   }
                   setActiveScreen(tab.id);
                 }}
-                className={`px-4 py-2.5 text-xs font-bold rounded-xl flex items-center gap-2 whitespace-nowrap transition-all border ${
+                className={`px-4 py-3 text-xs font-bold rounded-2xl flex items-center gap-2 whitespace-nowrap transition-all ${
                   isActive
-                    ? "bg-[#0b1f3a] text-white border-[#0b1f3a] shadow-xs"
-                    : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-slate-200/80"
+                    ? "neo-btn-primary text-white"
+                    : "neo-card-sm bg-white text-slate-600 hover:text-slate-900 border-slate-200/60"
                 }`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? "text-[#D8B15B]" : "text-slate-400"}`} />
                 <span>{tab.label}</span>
                 {tab.count !== undefined && (
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${isActive ? "bg-[#D8B15B] text-[#133255]" : "bg-slate-100 text-slate-600"}`}>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${isActive ? "bg-[#D8B15B] text-[#133255]" : "neo-inset text-slate-600"}`}>
                     {tab.count}
                   </span>
                 )}

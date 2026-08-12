@@ -401,10 +401,10 @@ export default function ClientDashboard({ clientName, userName, clientSlug, mand
           ) : (
             <>
               {/* Executive Welcome Hero Banner */}
-              <div className="bg-gradient-to-r from-[#0b1f3a] via-[#133255] to-[#1e3c63] rounded-2xl p-6 mb-8 text-white shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-white/10">
+              <div className="neo-card p-6 mb-8 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 os-sidebar-bg border border-white/10 rounded-3xl">
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#D8B15B]/20 text-[#D8B15B] border border-[#D8B15B]/40">
+                    <span className="px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#D8B15B]/20 text-[#D8B15B] border border-[#D8B15B]/40">
                       Client Command Centre
                     </span>
                   </div>
@@ -424,24 +424,24 @@ export default function ClientDashboard({ clientName, userName, clientSlug, mand
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {[
-                  { icon: Briefcase, label: "Open Positions", value: openMandates.length, color: "text-indigo-600", bg: "bg-indigo-50", onClick: () => setFilter("open") },
-                  { icon: Users, label: "Candidates Identified", value: totalCandidates, color: "text-sky-600", bg: "bg-sky-50", onClick: () => {} },
-                  { icon: MessageSquare, label: "Interviews Conducted", value: totalInterviews, color: "text-emerald-600", bg: "bg-emerald-50", onClick: () => setActiveTab("shortlist") },
-                  { icon: Award, label: "Offers Made", value: totalOffers, color: "text-violet-600", bg: "bg-violet-50", onClick: () => setActiveTab("shortlist") },
+                  { icon: Briefcase, label: "Open Positions", value: openMandates.length, color: "text-[#133255]", bg: "neo-inset", onClick: () => setFilter("open") },
+                  { icon: Users, label: "Candidates Identified", value: totalCandidates, color: "text-[#133255]", bg: "neo-inset", onClick: () => {} },
+                  { icon: MessageSquare, label: "Interviews Conducted", value: totalInterviews, color: "text-[#133255]", bg: "neo-inset", onClick: () => setActiveTab("shortlist") },
+                  { icon: Award, label: "Offers Made", value: totalOffers, color: "text-[#133255]", bg: "neo-inset", onClick: () => setActiveTab("shortlist") },
                 ].map((stat, i) => (
                   <button
                     key={i}
                     onClick={stat.onClick}
-                    className="bg-white rounded-xl p-4 shadow-xs border border-gray-100 flex items-center gap-3 hover:shadow-md transition-all text-left"
+                    className="neo-card-sm p-5 border border-slate-200/60 flex items-center gap-3 hover:-translate-y-0.5 transition-all text-left group"
                   >
-                    <div className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center shrink-0`}>
+                    <div className={`w-11 h-11 ${stat.bg} flex items-center justify-center shrink-0`}>
                       <stat.icon className={`w-5 h-5 ${stat.color}`} />
                     </div>
                     <div>
-                      <span className="text-[22px] font-bold text-[#0b1f3a] block leading-none">{stat.value}</span>
-                      <span className="text-[11px] text-gray-500 mt-1 block font-medium">{stat.label}</span>
+                      <span className="text-[24px] font-bold text-[#133255] block leading-none">{stat.value}</span>
+                      <span className="text-[11px] text-slate-500 mt-1 block font-semibold">{stat.label}</span>
                     </div>
                   </button>
                 ))}
@@ -483,7 +483,7 @@ export default function ClientDashboard({ clientName, userName, clientSlug, mand
                   return (
                     <div
                       key={mandate.id}
-                      className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 group cursor-pointer"
+                      className="neo-card-sm p-5 border border-slate-200/60 hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
                       onClick={() => navigateToMandate(mandate.id)}
                     >
                       <div className="flex items-start gap-4">
