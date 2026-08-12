@@ -4,17 +4,20 @@ Newest entry on top. Format: `YYYY-MM-DD — what changed — why`
 
 ---
 
+2026-08-12 — Client Portal Login Flow Improvements & AI Feature Streamlining — Performed targeted refinements:
+- **Client Login Improvements**: Refactored Client Portal authentication and route handling (`/[clientSlug]/mandates/[id]`) for seamless user access, persistent session resolution, and automatic linked client validation.
+- **AI Feature Streamlining**: Streamlined Client Hiring Command Centre by removing AI narrative synthesis text boxes and the AI Assistant drawer per user feedback, focusing 100% of the client UI on direct visual benchmarking, 6-screen executive workflows, multi-slot scheduling, and closed-loop task feedback.
+
 2026-08-12 — MK OS Client Hiring Command Centre Launch (MVP Definition & 6-Screen Architecture) — Implemented full Client Hiring Command Centre defined in MVP PRD:
 - **DB Schema Migration 0037**: Added `departments`, `mandate_positions`, `download_logs` tables and extended `mandate_candidates` with recruiter visibility switches (`visibleToClient`, `showContactDetails`, `showCompensation`, `showAssessment`, `showComments`), dual rankings (`consultantRanking` P1/P2/P3 vs `clientRanking` P1/P2/P3), and rejection tracking.
 - **Recruiter Controls**: Updated `MandateDetailClient.tsx` with Recruiter Visibility Modal (`RecruiterVisibilityModal`) and consultant P1/P2/P3 ranking selector.
 - **6-Screen Command Centre Shell (`ClientCommandCentreShell.tsx`)**:
   - **Screen 1 (Market Mapping / Universe)**: `MarketMappingScreen.tsx` displaying search depth funnel metrics (Mapped → Contacted → Engaged → Assessed → Shortlisted), talent universe table, filter controls, and CSV export.
   - **Screen 2 (Candidate Engagement Tracker)**: `EngagementTrackerScreen.tsx` ATS-style table view of 10–30 candidates with profile summaries, Monaki notes, rejection reasons, and candidate activity audit timeline.
-  - **Screen 3 (Shortlist & Candidate Comparison)**: `ShortlistCompareScreen.tsx` visual candidate cards, dual rankings, key strengths/concerns, multi-candidate selector, and `CompetencyComparisonMatrix.tsx` side-by-side benchmark matrix across 7 competencies with AI Comparative Narrative generator.
+  - **Screen 3 (Shortlist & Candidate Comparison)**: `ShortlistCompareScreen.tsx` visual candidate cards, dual rankings, key strengths/concerns, multi-candidate selector, and `CompetencyComparisonMatrix.tsx` side-by-side benchmark matrix across 7 competencies.
   - **Screen 4 (Candidate Deep Dive)**: `CandidateDeepDiveScreen.tsx` 360° candidate assessment profile with top 1-page Executive Summary, 4 assessment tabs, and watermarked PDF download (`logDocumentDownloadAction`).
   - **Screen 5 (Client Decisions & Interview Scheduling)**: `InterviewSchedulingModal.tsx` decision buttons (`Interview`, `Hold`, `Reject`, `Request Info`) and multi-slot date/time scheduler.
   - **Screen 6 ("Next Steps" Feedback Loop)**: `NextStepsModal.tsx` multi-select next steps task submission.
-  - **Client AI Intelligence**: `ClientAIAssistant.tsx` drawer chat assistant for candidate intelligence.
 
 2026-08-12 — Legal & Finance Admin Contract Templates, Dashboard Navigation Hierarchy & Official Tax Invoice Layout — Executed requested BRD updates:
 - **Admin Contract Templates**: Added DB migration `0036_contract_templates.sql` creating `contract_templates` table. Implemented `src/actions/contract-templates.ts` (`getContractTemplatesAction`, `saveContractTemplateAction`, `deleteContractTemplateAction`), `/dashboard/legal-finance/contracts/templates` page route, and `ContractTemplatesClient.tsx` for configuring default success fees, retainer amounts, replacement guarantees, and standard legal clauses. Updated `ContractWizard.tsx` with dynamic template selector in Step 2.
