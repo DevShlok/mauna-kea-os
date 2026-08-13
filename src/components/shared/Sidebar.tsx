@@ -66,7 +66,8 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
   interface NavGroup {
     header: string;
     icon: any;
-    items: NavChild[];
+    href?: string;
+    items?: NavChild[];
   }
 
   interface NavCategory {
@@ -134,18 +135,13 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
             { label: "Invoice Repository", href: "/dashboard/legal-finance/invoices", visibleTo: ["admin", "finance"] },
             { label: "Payment Dashboard", href: "/dashboard/legal-finance/payments/dashboard", visibleTo: ["admin", "finance"] },
             { label: "Payment Ledger", href: "/dashboard/legal-finance/payments", visibleTo: ["admin", "finance"] },
-            { label: "Credit Notes", href: "/dashboard/legal-finance/invoices?status=Credit+Note&page=1", visibleTo: ["admin", "finance"] },
           ]
         },
         {
           header: "Reports",
           icon: BarChart3,
-          items: [
-            { label: "Revenue", href: "/dashboard/legal-finance/reports?tab=revenue", visibleTo: ["admin", "finance"] },
-            { label: "Outstanding", href: "/dashboard/legal-finance/reports?tab=outstanding", visibleTo: ["admin", "finance"] },
-            { label: "Upcoming Renewals", href: "/dashboard/legal-finance/reports?tab=renewals", visibleTo: ["admin", "finance"] },
-            { label: "Collection Dashboard", href: "/dashboard/legal-finance/reports?tab=collection", visibleTo: ["admin", "finance"] },
-          ]
+          href: "/dashboard/legal-finance/reports",
+          items: []
         },
         {
           header: "Governance",
@@ -223,7 +219,12 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
       if (category.children) {
         allChildren = category.children.filter(c => c.visibleTo.includes(userRole));
       } else if (category.groups) {
-        allChildren = category.groups.flatMap(g => g.items.filter(i => i.visibleTo.includes(userRole)));
+        allChildren = category.groups.flatMap(g => {
+          if (g.href) {
+            return [{ label: g.header, href: g.href, visibleTo: category.visibleTo }];
+          }
+          return (g.items || []).filter(i => i.visibleTo.includes(userRole));
+        });
       }
 
       const isActive = allChildren.some(child => pathname?.startsWith(child.href) && child.href !== "/dashboard");
@@ -232,7 +233,9 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
 
         if (category.groups) {
           category.groups.forEach(g => {
-            const isGroupActive = g.items.some(i => pathname?.startsWith(i.href) && i.href !== "/dashboard");
+            const isGroupActive = g.href
+              ? pathname?.startsWith(g.href)
+              : (g.items || []).some(i => pathname?.startsWith(i.href) && i.href !== "/dashboard");
             if (isGroupActive) {
               activeGroupHeader = g.header;
             }
@@ -305,7 +308,12 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
             if (category.children) {
               allChildren = category.children.filter(c => c.visibleTo.includes(userRole));
             } else if (category.groups) {
-              allChildren = category.groups.flatMap(g => g.items.filter(i => i.visibleTo.includes(userRole)));
+              allChildren = category.groups.flatMap(g => {
+                if (g.href) {
+                  return [{ label: g.header, href: g.href, visibleTo: category.visibleTo }];
+                }
+                return (g.items || []).filter(i => i.visibleTo.includes(userRole));
+              });
             }
 
             if (allChildren.length === 0) return null;
@@ -383,7 +391,27 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                       {category.groups && (
                         <div className="flex flex-col py-1.5 pl-3 space-y-1">
                           {category.groups.map((group, groupIdx) => {
-                            const visibleGroupItems = group.items.filter(i => i.visibleTo.includes(userRole));
+                            if (group.href) {
+                              const isDirectActive = pathname === group.href || (pathname?.startsWith(group.href) && group.href.length > 25);
+                              return (
+                                <div key={groupIdx} className="flex flex-col rounded-xl overflow-hidden">
+                                  <Link
+                                    href={group.href}
+                                    className={`flex items-center gap-2.5 pl-6 pr-3 py-2 text-[14.5px] font-bold rounded-lg select-none transition-colors duration-200 ease-out ${
+                                      isDirectActive
+                                        ? "text-[#D8B15B] font-bold bg-[#D8B15B]/15 border border-[#D8B15B]/25"
+                                        : "text-white/80 hover:text-white hover:bg-white/5 border border-transparent"
+                                    }`}
+                                  >
+                                    <group.icon className={`w-4 h-4 shrink-0 transition-colors duration-200 ease-out ${isDirectActive ? "text-[#D8B15B]" : "text-white/45"}`} />
+                                    <span className="flex-1 tracking-wide">{group.header}</span>
+                                    {isDirectActive && <div className="ml-auto w-2 h-2 rounded-full bg-[#D8B15B] shrink-0" />}
+                                  </Link>
+                                </div>
+                              );
+                            }
+
+                            const visibleGroupItems = (group.items || []).filter(i => i.visibleTo.includes(userRole));
                             if (visibleGroupItems.length === 0) return null;
 
                             const isGroupActive = visibleGroupItems.some(i => pathname === i.href || (pathname.startsWith(i.href) && i.href.length > 25));
@@ -474,7 +502,23 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
                       })}
 
                       {category.groups && category.groups.map((group, groupIdx) => {
-                        const visibleGroupItems = group.items.filter(i => i.visibleTo.includes(userRole));
+                        if (group.href) {
+                          const isDirectActive = pathname === group.href || (pathname?.startsWith(group.href) && group.href.length > 25);
+                          return (
+                            <Link
+                              key={groupIdx}
+                              href={group.href}
+                              className={`flex items-center gap-2.5 px-3 py-2 text-[13.5px] font-bold transition-colors duration-200 ease-out rounded-lg ${
+                                isDirectActive ? "bg-[#D8B15B]/15 text-[#D8B15B] font-bold" : "text-white/80 hover:text-white hover:bg-white/5"
+                              }`}
+                            >
+                              <group.icon className="w-4 h-4 text-[#D8B15B] shrink-0" />
+                              <span>{group.header}</span>
+                            </Link>
+                          );
+                        }
+
+                        const visibleGroupItems = (group.items || []).filter(i => i.visibleTo.includes(userRole));
                         if (visibleGroupItems.length === 0) return null;
 
                         return (
