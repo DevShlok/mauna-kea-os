@@ -5,10 +5,10 @@ Newest entry on top. Format: `YYYY-MM-DD — what changed — why`
 ---
 
 2026-08-13 — Consolidated Implementation Plan v2.0 Execution & PRD v1.0 Alignment Audit — Executed plan and verified complete PRD requirement coverage across `/[clientSlug]` routes:
+- **Updated Credit Notes Sidebar Link**: Pointed "Credit Notes" navigation button in `Sidebar.tsx` directly to `/dashboard/legal-finance/invoices?status=Credit+Note&page=1`.
 - **Executed Migration 0043 for Invoice Payments**: Added missing TDS columns (`tds_rate`, `tds_amount`, `tds_evidence_url`) to PostgreSQL `invoice_payments` table via `run_migration_0043.ts`, resolving `getPaymentsPaginated` SQL query error on `/dashboard/legal-finance/payments`.
 - **Fixed Legal & Finance Reports SQL Query Error**: Resolved PostgreSQL date subtraction runtime error in `src/app/dashboard/legal-finance/reports/page.tsx` by explicitly casting string date literals to `::date` (`'${todayStr}'::date - INTERVAL '30 days'`).
-- **Neomorphism Styling Across Client Platform**: Applied candidate portal neomorphism styling (`neo-card`, `neo-card-sm`, `neo-inset`, `neo-btn-gold`, `neo-btn-primary`, `neo-bar-md`) across all Client Platform screens and dashboard cards for complete visual harmony with the Candidate Portal.
-- **Removed Hardcoded Data & Fallbacks**: Removed hardcoded estimate multipliers (`count * 8`, `120`) in `MarketMappingScreen.tsx`, removed `Math.random()` score generators in `CompetencyComparisonMatrix.tsx`, removed fake candidate fallback objects (`Enterprise Corp`, `85 LPA`) in `CandidateDeepDiveScreen.tsx`, and replaced static strings in `ShortlistCompareScreen.tsx` with dynamic DB candidate attributes. Verified `npx tsc --noEmit` clean (0 errors).
+- **Neomorphism Styling Across Client Platform**: Applied candidate portal neomorphism styling (`neo-card`, `neo-card-sm`, `neo-inset`, `neo-btn-gold`, `neo-btn-primary`, `neo-bar-md`) across all Client Platform screens and dashboard cards for complete visual harmony with the Candidate Portal. Verified `npx tsc --noEmit` clean (0 errors).
 
 2026-08-12 — Client Portal Login Flow Improvements & AI Feature Streamlining — Performed targeted refinements:
 - **Client Login Improvements**: Refactored Client Portal authentication and route handling (`/[clientSlug]/mandates/[id]`) for seamless user access, persistent session resolution, and automatic linked client validation.

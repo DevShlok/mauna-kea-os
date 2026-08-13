@@ -134,7 +134,7 @@ export function Sidebar({ userRole = "candidate", linkedClientId, linkedCandidat
             { label: "Invoice Repository", href: "/dashboard/legal-finance/invoices", visibleTo: ["admin", "finance"] },
             { label: "Payment Dashboard", href: "/dashboard/legal-finance/payments/dashboard", visibleTo: ["admin", "finance"] },
             { label: "Payment Ledger", href: "/dashboard/legal-finance/payments", visibleTo: ["admin", "finance"] },
-            { label: "Credit Notes", href: "/dashboard/legal-finance/invoices?type=CREDIT_NOTE", visibleTo: ["admin", "finance"] },
+            { label: "Credit Notes", href: "/dashboard/legal-finance/invoices?status=Credit+Note&page=1", visibleTo: ["admin", "finance"] },
           ]
         },
         {
