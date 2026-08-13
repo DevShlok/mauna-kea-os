@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Loader2, ArrowRight } from "lucide-react";
+import { CheckCircle2, Loader2, ArrowRight, ChevronLeft } from "lucide-react";
 import { completeOnboardingAction } from "@/actions/candidate-onboarding";
 
 export function Step4_ReviewProfile({ 
@@ -10,12 +10,14 @@ export function Step4_ReviewProfile({
   initialData, 
   source,
   onComplete,
+  onBack,
 }: { 
   candId: string; 
   candidate: any; 
   initialData: any; 
   source: "cv" | "linkedin" | "manual";
   onComplete?: () => void;
+  onBack?: () => void;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -143,17 +145,30 @@ export function Step4_ReviewProfile({
         )}
       </div>
 
-      <button 
-        onClick={handleFinish} 
-        disabled={isSubmitting}
-        className="flex items-center bg-[#133255] hover:bg-[#133255]/90 text-white px-8 py-4 rounded-xl text-lg font-semibold min-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isSubmitting ? (
-          <Loader2 className="w-5 h-5 animate-spin mr-2" />
-        ) : null}
-        {isSubmitting ? "Finalizing..." : "Go to my Dashboard"}
-        {!isSubmitting && <ArrowRight className="w-5 h-5 ml-2" />}
-      </button>
+      <div className="flex items-center gap-4">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            disabled={isSubmitting}
+            className="flex items-center justify-center gap-2 border border-slate-300 hover:bg-slate-100 text-slate-700 px-6 py-4 rounded-xl text-lg font-semibold disabled:opacity-50 cursor-pointer transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            Back
+          </button>
+        )}
+        <button 
+          onClick={handleFinish} 
+          disabled={isSubmitting}
+          className="flex items-center bg-[#133255] hover:bg-[#133255]/90 text-white px-8 py-4 rounded-xl text-lg font-semibold min-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+        >
+          {isSubmitting ? (
+            <Loader2 className="w-5 h-5 animate-spin mr-2" />
+          ) : null}
+          {isSubmitting ? "Finalizing..." : "Go to my Dashboard"}
+          {!isSubmitting && <ArrowRight className="w-5 h-5 ml-2" />}
+        </button>
+      </div>
     </div>
   );
 }

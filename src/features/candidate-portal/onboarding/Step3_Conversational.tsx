@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, Send, Loader2, Sparkles, Check, ChevronRight } from "lucide-react";
+import { MessageSquare, Send, Loader2, Sparkles, Check, ChevronRight, ChevronLeft } from "lucide-react";
 import { saveConversationalAnswersAction } from "@/actions/candidate-onboarding";
 
 interface QuestionConfig {
@@ -107,7 +107,7 @@ const QUESTIONS: QuestionConfig[] = [
   }
 ];
 
-export function Step3_Conversational({ candId, onNext }: { candId: string; onNext: (data?: any) => void }) {
+export function Step3_Conversational({ candId, onNext, onBack }: { candId: string; onNext: (data?: any) => void; onBack?: () => void }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [currentAnswer, setCurrentAnswer] = useState("");
@@ -116,6 +116,18 @@ export function Step3_Conversational({ candId, onNext }: { candId: string; onNex
 
   const q = QUESTIONS[currentIndex];
   const progressPercent = Math.round(((currentIndex) / QUESTIONS.length) * 100);
+
+  const handlePrevQuestion = () => {
+    if (currentIndex > 0) {
+      const prevIdx = currentIndex - 1;
+      const prevQ = QUESTIONS[prevIdx];
+      setCurrentIndex(prevIdx);
+      setCurrentAnswer(answers[prevQ.id] || "");
+      setHistory(prev => prev.slice(0, Math.max(0, prev.length - 1)));
+    } else if (onBack) {
+      onBack();
+    }
+  };
 
   const submitAnswer = async (answerVal: string) => {
     const val = answerVal.trim();
@@ -276,13 +288,24 @@ export function Step3_Conversational({ candId, onNext }: { candId: string; onNex
         
         {/* Footer Stepper Controls */}
         <div className="flex justify-between items-center text-xs pt-1">
+          <button
+            type="button"
+            onClick={handlePrevQuestion}
+            className="flex items-center gap-1 font-bold text-[#133255] hover:underline cursor-pointer disabled:opacity-50"
+            disabled={isSaving}
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            <span>{currentIndex > 0 ? "Previous question" : "Back"}</span>
+          </button>
+
           <span className="text-slate-400 font-bold">
             Question {currentIndex + 1} of {QUESTIONS.length} ({progressPercent}% complete)
           </span>
+
           <button 
             type="button"
             onClick={handleSkip}
-            className="text-[#133255] font-bold hover:underline cursor-pointer"
+            className="text-[#133255] font-bold hover:underline cursor-pointer disabled:opacity-50"
             disabled={isSaving}
           >
             Skip question

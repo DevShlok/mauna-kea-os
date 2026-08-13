@@ -6,7 +6,7 @@ import { Step1_UploadCV } from "./Step1_UploadCV";
 import { Step2_LinkedInUpload } from "./Step2_LinkedInUpload";
 import { Step3_Conversational } from "./Step3_Conversational";
 import { Step4_ReviewProfile } from "./Step4_ReviewProfile";
-import { Check } from "lucide-react";
+import { Check, ChevronLeft } from "lucide-react";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -73,6 +73,18 @@ export function OnboardingShell({ candId, candidate }: OnboardingShellProps) {
     }
   };
 
+  const handleBack = () => {
+    if (currentStep === 3) {
+      if (source === "cv") {
+        setCurrentStep(1);
+      } else {
+        setCurrentStep(2);
+      }
+    } else if (currentStep > 1) {
+      setCurrentStep((prev) => (prev - 1) as Step);
+    }
+  };
+
   // ── Called by Step4 after completeOnboardingAction resolves successfully ────
   const handleComplete = () => {
     // Clear persisted step — returning users should not see onboarding again
@@ -124,8 +136,8 @@ export function OnboardingShell({ candId, candidate }: OnboardingShellProps) {
         }}
       >
         {currentStep === 1 && <Step1_UploadCV candId={candId} onNext={handleNext} />}
-        {currentStep === 2 && <Step2_LinkedInUpload candId={candId} onNext={handleNext} />}
-        {currentStep === 3 && <Step3_Conversational candId={candId} onNext={handleNext} />}
+        {currentStep === 2 && <Step2_LinkedInUpload candId={candId} onNext={handleNext} onBack={handleBack} />}
+        {currentStep === 3 && <Step3_Conversational candId={candId} onNext={handleNext} onBack={handleBack} />}
         {currentStep === 4 && (
           <Step4_ReviewProfile 
             candId={candId} 
@@ -133,6 +145,7 @@ export function OnboardingShell({ candId, candidate }: OnboardingShellProps) {
             initialData={extractedData}
             source={source}
             onComplete={handleComplete}
+            onBack={handleBack}
           />
         )}
       </div>

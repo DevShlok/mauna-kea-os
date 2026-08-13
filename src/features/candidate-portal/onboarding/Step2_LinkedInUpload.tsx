@@ -1,9 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, ArrowRight, Loader2, Info } from "lucide-react";
+import { Upload, ArrowRight, Loader2, Info, ChevronLeft } from "lucide-react";
 
-export function Step2_LinkedInUpload({ candId, onNext }: { candId: string; onNext: (data?: any, source?: "linkedin") => void }) {
+export function Step2_LinkedInUpload({ 
+  candId, 
+  onNext,
+  onBack,
+}: { 
+  candId: string; 
+  onNext: (data?: any, source?: "linkedin") => void;
+  onBack?: () => void;
+}) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
 
@@ -121,13 +129,26 @@ export function Step2_LinkedInUpload({ candId, onNext }: { candId: string; onNex
         <div className="h-px bg-slate-200 flex-1"></div>
       </div>
 
-      <button
-        className="mt-6 flex items-center gap-2 text-[#133255] font-medium hover:bg-[#133255]/5 px-4 py-2 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        onClick={() => onNext()}
-        disabled={isUploading}
-      >
-        Skip and enter manually <ArrowRight className="w-4 h-4" />
-      </button>
+      <div className="mt-6 flex items-center justify-between w-full max-w-md">
+        {onBack && (
+          <button
+            type="button"
+            className="flex items-center gap-1 text-slate-600 font-medium hover:text-[#133255] px-3 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+            onClick={onBack}
+            disabled={isUploading}
+          >
+            <ChevronLeft className="w-4 h-4" /> Back
+          </button>
+        )}
+        <button
+          type="button"
+          className="flex items-center gap-2 text-[#133255] font-medium hover:bg-[#133255]/5 px-4 py-2 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ml-auto"
+          onClick={() => onNext()}
+          disabled={isUploading}
+        >
+          Skip and enter manually <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }
