@@ -1,4 +1,4 @@
-﻿import { requireRole } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { db } from "@/db";
 import { invoices, contracts, clients } from "@/db/schema";
 import { eq, sql, and, lte, gte, lt, isNull, or, not } from "drizzle-orm";
@@ -29,10 +29,10 @@ export default async function ReportsPage() {
         totalCollected: sql<number>`COALESCE(SUM(amount_paid), 0)`,
         totalOutstanding: sql<number>`COALESCE(SUM(amount_outstanding), 0)`,
         // Real aging buckets: based on days past due_date
-        bucket0_30: sql<number>`COALESCE(SUM(CASE WHEN due_date >= ${sql.raw(`'${todayStr}'`)} - INTERVAL '30 days' AND due_date <= ${sql.raw(`'${todayStr}'`)} AND amount_outstanding > 0 THEN amount_outstanding ELSE 0 END), 0)`,
-        bucket31_60: sql<number>`COALESCE(SUM(CASE WHEN due_date < ${sql.raw(`'${todayStr}'`)} - INTERVAL '30 days' AND due_date >= ${sql.raw(`'${todayStr}'`)} - INTERVAL '60 days' AND amount_outstanding > 0 THEN amount_outstanding ELSE 0 END), 0)`,
-        bucket61_90: sql<number>`COALESCE(SUM(CASE WHEN due_date < ${sql.raw(`'${todayStr}'`)} - INTERVAL '60 days' AND due_date >= ${sql.raw(`'${todayStr}'`)} - INTERVAL '90 days' AND amount_outstanding > 0 THEN amount_outstanding ELSE 0 END), 0)`,
-        bucket90_plus: sql<number>`COALESCE(SUM(CASE WHEN due_date < ${sql.raw(`'${todayStr}'`)} - INTERVAL '90 days' AND amount_outstanding > 0 THEN amount_outstanding ELSE 0 END), 0)`,
+        bucket0_30: sql<number>`COALESCE(SUM(CASE WHEN due_date >= '${sql.raw(todayStr)}'::date - INTERVAL '30 days' AND due_date <= '${sql.raw(todayStr)}'::date AND amount_outstanding > 0 THEN amount_outstanding ELSE 0 END), 0)`,
+        bucket31_60: sql<number>`COALESCE(SUM(CASE WHEN due_date < '${sql.raw(todayStr)}'::date - INTERVAL '30 days' AND due_date >= '${sql.raw(todayStr)}'::date - INTERVAL '60 days' AND amount_outstanding > 0 THEN amount_outstanding ELSE 0 END), 0)`,
+        bucket61_90: sql<number>`COALESCE(SUM(CASE WHEN due_date < '${sql.raw(todayStr)}'::date - INTERVAL '60 days' AND due_date >= '${sql.raw(todayStr)}'::date - INTERVAL '90 days' AND amount_outstanding > 0 THEN amount_outstanding ELSE 0 END), 0)`,
+        bucket90_plus: sql<number>`COALESCE(SUM(CASE WHEN due_date < '${sql.raw(todayStr)}'::date - INTERVAL '90 days' AND amount_outstanding > 0 THEN amount_outstanding ELSE 0 END), 0)`,
       })
       .from(invoices)
       .where(eq(invoices.isDeleted, false)),
