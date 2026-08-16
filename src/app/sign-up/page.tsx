@@ -228,13 +228,22 @@ export default function SignUpPage() {
               </form>
             </div>
 
-            <div className="w-full border-t border-white/[0.06] px-8 py-5 flex items-center justify-center bg-white/[0.02]">
+            <div className="w-full border-t border-white/[0.06] px-8 py-5 flex flex-col items-center justify-center gap-2 bg-white/[0.02]">
               <p className="text-[12px] text-white/35">
                 Already have an account?{' '}
                 <Link href="/sign-in" className="text-sky-400/80 font-semibold hover:text-sky-300 transition-colors">
                   Sign in
                 </Link>
               </p>
+              <div className="flex items-center gap-4 text-[11px] text-white/25 pt-1">
+                <Link href="/privacy-policy" className="hover:text-white/60 transition-colors">
+                  Privacy Policy
+                </Link>
+                <span>•</span>
+                <Link href="/terms-of-service" className="hover:text-white/60 transition-colors">
+                  Terms of Service
+                </Link>
+              </div>
             </div>
           </div>
         </div>

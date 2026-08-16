@@ -4,6 +4,11 @@ Newest entry on top. Format: `YYYY-MM-DD — what changed — why`
 
 ---
 
+2026-08-16 — Added Official Privacy Policy & Terms of Service Pages — Prepared platform for Google OAuth App Verification and production launch:
+- **Added `/privacy-policy` Route**: Created comprehensive Privacy Policy page at `src/app/privacy-policy/page.tsx` adhering to Google API Services User Data Policy, Limited Use disclosures, data handling/storage practices, user data rights, and deletion request protocols.
+- **Added `/terms-of-service` Route**: Created official Terms of Service page at `src/app/terms-of-service/page.tsx` establishing platform governance, candidate/client portal usage terms, confidentiality safeguards, and legal liability boundaries under New Delhi, India jurisdiction.
+- **Linked Legal Footers**: Embedded Privacy Policy and Terms of Service navigation links in auth sign-in (`/sign-in`) and sign-up (`/sign-up`) footers. Verified `npx tsc --noEmit` clean (0 errors).
+
 2026-08-13 — Consolidated Implementation Plan v2.0 Execution & PRD v1.0 Alignment Audit — Executed plan and verified complete PRD requirement coverage across `/[clientSlug]` routes:
 - **Updated Credit Notes Sidebar Link**: Pointed "Credit Notes" navigation button in `Sidebar.tsx` directly to `/dashboard/legal-finance/invoices?status=Credit+Note&page=1`.
 - **Executed Migration 0043 for Invoice Payments**: Added missing TDS columns (`tds_rate`, `tds_amount`, `tds_evidence_url`) to PostgreSQL `invoice_payments` table via `run_migration_0043.ts`, resolving `getPaymentsPaginated` SQL query error on `/dashboard/legal-finance/payments`.
