@@ -4,10 +4,13 @@ Newest entry on top. Format: `YYYY-MM-DD — what changed — why`
 
 ---
 
-2026-08-16 — Added Official Privacy Policy & Terms of Service Pages — Prepared platform for Google OAuth App Verification and production launch:
+2026-08-16 — Added Official Privacy Policy, Terms of Service & Comprehensive Public Homepage — Resolved all Google OAuth Verification requirements:
+- **Redesigned Public Homepage (`src/app/page.tsx`)**: Replaced the previous minimal placeholder with a rich, fully accessible public landing page outlining the complete purpose of **Mauna Kea** (Executive Search & Hiring Platform) without requiring users to log in.
+- **Brand & App Name Exact Alignment**: Prominently featured the exact application name **"Mauna Kea"** matching the OAuth consent screen configuration 1:1 across headers, hero sections, and metadata.
+- **Google OAuth Integration & Limited Use Disclosure**: Added dedicated sections explaining how Google OAuth is used solely for secure candidate/client Single Sign-On (SSO) alongside Google API Services User Data Policy adherence.
 - **Added `/privacy-policy` Route**: Created comprehensive Privacy Policy page at `src/app/privacy-policy/page.tsx` adhering to Google API Services User Data Policy, Limited Use disclosures, data handling/storage practices, user data rights, and deletion request protocols.
 - **Added `/terms-of-service` Route**: Created official Terms of Service page at `src/app/terms-of-service/page.tsx` establishing platform governance, candidate/client portal usage terms, confidentiality safeguards, and legal liability boundaries under New Delhi, India jurisdiction.
-- **Linked Legal Footers**: Embedded Privacy Policy and Terms of Service navigation links in auth sign-in (`/sign-in`) and sign-up (`/sign-up`) footers. Verified `npx tsc --noEmit` clean (0 errors).
+- **Linked Legal Footers**: Embedded Privacy Policy and Terms of Service navigation links in homepage, auth sign-in (`/sign-in`), and sign-up (`/sign-up`) footers. Verified `npx tsc --noEmit` clean (0 errors).
 
 2026-08-13 — Consolidated Implementation Plan v2.0 Execution & PRD v1.0 Alignment Audit — Executed plan and verified complete PRD requirement coverage across `/[clientSlug]` routes:
 - **Updated Credit Notes Sidebar Link**: Pointed "Credit Notes" navigation button in `Sidebar.tsx` directly to `/dashboard/legal-finance/invoices?status=Credit+Note&page=1`.
